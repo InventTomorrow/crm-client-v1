@@ -1,0 +1,117 @@
+'use client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/utils';
+import {
+  login, register, logout, forgotPassword, resetPassword,
+  acceptInvite, verifyEmail, resendVerification, getMe, updateMe,
+} from '../services/authService';
+import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
+
+export function useLogin() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: LoginData) => login(data),
+    onSuccess: (user) => {
+      if (user.onboardingStatus === 'EMAIL_UNVERIFIED') {
+        router.push('/auth/verify-email');
+        return;
+      }
+      if (user.onboardingStep && user.onboardingStep !== 'DONE') {
+        const step = user.onboardingStep.toLowerCase();
+        router.push(`/onboarding/${step}`);
+        return;
+      }
+      router.push('/inbox');
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useRegister() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: RegisterData) => register(data),
+    onSuccess: () => router.push('/auth/verify-email'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useLogout() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: logout,
+    onSuccess: () => router.push('/auth/login'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useVerifyEmail() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (token: string) => verifyEmail(token),
+    onSuccess: () => router.push('/onboarding/channel'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (email: string) => resendVerification(email),
+    onSuccess: () => toast.success('Verification email sent — check your inbox.'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (data: ForgotPasswordData) => forgotPassword(data),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useResetPassword(token: string) {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: ResetPasswordData) => resetPassword(token, data),
+    onSuccess: () => {
+      toast.success('Password reset. Please sign in.');
+      router.push('/auth/login');
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useAcceptInvite(token: string) {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: AcceptInviteData) => acceptInvite(token, data),
+    onSuccess: () => router.push('/inbox'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useMe() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => getMe(),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return { user: data, isLoading, error };
+}
+
+export function useUpdateMe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMe,
+    onSuccess: (updated) => {
+      // Update cache optimistically
+      queryClient.setQueryData(['me'], updated);
+      toast.success('Profile saved.');
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
