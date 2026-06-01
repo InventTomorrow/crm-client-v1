@@ -1,0 +1,63 @@
+'use client';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { apiClient } from '@/lib/apiClient';
+import { extractErrorMessage } from '@/lib/utils';
+import type { ConnectChannelData, SaveChatbotData } from '../types';
+
+async function getOnboardingStatus() {
+  const res = await apiClient.get('/onboarding/status');
+  return res.data.data as {
+    onboardingStep: 'CHANNEL' | 'CHATBOT' | 'DONE';
+    inventoryTier: string | null;
+    channels: Array<{ channel: string; status: string }>;
+    hasChatbotConfig: boolean;
+  };
+}
+
+async function connectChannel(data: ConnectChannelData) {
+  const res = await apiClient.post('/onboarding/channel', data);
+  return res.data;
+}
+
+async function saveChatbot(data: SaveChatbotData) {
+  const res = await apiClient.post('/onboarding/chatbot', data);
+  return res.data;
+}
+
+async function skipOnboarding() {
+  const res = await apiClient.post('/onboarding/skip');
+  return res.data;
+}
+
+export function useOnboardingStatus() {
+  return useQuery({ queryKey: ['onboarding-status'], queryFn: getOnboardingStatus });
+}
+
+export function useConnectChannel() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: ConnectChannelData) => connectChannel(data),
+    onSuccess: () => router.push('/onboarding/chatbot'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useSaveChatbot() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: SaveChatbotData) => saveChatbot(data),
+    onSuccess: () => router.push('/onboarding/done'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useSkipOnboarding() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: skipOnboarding,
+    onSuccess: () => router.push('/inbox'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}

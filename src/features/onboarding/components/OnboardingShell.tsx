@@ -1,0 +1,53 @@
+import { cn } from '@/lib/utils';
+
+const STEPS = [
+  { key: 'CHANNEL', label: 'Connect WhatsApp' },
+  { key: 'CHATBOT', label: 'Configure chatbot' },
+];
+
+interface Props {
+  currentStep: 'CHANNEL' | 'CHATBOT';
+  children: React.ReactNode;
+}
+
+export function OnboardingShell({ currentStep, children }: Props) {
+  const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
+
+  return (
+    <div className="w-full max-w-[520px] mx-auto">
+      {/* Stepper */}
+      <div className="flex items-center gap-0 mb-8">
+        {STEPS.map((step, i) => (
+          <div key={step.key} className="flex items-center flex-1">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                'w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0 transition-colors',
+                i < currentIndex
+                  ? 'bg-[var(--accent)] text-white'
+                  : i === currentIndex
+                  ? 'bg-[var(--accent)] text-white ring-4 ring-[rgba(79,195,247,0.2)]'
+                  : 'bg-[var(--surface-2)] text-[var(--ink-mute)]',
+              )}>
+                {i < currentIndex ? '✓' : i + 1}
+              </div>
+              <span className={cn(
+                'text-[12.5px] font-medium hidden sm:block',
+                i === currentIndex ? 'text-[var(--ink)]' : 'text-[var(--ink-mute)]',
+              )}>
+                {step.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={cn(
+                'flex-1 h-px mx-3',
+                i < currentIndex ? 'bg-[var(--accent)]' : 'bg-[var(--line)]',
+              )} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {children}
+    </div>
+  );
+}
