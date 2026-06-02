@@ -7,6 +7,7 @@ import {
   Check,
   CheckCheck,
   ChevronLeft,
+  Download,
   FileText,
   Flame,
   Image,
@@ -14,7 +15,9 @@ import {
   Mic,
   MicOff,
   Paperclip,
+  Pause,
   Phone,
+  Play,
   Search,
   Send,
   Sparkles,
@@ -72,6 +75,138 @@ function EscalationBadge({ status }: { status: string }) {
     );
   }
   return null;
+}
+
+/** WhatsApp-style voice note player with play/pause + seek bar. */
+function AudioBubble({ url, outbound }: { url: string; outbound: boolean }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) { a.pause(); } else { void a.play(); }
+    setPlaying(!playing);
+  };
+
+  const fmt = (s: number) => {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2.5 rounded-[14px] px-3 py-2.5 min-w-[180px] max-w-[240px]',
+        outbound ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]',
+      )}
+    >
+      <button
+        onClick={toggle}
+        className={cn(
+          'flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0',
+          outbound ? 'bg-white/20' : 'bg-[var(--accent)] text-white',
+        )}
+      >
+        {playing ? <Pause size={14} /> : <Play size={14} />}
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className={cn('h-1 rounded-full overflow-hidden', outbound ? 'bg-white/30' : 'bg-[var(--line)]')}>
+          <div
+            className={cn('h-full rounded-full', outbound ? 'bg-white' : 'bg-[var(--accent)]')}
+            style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
+          />
+        </div>
+        <div className={cn('text-[10px] mt-1', outbound ? 'text-white/80' : 'text-[var(--ink-mute)]')}>
+          {fmt(playing || progress ? progress : duration)}
+        </div>
+      </div>
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="metadata"
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime)}
+        onEnded={() => { setPlaying(false); setProgress(0); }}
+      />
+    </div>
+  );
+}
+
+/** Renders inbound/outbound media (image, video, audio, document) WhatsApp-style. */
+function MediaBubble({
+  mediaUrl,
+  mediaType,
+  caption,
+  outbound,
+}: {
+  mediaUrl: string;
+  mediaType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT';
+  caption?: string | null;
+  outbound: boolean;
+}) {
+  // Hide caption when it's just the raw URL or a placeholder label
+  // (e.g. "[audio]" or "🎤 Voice message") that adds no information.
+  const PLACEHOLDER_RE = /^(\[(image|video|audio|document)\]|🎤\s*voice message)$/i;
+  const showCaption =
+    !!caption && caption !== mediaUrl && !PLACEHOLDER_RE.test(caption.trim());
+
+  if (mediaType === 'IMAGE') {
+    return (
+      <div className="rounded-[14px] overflow-hidden max-w-[220px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={mediaUrl} alt="attachment" className="w-full object-cover" style={{ maxHeight: 260 }} />
+        {showCaption && <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>}
+      </div>
+    );
+  }
+
+  if (mediaType === 'VIDEO') {
+    return (
+      <div className="rounded-[14px] overflow-hidden max-w-[240px]">
+        <video src={mediaUrl} controls className="w-full" style={{ maxHeight: 280 }} />
+        {showCaption && <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>}
+      </div>
+    );
+  }
+
+  if (mediaType === 'AUDIO') {
+    return (
+      <div className="flex flex-col gap-1">
+        <AudioBubble url={mediaUrl} outbound={outbound} />
+        {showCaption && (
+          <p className={cn('text-[12.5px] italic px-1', outbound ? 'text-right text-[var(--ink-soft)]' : 'text-[var(--ink-soft)]')}>
+            “{caption}”
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // DOCUMENT
+  return (
+    <a
+      href={mediaUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        'flex items-center gap-2.5 rounded-[14px] px-3 py-2.5 min-w-[180px] max-w-[240px] no-underline',
+        outbound ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]',
+      )}
+    >
+      <div className={cn('flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0', outbound ? 'bg-white/20' : 'bg-[var(--accent-soft)]')}>
+        <FileText size={16} className={outbound ? 'text-white' : 'text-[var(--accent)]'} />
+      </div>
+      <span className="flex-1 min-w-0 truncate text-[12.5px] font-medium">
+        {showCaption ? caption : 'Document'}
+      </span>
+      <Download size={14} className={cn('flex-shrink-0', outbound ? 'text-white/80' : 'text-[var(--ink-mute)]')} />
+    </a>
+  );
 }
 
 function ConversationRow({
@@ -364,16 +499,13 @@ export function InboxView() {
                       </div>
 
                       {/* Bubble */}
-                      {msg.mediaType === 'IMAGE' && msg.mediaUrl ? (
-                        <div className={cn('rounded-[14px] overflow-hidden max-w-[220px]', isOutbound ? 'shadow-sm' : '')}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={msg.mediaUrl}
-                            alt="Product image"
-                            className="w-full object-cover"
-                            style={{ maxHeight: 240 }}
-                          />
-                        </div>
+                      {msg.mediaType && msg.mediaUrl ? (
+                        <MediaBubble
+                          mediaUrl={msg.mediaUrl}
+                          mediaType={msg.mediaType}
+                          caption={msg.content}
+                          outbound={isOutbound}
+                        />
                       ) : (
                         <div
                           className={cn(
