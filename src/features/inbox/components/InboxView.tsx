@@ -589,13 +589,31 @@ export function InboxView() {
                       </div>
 
                       {/* Bubble */}
-                      {msg.mediaType && msg.mediaUrl ? (
-                        <MediaBubble
-                          mediaUrl={msg.mediaUrl}
-                          mediaType={msg.mediaType}
-                          caption={msg.content}
-                          outbound={isOutbound}
-                        />
+                      {msg.mediaType === 'IMAGE' && msg.mediaUrl ? (
+                        <div
+                          className={cn(
+                            'rounded-[14px] overflow-hidden max-w-[240px]',
+                            isOutbound ? 'bg-[var(--accent)]' : 'bg-[var(--surface-2)] border border-[var(--line)]',
+                            msg.isDraft && 'ring-1 ring-dashed ring-[var(--accent)]',
+                          )}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={msg.mediaUrl}
+                            alt="Product image"
+                            className="w-full object-cover"
+                            style={{ maxHeight: 240 }}
+                          />
+                          {/* Caption = product details (shown only when content isn't just the URL) */}
+                          {msg.content && msg.content !== msg.mediaUrl && (
+                            <div className={cn('px-2.5 py-1.5 text-[12.5px] leading-snug', isOutbound ? 'text-white' : 'text-[var(--ink)]')}>
+                              {msg.content}
+                              {msg.isDraft && (
+                                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">· Draft</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div
                           className={cn(
