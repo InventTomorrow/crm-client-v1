@@ -1,4 +1,12 @@
-export type { Lead, Channel, LeadStatus, LeadIntent } from '@/lib/mockData';
+import type { Lead as BaseLead } from '@/lib/mockData';
+export type { Channel, LeadStatus, LeadIntent } from '@/lib/mockData';
+
+// Frontend lead carries a few extra backend fields used for edit + open-chat.
+export interface Lead extends BaseLead {
+  phone?: string;
+  email?: string;
+  conversationId?: string;
+}
 
 export type LeadsView = 'kanban' | 'list' | 'table';
 export type LeadsChannelFilter = 'all' | 'wa' | 'ig' | 'fb' | 'tk';

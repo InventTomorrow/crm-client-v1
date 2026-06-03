@@ -7,8 +7,13 @@ import { extractErrorMessage } from '@/lib/utils';
 import {
   fetchLeads,
   createLead,
+  updateLead,
   updateLeadStatus,
   deleteLead,
+  exportLeads,
+  parseImportCsv,
+  bulkCreateLeads,
+  type UpdateLeadInput,
 } from '../services/leadsService';
 
 export function useLeads() {
@@ -19,19 +24,26 @@ export function useAddLead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createLead,
-    onMutate: async (lead) => {
-      await queryClient.cancelQueries({ queryKey: ['leads'] });
-      const previousLeads = queryClient.getQueryData<Lead[]>(['leads']) ?? [];
-      queryClient.setQueryData(['leads'], [lead, ...previousLeads]);
-      return { previousLeads };
+    // No optimistic insert — the form passes a partial shape (no lastMsg/time),
+    // which would crash list rendering. Show the dialog loading state instead,
+    // then refetch on success.
+    onSuccess: () => {
+      toast.success('Lead added');
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
-    onError: (error, _lead, rollbackContext) => {
-      toast.error(extractErrorMessage(error));
-      if (rollbackContext?.previousLeads) {
-        queryClient.setQueryData(['leads'], rollbackContext.previousLeads);
-      }
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useUpdateLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateLeadInput }) => updateLead(id, data),
+    onSuccess: () => {
+      toast.success('Lead updated');
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
+    onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }
 
@@ -74,6 +86,40 @@ export function useDeleteLead() {
       if (rollbackContext?.previousLeads) {
         queryClient.setQueryData(['leads'], rollbackContext.previousLeads);
       }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
+  });
+}
+
+export function useExportLeads() {
+  return useMutation({
+    mutationFn: exportLeads,
+    onSuccess: () => toast.success('Leads exported'),
+    onError: (error) => toast.error(extractErrorMessage(error) || 'Export failed'),
+  });
+}
+
+export function useParseCsv() {
+  return useMutation({
+    mutationFn: parseImportCsv,
+    onError: (error) => {
+      toast.error(extractErrorMessage(error) || 'Failed to parse CSV');
+    },
+  });
+}
+
+export function useBulkCreateLeads() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkCreateLeads,
+    onSuccess: (data) => {
+      toast.success(`Imported ${data.successful} leads successfully.`);
+      if (data.failed > 0) {
+        toast.warning(`${data.failed} leads failed to import.`);
+      }
+    },
+    onError: (error) => {
+      toast.error(extractErrorMessage(error) || 'Failed to import leads');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
