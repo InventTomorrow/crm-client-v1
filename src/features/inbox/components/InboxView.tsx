@@ -26,6 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   filterConversations,
@@ -328,8 +329,10 @@ function ConversationRow({
 }
 
 export function InboxView() {
+  const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<ConversationFilter>('all');
+  const [search, setSearch] = useState('');
   const [draft, setDraft] = useState('');
   const [mobPane, setMobPane] = useState<MobilePane>('list');
   const [showProfile, setShowProfile] = useState(true);
@@ -353,15 +356,32 @@ export function InboxView() {
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
 
-  const filtered = filterConversations(conversations, filter);
+  const searchLower = search.trim().toLowerCase();
+  const filtered = filterConversations(conversations, filter).filter((c) => {
+    if (!searchLower) return true;
+    const name = c.lead.name?.toLowerCase() ?? '';
+    const phone = c.lead.phone?.toLowerCase() ?? '';
+    return name.includes(searchLower) || phone.includes(searchLower);
+  });
   const activeConv = conversations.find((c) => c.id === selectedId);
 
-  // Auto-select first conversation
+  // Deep-link from the Leads page: /inbox?lead=<leadId> selects that lead's chat.
   useEffect(() => {
-    if (!selectedId && filtered.length > 0) {
+    const leadId = searchParams.get('lead');
+    if (!leadId || conversations.length === 0) return;
+    const conv = conversations.find((c) => c.lead.id === leadId);
+    if (conv) {
+      setSelectedId(conv.id);
+      setMobPane('chat');
+    }
+  }, [searchParams, conversations]);
+
+  // Auto-select first conversation (only when not deep-linking)
+  useEffect(() => {
+    if (!selectedId && !searchParams.get('lead') && filtered.length > 0) {
       setSelectedId(filtered[0].id);
     }
-  }, [filtered, selectedId]);
+  }, [filtered, selectedId, searchParams]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -461,7 +481,12 @@ export function InboxView() {
         <div className="px-3.5 pt-3 pb-2">
           <div className="relative mb-2">
             <Search size={13} className="absolute left-[11px] top-[11px] text-[var(--ink-mute)]" />
-            <input className="input pl-8" placeholder="Search conversations…" readOnly />
+            <input
+              className="input pl-8"
+              placeholder="Search by name or phone…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
           <div className="flex gap-1.5">
             {FILTERS.map((f) => (
