@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { InboxView } from '@/features/inbox/components/InboxView';
 
 export const metadata: Metadata = {
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function InboxPage() {
   return (
     <div className="h-full">
-      <InboxView />
+      <Suspense fallback={null}>
+        <InboxView />
+      </Suspense>
     </div>
   );
 }

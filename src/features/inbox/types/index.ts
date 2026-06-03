@@ -18,6 +18,7 @@ export interface ConversationListItem {
   id: string;
   channel: string;
   escalationStatus: EscalationStatus;
+  aiEnabled: boolean;
   lastMessageAt: string;
   createdAt: string;
   lead: {

@@ -1,5 +1,5 @@
 'use client';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import {
   AlertTriangle,
@@ -7,22 +7,26 @@ import {
   Check,
   CheckCheck,
   ChevronLeft,
+  Download,
   FileText,
   Flame,
   Image,
   Loader2,
   Mic,
-  MicOff,
   Paperclip,
+  Pause,
   Phone,
+  Play,
   Search,
   Send,
   Sparkles,
+  Trash2,
   User,
   Video,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   filterConversations,
@@ -31,6 +35,7 @@ import {
   useConversations,
   useEscalate,
   useResolve,
+  useToggleAiMode,
   useSendHumanReply,
   useSendMedia,
   useUploadAttachment,
@@ -39,7 +44,7 @@ import type { ConversationFilter, ConversationListItem, MobilePane } from '../ty
 
 const FILTERS: { id: ConversationFilter; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'escalated', label: 'Escalated' },
+  { id: 'escalated', label: 'Needs Attention' },
 ];
 
 function relativeTime(iso: string): string {
@@ -60,18 +65,220 @@ function EscalationBadge({ status }: { status: string }) {
   if (status === 'ESCALATED') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#EF4444] bg-[#FEF2F2] px-1.5 py-0.5 rounded-full">
-        <Flame size={9} /> Escalated
+        <Flame size={9} /> Needs Attention
       </span>
     );
   }
   if (status === 'RESOLVED') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#15803D] bg-[#DCFCE7] px-1.5 py-0.5 rounded-full">
-        <Check size={9} /> Resolved
+        <Check size={9} /> Done
       </span>
     );
   }
   return null;
+}
+
+// Static pseudo-waveform — deterministic bar heights for the WhatsApp look.
+const WAVEFORM_BARS = [
+  0.35, 0.55, 0.8, 0.45, 0.95, 0.6, 0.4, 0.7, 1, 0.5, 0.3, 0.65,
+  0.85, 0.45, 0.55, 0.9, 0.4, 0.75, 0.6, 0.35, 0.8, 0.5, 0.7, 0.45,
+  0.6, 0.9, 0.4, 0.55,
+];
+
+/** WhatsApp-style voice note player: play/pause, seekable waveform, timer, mic. */
+function AudioBubble({ url, outbound }: { url: string; outbound: boolean }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const probingRef = useRef(false); // true while forcing duration calc
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const knownDuration = Number.isFinite(duration) && duration > 0;
+  const pct = knownDuration ? Math.min((progress / duration) * 100, 100) : 0;
+
+  // .ogg/opus and .webm recordings often lack a duration header, so the browser
+  // reports Infinity. Seeking to a huge time forces it to scan and compute the
+  // real duration, which then arrives via `durationchange`; we reset to 0 after.
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+
+    const resolveDuration = () => {
+      if (Number.isFinite(a.duration) && a.duration > 0) {
+        setDuration(a.duration);
+        if (probingRef.current) {
+          probingRef.current = false;
+          a.currentTime = 0;
+        }
+      } else if (!probingRef.current) {
+        probingRef.current = true;
+        try { a.currentTime = 1e101; } catch { /* seeking unsupported */ }
+      }
+    };
+
+    a.addEventListener('loadedmetadata', resolveDuration);
+    a.addEventListener('durationchange', resolveDuration);
+    if (a.readyState >= 1) resolveDuration(); // metadata already available
+
+    return () => {
+      a.removeEventListener('loadedmetadata', resolveDuration);
+      a.removeEventListener('durationchange', resolveDuration);
+    };
+  }, [url]);
+
+  const toggle = async () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) { try { await a.play(); } catch { /* autoplay/decoding guard */ } }
+    else { a.pause(); }
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const a = audioRef.current;
+    if (!a || !knownDuration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+    a.currentTime = ratio * duration;
+    setProgress(a.currentTime);
+  };
+
+  const fmt = (s: number) => {
+    if (!Number.isFinite(s) || s < 0) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const filledColor = outbound ? 'bg-white' : 'bg-[var(--accent)]';
+  const trackColor  = outbound ? 'bg-white/35' : 'bg-[var(--ink-mute)]/30';
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-[16px] px-3 py-2.5 min-w-[230px] max-w-[280px]',
+        outbound ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]',
+      )}
+    >
+      {/* Play / pause */}
+      <button
+        onClick={toggle}
+        aria-label={playing ? 'Pause' : 'Play'}
+        className={cn(
+          'flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 transition-transform active:scale-95',
+          outbound ? 'bg-white text-[var(--accent)]' : 'bg-[var(--accent)] text-white',
+        )}
+      >
+        {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
+      </button>
+
+      {/* Waveform + timer */}
+      <div className="flex-1 min-w-0">
+        <div
+          onClick={seek}
+          className={cn('flex items-center gap-[2px] h-7', knownDuration && 'cursor-pointer')}
+        >
+          {WAVEFORM_BARS.map((h, i) => {
+            const barPct = ((i + 1) / WAVEFORM_BARS.length) * 100;
+            const filled = barPct <= pct;
+            return (
+              <span
+                key={i}
+                className={cn('flex-1 rounded-full transition-colors', filled ? filledColor : trackColor)}
+                style={{ height: `${Math.max(h * 100, 18)}%` }}
+              />
+            );
+          })}
+        </div>
+        <div className={cn('flex items-center gap-1 mt-1 text-[10.5px]', outbound ? 'text-white/85' : 'text-[var(--ink-mute)]')}>
+          <Mic size={11} className={outbound ? 'text-white/85' : 'text-[var(--accent)]'} />
+          <span>{fmt(playing || progress > 0 ? progress : duration)}</span>
+        </div>
+      </div>
+
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="metadata"
+        onTimeUpdate={(e) => { if (!probingRef.current) setProgress(e.currentTarget.currentTime); }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setProgress(0); }}
+      />
+    </div>
+  );
+}
+
+/** Renders inbound/outbound media (image, video, audio, document) WhatsApp-style. */
+function MediaBubble({
+  mediaUrl,
+  mediaType,
+  caption,
+  outbound,
+}: {
+  mediaUrl: string;
+  mediaType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT';
+  caption?: string | null;
+  outbound: boolean;
+}) {
+  // Hide caption when it's just the raw URL or a placeholder label
+  // (e.g. "[audio]" or "🎤 Voice message") that adds no information.
+  const PLACEHOLDER_RE = /^(\[(image|video|audio|document)\]|🎤\s*voice message)$/i;
+  const showCaption =
+    !!caption && caption !== mediaUrl && !PLACEHOLDER_RE.test(caption.trim());
+
+  if (mediaType === 'IMAGE') {
+    return (
+      <div className="rounded-[14px] overflow-hidden max-w-[220px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={getImageUrl(mediaUrl)} alt="attachment" className="w-full object-cover" style={{ maxHeight: 260 }} />
+        {showCaption && <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>}
+      </div>
+    );
+  }
+
+  if (mediaType === 'VIDEO') {
+    return (
+      <div className="rounded-[14px] overflow-hidden max-w-[240px]">
+        <video src={mediaUrl} controls className="w-full" style={{ maxHeight: 280 }} />
+        {showCaption && <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>}
+      </div>
+    );
+  }
+
+  if (mediaType === 'AUDIO') {
+    return (
+      <div className="flex flex-col gap-1">
+        <AudioBubble url={mediaUrl} outbound={outbound} />
+        {showCaption && (
+          <p className={cn('text-[12.5px] italic px-1', outbound ? 'text-right text-[var(--ink-soft)]' : 'text-[var(--ink-soft)]')}>
+            “{caption}”
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // DOCUMENT
+  return (
+    <a
+      href={mediaUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        'flex items-center gap-2.5 rounded-[14px] px-3 py-2.5 min-w-[180px] max-w-[240px] no-underline',
+        outbound ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]',
+      )}
+    >
+      <div className={cn('flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0', outbound ? 'bg-white/20' : 'bg-[var(--accent-soft)]')}>
+        <FileText size={16} className={outbound ? 'text-white' : 'text-[var(--accent)]'} />
+      </div>
+      <span className="flex-1 min-w-0 truncate text-[12.5px] font-medium">
+        {showCaption ? caption : 'Document'}
+      </span>
+      <Download size={14} className={cn('flex-shrink-0', outbound ? 'text-white/80' : 'text-[var(--ink-mute)]')} />
+    </a>
+  );
 }
 
 function ConversationRow({
@@ -123,8 +330,10 @@ function ConversationRow({
 }
 
 export function InboxView() {
+  const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<ConversationFilter>('all');
+  const [search, setSearch] = useState('');
   const [draft, setDraft] = useState('');
   const [mobPane, setMobPane] = useState<MobilePane>('list');
   const [showProfile, setShowProfile] = useState(true);
@@ -136,6 +345,7 @@ export function InboxView() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingCancelledRef = useRef(false); // true → discard on stop, don't send
 
   const { data: conversations = [], isLoading: listLoading } = useConversations();
   const { data: detail, isLoading: detailLoading } = useConversationDetail(selectedId);
@@ -146,16 +356,34 @@ export function InboxView() {
   const uploadMut = useUploadAttachment();
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
+  const aiModeMut = useToggleAiMode(selectedId ?? '');
 
-  const filtered = filterConversations(conversations, filter);
+  const searchLower = search.trim().toLowerCase();
+  const filtered = filterConversations(conversations, filter).filter((c) => {
+    if (!searchLower) return true;
+    const name = c.lead.name?.toLowerCase() ?? '';
+    const phone = c.lead.phone?.toLowerCase() ?? '';
+    return name.includes(searchLower) || phone.includes(searchLower);
+  });
   const activeConv = conversations.find((c) => c.id === selectedId);
 
-  // Auto-select first conversation
+  // Deep-link from the Leads page: /inbox?lead=<leadId> selects that lead's chat.
   useEffect(() => {
-    if (!selectedId && filtered.length > 0) {
+    const leadId = searchParams.get('lead');
+    if (!leadId || conversations.length === 0) return;
+    const conv = conversations.find((c) => c.lead.id === leadId);
+    if (conv) {
+      setSelectedId(conv.id);
+      setMobPane('chat');
+    }
+  }, [searchParams, conversations]);
+
+  // Auto-select first conversation (only when not deep-linking)
+  useEffect(() => {
+    if (!selectedId && !searchParams.get('lead') && filtered.length > 0) {
       setSelectedId(filtered[0].id);
     }
-  }, [filtered, selectedId]);
+  }, [filtered, selectedId, searchParams]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -197,10 +425,16 @@ export function InboxView() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      recordingCancelledRef.current = false;
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        // Discarded by the user — drop the recording, send nothing.
+        if (recordingCancelledRef.current) {
+          audioChunksRef.current = [];
+          return;
+        }
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const audioFile = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
         if (!selectedId) return;
@@ -219,11 +453,24 @@ export function InboxView() {
     }
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+  const stopTimer = () => {
     if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
     setIsRecording(false);
     setRecordingSeconds(0);
+  };
+
+  // Stop and SEND the recording.
+  const sendRecording = () => {
+    recordingCancelledRef.current = false;
+    mediaRecorderRef.current?.stop();
+    stopTimer();
+  };
+
+  // Stop and DISCARD the recording (no upload, no send).
+  const cancelRecording = () => {
+    recordingCancelledRef.current = true;
+    mediaRecorderRef.current?.stop();
+    stopTimer();
   };
 
   const displayName = activeConv?.lead.name ?? activeConv?.lead.phone ?? 'Conversation';
@@ -236,7 +483,12 @@ export function InboxView() {
         <div className="px-3.5 pt-3 pb-2">
           <div className="relative mb-2">
             <Search size={13} className="absolute left-[11px] top-[11px] text-[var(--ink-mute)]" />
-            <input className="input pl-8" placeholder="Search conversations…" readOnly />
+            <input
+              className="input pl-8"
+              placeholder="Search by name or phone…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
           <div className="flex gap-1.5">
             {FILTERS.map((f) => (
@@ -304,7 +556,7 @@ export function InboxView() {
                   <div className="text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1.5">
                     <Phone size={10} /> {activeConv?.lead.phone ?? '—'}
                     {activeConv?.escalationStatus === 'RESOLVED' && (
-                      <span className="text-[#15803D] font-medium">· Resolved</span>
+                      <span className="text-[#15803D] font-medium">· Done</span>
                     )}
                   </div>
                 </div>
@@ -312,6 +564,21 @@ export function InboxView() {
 
               {/* Action buttons */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
+                {/* Per-chat AI toggle — when off, this chat is handled manually */}
+                <button
+                  onClick={() => selectedId && aiModeMut.mutate()}
+                  disabled={aiModeMut.isPending}
+                  title={activeConv?.aiEnabled ? 'AI is replying to this chat — click to take over manually' : 'AI is off for this chat — click to let AI reply'}
+                  className={cn(
+                    'btn btn-outline py-[5px] px-[10px] text-[11.5px] gap-1.5',
+                    activeConv?.aiEnabled
+                      ? 'text-[var(--accent)] border-[var(--accent)] bg-[var(--accent-soft)]'
+                      : 'text-[var(--ink-mute)]',
+                  )}
+                >
+                  {aiModeMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  <span className="hide-mobile">AI {activeConv?.aiEnabled ? 'On' : 'Off'}</span>
+                </button>
                 {activeConv?.escalationStatus !== 'RESOLVED' && (
                   <button
                     onClick={() => selectedId && resolveMut.mutate(selectedId)}
@@ -319,7 +586,7 @@ export function InboxView() {
                     className="btn btn-outline py-[5px] px-[10px] text-[11.5px] text-[#15803D] border-[#BBF7D0]"
                   >
                     {resolveMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={12} />}
-                    <span className="hide-mobile">Resolve</span>
+                    <span className="hide-mobile">Mark Done</span>
                   </button>
                 )}
                 {activeConv?.escalationStatus !== 'ESCALATED' && (
@@ -329,7 +596,7 @@ export function InboxView() {
                     className="btn btn-outline py-[5px] px-[10px] text-[11.5px]"
                   >
                     {escalateMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <Flame size={12} className="text-[#EF4444]" />}
-                    <span className="hide-mobile">Escalate</span>
+                    <span className="hide-mobile">Flag</span>
                   </button>
                 )}
               </div>
@@ -365,14 +632,29 @@ export function InboxView() {
 
                       {/* Bubble */}
                       {msg.mediaType === 'IMAGE' && msg.mediaUrl ? (
-                        <div className={cn('rounded-[14px] overflow-hidden max-w-[220px]', isOutbound ? 'shadow-sm' : '')}>
+                        <div
+                          className={cn(
+                            'rounded-[14px] overflow-hidden max-w-[240px]',
+                            isOutbound ? 'bg-[var(--accent)]' : 'bg-[var(--surface-2)] border border-[var(--line)]',
+                            msg.isDraft && 'ring-1 ring-dashed ring-[var(--accent)]',
+                          )}
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={msg.mediaUrl}
+                            src={getImageUrl(msg.mediaUrl)}
                             alt="Product image"
                             className="w-full object-cover"
                             style={{ maxHeight: 240 }}
                           />
+                          {/* Caption = product details (shown only when content isn't just the URL) */}
+                          {msg.content && msg.content !== msg.mediaUrl && (
+                            <div className={cn('px-2.5 py-1.5 text-[12.5px] leading-snug', isOutbound ? 'text-white' : 'text-[var(--ink)]')}>
+                              {msg.content}
+                              {msg.isDraft && (
+                                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">· Draft</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div
@@ -449,15 +731,34 @@ export function InboxView() {
                 </div>
               )}
 
-              {/* Voice recording indicator */}
+              {/* Voice recording bar — WhatsApp style: delete · timer · send */}
               {isRecording && (
-                <div className="flex items-center gap-2.5 px-3 py-2 bg-[#FEF2F2] border-b border-[#FECACA]">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-pulse" />
-                  <span className="text-[12.5px] font-medium text-[#EF4444]">
-                    Recording… {Math.floor(recordingSeconds / 60).toString().padStart(2, '0')}:{(recordingSeconds % 60).toString().padStart(2, '0')}
-                  </span>
-                  <button onClick={stopRecording} className="btn py-1 px-3 text-[12px] bg-[#EF4444] text-white rounded-full ml-auto">
-                    <MicOff size={12} /> Stop & Send
+                <div className="flex items-center gap-3 px-3 py-2.5 bg-[#FEF2F2] border-b border-[#FECACA]">
+                  {/* Delete / cancel */}
+                  <button
+                    onClick={cancelRecording}
+                    title="Delete recording"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-[#EF4444] hover:bg-[#FECACA]/40 flex-shrink-0"
+                  >
+                    <Trash2 size={17} />
+                  </button>
+
+                  {/* Pulsing dot + timer */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-pulse flex-shrink-0" />
+                    <span className="text-[13px] font-medium text-[#EF4444] tabular-nums">
+                      {Math.floor(recordingSeconds / 60).toString().padStart(2, '0')}:{(recordingSeconds % 60).toString().padStart(2, '0')}
+                    </span>
+                    <span className="text-[12px] text-[#B91C1C]/70 truncate">Recording…</span>
+                  </div>
+
+                  {/* Send */}
+                  <button
+                    onClick={sendRecording}
+                    title="Send voice message"
+                    className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--accent)] text-white flex-shrink-0 transition-transform active:scale-95"
+                  >
+                    <Send size={16} />
                   </button>
                 </div>
               )}
@@ -514,16 +815,17 @@ export function InboxView() {
                     >
                       <Paperclip size={15} />
                     </button>
-                    {/* Voice */}
+                    {/* Voice — starts recording; the recording bar owns stop/cancel/send */}
                     <button
-                      title={isRecording ? 'Stop recording' : 'Record voice message'}
-                      onClick={isRecording ? stopRecording : startRecording}
+                      title="Record voice message"
+                      onClick={startRecording}
+                      disabled={isRecording}
                       className={cn(
                         'btn btn-ghost p-1.5',
                         isRecording ? 'text-[#EF4444]' : 'text-[var(--ink-mute)] hover:text-[var(--accent)]',
                       )}
                     >
-                      {isRecording ? <MicOff size={15} /> : <Mic size={15} />}
+                      <Mic size={15} />
                     </button>
                   </div>
                 </div>
@@ -586,7 +888,7 @@ export function InboxView() {
                 disabled={resolveMut.isPending}
                 className="btn btn-outline justify-center py-2 text-[12px] text-[#15803D] border-[#BBF7D0]"
               >
-                <CheckCheck size={13} /> Mark Resolved
+                <CheckCheck size={13} /> Mark Done
               </button>
             )}
             {activeConv.escalationStatus !== 'ESCALATED' && (
@@ -595,8 +897,7 @@ export function InboxView() {
                 disabled={escalateMut.isPending}
                 className="btn btn-outline justify-center py-2 text-[12px]"
               >
-                <Flame size={13} className="text-[#EF4444]" /> Escalate
-              </button>
+                <Flame size={13} className="text-[#EF4444]" /> Flag</button>
             )}
           </div>
         </div>

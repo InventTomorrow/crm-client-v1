@@ -27,16 +27,29 @@ export const sendMediaMessage = async (
   mimeType: string,
   caption?: string,
 ): Promise<ConversationMessage> => {
-  const res = await apiClient.post(`/conversations/${conversationId}/send-media`, { mediaUrl, mimeType, caption });
+  const res = await apiClient.post(
+    `/conversations/${conversationId}/send-media`,
+    { mediaUrl, mimeType, caption },
+    { headers: { 'Content-Type': 'application/json' } }, // explicit so it survives the 401-refresh retry
+  );
   return res.data.data;
 };
 
 export const uploadAttachment = async (file: File): Promise<{ url: string }> => {
   const form = new FormData();
   form.append('file', file);
+  // Clear the instance's default application/json Content-Type so axios detects
+  // the FormData and lets the browser set multipart/form-data WITH a boundary.
+  // (Setting it to a literal 'multipart/form-data' omits the boundary → multer
+  // can't parse the file → "validation failed".)
   const res = await apiClient.post('/upload?folder=attachments', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: { 'Content-Type': undefined },
   });
+  return res.data.data;
+};
+
+export const toggleAiMode = async (id: string): Promise<{ aiEnabled: boolean }> => {
+  const res = await apiClient.patch(`/conversations/${id}/ai-mode`);
   return res.data.data;
 };
 
