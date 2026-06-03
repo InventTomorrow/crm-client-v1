@@ -24,7 +24,15 @@ import {
   User,
   Video,
   X,
+  MoreVertical,
+  Edit2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/DropdownMenu";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -32,7 +40,10 @@ import {
   filterConversations,
   useApproveDraft,
   useConversationDetail,
-  useConversations,
+  useInfiniteConversations,
+  useMessagesPaginated,
+  useDeleteMessage,
+  useEditMessage,
   useEscalate,
   useResolve,
   useSendHumanReply,
@@ -428,6 +439,7 @@ export function InboxView() {
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [mobPane, setMobPane] = useState<MobilePane>("list");
   const [showProfile, setShowProfile] = useState(true);
   const [pendingFile, setPendingFile] = useState<{
@@ -444,10 +456,24 @@ export function InboxView() {
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingCancelledRef = useRef(false); // true → discard on stop, don't send
 
-  const { data: conversations = [], isLoading: listLoading } =
-    useConversations();
-  const { data: detail, isLoading: detailLoading } =
-    useConversationDetail(selectedId);
+  const {
+    data: conversationsData,
+    isLoading: listLoading,
+    fetchNextPage: fetchNextConvs,
+    hasNextPage: hasMoreConvs,
+    isFetchingNextPage: fetchingNextConvs,
+  } = useInfiniteConversations();
+  const conversations = conversationsData?.pages.flat() || [];
+
+  const { data: detail } = useConversationDetail(selectedId);
+  const {
+    data: messagesData,
+    isLoading: messagesLoading,
+    fetchNextPage: fetchNextMsgs,
+    hasNextPage: hasMoreMsgs,
+    isFetchingNextPage: fetchingNextMsgs,
+  } = useMessagesPaginated(selectedId);
+  const messages = [...(messagesData?.pages.flat() || [])].reverse();
 
   const approveDraftMut = useApproveDraft(selectedId ?? "");
   const sendReplyMut = useSendHumanReply(selectedId ?? "");
@@ -456,6 +482,8 @@ export function InboxView() {
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
   const aiModeMut = useToggleAiMode(selectedId ?? "");
+  const editMut = useEditMessage(selectedId ?? "");
+  const deleteMut = useDeleteMessage(selectedId ?? "");
 
   const searchLower = search.trim().toLowerCase();
   const filtered = filterConversations(conversations, filter).filter((c) => {
@@ -484,16 +512,62 @@ export function InboxView() {
     }
   }, [filtered, selectedId, searchParams]);
 
-  // Scroll to bottom on new messages
+  const msgObserverTarget = useRef<HTMLDivElement>(null);
+  const listObserverTarget = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (scrollRef.current) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreMsgs && !fetchingNextMsgs) {
+          fetchNextMsgs();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (msgObserverTarget.current) observer.observe(msgObserverTarget.current);
+    return () => observer.disconnect();
+  }, [hasMoreMsgs, fetchNextMsgs, selectedId, fetchingNextMsgs]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreConvs && !fetchingNextConvs) {
+          fetchNextConvs();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (listObserverTarget.current) observer.observe(listObserverTarget.current);
+    return () => observer.disconnect();
+  }, [hasMoreConvs, fetchNextConvs, fetchingNextConvs]);
+
+  const previousScrollHeight = useRef(0);
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    if (messagesData?.pages.length === 1) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    } else {
+      const newScrollHeight = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop += newScrollHeight - previousScrollHeight.current;
     }
-  }, [detail?.messages.length]);
+    previousScrollHeight.current = scrollRef.current.scrollHeight;
+  }, [messages?.length]);
 
   const handleSend = () => {
-    if (!draft.trim() || !selectedId || sendReplyMut.isPending) return;
-    sendReplyMut.mutate(draft.trim());
+    if (!draft.trim() || !selectedId) return;
+    if (editingMessageId) {
+      if (editMut.isPending) return;
+      editMut.mutate({ messageId: editingMessageId, content: draft.trim() });
+      setEditingMessageId(null);
+    } else {
+      if (sendReplyMut.isPending) return;
+      sendReplyMut.mutate(draft.trim());
+    }
+    setDraft("");
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
     setDraft("");
   };
 
@@ -654,6 +728,12 @@ export function InboxView() {
               }}
             />
           ))}
+          {fetchingNextConvs && (
+            <div className="flex justify-center py-3 flex-shrink-0">
+              <Loader2 size={16} className="animate-spin text-[var(--ink-mute)]" />
+            </div>
+          )}
+          <div ref={listObserverTarget} className="h-4 w-full flex-shrink-0" />
         </div>
       </div>
 
@@ -762,7 +842,7 @@ export function InboxView() {
               ref={scrollRef}
               className="scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px]"
             >
-              {detailLoading && (
+              {messagesLoading && (
                 <div className="flex justify-center py-8">
                   <Loader2
                     size={20}
@@ -770,16 +850,31 @@ export function InboxView() {
                   />
                 </div>
               )}
+              <div ref={msgObserverTarget} className="h-4 w-full flex-shrink-0" />
 
-              {detail?.messages.map((msg) => {
+              {fetchingNextMsgs && (
+                <div className="flex justify-center py-2 flex-shrink-0">
+                  <Loader2
+                    size={16}
+                    className="animate-spin text-[var(--ink-mute)]"
+                  />
+                  <span className="text-xs text-[var(--ink-mute)] ml-1.5">Loading older messages...</span>
+                </div>
+              )}
+
+              {messages.map((msg) => {
                 const isOutbound = msg.senderType !== "CUSTOMER";
                 const isAI = msg.senderType === "AI";
                 const isAgent = msg.senderType === "AGENT";
+                const isDeleted = msg.isDeleted;
+
+                const isWithin15Mins = Date.now() - new Date(msg.createdAt).getTime() < 15 * 60 * 1000;
+                const isWithin60Mins = Date.now() - new Date(msg.createdAt).getTime() < 60 * 60 * 1000;
 
                 return (
                   <div
                     key={msg.id}
-                    className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}
+                    className={`flex group relative ${isOutbound ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`flex flex-col max-w-[76%] ${isOutbound ? "items-end" : "items-start"}`}
@@ -798,60 +893,116 @@ export function InboxView() {
                         )}
                       </div>
 
-                      {/* Bubble */}
-                      {msg.mediaType === "IMAGE" && msg.mediaUrl ? (
-                        <div
-                          className={cn(
-                            "rounded-[14px] overflow-hidden max-w-[240px]",
-                            isOutbound
-                              ? "bg-[var(--accent)]"
-                              : "bg-[var(--surface-2)] border border-[var(--line)]",
-                            msg.isDraft &&
-                              "ring-1 ring-dashed ring-[var(--accent)]",
-                          )}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={getImageUrl(msg.mediaUrl)}
-                            alt="Product image"
-                            className="w-full object-cover"
-                            style={{ maxHeight: 240 }}
-                          />
-                          {/* Caption = product details (shown only when content isn't just the URL) */}
-                          {msg.content && msg.content !== msg.mediaUrl && (
-                            <div
-                              className={cn(
-                                "px-2.5 py-1.5 text-[12.5px] leading-snug",
-                                isOutbound ? "text-white" : "text-[var(--ink)]",
-                              )}
-                            >
-                              {msg.content}
-                              {msg.isDraft && (
-                                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                                  · Draft
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div
-                          className={cn(
-                            "bubble",
-                            !isOutbound && "received",
-                            isOutbound && !msg.isDraft && "sent",
-                            msg.isDraft &&
-                              "border border-dashed border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[14px] px-[14px] py-[8px] text-[13.5px]",
-                          )}
-                        >
-                          {msg.content ?? ""}
-                          {msg.isDraft && (
-                            <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                              · Draft
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      {/* Bubble + Options wrapper */}
+                      <div className="flex items-center gap-2 w-full">
+                        {/* Options trigger (shown on hover, unless message is deleted or draft) */}
+                        {!isDeleted && !msg.isDraft && (
+                          <div className={cn(
+                            "opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center flex-shrink-0",
+                            isOutbound ? "order-first" : "order-last"
+                          )}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="btn btn-ghost p-1 rounded-full text-[var(--ink-mute)] hover:bg-[var(--surface-3)]">
+                                  <MoreVertical size={14} />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align={isOutbound ? "end" : "start"}>
+                                {isOutbound && isWithin15Mins && (
+                                  <DropdownMenuItem onClick={() => {
+                                    setEditingMessageId(msg.id);
+                                    setDraft(msg.content ?? "");
+                                  }}>
+                                    <Edit2 size={13} className="mr-1.5" />
+                                    Edit Message
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={() => deleteMut.mutate({ messageId: msg.id, everyone: false })}
+                                >
+                                  <Trash2 size={13} className="mr-1.5" />
+                                  Delete for me
+                                </DropdownMenuItem>
+                                {isOutbound && isWithin60Mins && (
+                                  <DropdownMenuItem
+                                    onClick={() => deleteMut.mutate({ messageId: msg.id, everyone: true })}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 size={13} className="mr-1.5" />
+                                    Delete for everyone
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        )}
+
+                        {/* Bubble */}
+                        {isDeleted ? (
+                          <div
+                            className={cn(
+                              "bubble italic text-[var(--ink-mute)] opacity-70 border border-[var(--line)] bg-transparent",
+                              !isOutbound && "received",
+                              isOutbound && "sent",
+                            )}
+                            style={{ fontStyle: "italic" }}
+                          >
+                            {isOutbound ? "You deleted this message" : "This message was deleted"}
+                          </div>
+                        ) : msg.mediaType === "IMAGE" && msg.mediaUrl ? (
+                          <div
+                            className={cn(
+                              "rounded-[14px] overflow-hidden max-w-[240px]",
+                              isOutbound
+                                ? "bg-[var(--accent)]"
+                                : "bg-[var(--surface-2)] border border-[var(--line)]",
+                              msg.isDraft &&
+                                "ring-1 ring-dashed ring-[var(--accent)]",
+                            )}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={getImageUrl(msg.mediaUrl)}
+                              alt="Product image"
+                              className="w-full object-cover"
+                              style={{ maxHeight: 240 }}
+                            />
+                            {/* Caption = product details (shown only when content isn't just the URL) */}
+                            {msg.content && msg.content !== msg.mediaUrl && (
+                              <div
+                                className={cn(
+                                  "px-2.5 py-1.5 text-[12.5px] leading-snug",
+                                  isOutbound ? "text-white" : "text-[var(--ink)]",
+                                )}
+                              >
+                                {msg.content}
+                                {msg.isDraft && (
+                                  <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
+                                    · Draft
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "bubble",
+                              !isOutbound && "received",
+                              isOutbound && !msg.isDraft && "sent",
+                              msg.isDraft &&
+                                "border border-dashed border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[14px] px-[14px] py-[8px] text-[13.5px]",
+                            )}
+                          >
+                            {msg.content ?? ""}
+                            {msg.isDraft && (
+                              <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
+                                · Draft
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
 
                       {/* Draft approve button */}
                       {msg.isDraft && (
@@ -871,7 +1022,8 @@ export function InboxView() {
 
                       <div className="flex items-center gap-1 px-1 mt-[3px] text-[10px] text-[var(--ink-mute)]">
                         {shortTime(msg.createdAt)}
-                        {isOutbound && !msg.isDraft && <Check size={10} />}
+                        {!isDeleted && msg.editedAt && <span>· Edited</span>}
+                        {isOutbound && !msg.isDraft && !isDeleted && <Check size={10} />}
                       </div>
                     </div>
                   </div>
@@ -966,6 +1118,22 @@ export function InboxView() {
                 </div>
               )}
 
+              {/* Editing message bar */}
+              {editingMessageId && (
+                <div className="flex items-center justify-between gap-2.5 px-3.5 py-2 bg-[var(--accent-soft)] border-b border-[var(--line)]">
+                  <div className="flex items-center gap-2 text-[12.5px] text-[var(--accent)] font-medium">
+                    <Edit2 size={14} />
+                    <span>Editing message</span>
+                  </div>
+                  <button
+                    onClick={cancelEdit}
+                    className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--ink)]"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
               {/* Text input + toolbar */}
               <div className="p-2.5">
                 <div className="flex items-end gap-1 p-1 rounded-xl border border-[var(--line)] bg-[var(--surface-2)]">
@@ -979,18 +1147,26 @@ export function InboxView() {
                         handleSend();
                       }
                     }}
-                    placeholder="Type a reply… (Enter to send)"
+                    placeholder={editingMessageId ? "Edit your message… (Enter to update)" : "Type a reply… (Enter to send)"}
                     className="flex-1 resize-none border-none bg-transparent outline-none p-2 min-h-[36px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)]"
                   />
                   <button
                     className="btn btn-grad py-2 px-[14px] flex-shrink-0"
                     onClick={handleSend}
-                    disabled={!draft.trim() || sendReplyMut.isPending}
+                    disabled={!draft.trim() || (editingMessageId ? editMut.isPending : sendReplyMut.isPending)}
                   >
-                    {sendReplyMut.isPending ? (
-                      <Loader2 size={13} className="animate-spin" />
+                    {editingMessageId ? (
+                      editMut.isPending ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <span className="text-[12.5px] font-semibold">Update</span>
+                      )
                     ) : (
-                      <Send size={13} />
+                      sendReplyMut.isPending ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Send size={13} />
+                      )
                     )}
                   </button>
                 </div>

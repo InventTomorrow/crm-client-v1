@@ -1,8 +1,16 @@
 import { apiClient } from '@/lib/apiClient';
 import type { ConversationDetail, ConversationListItem, ConversationMessage } from '../types';
 
-export const getConversations = async (): Promise<ConversationListItem[]> => {
-  const res = await apiClient.get('/conversations');
+export const getConversations = async ({ pageParam }: { pageParam?: string }): Promise<ConversationListItem[]> => {
+  const url = pageParam ? `/conversations?cursor=${pageParam}&limit=25` : '/conversations?limit=25';
+  const res = await apiClient.get(url);
+  return res.data.data;
+};
+
+export const getMessages = async ({ queryKey, pageParam }: { queryKey: any[], pageParam?: string }): Promise<ConversationMessage[]> => {
+  const [_key, conversationId] = queryKey;
+  const url = pageParam ? `/conversations/${conversationId}/messages?cursor=${pageParam}&limit=30` : `/conversations/${conversationId}/messages?limit=30`;
+  const res = await apiClient.get(url);
   return res.data.data;
 };
 
@@ -59,4 +67,16 @@ export const escalateConversation = async (id: string): Promise<void> => {
 
 export const resolveConversation = async (id: string): Promise<void> => {
   await apiClient.patch(`/conversations/${id}/resolve`);
+};
+
+export const deleteMessage = async (conversationId: string, messageId: string, everyone: boolean = false): Promise<ConversationMessage> => {
+  const res = await apiClient.delete(`/conversations/${conversationId}/messages/${messageId}`, {
+    data: { everyone }
+  });
+  return res.data.data;
+};
+
+export const editMessage = async (conversationId: string, messageId: string, content: string): Promise<ConversationMessage> => {
+  const res = await apiClient.patch(`/conversations/${conversationId}/messages/${messageId}`, { content });
+  return res.data.data;
 };

@@ -12,6 +12,9 @@ export interface ConversationMessage {
   mediaType?: MediaType | null;
   isDraft: boolean;
   createdAt: string;
+  isDeleted: boolean;
+  deletedAt?: string | null;
+  editedAt?: string | null;
 }
 
 export interface ConversationListItem {
