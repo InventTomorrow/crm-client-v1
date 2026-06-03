@@ -1,5 +1,5 @@
 'use client';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import {
   AlertTriangle,
@@ -230,7 +230,7 @@ function MediaBubble({
     return (
       <div className="rounded-[14px] overflow-hidden max-w-[220px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={mediaUrl} alt="attachment" className="w-full object-cover" style={{ maxHeight: 260 }} />
+        <img src={getImageUrl(mediaUrl)} alt="attachment" className="w-full object-cover" style={{ maxHeight: 260 }} />
         {showCaption && <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>}
       </div>
     );
@@ -624,7 +624,7 @@ export function InboxView() {
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={msg.mediaUrl}
+                            src={getImageUrl(msg.mediaUrl)}
                             alt="Product image"
                             className="w-full object-cover"
                             style={{ maxHeight: 240 }}

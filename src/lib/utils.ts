@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -44,4 +44,11 @@ export function extractErrorMessage(
   }
   if (typeof err?.message === 'string' && err.message) return err.message;
   return fallback;
+}
+
+export function getImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.includes('amazonaws.com')
+    ? `/api/v1/upload/image?url=${encodeURIComponent(url)}`
+    : url;
 }

@@ -1,7 +1,7 @@
-'use client';
-import { useRef, useState, useCallback } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+"use client";
+import { cn, getImageUrl } from "@/lib/utils";
+import { Loader2, Upload, X } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 
 interface ImageUploaderProps {
   value?: string | null;
@@ -14,7 +14,14 @@ interface ImageUploaderProps {
   compact?: boolean;
 }
 
-export function ImageUploader({ value, onChange, onUpload, isUploading = false, className, compact }: ImageUploaderProps) {
+export function ImageUploader({
+  value,
+  onChange,
+  onUpload,
+  isUploading = false,
+  className,
+  compact,
+}: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -24,9 +31,9 @@ export function ImageUploader({ value, onChange, onUpload, isUploading = false, 
       if (onUpload) {
         try {
           const url = await onUpload(file);
-          onChange(url);
-        } catch {
-          // error toast already shown by the mutation's onError
+          if (url) onChange(url);
+        } catch (e) {
+          console.error("Upload failed", e);
         }
       } else {
         // Fallback: local base64 preview (no server)
@@ -35,39 +42,50 @@ export function ImageUploader({ value, onChange, onUpload, isUploading = false, 
         reader.readAsDataURL(file);
       }
     },
-    [onChange, onUpload],
+    [onUpload, onChange],
   );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
-      const file = e.dataTransfer.files[0];
+      const file = e.dataTransfer.files?.[0];
       if (file) handleFile(file);
     },
     [handleFile],
   );
 
-  const h = compact ? 'h-[80px]' : 'h-[120px]';
+  const h = compact ? "h-[80px]" : "h-[120px]";
 
   if (isUploading) {
     return (
-      <div className={cn(`flex ${h} items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)]`, className)}>
+      <div
+        className={cn(
+          `flex ${h} items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)]`,
+          className,
+        )}
+      >
         <Loader2 size={18} className="animate-spin text-[var(--accent)]" />
-        <span className="text-[12.5px] text-[var(--accent)] font-medium">Uploading…</span>
+        <span className="text-[12.5px] text-[var(--accent)] font-medium">
+          Uploading…
+        </span>
       </div>
     );
   }
 
   if (value) {
     return (
-      <div className={cn(`relative ${h} overflow-hidden rounded-lg`, className)}>
+      <div
+        className={cn(`relative ${h} overflow-hidden rounded-lg`, className)}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={value}
+          src={getImageUrl(value)}
           alt="Product"
           className="h-full w-full object-cover"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
         />
         <button
           type="button"
@@ -85,15 +103,18 @@ export function ImageUploader({ value, onChange, onUpload, isUploading = false, 
       role="button"
       tabIndex={0}
       onClick={() => inputRef.current?.click()}
-      onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+      onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
       onDrop={handleDrop}
-      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
       onDragLeave={() => setIsDragging(false)}
       className={cn(
         `flex ${h} cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed transition-colors`,
         isDragging
-          ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
-          : 'border-[var(--line)] bg-[var(--surface-2)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]',
+          ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+          : "border-[var(--line)] bg-[var(--surface-2)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]",
         className,
       )}
     >
@@ -103,10 +124,12 @@ export function ImageUploader({ value, onChange, onUpload, isUploading = false, 
       {!compact && (
         <div className="text-center">
           <p className="text-[12.5px] font-medium text-[var(--ink-soft)]">
-            Drop image or{' '}
+            Drop image or{" "}
             <span className="text-[var(--accent)]">click to upload</span>
           </p>
-          <p className="mt-0.5 text-[11px] text-[var(--ink-mute)]">PNG, JPG, WEBP — up to 5 MB</p>
+          <p className="mt-0.5 text-[11px] text-[var(--ink-mute)]">
+            PNG, JPG, WEBP — up to 5 MB
+          </p>
         </div>
       )}
       <input
@@ -114,7 +137,10 @@ export function ImageUploader({ value, onChange, onUpload, isUploading = false, 
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
       />
     </div>
   );
