@@ -10,6 +10,7 @@ import {
   resolveConversation,
   sendHumanMessage,
   sendMediaMessage,
+  toggleAiMode,
   uploadAttachment,
 } from '../services/inboxService';
 import type { ConversationDetail, ConversationFilter, ConversationListItem } from '../types';
@@ -93,6 +94,35 @@ export function useUploadAttachment() {
   return useMutation({
     mutationFn: (file: File) => uploadAttachment(file),
     onError: (error) => toast.error(extractErrorMessage(error, 'Upload failed')),
+  });
+}
+
+export function useToggleAiMode(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => toggleAiMode(conversationId),
+    // Optimistically flip aiEnabled in the cached conversation detail + list.
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['conversation', conversationId] });
+      const prevDetail = queryClient.getQueryData<ConversationDetail>(['conversation', conversationId]);
+      const prevList = queryClient.getQueryData<ConversationListItem[]>(['conversations']);
+      if (prevDetail) {
+        queryClient.setQueryData<ConversationDetail>(['conversation', conversationId], { ...prevDetail, aiEnabled: !prevDetail.aiEnabled });
+      }
+      if (prevList) {
+        queryClient.setQueryData<ConversationListItem[]>(['conversations'], prevList.map((c) => c.id === conversationId ? { ...c, aiEnabled: !c.aiEnabled } : c));
+      }
+      return { prevDetail, prevList };
+    },
+    onError: (error, _v, ctx) => {
+      if (ctx?.prevDetail) queryClient.setQueryData(['conversation', conversationId], ctx.prevDetail);
+      if (ctx?.prevList) queryClient.setQueryData(['conversations'], ctx.prevList);
+      toast.error(extractErrorMessage(error, 'Failed to toggle AI mode'));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
   });
 }
 

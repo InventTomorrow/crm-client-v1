@@ -35,6 +35,7 @@ import {
   useConversations,
   useEscalate,
   useResolve,
+  useToggleAiMode,
   useSendHumanReply,
   useSendMedia,
   useUploadAttachment,
@@ -43,7 +44,7 @@ import type { ConversationFilter, ConversationListItem, MobilePane } from '../ty
 
 const FILTERS: { id: ConversationFilter; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'escalated', label: 'Escalated' },
+  { id: 'escalated', label: 'Needs Attention' },
 ];
 
 function relativeTime(iso: string): string {
@@ -64,14 +65,14 @@ function EscalationBadge({ status }: { status: string }) {
   if (status === 'ESCALATED') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#EF4444] bg-[#FEF2F2] px-1.5 py-0.5 rounded-full">
-        <Flame size={9} /> Escalated
+        <Flame size={9} /> Needs Attention
       </span>
     );
   }
   if (status === 'RESOLVED') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#15803D] bg-[#DCFCE7] px-1.5 py-0.5 rounded-full">
-        <Check size={9} /> Resolved
+        <Check size={9} /> Done
       </span>
     );
   }
@@ -355,6 +356,7 @@ export function InboxView() {
   const uploadMut = useUploadAttachment();
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
+  const aiModeMut = useToggleAiMode(selectedId ?? '');
 
   const searchLower = search.trim().toLowerCase();
   const filtered = filterConversations(conversations, filter).filter((c) => {
@@ -554,7 +556,7 @@ export function InboxView() {
                   <div className="text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1.5">
                     <Phone size={10} /> {activeConv?.lead.phone ?? '—'}
                     {activeConv?.escalationStatus === 'RESOLVED' && (
-                      <span className="text-[#15803D] font-medium">· Resolved</span>
+                      <span className="text-[#15803D] font-medium">· Done</span>
                     )}
                   </div>
                 </div>
@@ -562,6 +564,21 @@ export function InboxView() {
 
               {/* Action buttons */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
+                {/* Per-chat AI toggle — when off, this chat is handled manually */}
+                <button
+                  onClick={() => selectedId && aiModeMut.mutate()}
+                  disabled={aiModeMut.isPending}
+                  title={activeConv?.aiEnabled ? 'AI is replying to this chat — click to take over manually' : 'AI is off for this chat — click to let AI reply'}
+                  className={cn(
+                    'btn btn-outline py-[5px] px-[10px] text-[11.5px] gap-1.5',
+                    activeConv?.aiEnabled
+                      ? 'text-[var(--accent)] border-[var(--accent)] bg-[var(--accent-soft)]'
+                      : 'text-[var(--ink-mute)]',
+                  )}
+                >
+                  {aiModeMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  <span className="hide-mobile">AI {activeConv?.aiEnabled ? 'On' : 'Off'}</span>
+                </button>
                 {activeConv?.escalationStatus !== 'RESOLVED' && (
                   <button
                     onClick={() => selectedId && resolveMut.mutate(selectedId)}
@@ -569,7 +586,7 @@ export function InboxView() {
                     className="btn btn-outline py-[5px] px-[10px] text-[11.5px] text-[#15803D] border-[#BBF7D0]"
                   >
                     {resolveMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={12} />}
-                    <span className="hide-mobile">Resolve</span>
+                    <span className="hide-mobile">Mark Done</span>
                   </button>
                 )}
                 {activeConv?.escalationStatus !== 'ESCALATED' && (
@@ -579,7 +596,7 @@ export function InboxView() {
                     className="btn btn-outline py-[5px] px-[10px] text-[11.5px]"
                   >
                     {escalateMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <Flame size={12} className="text-[#EF4444]" />}
-                    <span className="hide-mobile">Escalate</span>
+                    <span className="hide-mobile">Flag</span>
                   </button>
                 )}
               </div>
@@ -871,7 +888,7 @@ export function InboxView() {
                 disabled={resolveMut.isPending}
                 className="btn btn-outline justify-center py-2 text-[12px] text-[#15803D] border-[#BBF7D0]"
               >
-                <CheckCheck size={13} /> Mark Resolved
+                <CheckCheck size={13} /> Mark Done
               </button>
             )}
             {activeConv.escalationStatus !== 'ESCALATED' && (
@@ -880,8 +897,7 @@ export function InboxView() {
                 disabled={escalateMut.isPending}
                 className="btn btn-outline justify-center py-2 text-[12px]"
               >
-                <Flame size={13} className="text-[#EF4444]" /> Escalate
-              </button>
+                <Flame size={13} className="text-[#EF4444]" /> Flag</button>
             )}
           </div>
         </div>
