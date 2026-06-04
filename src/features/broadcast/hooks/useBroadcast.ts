@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/utils';
 import { broadcastService } from '../services/broadcastService';
 import type { CreateBroadcastPayload } from '../types';
 
@@ -9,9 +10,8 @@ export const useCreateBroadcast = () => {
     onSuccess: () => {
       toast.success('Broadcast started successfully');
     },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.message || 'Failed to start broadcast';
-      toast.error(msg);
+    onError: (error) => {
+      toast.error(extractErrorMessage(error, 'Failed to start broadcast'));
     },
   });
 };
