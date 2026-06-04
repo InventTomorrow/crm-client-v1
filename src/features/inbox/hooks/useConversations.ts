@@ -1,12 +1,15 @@
 'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/utils';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   approveDraft,
+  deleteMessage,
+  editMessage,
   escalateConversation,
   getConversation,
   getConversations,
+  getMessages,
   resolveConversation,
   sendHumanMessage,
   sendMediaMessage,
@@ -18,7 +21,17 @@ import type { ConversationDetail, ConversationFilter, ConversationListItem } fro
 export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
+    queryFn: () => getConversations({}),
+    refetchInterval: 5_000,
+  });
+}
+
+export function useInfiniteConversations() {
+  return useInfiniteQuery({
+    queryKey: ['conversations', 'infinite'],
     queryFn: getConversations,
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
     refetchInterval: 5_000,
   });
 }
@@ -32,13 +45,24 @@ export function useConversationDetail(id: string | null) {
   });
 }
 
+export function useMessagesPaginated(id: string | null) {
+  return useInfiniteQuery({
+    queryKey: ['conversation', id, 'messages'],
+    queryFn: getMessages,
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.length === 30 ? lastPage[lastPage.length - 1].id : undefined,
+    enabled: !!id,
+    refetchInterval: 3_000,
+  });
+}
+
 export function useApproveDraft(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (messageId: string) => approveDraft(conversationId, messageId),
     onSuccess: () => {
       toast.success('Reply sent');
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send reply')),
   });
@@ -63,6 +87,7 @@ export function useSendHumanReply(conversationId: string) {
               content,
               isDraft: false,
               createdAt: new Date().toISOString(),
+              isDeleted: false,
             },
           ],
         });
@@ -84,7 +109,7 @@ export function useSendMedia(conversationId: string) {
       sendMediaMessage(conversationId, mediaUrl, mimeType, caption),
     onSuccess: () => {
       toast.success('Media sent');
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send media')),
   });
@@ -120,7 +145,7 @@ export function useToggleAiMode(conversationId: string) {
       toast.error(extractErrorMessage(error, 'Failed to toggle AI mode'));
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
@@ -158,4 +183,30 @@ export function filterConversations(
 ): ConversationListItem[] {
   if (filter === 'escalated') return conversations.filter((c) => c.escalationStatus === 'ESCALATED');
   return conversations;
+}
+
+export function useDeleteMessage(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, everyone }: { messageId: string; everyone: boolean }) =>
+      deleteMessage(conversationId, messageId, everyone),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
+      toast.success('Message deleted');
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to delete message')),
+  });
+}
+
+export function useEditMessage(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
+      editMessage(conversationId, messageId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
+      toast.success('Message updated');
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to update message')),
+  });
 }
