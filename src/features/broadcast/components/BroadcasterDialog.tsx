@@ -169,11 +169,22 @@ export function BroadcasterDialog({
         mimeType = pendingFile.mimeType;
       }
 
+      // When the user selected exactly everyone in the current filter (and isn't
+      // searching), send the server-side "all" target so it reaches ALL eligible
+      // leads — not just the loaded page. The server applies statusFilter too.
+      const selectedExactlyAllFiltered =
+        !searchQuery.trim() && allFilteredSelected && selected.size === filteredIds.length;
+
+      const leadTarget: { leadIds: string[] | 'all'; statusFilter?: string } =
+        selectedExactlyAllFiltered
+          ? { leadIds: 'all', ...(statusFilter !== 'all' ? { statusFilter: statusFilter.toUpperCase() } : {}) }
+          : { leadIds: Array.from(selected) };
+
       await createMut.mutateAsync({
         message: draft.trim() || undefined,
         mediaUrl,
         mimeType,
-        leadIds: Array.from(selected),
+        ...leadTarget,
       });
     })();
     
