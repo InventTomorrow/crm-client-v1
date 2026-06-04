@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { Loader2, MessageCircle, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Loader2, MessageCircle, ArrowRight, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useConnectChannel, useSkipOnboarding } from '../hooks/useOnboarding';
+import { useConnectChannel, useOnboardingStatus, useSkipOnboarding } from '../hooks/useOnboarding';
 import { OnboardingShell } from './OnboardingShell';
 
 const CHANNELS = [
@@ -43,16 +43,25 @@ const CHANNELS = [
 
 export function ChannelView() {
   const [selected, setSelected] = useState<'WHATSAPP' | null>(null);
+  const [workspaceName, setWorkspaceName] = useState('');
   const [wabaId, setWabaId] = useState('');
   const [phoneNumberId, setPhoneNumberId] = useState('');
   const [accessToken, setAccessToken] = useState('');
+  const { data: status } = useOnboardingStatus();
   const { mutate: connect, isPending } = useConnectChannel();
   const { mutate: skip, isPending: isSkipping } = useSkipOnboarding();
+
+  // Prefill the workspace name from the tenant created at signup (editable here).
+  useEffect(() => {
+    if (status?.workspaceName) setWorkspaceName((prev) => prev || status.workspaceName);
+  }, [status?.workspaceName]);
+
+  const trimmedName = workspaceName.trim();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected) return;
-    connect({ channel: selected, wabaId, phoneNumberId, accessToken });
+    connect({ channel: selected, wabaId, phoneNumberId, accessToken, workspaceName: trimmedName || undefined });
   };
 
   return (
@@ -63,6 +72,20 @@ export function ChannelView() {
       </div>
 
       <div className="card p-6 flex flex-col gap-5">
+        {/* Workspace name */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[12px] font-medium text-[var(--ink-soft)] flex items-center gap-1.5">
+            <Building2 size={13} className="text-[var(--accent)]" /> Workspace name
+          </label>
+          <input
+            className="input text-[13px]"
+            placeholder="e.g. Acme Boutique"
+            value={workspaceName}
+            onChange={(e) => setWorkspaceName(e.target.value)}
+          />
+          <p className="text-[11px] text-[var(--ink-mute)]">This is how your business appears across the app.</p>
+        </div>
+
         {/* Channel cards */}
         <div className="flex flex-col gap-2.5">
           {CHANNELS.map((ch) => {

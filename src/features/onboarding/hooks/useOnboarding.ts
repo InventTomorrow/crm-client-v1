@@ -10,6 +10,7 @@ async function getOnboardingStatus() {
   const res = await apiClient.get('/onboarding/status');
   return res.data.data as {
     onboardingStep: 'CHANNEL' | 'CHATBOT' | 'DONE';
+    workspaceName: string;
     inventoryTier: string | null;
     channels: Array<{ channel: string; status: string }>;
     hasChatbotConfig: boolean;
