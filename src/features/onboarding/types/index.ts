@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const connectChannelSchema = z.object({
   skip: z.boolean().optional(),
+  workspaceName: z.string().min(2, 'Workspace name must be at least 2 characters').optional(),
   channel: z.enum(['WHATSAPP', 'INSTAGRAM', 'MESSENGER']).optional(),
   accessToken: z.string().optional(),
   wabaId: z.string().optional(),

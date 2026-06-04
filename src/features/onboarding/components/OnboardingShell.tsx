@@ -1,3 +1,5 @@
+'use client';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
@@ -14,7 +16,13 @@ export function OnboardingShell({ currentStep, children }: Props) {
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
   return (
-    <div className="w-full max-w-[520px] mx-auto">
+    <motion.div
+      key={currentStep}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="w-full max-w-[520px] mx-auto"
+    >
       {/* Stepper */}
       <div className="flex items-center gap-0 mb-8">
         {STEPS.map((step, i) => (
@@ -47,7 +55,13 @@ export function OnboardingShell({ currentStep, children }: Props) {
         ))}
       </div>
 
-      {children}
-    </div>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut', delay: 0.08 }}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
   );
 }
