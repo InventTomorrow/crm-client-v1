@@ -1,6 +1,7 @@
 "use client";
 import { cn, getImageUrl } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
+import { Spinner, Skeleton } from "@/shared/ui/Motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,7 @@ import {
   Video,
   X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -63,6 +65,47 @@ const FILTERS: { id: ConversationFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "escalated", label: "Needs Attention" },
 ];
+
+// ─── Skeleton loaders ─────────────────────────────────────────────────────────
+
+function ChatListSkeleton() {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-[11px] px-[14px] py-[11px] border-b border-[var(--line-soft)]">
+          <Skeleton circle className="w-[38px] h-[38px] flex-shrink-0" />
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div className="flex justify-between">
+              <Skeleton className="h-[12px] w-28" />
+              <Skeleton className="h-[10px] w-8" />
+            </div>
+            <Skeleton className="h-[10px] w-40" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MessageSkeleton() {
+  const rows = [
+    { out: false, w: 'w-48' }, { out: true, w: 'w-36' },
+    { out: false, w: 'w-56' }, { out: true, w: 'w-44' },
+    { out: false, w: 'w-32' },
+  ];
+  return (
+    <div className="flex flex-col gap-4 px-4 py-6">
+      {rows.map(({ out, w }, i) => (
+        <div key={i} className={`flex ${out ? 'justify-end' : 'justify-start'}`}>
+          <div className="flex flex-col gap-1">
+            <Skeleton className={`h-9 ${w} rounded-[14px]`} />
+            <Skeleton className="h-[9px] w-10 ml-1" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -391,7 +434,11 @@ function ConversationRow({
   const lastMsg = conv.messages[0];
   const displayName = conv.lead.name ?? conv.lead.phone ?? "Unknown";
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
       onClick={onClick}
       className={cn(
         "flex items-center gap-[11px] cursor-pointer px-[14px] py-[11px]",
@@ -431,7 +478,7 @@ function ConversationRow({
           <EscalationBadge status={conv.escalationStatus} />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -549,17 +596,28 @@ export function InboxView() {
   }, [hasMoreConvs, fetchNextConvs, fetchingNextConvs]);
 
   const previousScrollHeight = useRef(0);
+  const isFirstLoad = useRef(true);
   useEffect(() => {
     if (!scrollRef.current) return;
-    if (messagesData?.pages.length === 1) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (isFirstLoad.current || messagesData?.pages.length === 1) {
+      // First load or new conversation — scroll to bottom immediately
+      requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+      isFirstLoad.current = false;
     } else {
-      const newScrollHeight = scrollRef.current.scrollHeight;
-      scrollRef.current.scrollTop +=
-        newScrollHeight - previousScrollHeight.current;
+      // Older page loaded at top — restore position without jump
+      const newScrollHeight = el.scrollHeight;
+      const delta = newScrollHeight - previousScrollHeight.current;
+      // Only adjust if content grew (new page prepended)
+      if (delta > 0) {
+        el.scrollTop += delta;
+      }
     }
-    previousScrollHeight.current = scrollRef.current.scrollHeight;
-  }, [messages?.length]);
+    previousScrollHeight.current = el.scrollHeight;
+  }, [messages?.length, messagesData?.pages.length]);
+
+  // Reset first-load flag when conversation changes
+  useEffect(() => { isFirstLoad.current = true; }, [selectedId]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedId) return;
@@ -720,20 +778,21 @@ export function InboxView() {
         </div>
         <div className="h-px bg-[var(--line)]" />
         <div className="scroll overflow-y-auto flex-1">
-          {listLoading && (
-            <div className="flex justify-center py-8">
-              <Loader2
-                size={20}
-                className="animate-spin text-[var(--ink-mute)]"
-              />
-            </div>
-          )}
-          {!listLoading && filtered.length === 0 && (
-            <div className="flex flex-col items-center py-10 text-[var(--ink-mute)]">
-              <Bot size={28} className="mb-2 opacity-40" />
-              <p className="text-[12.5px]">No conversations yet</p>
-            </div>
-          )}
+          {listLoading && <ChatListSkeleton />}
+          <AnimatePresence>
+            {!listLoading && filtered.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-col items-center py-10 text-[var(--ink-mute)]"
+              >
+                <Bot size={28} className="mb-2 opacity-40" />
+                <p className="text-[12.5px]">No conversations yet</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {filtered.map((conv) => (
             <ConversationRow
               key={conv.id}
@@ -747,10 +806,7 @@ export function InboxView() {
           ))}
           {fetchingNextConvs && (
             <div className="flex justify-center py-3 flex-shrink-0">
-              <Loader2
-                size={16}
-                className="animate-spin text-[var(--ink-mute)]"
-              />
+              <Spinner size={16} />
             </div>
           )}
           <div ref={listObserverTarget} className="h-4 w-full flex-shrink-0" />
@@ -861,31 +917,29 @@ export function InboxView() {
             <div
               ref={scrollRef}
               className="scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px]"
+              style={{ overscrollBehavior: 'contain' }}
             >
-              {messagesLoading && (
-                <div className="flex justify-center py-8">
-                  <Loader2
-                    size={20}
-                    className="animate-spin text-[var(--ink-mute)]"
-                  />
-                </div>
-              )}
+              {messagesLoading && <MessageSkeleton />}
               <div
                 ref={msgObserverTarget}
                 className="h-4 w-full flex-shrink-0"
               />
 
-              {fetchingNextMsgs && (
-                <div className="flex justify-center py-2 flex-shrink-0">
-                  <Loader2
-                    size={16}
-                    className="animate-spin text-[var(--ink-mute)]"
-                  />
-                  <span className="text-xs text-[var(--ink-mute)] ml-1.5">
-                    Loading older messages...
-                  </span>
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {fetchingNextMsgs && (
+                  <motion.div
+                    key="older-msgs-loader"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center justify-center py-2 gap-1.5 flex-shrink-0"
+                  >
+                    <Spinner size={14} />
+                    <span className="text-xs text-[var(--ink-mute)]">Loading older messages…</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {messages.map((msg) => {
                 const isOutbound = msg.senderType !== "CUSTOMER";
@@ -901,8 +955,12 @@ export function InboxView() {
                   60 * 60 * 1000;
 
                 return (
-                  <div
+                  <motion.div
                     key={msg.id}
+                    layout
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
                     className={`flex group relative ${isOutbound ? "justify-end" : "justify-start"}`}
                   >
                     <div
@@ -1077,7 +1135,7 @@ export function InboxView() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
