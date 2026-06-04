@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/utils';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
   connectWA,
   disconnectWA,
@@ -10,7 +10,7 @@ import {
   getWAStatus,
   updateWAConfig,
 } from '../services/channelsService';
-import type { WAConfig, WASessionStatus, WASSEEvent } from '../types';
+import type { WAConfig, WASSEEvent, WASessionStatus } from '../types';
 
 export function useWAStatus() {
   return useQuery({
@@ -73,7 +73,7 @@ export function useWAEventStream(enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) return;
-    const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+    const base = "/api/v1";
     const es = new EventSource(`${base}/whatsapp/qr-stream`, { withCredentials: true });
     esRef.current = es;
 
@@ -92,7 +92,11 @@ export function useWAEventStream(enabled: boolean) {
       }
     };
 
-    es.onerror = () => es.close();
+    es.onerror = () => {
+      es.close();
+      setLiveStatus('DISCONNECTED');
+      setLiveError('Stream connection failed. Please try again.');
+    };
 
     return () => {
       es.close();
