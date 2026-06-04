@@ -2,17 +2,26 @@
 import { cn, getImageUrl } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/DropdownMenu";
+import {
   AlertTriangle,
   Bot,
   Check,
   CheckCheck,
   ChevronLeft,
   Download,
+  Edit2,
   FileText,
   Flame,
   Image,
   Loader2,
+  Megaphone,
   Mic,
+  MoreVertical,
   Paperclip,
   Pause,
   Phone,
@@ -24,27 +33,20 @@ import {
   User,
   Video,
   X,
-  MoreVertical,
-  Edit2,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/DropdownMenu";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import {
   filterConversations,
   useApproveDraft,
   useConversationDetail,
-  useInfiniteConversations,
-  useMessagesPaginated,
   useDeleteMessage,
   useEditMessage,
   useEscalate,
+  useInfiniteConversations,
+  useMessagesPaginated,
   useResolve,
   useSendHumanReply,
   useSendMedia,
@@ -440,8 +442,12 @@ export function InboxView() {
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null,
+  );
   const [mobPane, setMobPane] = useState<MobilePane>("list");
   const [showProfile, setShowProfile] = useState(true);
+  const [showBroadcast, setShowBroadcast] = useState(false);
   const [pendingFile, setPendingFile] = useState<{
     file: File;
     previewUrl: string;
@@ -522,7 +528,7 @@ export function InboxView() {
           fetchNextMsgs();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     if (msgObserverTarget.current) observer.observe(msgObserverTarget.current);
     return () => observer.disconnect();
@@ -535,9 +541,10 @@ export function InboxView() {
           fetchNextConvs();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
-    if (listObserverTarget.current) observer.observe(listObserverTarget.current);
+    if (listObserverTarget.current)
+      observer.observe(listObserverTarget.current);
     return () => observer.disconnect();
   }, [hasMoreConvs, fetchNextConvs, fetchingNextConvs]);
 
@@ -548,7 +555,8 @@ export function InboxView() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     } else {
       const newScrollHeight = scrollRef.current.scrollHeight;
-      scrollRef.current.scrollTop += newScrollHeight - previousScrollHeight.current;
+      scrollRef.current.scrollTop +=
+        newScrollHeight - previousScrollHeight.current;
     }
     previousScrollHeight.current = scrollRef.current.scrollHeight;
   }, [messages?.length]);
@@ -674,17 +682,26 @@ export function InboxView() {
         className={`card inbox-list w-[320px] flex-shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
       >
         <div className="px-3.5 pt-3 pb-2">
-          <div className="relative mb-2">
-            <Search
-              size={13}
-              className="absolute left-[11px] top-[11px] text-[var(--ink-mute)]"
-            />
-            <input
-              className="input pl-8"
-              placeholder="Search by name or phone…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex gap-2 mb-2">
+            <div className="relative flex-1">
+              <Search
+                size={13}
+                className="absolute left-[11px] top-[11px] text-[var(--ink-mute)]"
+              />
+              <input
+                className="input pl-8 w-full"
+                placeholder="Search by name or phone…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              className="btn btn-outline p-2 h-auto text-[var(--ink-soft)] hover:text-[var(--accent)]"
+              onClick={() => setShowBroadcast(true)}
+              title="Broadcast Announcement"
+            >
+              <Megaphone size={16} />
+            </button>
           </div>
           <div className="flex gap-1.5">
             {FILTERS.map((f) => (
@@ -730,7 +747,10 @@ export function InboxView() {
           ))}
           {fetchingNextConvs && (
             <div className="flex justify-center py-3 flex-shrink-0">
-              <Loader2 size={16} className="animate-spin text-[var(--ink-mute)]" />
+              <Loader2
+                size={16}
+                className="animate-spin text-[var(--ink-mute)]"
+              />
             </div>
           )}
           <div ref={listObserverTarget} className="h-4 w-full flex-shrink-0" />
@@ -850,7 +870,10 @@ export function InboxView() {
                   />
                 </div>
               )}
-              <div ref={msgObserverTarget} className="h-4 w-full flex-shrink-0" />
+              <div
+                ref={msgObserverTarget}
+                className="h-4 w-full flex-shrink-0"
+              />
 
               {fetchingNextMsgs && (
                 <div className="flex justify-center py-2 flex-shrink-0">
@@ -858,7 +881,9 @@ export function InboxView() {
                     size={16}
                     className="animate-spin text-[var(--ink-mute)]"
                   />
-                  <span className="text-xs text-[var(--ink-mute)] ml-1.5">Loading older messages...</span>
+                  <span className="text-xs text-[var(--ink-mute)] ml-1.5">
+                    Loading older messages...
+                  </span>
                 </div>
               )}
 
@@ -868,8 +893,12 @@ export function InboxView() {
                 const isAgent = msg.senderType === "AGENT";
                 const isDeleted = msg.isDeleted;
 
-                const isWithin15Mins = Date.now() - new Date(msg.createdAt).getTime() < 15 * 60 * 1000;
-                const isWithin60Mins = Date.now() - new Date(msg.createdAt).getTime() < 60 * 60 * 1000;
+                const isWithin15Mins =
+                  Date.now() - new Date(msg.createdAt).getTime() <
+                  15 * 60 * 1000;
+                const isWithin60Mins =
+                  Date.now() - new Date(msg.createdAt).getTime() <
+                  60 * 60 * 1000;
 
                 return (
                   <div
@@ -897,35 +926,51 @@ export function InboxView() {
                       <div className="flex items-center gap-2 w-full">
                         {/* Options trigger (shown on hover, unless message is deleted or draft) */}
                         {!isDeleted && !msg.isDraft && (
-                          <div className={cn(
-                            "opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center flex-shrink-0",
-                            isOutbound ? "order-first" : "order-last"
-                          )}>
+                          <div
+                            className={cn(
+                              "opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center flex-shrink-0",
+                              isOutbound ? "order-first" : "order-last",
+                            )}
+                          >
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button className="btn btn-ghost p-1 rounded-full text-[var(--ink-mute)] hover:bg-[var(--surface-3)]">
                                   <MoreVertical size={14} />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align={isOutbound ? "end" : "start"}>
+                              <DropdownMenuContent
+                                align={isOutbound ? "end" : "start"}
+                              >
                                 {isOutbound && isWithin15Mins && (
-                                  <DropdownMenuItem onClick={() => {
-                                    setEditingMessageId(msg.id);
-                                    setDraft(msg.content ?? "");
-                                  }}>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingMessageId(msg.id);
+                                      setDraft(msg.content ?? "");
+                                    }}
+                                  >
                                     <Edit2 size={13} className="mr-1.5" />
                                     Edit Message
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
-                                  onClick={() => deleteMut.mutate({ messageId: msg.id, everyone: false })}
+                                  onClick={() =>
+                                    deleteMut.mutate({
+                                      messageId: msg.id,
+                                      everyone: false,
+                                    })
+                                  }
                                 >
                                   <Trash2 size={13} className="mr-1.5" />
                                   Delete for me
                                 </DropdownMenuItem>
                                 {isOutbound && isWithin60Mins && (
                                   <DropdownMenuItem
-                                    onClick={() => deleteMut.mutate({ messageId: msg.id, everyone: true })}
+                                    onClick={() =>
+                                      deleteMut.mutate({
+                                        messageId: msg.id,
+                                        everyone: true,
+                                      })
+                                    }
                                     className="text-red-600 focus:text-red-600"
                                   >
                                     <Trash2 size={13} className="mr-1.5" />
@@ -947,7 +992,9 @@ export function InboxView() {
                             )}
                             style={{ fontStyle: "italic" }}
                           >
-                            {isOutbound ? "You deleted this message" : "This message was deleted"}
+                            {isOutbound
+                              ? "You deleted this message"
+                              : "This message was deleted"}
                           </div>
                         ) : msg.mediaType === "IMAGE" && msg.mediaUrl ? (
                           <div
@@ -972,7 +1019,9 @@ export function InboxView() {
                               <div
                                 className={cn(
                                   "px-2.5 py-1.5 text-[12.5px] leading-snug",
-                                  isOutbound ? "text-white" : "text-[var(--ink)]",
+                                  isOutbound
+                                    ? "text-white"
+                                    : "text-[var(--ink)]",
                                 )}
                               >
                                 {msg.content}
@@ -1023,7 +1072,9 @@ export function InboxView() {
                       <div className="flex items-center gap-1 px-1 mt-[3px] text-[10px] text-[var(--ink-mute)]">
                         {shortTime(msg.createdAt)}
                         {!isDeleted && msg.editedAt && <span>· Edited</span>}
-                        {isOutbound && !msg.isDraft && !isDeleted && <Check size={10} />}
+                        {isOutbound && !msg.isDraft && !isDeleted && (
+                          <Check size={10} />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1147,26 +1198,35 @@ export function InboxView() {
                         handleSend();
                       }
                     }}
-                    placeholder={editingMessageId ? "Edit your message… (Enter to update)" : "Type a reply… (Enter to send)"}
+                    placeholder={
+                      editingMessageId
+                        ? "Edit your message… (Enter to update)"
+                        : "Type a reply… (Enter to send)"
+                    }
                     className="flex-1 resize-none border-none bg-transparent outline-none p-2 min-h-[36px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)]"
                   />
                   <button
                     className="btn btn-grad py-2 px-[14px] flex-shrink-0"
                     onClick={handleSend}
-                    disabled={!draft.trim() || (editingMessageId ? editMut.isPending : sendReplyMut.isPending)}
+                    disabled={
+                      !draft.trim() ||
+                      (editingMessageId
+                        ? editMut.isPending
+                        : sendReplyMut.isPending)
+                    }
                   >
                     {editingMessageId ? (
                       editMut.isPending ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
-                        <span className="text-[12.5px] font-semibold">Update</span>
+                        <span className="text-[12.5px] font-semibold">
+                          Update
+                        </span>
                       )
+                    ) : sendReplyMut.isPending ? (
+                      <Loader2 size={13} className="animate-spin" />
                     ) : (
-                      sendReplyMut.isPending ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Send size={13} />
-                      )
+                      <Send size={13} />
                     )}
                   </button>
                 </div>
@@ -1321,6 +1381,11 @@ export function InboxView() {
           </div>
         </div>
       )}
+
+      <BroadcasterDialog
+        open={showBroadcast}
+        onClose={() => setShowBroadcast(false)}
+      />
     </div>
   );
 }
