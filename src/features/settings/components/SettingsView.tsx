@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   User, Bell, Link, Crown, Shield, Activity,
   Upload, Check, RefreshCw, Zap, Cloud, Lock, Sparkles,
-  Users, Building2, Loader2,
+  Users, Building2, Loader2, Bot, Store,
 } from 'lucide-react';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import { CRMSwitch } from '@/shared/ui/CRMSwitch';
@@ -13,6 +13,8 @@ import { useAppStore } from '@/lib/appStore';
 import { useMe, useUpdateMe } from '@/features/auth/hooks/useAuth';
 import { usePresignedUpload } from '@/features/inventory/hooks/useProducts';
 import { WorkspacesManagementView } from './WorkspacesManagementView';
+import { ChatbotSection } from './ChatbotSection';
+import { BusinessSection } from './BusinessSection';
 import { SECTION_NAV, CHANNELS_DATA, SYSTEM_STATS } from '../types';
 import type { SettingsSection } from '../types';
 import type { NotifSettings } from '../types';
@@ -20,6 +22,8 @@ import type { NotifSettings } from '../types';
 const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
   profile:    User,
   notif:      Bell,
+  chatbot:    Bot,
+  business:   Store,
   channels:   Link,
   tier:       Crown,
   access:     Shield,
@@ -459,6 +463,8 @@ export function SettingsView() {
       )}>
         {section === 'profile'    && <ProfileSection />}
         {section === 'notif'      && <NotifSection />}
+        {section === 'chatbot'    && <ChatbotSection />}
+        {section === 'business'   && <BusinessSection />}
         {section === 'channels'   && <ChannelsSection />}
         {section === 'tier'       && <TierSection />}
         {section === 'access'     && <AccessSection />}
