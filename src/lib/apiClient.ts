@@ -1,10 +1,5 @@
 import axios from 'axios';
 
-/**
- * Pre-configured axios instance for all API requests.
- * HttpOnly cookies are sent automatically — no manual token handling needed.
- * Set NEXT_PUBLIC_API_URL in .env to point at the real backend.
- */
 export const apiClient = axios.create({
   baseURL: '/api/v1',
   withCredentials: true,
