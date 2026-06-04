@@ -6,7 +6,7 @@ import axios from 'axios';
  * Set NEXT_PUBLIC_API_URL in .env to point at the real backend.
  */
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? '/api/v1',
+  baseURL: '/api/v1',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -66,7 +66,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         isRefreshing = false;
         processQueue(refreshError);
-        
+
         if (typeof window !== 'undefined') {
           window.location.href = '/auth/login';
         }
