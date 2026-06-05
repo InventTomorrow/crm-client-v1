@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/shared/ui/Dialog";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   Form,
   FormControl,
@@ -307,14 +308,11 @@ function BulkCard({
       {/* Image */}
       <div className="w-full h-[72px] rounded-[7px] overflow-hidden bg-[var(--surface-2)] flex items-center justify-center">
         {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ShimmerImage
             src={getImageUrl(item.imageUrl)}
             alt={item.name}
+            wrapperClassName="w-full h-full"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
           />
         ) : (
           <ImageIcon size={20} className="text-[var(--ink-mute)] opacity-40" />
