@@ -61,6 +61,10 @@ export const toggleAiMode = async (id: string): Promise<{ aiEnabled: boolean }> 
   return res.data.data;
 };
 
+export const sendTyping = async (id: string, isTyping: boolean): Promise<void> => {
+  await apiClient.post(`/conversations/${id}/typing`, { isTyping });
+};
+
 export const escalateConversation = async (id: string): Promise<void> => {
   await apiClient.patch(`/conversations/${id}/escalate`);
 };

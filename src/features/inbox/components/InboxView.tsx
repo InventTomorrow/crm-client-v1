@@ -1,13 +1,15 @@
 "use client";
 import { cn, getImageUrl } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
-import { Spinner, Skeleton } from "@/shared/ui/Motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
+import { Skeleton, Spinner } from "@/shared/ui/Motion";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   Bot,
@@ -35,19 +37,20 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import {
   filterConversations,
+  useAgentTyping,
   useApproveDraft,
   useConversationDetail,
   useDeleteMessage,
   useEditMessage,
   useEscalate,
   useInfiniteConversations,
+  useLeadTyping,
   useMessagesPaginated,
   useResolve,
   useSendHumanReply,
@@ -72,7 +75,10 @@ function ChatListSkeleton() {
   return (
     <div className="flex flex-col">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-[11px] px-[14px] py-[11px] border-b border-[var(--line-soft)]">
+        <div
+          key={i}
+          className="flex items-center gap-[11px] px-[14px] py-[11px] border-b border-[var(--line-soft)]"
+        >
           <Skeleton circle className="w-[38px] h-[38px] flex-shrink-0" />
           <div className="flex-1 min-w-0 flex flex-col gap-1.5">
             <div className="flex justify-between">
@@ -89,14 +95,19 @@ function ChatListSkeleton() {
 
 function MessageSkeleton() {
   const rows = [
-    { out: false, w: 'w-48' }, { out: true, w: 'w-36' },
-    { out: false, w: 'w-56' }, { out: true, w: 'w-44' },
-    { out: false, w: 'w-32' },
+    { out: false, w: "w-48" },
+    { out: true, w: "w-36" },
+    { out: false, w: "w-56" },
+    { out: true, w: "w-44" },
+    { out: false, w: "w-32" },
   ];
   return (
     <div className="flex flex-col gap-4 px-4 py-6">
       {rows.map(({ out, w }, i) => (
-        <div key={i} className={`flex ${out ? 'justify-end' : 'justify-start'}`}>
+        <div
+          key={i}
+          className={`flex ${out ? "justify-end" : "justify-start"}`}
+        >
           <div className="flex flex-col gap-1">
             <Skeleton className={`h-9 ${w} rounded-[14px]`} />
             <Skeleton className="h-[9px] w-10 ml-1" />
@@ -334,10 +345,11 @@ function MediaBubble({
   if (mediaType === "IMAGE") {
     return (
       <div className="rounded-[14px] overflow-hidden max-w-[220px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ShimmerImage
           src={getImageUrl(mediaUrl)}
           alt="attachment"
+          wrapperClassName="w-full"
+          loadingClassName="h-[180px] w-[200px]"
           className="w-full object-cover"
           style={{ maxHeight: 260 }}
         />
@@ -438,7 +450,7 @@ function ConversationRow({
       layout
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
       onClick={onClick}
       className={cn(
         "flex items-center gap-[11px] cursor-pointer px-[14px] py-[11px]",
@@ -538,6 +550,11 @@ export function InboxView() {
   const editMut = useEditMessage(selectedId ?? "");
   const deleteMut = useDeleteMessage(selectedId ?? "");
 
+  const typingConversationId = useLeadTyping();
+  const leadIsTyping = !!selectedId && typingConversationId === selectedId;
+  const { onType: notifyAgentTyping, stop: stopAgentTyping } =
+    useAgentTyping(selectedId);
+
   const searchLower = search.trim().toLowerCase();
   const filtered = filterConversations(conversations, filter).filter((c) => {
     if (!searchLower) return true;
@@ -602,7 +619,9 @@ export function InboxView() {
     const el = scrollRef.current;
     if (isFirstLoad.current || messagesData?.pages.length === 1) {
       // First load or new conversation — scroll to bottom immediately
-      requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
       isFirstLoad.current = false;
     } else {
       // Older page loaded at top — restore position without jump
@@ -617,10 +636,13 @@ export function InboxView() {
   }, [messages?.length, messagesData?.pages.length]);
 
   // Reset first-load flag when conversation changes
-  useEffect(() => { isFirstLoad.current = true; }, [selectedId]);
+  useEffect(() => {
+    isFirstLoad.current = true;
+  }, [selectedId]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedId) return;
+    stopAgentTyping();
     if (editingMessageId) {
       if (editMut.isPending) return;
       editMut.mutate({ messageId: editingMessageId, content: draft.trim() });
@@ -917,7 +939,7 @@ export function InboxView() {
             <div
               ref={scrollRef}
               className="scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px]"
-              style={{ overscrollBehavior: 'contain' }}
+              style={{ overscrollBehavior: "contain" }}
             >
               {messagesLoading && <MessageSkeleton />}
               <div
@@ -930,13 +952,15 @@ export function InboxView() {
                   <motion.div
                     key="older-msgs-loader"
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
+                    animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
                     className="flex items-center justify-center py-2 gap-1.5 flex-shrink-0"
                   >
                     <Spinner size={14} />
-                    <span className="text-xs text-[var(--ink-mute)]">Loading older messages…</span>
+                    <span className="text-xs text-[var(--ink-mute)]">
+                      Loading older messages…
+                    </span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -960,7 +984,7 @@ export function InboxView() {
                     layout
                     initial={{ opacity: 0, y: 8, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
                     className={`flex group relative ${isOutbound ? "justify-end" : "justify-start"}`}
                   >
                     <div
@@ -1065,10 +1089,11 @@ export function InboxView() {
                                 "ring-1 ring-dashed ring-[var(--accent)]",
                             )}
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <ShimmerImage
                               src={getImageUrl(msg.mediaUrl)}
                               alt="Product image"
+                              wrapperClassName="w-full"
+                              loadingClassName="h-[180px] w-[220px]"
                               className="w-full object-cover"
                               style={{ maxHeight: 240 }}
                             />
@@ -1138,6 +1163,28 @@ export function InboxView() {
                   </motion.div>
                 );
               })}
+
+              <AnimatePresence initial={false}>
+                {leadIsTyping && (
+                  <motion.div
+                    key="lead-typing"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.18 }}
+                    className="flex items-center gap-1.5 self-start rounded-[14px] bg-[var(--surface-2)] border border-[var(--line)] px-3 py-2.5"
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="h-1.5 w-1.5 rounded-full bg-[var(--ink-mute)]"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Input area */}
@@ -1249,7 +1296,11 @@ export function InboxView() {
                   <textarea
                     rows={1}
                     value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      if (e.target.value.trim()) notifyAgentTyping();
+                      else stopAgentTyping();
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -1401,7 +1452,7 @@ export function InboxView() {
             <div className="flex justify-between items-center mb-1 text-[11px] text-[var(--ink-mute)] uppercase tracking-[0.06em] font-semibold">
               <span>Messages</span>
               <span className="text-[var(--accent)] font-semibold text-[14px] font-[var(--font-head)]">
-                {detail?.messages.filter((m) => !m.isDraft).length ?? 0}
+                {detail?.messages.filter((m: any) => !m.isDraft).length ?? 0}
               </span>
             </div>
             {detail?.messages.some((m) => m.isDraft) && (

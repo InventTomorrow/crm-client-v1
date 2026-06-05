@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/shared/ui/Dialog";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   Form,
   FormControl,
@@ -412,11 +413,11 @@ function ProductGridCard({
     >
       <div className="relative aspect-square">
         {p.imageUrls && p.imageUrls.length > 0 ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ShimmerImage
             src={getImageUrl(p.imageUrls[0])}
             alt={p.name}
-            className="absolute inset-0 w-full h-full object-cover"
+            wrapperClassName="absolute inset-0"
+            className="w-full h-full object-cover"
           />
         ) : (
           <div className="placeholder-img absolute inset-0 rounded-none aspect-auto h-full flex items-center justify-center text-[var(--ink-mute)] opacity-50 bg-[var(--surface-2)]">
@@ -538,7 +539,7 @@ export function InventoryView() {
     return () => document.removeEventListener("mousedown", handler);
   }, [addMenuOpen]);
 
-  const filtered = products.filter((p) =>
+  const filtered = products.filter((p: Product) =>
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -770,7 +771,7 @@ export function InventoryView() {
 
           {!isLoading && inventoryView === "grid" && (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-              {filtered.map((p) => (
+              {filtered.map((p: Product) => (
                 <ProductGridCard
                   key={p.id}
                   p={p}
@@ -817,16 +818,16 @@ export function InventoryView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((p) => (
+                  {filtered.map((p: Product) => (
                     <tr key={p.id}>
                       <td>
                         <div className="flex items-center gap-3">
                           {p.imageUrls && p.imageUrls.length > 0 ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <ShimmerImage
                               src={getImageUrl(p.imageUrls[0])}
                               alt={p.name}
-                              className="w-9 h-9 rounded-lg object-cover bg-[var(--surface-2)] flex-shrink-0"
+                              wrapperClassName="w-9 h-9 rounded-lg bg-[var(--surface-2)] flex-shrink-0"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="placeholder-img w-9 h-9 rounded-lg flex items-center justify-center text-[var(--ink-mute)] opacity-40 bg-[var(--surface-2)] flex-shrink-0">
