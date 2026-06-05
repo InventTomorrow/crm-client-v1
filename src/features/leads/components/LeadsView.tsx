@@ -17,6 +17,7 @@ import { ExportLeadsDialog } from "./ExportLeadsDialog";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
+import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import KanbanView from "./views/KanbanView";
 import ListView from "./views/ListView";
 import TableView from "./views/TableView";
@@ -117,7 +118,8 @@ export function LeadsView() {
             {leads.length} leads · {hot} hot · {pkr(totalValue)} projected
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <WAStatusBadge />
           <button className="btn btn-outline" onClick={() => setExportOpen(true)}>
             <Download size={13} /> Export
           </button>
