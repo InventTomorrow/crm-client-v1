@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useUpdateWAConfig,
   useWAConfig,
@@ -70,6 +70,17 @@ export function ChannelsView() {
 
   const [streamActive, setStreamActive] = useState(false);
   const { qr, liveStatus, livePhone, liveError } = useWAEventStream(streamActive);
+
+  // DISCONNECTED is terminal — emitted only on final failure / logout / explicit
+  // disconnect (launch retries stay PENDING), so no further events follow. Drop
+  // streamActive to close the EventSource; flipping it false also lets the next
+  // handleConnect re-open a fresh stream for the retry. We keep the stream open
+  // while CONNECTED so an unexpected logout still reaches the UI live.
+  useEffect(() => {
+    if (liveStatus === 'DISCONNECTED') {
+      setStreamActive(false);
+    }
+  }, [liveStatus]);
 
   const status: WASessionStatus = liveStatus ?? statusData?.status ?? 'DISCONNECTED';
   const phoneNumber = livePhone ?? statusData?.phoneNumber;

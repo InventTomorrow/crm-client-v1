@@ -37,10 +37,13 @@ import {
   Video,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
+import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
+import { useWAStatus } from "../../channels/hooks/useWhatsApp";
 import {
   filterConversations,
   useAgentTyping,
@@ -543,6 +546,11 @@ export function InboxView() {
   const approveDraftMut = useApproveDraft(selectedId ?? "");
   const sendReplyMut = useSendHumanReply(selectedId ?? "");
   const sendMediaMut = useSendMedia(selectedId ?? "");
+
+  // Agents can only message a lead while the WhatsApp session is live — the
+  // server rejects sends otherwise, so we disable the composer to match.
+  const { data: waStatus } = useWAStatus();
+  const waConnected = waStatus?.status === "CONNECTED";
   const uploadMut = useUploadAttachment();
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
@@ -642,6 +650,10 @@ export function InboxView() {
 
   const handleSend = () => {
     if (!draft.trim() || !selectedId) return;
+    if (!waConnected) {
+      toast.error("WhatsApp is not connected. Reconnect in Channels to send.");
+      return;
+    }
     stopAgentTyping();
     if (editingMessageId) {
       if (editMut.isPending) return;
@@ -669,6 +681,10 @@ export function InboxView() {
 
   const handleSendFile = async () => {
     if (!pendingFile || !selectedId) return;
+    if (!waConnected) {
+      toast.error("WhatsApp is not connected. Reconnect in Channels to send.");
+      return;
+    }
     try {
       const { url } = await uploadMut.mutateAsync(pendingFile.file);
       await sendMediaMut.mutateAsync({
@@ -782,6 +798,7 @@ export function InboxView() {
             >
               <Megaphone size={16} />
             </button>
+            <WAStatusBadge showLabel={false} className="self-center" />
           </div>
           <div className="flex gap-1.5">
             {FILTERS.map((f) => (
@@ -1140,8 +1157,13 @@ export function InboxView() {
                       {msg.isDraft && (
                         <button
                           onClick={() => approveDraftMut.mutate(msg.id)}
-                          disabled={approveDraftMut.isPending}
-                          className="btn btn-grad mt-1.5 py-1 px-3 text-[11.5px] self-end"
+                          disabled={approveDraftMut.isPending || !waConnected}
+                          title={
+                            !waConnected
+                              ? "Connect WhatsApp to send"
+                              : undefined
+                          }
+                          className="btn btn-grad mt-1.5 py-1 px-3 text-[11.5px] self-end disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {approveDraftMut.isPending ? (
                             <Loader2 size={11} className="animate-spin" />
@@ -1179,7 +1201,11 @@ export function InboxView() {
                         key={i}
                         className="h-1.5 w-1.5 rounded-full bg-[var(--ink-mute)]"
                         animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                        }}
                       />
                     ))}
                   </motion.div>
@@ -1292,10 +1318,21 @@ export function InboxView() {
 
               {/* Text input + toolbar */}
               <div className="p-2.5">
+                {!waConnected && (
+                  <Link
+                    href="/channels"
+                    className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E] hover:opacity-90"
+                  >
+                    <AlertTriangle size={12} className="flex-shrink-0" />
+                    WhatsApp isn’t connected — reconnect in Channels to send
+                    messages.
+                  </Link>
+                )}
                 <div className="flex items-end gap-1 p-1 rounded-xl border border-[var(--line)] bg-[var(--surface-2)]">
                   <textarea
                     rows={1}
                     value={draft}
+                    disabled={!waConnected}
                     onChange={(e) => {
                       setDraft(e.target.value);
                       if (e.target.value.trim()) notifyAgentTyping();
@@ -1308,16 +1345,19 @@ export function InboxView() {
                       }
                     }}
                     placeholder={
-                      editingMessageId
-                        ? "Edit your message… (Enter to update)"
-                        : "Type a reply… (Enter to send)"
+                      !waConnected
+                        ? "Connect WhatsApp to send messages…"
+                        : editingMessageId
+                          ? "Edit your message… (Enter to update)"
+                          : "Type a reply… (Enter to send)"
                     }
-                    className="flex-1 resize-none border-none bg-transparent outline-none p-2 min-h-[36px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)]"
+                    className="flex-1 resize-none border-none bg-transparent outline-none p-2 min-h-[36px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)] disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <button
                     className="btn btn-grad py-2 px-[14px] flex-shrink-0"
                     onClick={handleSend}
                     disabled={
+                      !waConnected ||
                       !draft.trim() ||
                       (editingMessageId
                         ? editMut.isPending
@@ -1349,28 +1389,31 @@ export function InboxView() {
                     {/* Image */}
                     <button
                       title="Send image"
+                      disabled={!waConnected}
                       onClick={() => {
                         fileInputRef.current?.setAttribute("accept", "image/*");
                         fileInputRef.current?.click();
                       }}
-                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)]"
+                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Image size={15} />
                     </button>
                     {/* Video */}
                     <button
                       title="Send video"
+                      disabled={!waConnected}
                       onClick={() => {
                         fileInputRef.current?.setAttribute("accept", "video/*");
                         fileInputRef.current?.click();
                       }}
-                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)]"
+                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Video size={15} />
                     </button>
                     {/* Document */}
                     <button
                       title="Send document"
+                      disabled={!waConnected}
                       onClick={() => {
                         fileInputRef.current?.setAttribute(
                           "accept",
@@ -1378,7 +1421,7 @@ export function InboxView() {
                         );
                         fileInputRef.current?.click();
                       }}
-                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)]"
+                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Paperclip size={15} />
                     </button>
@@ -1386,9 +1429,9 @@ export function InboxView() {
                     <button
                       title="Record voice message"
                       onClick={startRecording}
-                      disabled={isRecording}
+                      disabled={isRecording || !waConnected}
                       className={cn(
-                        "btn btn-ghost p-1.5",
+                        "btn btn-ghost p-1.5 disabled:opacity-50 disabled:cursor-not-allowed",
                         isRecording
                           ? "text-[#EF4444]"
                           : "text-[var(--ink-mute)] hover:text-[var(--accent)]",
@@ -1399,7 +1442,6 @@ export function InboxView() {
                   </div>
                 </div>
 
-                {/* Hidden file input */}
                 <input
                   ref={fileInputRef}
                   type="file"
