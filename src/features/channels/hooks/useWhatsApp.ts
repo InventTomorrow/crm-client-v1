@@ -16,7 +16,12 @@ export function useWAStatus() {
   return useQuery({
     queryKey: ["wa-status"],
     queryFn: getWAStatus,
-    refetchInterval: 10_000,
+    // Poll fast while connecting/disconnected so the UI catches a backend status
+    // flip (e.g. `ready` firing late on a slow host) within seconds instead of
+    // 10s — and so it never depends solely on the flaky long-lived SSE. Back off
+    // once CONNECTED, where live changes arrive over the stream anyway.
+    refetchInterval: (query) =>
+      query.state.data?.status === "CONNECTED" ? 15_000 : 3_000,
   });
 }
 
@@ -79,13 +84,17 @@ export function useWAEventStream(enabled: boolean) {
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    if (!enabled) return;
-    // Fresh stream — clear any state left over from a previous session so a
-    // retry doesn't briefly show the old QR / error before new events arrive.
+    // Reset live state on every (re)entry. When the stream is OFF this leaves the
+    // polled useWAStatus query as the single source of truth — a stale CONNECTED
+    // can no longer shadow it after disconnect/teardown (which is why the UI used
+    // to need a manual refresh). When turning ON, it clears the previous session
+    // so a retry doesn't flash an old QR/status.
     setQr(null);
     setLiveStatus(null);
     setLivePhone(null);
     setLiveError(null);
+
+    if (!enabled) return;
     const base = "/api/v1";
     const es = new EventSource(`${base}/whatsapp/qr-stream`, {
       withCredentials: true,
@@ -108,9 +117,15 @@ export function useWAEventStream(enabled: boolean) {
     };
 
     es.onerror = () => {
-      es.close();
-      setLiveStatus("DISCONNECTED");
-      setLiveError("Stream connection failed. Please try again.");
+      // A transient SSE drop (idle-proxy timeout, brief network blip) is NOT a
+      // session disconnect. Forcing DISCONNECTED here used to mask a real
+      // CONNECTED: the long-lived QR stream gets cut while the user scans, the
+      // phone links, the server goes CONNECTED — but the stale DISCONNECTED
+      // shadowed the polled /status and the CRM stayed stuck.
+      //
+      // Don't close and don't override status: EventSource auto-reconnects, and
+      // the server re-sends the current status on each (re)open. The polled
+      // useWAStatus query remains the source of truth meanwhile.
     };
 
     return () => {
