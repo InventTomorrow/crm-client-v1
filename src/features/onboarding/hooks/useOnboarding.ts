@@ -27,9 +27,9 @@ async function saveChatbot(data: SaveChatbotData) {
   return res.data;
 }
 
-async function skipOnboarding() {
+async function skipStep() {
   const res = await apiClient.post('/onboarding/skip');
-  return res.data;
+  return res.data.data as { onboardingStep: 'CHATBOT' | 'DONE' };
 }
 
 export function useOnboardingStatus() {
@@ -57,8 +57,16 @@ export function useSaveChatbot() {
 export function useSkipOnboarding() {
   const router = useRouter();
   return useMutation({
-    mutationFn: skipOnboarding,
-    onSuccess: () => router.push('/inbox'),
+    mutationFn: skipStep,
+    // Skip advances one step only: from the channel step → chatbot config;
+    // from the last step → finish into the app.
+    onSuccess: (result) => {
+      if (result.onboardingStep === 'CHATBOT') {
+        router.push('/onboarding/chatbot');
+      } else {
+        router.push('/inbox');
+      }
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }
