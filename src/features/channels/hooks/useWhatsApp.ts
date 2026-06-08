@@ -1,35 +1,38 @@
-'use client';
-import { extractErrorMessage } from '@/lib/utils';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+"use client";
+import { extractErrorMessage } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   connectWA,
   disconnectWA,
   getWAConfig,
   getWAStatus,
   updateWAConfig,
-} from '../services/channelsService';
-import type { WAConfig, WASSEEvent, WASessionStatus } from '../types';
+} from "../services/channelsService";
+import type { WAConfig, WASSEEvent, WASessionStatus } from "../types";
 
 export function useWAStatus() {
   return useQuery({
-    queryKey: ['wa-status'],
+    queryKey: ["wa-status"],
     queryFn: getWAStatus,
     refetchInterval: 10_000,
   });
 }
 
 export function useWAConfig() {
-  return useQuery({ queryKey: ['wa-config'], queryFn: getWAConfig });
+  return useQuery({ queryKey: ["wa-config"], queryFn: getWAConfig });
 }
 
 export function useWAConnect() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: connectWA,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wa-status'] }),
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to start WhatsApp session')),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wa-status"] }),
+    onError: (error) =>
+      toast.error(
+        extractErrorMessage(error, "Failed to start WhatsApp session"),
+      ),
   });
 }
 
@@ -38,10 +41,11 @@ export function useWADisconnect() {
   return useMutation({
     mutationFn: disconnectWA,
     onSuccess: () => {
-      toast.success('WhatsApp disconnected');
-      queryClient.invalidateQueries({ queryKey: ['wa-status'] });
+      toast.success("WhatsApp disconnected");
+      queryClient.invalidateQueries({ queryKey: ["wa-status"] });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to disconnect')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to disconnect")),
   });
 }
 
@@ -50,16 +54,19 @@ export function useUpdateWAConfig() {
   return useMutation({
     mutationFn: (config: Partial<WAConfig>) => updateWAConfig(config),
     onMutate: async (next) => {
-      await queryClient.cancelQueries({ queryKey: ['wa-config'] });
-      const prev = queryClient.getQueryData<WAConfig>(['wa-config']);
-      queryClient.setQueryData<WAConfig>(['wa-config'], (old) => ({ ...old!, ...next }));
+      await queryClient.cancelQueries({ queryKey: ["wa-config"] });
+      const prev = queryClient.getQueryData<WAConfig>(["wa-config"]);
+      queryClient.setQueryData<WAConfig>(["wa-config"], (old) => ({
+        ...old!,
+        ...next,
+      }));
       return { prev };
     },
     onError: (error, _vars, ctx) => {
-      toast.error(extractErrorMessage(error, 'Failed to update settings'));
-      if (ctx?.prev) queryClient.setQueryData(['wa-config'], ctx.prev);
+      toast.error(extractErrorMessage(error, "Failed to update settings"));
+      if (ctx?.prev) queryClient.setQueryData(["wa-config"], ctx.prev);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['wa-config'] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["wa-config"] }),
   });
 }
 
@@ -73,29 +80,37 @@ export function useWAEventStream(enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) return;
+    // Fresh stream — clear any state left over from a previous session so a
+    // retry doesn't briefly show the old QR / error before new events arrive.
+    setQr(null);
+    setLiveStatus(null);
+    setLivePhone(null);
+    setLiveError(null);
     const base = "/api/v1";
-    const es = new EventSource(`${base}/whatsapp/qr-stream`, { withCredentials: true });
+    const es = new EventSource(`${base}/whatsapp/qr-stream`, {
+      withCredentials: true,
+    });
     esRef.current = es;
 
     es.onmessage = (e: MessageEvent) => {
       const event: WASSEEvent = JSON.parse(e.data as string);
-      if (event.type === 'qr') {
+      if (event.type === "qr") {
         setQr(event.qr);
-        setLiveStatus('PENDING');
+        setLiveStatus("PENDING");
         setLiveError(null);
-      } else if (event.type === 'status') {
+      } else if (event.type === "status") {
         setLiveStatus(event.status);
         setLivePhone(event.phoneNumber ?? null);
         setLiveError(event.error ?? null);
-        if (event.status === 'CONNECTED') setQr(null);
-        if (event.status === 'PENDING') setLiveError(null);
+        if (event.status === "CONNECTED") setQr(null);
+        if (event.status === "PENDING") setLiveError(null);
       }
     };
 
     es.onerror = () => {
       es.close();
-      setLiveStatus('DISCONNECTED');
-      setLiveError('Stream connection failed. Please try again.');
+      setLiveStatus("DISCONNECTED");
+      setLiveError("Stream connection failed. Please try again.");
     };
 
     return () => {
