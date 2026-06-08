@@ -2,9 +2,10 @@
 import { useAppStore } from "@/lib/appStore";
 import { pkr } from "@/lib/utils";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { Download, Grid2x2, Layers, List, Plus, Search } from "lucide-react";
+import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import {
   useAddLead,
   useDeleteLead,
@@ -17,7 +18,6 @@ import { ExportLeadsDialog } from "./ExportLeadsDialog";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
-import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import KanbanView from "./views/KanbanView";
 import ListView from "./views/ListView";
 import TableView from "./views/TableView";
@@ -44,8 +44,11 @@ export function LeadsView() {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
 
-  const hot = leads.filter((l) => l.status === "hot").length;
-  const totalValue = leads.reduce((a, l) => a + (l.value || 0), 0);
+  const hot = leads.filter((l: Lead) => l.status === "hot").length;
+  const totalValue = leads.reduce(
+    (a: number, l: Lead) => a + (l.value || 0),
+    0,
+  );
 
   const handleStatusChange = (id: string, status: LeadStatus) => {
     updateStatus.mutate({ id, status });
@@ -97,7 +100,7 @@ export function LeadsView() {
   const VIEW_BTNS: { id: LeadsView; label: string; Icon: React.ElementType }[] =
     [
       { id: "kanban", label: "Kanban", Icon: Layers },
-      { id: "list", label: "List", Icon: List },
+      // { id: "list", label: "List", Icon: List },
       { id: "table", label: "Table", Icon: Grid2x2 },
     ];
 
@@ -120,7 +123,10 @@ export function LeadsView() {
         </div>
         <div className="flex gap-2 items-center">
           <WAStatusBadge />
-          <button className="btn btn-outline" onClick={() => setExportOpen(true)}>
+          <button
+            className="btn btn-outline"
+            onClick={() => setExportOpen(true)}
+          >
             <Download size={13} /> Export
           </button>
           <button
