@@ -5,19 +5,20 @@ import {
   useWAEventStream,
 } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
-import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
-import Image from "next/image";
 import {
   Building2,
   CheckCircle2,
   Loader2,
+  QrCode,
   RefreshCw,
   WifiOff,
-  QrCode,
 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useOnboardingStatus, useSkipOnboarding } from "../hooks/useOnboarding";
 import { OnboardingShell } from "./OnboardingShell";
+
+// ── Channel cards definition ────────────────────────────────────────────────
 
 // ── QR panel (inline for onboarding, not a modal) ───────────────────────────
 
@@ -30,10 +31,14 @@ function QRFrame({ src }: { src: string }) {
             key={pos}
             className={cn(
               "absolute w-[20px] h-[20px] border-[#25D366]",
-              pos === "tl" && "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[5px]",
-              pos === "tr" && "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[5px]",
-              pos === "bl" && "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[5px]",
-              pos === "br" && "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[5px]",
+              pos === "tl" &&
+                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[5px]",
+              pos === "tr" &&
+                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[5px]",
+              pos === "bl" &&
+                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[5px]",
+              pos === "br" &&
+                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[5px]",
             )}
           />
         ))}
@@ -84,7 +89,9 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
         <div className="w-14 h-14 rounded-full bg-[rgba(37,211,102,0.12)] flex items-center justify-center">
           <CheckCircle2 size={28} className="text-[#25D366]" />
         </div>
-        <p className="text-[14px] font-semibold text-[var(--ink)]">WhatsApp connected!</p>
+        <p className="text-[14px] font-semibold text-[var(--ink)]">
+          WhatsApp connected!
+        </p>
         <p className="text-[12px] text-[var(--ink-mute)]">Redirecting…</p>
       </div>
     );
@@ -108,10 +115,13 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
     return (
       <div className="flex flex-col items-center gap-4">
         <p className="text-[12px] text-[var(--ink-mute)] text-center">
-          Open WhatsApp on your phone → <strong>Linked Devices</strong> → <strong>Link a Device</strong> → Scan QR
+          Open WhatsApp on your phone → <strong>Linked Devices</strong> →{" "}
+          <strong>Link a Device</strong> → Scan QR
         </p>
         <QRFrame src={qr} />
-        <p className="text-[11px] text-[var(--ink-mute)]">QR expires in ~60 seconds</p>
+        <p className="text-[11px] text-[var(--ink-mute)]">
+          QR expires in ~60 seconds
+        </p>
       </div>
     );
   }
@@ -169,7 +179,8 @@ export function ChannelView() {
         {/* Workspace name */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-[var(--ink-soft)] flex items-center gap-1.5">
-            <Building2 size={13} className="text-[var(--accent)]" /> Workspace name
+            <Building2 size={13} className="text-[var(--accent)]" /> Workspace
+            name
           </label>
           <input
             className="input text-[13px]"
@@ -199,7 +210,9 @@ export function ChannelView() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[13.5px] font-medium text-[var(--ink)]">WhatsApp</div>
+              <div className="text-[13.5px] font-medium text-[var(--ink)]">
+                WhatsApp
+              </div>
               <p className="text-[12px] text-[var(--ink-mute)] mt-0.5">
                 Connect via QR code scan — no API keys needed
               </p>
