@@ -30,6 +30,11 @@ export const fetchLeads = async (): Promise<Lead[]> => {
   return response.data.data.data.map(mapBackendToFrontend);
 };
 
+export const fetchLeadsCount = async (): Promise<number> => {
+  const response = await apiClient.get('/leads?limit=1');
+  return response.data.data.meta?.total ?? 0;
+};
+
 // Frontend channel codes → backend ChannelType enum
 const CHANNEL_TO_BACKEND: Record<string, 'WHATSAPP' | 'INSTAGRAM' | 'MESSENGER'> = {
   wa: 'WHATSAPP',

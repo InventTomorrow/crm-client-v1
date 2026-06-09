@@ -1,5 +1,4 @@
 'use client';
-import { useEffect } from 'react';
 import { useAppStore } from '@/lib/appStore';
 import { AppSidebar } from '@/shared/layout/AppSidebar';
 import { AppTopBar } from '@/shared/layout/AppTopBar';
@@ -8,19 +7,9 @@ import { EscalateDialog } from '@/shared/layout/EscalateDialog';
 import { HotToast } from '@/shared/layout/HotToast';
 import { WorkspaceSwitchingOverlay } from '@/shared/layout/WorkspaceSwitchingOverlay';
 import { Toaster } from '@/shared/ui/Sonner';
-import { INITIAL_LEADS } from '@/lib/mockData';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { mobileMenuOpen, setMobileMenuOpen, escalatingLead, hotLead, setEscalatingLead, setHotLead } = useAppStore();
-
-  // Demo: ping hot lead on mount
-  useEffect(() => {
-    const t = setTimeout(() => {
-      const ali = INITIAL_LEADS.find(l => l.id === 'L1');
-      if (ali) setHotLead(ali);
-    }, 2200);
-    return () => clearTimeout(t);
-  }, [setHotLead]);
 
   return (
     <div className="app-shell">

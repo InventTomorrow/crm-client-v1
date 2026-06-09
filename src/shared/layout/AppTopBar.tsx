@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, Search, Bell } from 'lucide-react';
 import { useAppStore } from '@/lib/appStore';
+import { useNotificationStream, useUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { NotificationsPanel } from './NotificationsPanel';
 import { SearchPalette } from './SearchPalette';
 
@@ -12,6 +13,7 @@ const TITLES: Record<string, string> = {
   '/inventory': 'Inventory',
   '/analytics': 'Analytics',
   '/admin':     'Team & Access',
+  '/notifications': 'Notifications',
   '/settings':  'Settings',
 };
 
@@ -21,11 +23,13 @@ interface AppTopBarProps {
 
 export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const pathname = usePathname();
-  const { notifications, workspaces, currentWorkspaceId } = useAppStore();
+  const { workspaces, currentWorkspaceId } = useAppStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const unread = notifications.filter(n => !n.read).length;
+  // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
+  useNotificationStream();
+  const { data: unread = 0 } = useUnreadCount();
   const ws = workspaces.find(w => w.id === currentWorkspaceId) || workspaces[0];
   const title = Object.entries(TITLES).find(([k]) => pathname.startsWith(k))?.[1] ?? 'SaleFlow';
 

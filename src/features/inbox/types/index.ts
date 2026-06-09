@@ -23,6 +23,7 @@ export interface ConversationListItem {
   escalationStatus: EscalationStatus;
   aiEnabled: boolean;
   lastMessageAt: string;
+  unreadCount: number;
   createdAt: string;
   lead: {
     id: string;
