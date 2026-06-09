@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, Users, Package, TrendingUp, Shield, Settings } from 'lucide-react';
+import { Inbox, Users, Package, TrendingUp, Shield, Settings, ShoppingCart } from 'lucide-react';
 import { useInboxUnreadCount } from '@/features/inbox/hooks/useConversations';
 import { useLeadsCount } from '@/features/leads/hooks/useLeads';
 
 const DOCK_ITEMS = [
   { href: '/inbox',     label: 'Inbox', Icon: Inbox },
   { href: '/leads',     label: 'Leads', Icon: Users },
+  { href: '/orders',    label: 'Orders', Icon: ShoppingCart },
   { href: '/inventory', label: 'Stock', Icon: Package },
   { href: '/analytics', label: 'Stats', Icon: TrendingUp },
   { href: '/admin',     label: 'Team',  Icon: Shield },

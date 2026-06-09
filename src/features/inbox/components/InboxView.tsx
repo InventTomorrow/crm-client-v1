@@ -31,6 +31,7 @@ import {
   Play,
   Search,
   Send,
+  ShoppingCart,
   Sparkles,
   Trash2,
   User,
@@ -42,6 +43,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
+import { OrderForm } from "../../orders/components/OrderForm";
+import { useCreateOrder } from "../../orders/hooks/useOrders";
 import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
 import {
@@ -523,6 +526,8 @@ export function InboxView() {
   const [mobPane, setMobPane] = useState<MobilePane>("list");
   const [showProfile, setShowProfile] = useState(true);
   const [showBroadcast, setShowBroadcast] = useState(false);
+  const [orderFormOpen, setOrderFormOpen] = useState(false);
+  const createOrder = useCreateOrder();
   const [pendingFile, setPendingFile] = useState<{
     file: File;
     previewUrl: string;
@@ -918,6 +923,15 @@ export function InboxView() {
 
               {/* Action buttons */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
+                {/* Create an order for this conversation's customer */}
+                <button
+                  onClick={() => setOrderFormOpen(true)}
+                  title="Create an order for this customer"
+                  className="btn btn-outline py-[5px] px-[10px] text-[11.5px] gap-1.5"
+                >
+                  <ShoppingCart size={12} />
+                  <span className="hide-mobile">Order</span>
+                </button>
                 {/* Per-chat AI toggle — when off, this chat is handled manually */}
                 <button
                   onClick={() => selectedId && aiModeMut.mutate()}
@@ -1559,6 +1573,19 @@ export function InboxView() {
         open={showBroadcast}
         onClose={() => setShowBroadcast(false)}
       />
+
+      {activeConv && (
+        <OrderForm
+          open={orderFormOpen}
+          onClose={() => setOrderFormOpen(false)}
+          presetLeadId={activeConv.lead.id}
+          presetConversationId={activeConv.id}
+          isSubmitting={createOrder.isPending}
+          onSubmit={(values) =>
+            createOrder.mutate(values, { onSuccess: () => setOrderFormOpen(false) })
+          }
+        />
+      )}
     </div>
   );
 }
