@@ -10,6 +10,7 @@ import { SearchPalette } from './SearchPalette';
 const TITLES: Record<string, string> = {
   '/inbox':     'Unified Inbox',
   '/leads':     'Leads',
+  '/orders':    'Orders',
   '/inventory': 'Inventory',
   '/analytics': 'Analytics',
   '/admin':     'Team & Access',

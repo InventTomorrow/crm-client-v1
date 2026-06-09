@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, ChevronRight, Search, Sun, Moon, ChevronDown, Wifi } from 'lucide-react';
+import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, ChevronRight, Search, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/appStore';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
@@ -15,6 +15,7 @@ import { useLeadsCount } from '@/features/leads/hooks/useLeads';
 const NAV_ITEMS = [
   { href: '/inbox',     label: 'Inbox',         Icon: Inbox },
   { href: '/leads',     label: 'Leads',         Icon: Users },
+  { href: '/orders',    label: 'Orders',        Icon: ShoppingCart },
   { href: '/inventory', label: 'Inventory',     Icon: Package },
   { href: '/channels',  label: 'Channels',      Icon: Wifi },
   { href: '/analytics', label: 'Analytics',     Icon: TrendingUp },
