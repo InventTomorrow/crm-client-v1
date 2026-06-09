@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { useMemo } from "react";
 import { useFieldArray, useForm, type Resolver } from "react-hook-form";
-import { CURRENCIES, formatMoney } from "../lib/format";
+import { formatMoney } from "../lib/format";
 import type { Order } from "../types";
 import { orderFormSchema, type OrderFormValues } from "../validations.order";
 import { SearchableSelect, type ComboOption } from "./SearchableSelect";
@@ -61,16 +61,6 @@ export function OrderForm({
         data: p,
       })),
     [products],
-  );
-
-  const currencyOptions: ComboOption<{ code: string; name: string }>[] = useMemo(
-    () =>
-      CURRENCIES.map((c) => ({
-        value: c.code,
-        search: `${c.code} ${c.name}`,
-        data: c,
-      })),
-    [],
   );
 
   const defaults: OrderFormValues = useMemo(
@@ -279,38 +269,6 @@ export function OrderForm({
             )}
           </div>
 
-          {/* Currency + discount */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">Currency</label>
-              <div className="mt-1">
-                <SearchableSelect
-                  options={currencyOptions}
-                  value={watch("currency")}
-                  placeholder="Currency"
-                  onChange={(code) => setValue("currency", code, { shouldValidate: true })}
-                  renderRow={(c) => (
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-[13px] text-[var(--ink)]">{c.code}</span>
-                      <span className="text-[11.5px] text-[var(--ink-mute)] truncate">{c.name}</span>
-                    </div>
-                  )}
-                  renderSelected={(c) => <span className="text-[13px]">{c.code}</span>}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">Discount</label>
-              <input
-                className="input mt-1"
-                type="number"
-                min={0}
-                step="0.01"
-                {...register("discount")}
-              />
-            </div>
-          </div>
-
           {/* Notes */}
           <div>
             <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">Notes</label>
@@ -327,9 +285,18 @@ export function OrderForm({
               <span>Subtotal</span>
               <span>{formatMoney(subtotal, currency)}</span>
             </div>
-            <div className="flex justify-between text-[var(--ink-soft)] mt-1">
+            <div className="flex justify-between items-center text-[var(--ink-soft)] mt-1.5">
               <span>Discount</span>
-              <span>− {formatMoney(discount, currency)}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-[var(--ink-mute)]">−</span>
+                <input
+                  className="input w-[120px] py-1 text-right text-[13px]"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  {...register("discount")}
+                />
+              </div>
             </div>
             <div className="flex justify-between font-semibold text-[var(--ink)] mt-2 pt-2 border-t border-[var(--line)]">
               <span>Total</span>
