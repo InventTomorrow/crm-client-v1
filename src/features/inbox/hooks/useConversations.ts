@@ -1,6 +1,6 @@
 'use client';
 import { extractErrorMessage } from '@/lib/utils';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -55,6 +55,9 @@ export function useInfiniteConversations() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
     refetchInterval: 5_000,
+    // Keep stale data visible during background refetches so the list never
+    // flashes empty while a fetch is in-flight (e.g. transient disconnect).
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -280,6 +283,43 @@ const AGENT_TYPING_IDLE_MS = 2_500;
  * keystroke and `stop()` when sending or leaving — sends start once, then a
  * single stop after the agent pauses, so we never spam the endpoint.
  */
+export function useConversationStream() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const es = new EventSource('/api/v1/conversations/stream', {
+      withCredentials: true,
+    });
+
+    es.onmessage = (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data as string) as {
+          type: string;
+          conversationId?: string;
+        };
+        if (data.type === 'new-message') {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+          queryClient.invalidateQueries({ queryKey: ['conversation', data.conversationId] });
+          queryClient.invalidateQueries({ queryKey: ['conversation', data.conversationId, 'messages'] });
+          queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
+        }
+        if (data.type === 'new-conversation') {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+          queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
+        }
+      } catch {
+        /* malformed payload — ignore */
+      }
+    };
+
+    es.onerror = () => es.close();
+
+    return () => es.close();
+  }, [queryClient]);
+}
+
 export function useAgentTyping(conversationId: string | null) {
   const isTypingRef = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
