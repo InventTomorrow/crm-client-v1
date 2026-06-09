@@ -1,9 +1,9 @@
 "use client";
-import { getImageUrl } from "@/lib/utils";
-import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { useProducts } from "@/features/inventory/hooks/useProducts";
 import { useLeads } from "@/features/leads/hooks/useLeads";
 import { Lead } from "@/features/leads/types";
+import { getImageUrl } from "@/lib/utils";
+import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { useMemo } from "react";
@@ -101,7 +101,9 @@ export function OrderForm({
   } = useForm<OrderFormValues>({
     // Cast: zod `coerce`/`default` make the resolver's input type diverge from
     // the output (OrderFormValues); the resolver still produces this shape.
-    resolver: zodResolver(orderFormSchema) as unknown as Resolver<OrderFormValues>,
+    resolver: zodResolver(
+      orderFormSchema,
+    ) as unknown as Resolver<OrderFormValues>,
     defaultValues: defaults,
   });
 
@@ -146,7 +148,9 @@ export function OrderForm({
                 value={watch("leadId")}
                 disabled={!!presetLeadId || !!initial}
                 placeholder="Select a lead…"
-                onChange={(id) => setValue("leadId", id, { shouldValidate: true })}
+                onChange={(id) =>
+                  setValue("leadId", id, { shouldValidate: true })
+                }
                 renderRow={(l) => (
                   <>
                     <CRMAvatar name={l.name ?? l.phone ?? "?"} size={28} />
@@ -165,24 +169,32 @@ export function OrderForm({
                 renderSelected={(l) => (
                   <span className="flex items-center gap-2 min-w-0">
                     <CRMAvatar name={l.name ?? l.phone ?? "?"} size={20} />
-                    <span className="truncate text-[13px]">{l.name ?? l.phone}</span>
+                    <span className="truncate text-[13px]">
+                      {l.name ?? l.phone}
+                    </span>
                   </span>
                 )}
               />
             </div>
             {errors.leadId && (
-              <p className="text-[11.5px] text-[#DC2626] mt-1">{errors.leadId.message}</p>
+              <p className="text-[11.5px] text-[#DC2626] mt-1">
+                {errors.leadId.message}
+              </p>
             )}
           </div>
 
           {/* Line items */}
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">Items</label>
+              <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">
+                Items
+              </label>
               <button
                 type="button"
                 className="btn btn-ghost text-[12px] py-1 px-2"
-                onClick={() => append({ name: "", sku: "", quantity: 1, unitPrice: 0 })}
+                onClick={() =>
+                  append({ name: "", sku: "", quantity: 1, unitPrice: 0 })
+                }
               >
                 <Plus size={13} /> Add item
               </button>
@@ -198,7 +210,9 @@ export function OrderForm({
                       placeholder="Select product…"
                       onChange={(pid, p) => {
                         setValue(`items.${i}.productId`, pid);
-                        setValue(`items.${i}.name`, p.name, { shouldValidate: true });
+                        setValue(`items.${i}.name`, p.name, {
+                          shouldValidate: true,
+                        });
                         setValue(`items.${i}.sku`, p.sku ?? "");
                         setValue(`items.${i}.unitPrice`, p.price ?? 0);
                       }}
@@ -215,7 +229,9 @@ export function OrderForm({
                             <span className="w-8 h-8 rounded-md bg-[var(--surface-2)] flex-shrink-0" />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="text-[13px] text-[var(--ink)] truncate">{p.name}</div>
+                            <div className="text-[13px] text-[var(--ink)] truncate">
+                              {p.name}
+                            </div>
                             <div className="text-[11.5px] text-[var(--ink-mute)]">
                               {formatMoney(p.price ?? 0, currency)}
                               {p.sku ? ` · ${p.sku}` : ""}
@@ -265,13 +281,17 @@ export function OrderForm({
               ))}
             </div>
             {errors.items?.message && (
-              <p className="text-[11.5px] text-[#DC2626] mt-1">{errors.items.message}</p>
+              <p className="text-[11.5px] text-[#DC2626] mt-1">
+                {errors.items.message}
+              </p>
             )}
           </div>
 
           {/* Notes */}
           <div>
-            <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">Notes</label>
+            <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">
+              Notes
+            </label>
             <textarea
               className="input mt-1 min-h-[60px]"
               placeholder="Optional notes…"
@@ -306,7 +326,11 @@ export function OrderForm({
         </form>
 
         <div className="p-[18px] border-t border-[var(--line)] flex justify-end gap-2">
-          <button className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
+          <button
+            className="btn btn-outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </button>
           <button

@@ -1,6 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { Loader2, Pencil, Trash2, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Loader2, Package, Pencil, Trash2, X } from 'lucide-react';
+import { getImageUrl } from '@/lib/utils';
+import { useProducts } from '@/features/inventory/hooks/useProducts';
 import { useDeleteOrder, useOrder, useUpdateOrderStatus } from '../hooks/useOrders';
 import type { Order } from '../types';
 import { formatMoney } from '../lib/format';
