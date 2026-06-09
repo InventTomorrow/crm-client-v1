@@ -19,6 +19,15 @@ export const getConversation = async (id: string): Promise<ConversationDetail> =
   return res.data.data;
 };
 
+export const getInboxUnreadCount = async (): Promise<number> => {
+  const res = await apiClient.get('/conversations/unread-count');
+  return res.data.data.count;
+};
+
+export const markConversationRead = async (id: string): Promise<void> => {
+  await apiClient.patch(`/conversations/${id}/read`);
+};
+
 export const approveDraft = async (conversationId: string, messageId: string): Promise<ConversationMessage> => {
   const res = await apiClient.post(`/conversations/${conversationId}/drafts/approve`, { messageId });
   return res.data.data;

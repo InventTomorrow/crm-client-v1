@@ -54,6 +54,7 @@ import {
   useEscalate,
   useInfiniteConversations,
   useLeadTyping,
+  useMarkConversationRead,
   useMessagesPaginated,
   useResolve,
   useSendHumanReply,
@@ -448,6 +449,7 @@ function ConversationRow({
 }) {
   const lastMsg = conv.messages[0];
   const displayName = conv.lead.name ?? conv.lead.phone ?? "Unknown";
+  const unread = conv.unreadCount > 0;
   return (
     <motion.div
       layout
@@ -481,7 +483,12 @@ function ConversationRow({
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[12.5px] text-[var(--ink-soft)] truncate flex-1">
+          <span
+            className={cn(
+              "text-[12.5px] truncate flex-1",
+              unread ? "text-[var(--ink)] font-medium" : "text-[var(--ink-soft)]",
+            )}
+          >
             {lastMsg?.senderType === "AI" && (
               <span className="text-[var(--accent)]">AI: </span>
             )}
@@ -490,7 +497,13 @@ function ConversationRow({
             )}
             {lastMsg?.content ?? "—"}
           </span>
-          <EscalationBadge status={conv.escalationStatus} />
+          {unread ? (
+            <span className="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10.5px] font-semibold inline-flex items-center justify-center">
+              {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+            </span>
+          ) : (
+            <EscalationBadge status={conv.escalationStatus} />
+          )}
         </div>
       </div>
     </motion.div>
@@ -571,6 +584,15 @@ export function InboxView() {
     return name.includes(searchLower) || phone.includes(searchLower);
   });
   const activeConv = conversations.find((c) => c.id === selectedId);
+
+  // Clear the unread badge when an unread conversation is opened.
+  const markReadMut = useMarkConversationRead();
+  useEffect(() => {
+    if (selectedId && activeConv && activeConv.unreadCount > 0) {
+      markReadMut.mutate(selectedId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, activeConv?.unreadCount]);
 
   // Deep-link from the Leads page: /inbox?lead=<leadId> selects that lead's chat.
   useEffect(() => {

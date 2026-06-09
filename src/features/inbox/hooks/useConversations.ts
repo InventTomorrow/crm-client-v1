@@ -10,7 +10,9 @@ import {
   escalateConversation,
   getConversation,
   getConversations,
+  getInboxUnreadCount,
   getMessages,
+  markConversationRead,
   resolveConversation,
   sendHumanMessage,
   sendMediaMessage,
@@ -25,6 +27,24 @@ export function useConversations() {
     queryKey: ['conversations'],
     queryFn: () => getConversations({}),
     refetchInterval: 5_000,
+  });
+}
+
+export function useInboxUnreadCount() {
+  return useQuery({
+    queryKey: ['conversations', 'unread-count'],
+    queryFn: getInboxUnreadCount,
+    refetchInterval: 10_000,
+  });
+}
+
+export function useMarkConversationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => markConversationRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
   });
 }
 

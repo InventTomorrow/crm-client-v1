@@ -6,6 +6,7 @@ import type { LeadsFilter } from '../types';
 import { extractErrorMessage } from '@/lib/utils';
 import {
   fetchLeads,
+  fetchLeadsCount,
   createLead,
   updateLead,
   updateLeadStatus,
@@ -18,6 +19,10 @@ import {
 
 export function useLeads() {
   return useQuery({ queryKey: ['leads'], queryFn: fetchLeads });
+}
+
+export function useLeadsCount() {
+  return useQuery({ queryKey: ['leads', 'count'], queryFn: fetchLeadsCount, refetchInterval: 30_000 });
 }
 
 export function useAddLead() {

@@ -9,10 +9,12 @@ import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import { ProfileMenu } from './ProfileMenu';
 import { useMe } from '@/features/auth/hooks/useAuth';
+import { useInboxUnreadCount } from '@/features/inbox/hooks/useConversations';
+import { useLeadsCount } from '@/features/leads/hooks/useLeads';
 
 const NAV_ITEMS = [
-  { href: '/inbox',     label: 'Inbox',         Icon: Inbox,     badge: 7 },
-  { href: '/leads',     label: 'Leads',         Icon: Users,     badge: 3 },
+  { href: '/inbox',     label: 'Inbox',         Icon: Inbox },
+  { href: '/leads',     label: 'Leads',         Icon: Users },
   { href: '/inventory', label: 'Inventory',     Icon: Package },
   { href: '/channels',  label: 'Channels',      Icon: Wifi },
   { href: '/analytics', label: 'Analytics',     Icon: TrendingUp },
@@ -29,6 +31,10 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar, theme, toggleTheme } = useAppStore();
   const { user } = useMe();
+  const { data: inboxUnread } = useInboxUnreadCount();
+  const { data: leadsCount } = useLeadsCount();
+  const badgeFor = (href: string): number | undefined =>
+    href === '/inbox' ? inboxUnread || undefined : href === '/leads' ? leadsCount || undefined : undefined;
   const [profileOpen, setProfileOpen] = useState(false);
   const collapsed = sidebarCollapsed;
 
@@ -96,6 +102,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
           )}
           {NAV_ITEMS.map(item => {
             const active = pathname.startsWith(item.href);
+            const badge = badgeFor(item.href);
             return (
               <Link
                 key={item.href}
@@ -105,9 +112,9 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               >
                 <item.Icon size={17} className={cn('nav-ic flex-shrink-0', active ? 'text-[var(--accent)]' : 'text-[var(--ink-mute)]')} />
                 {!collapsed && <span className="flex-1">{item.label}</span>}
-                {!collapsed && item.badge && (
+                {!collapsed && !!badge && (
                   <span className={cn('badge font-medium py-[1px] px-[7px] min-w-5 justify-center', active ? 'bg-[var(--accent)] text-white border-none' : 'bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]')}>
-                    {item.badge}
+                    {badge > 99 ? '99+' : badge}
                   </span>
                 )}
               </Link>
