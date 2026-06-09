@@ -52,6 +52,7 @@ import {
   useAgentTyping,
   useApproveDraft,
   useConversationDetail,
+  useConversationStream,
   useDeleteMessage,
   useEditMessage,
   useEscalate,
@@ -541,6 +542,7 @@ export function InboxView() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingCancelledRef = useRef(false); // true → discard on stop, don't send
+  const orderTriggeredMsgIds = useRef<Set<string>>(new Set());
 
   const {
     data: conversationsData,
@@ -576,6 +578,7 @@ export function InboxView() {
   const editMut = useEditMessage(selectedId ?? "");
   const deleteMut = useDeleteMessage(selectedId ?? "");
 
+  useConversationStream();
   const typingConversationId = useLeadTyping();
   const leadIsTyping = !!selectedId && typingConversationId === selectedId;
   const { onType: notifyAgentTyping, stop: stopAgentTyping } =
@@ -588,7 +591,11 @@ export function InboxView() {
     const phone = c.lead.phone?.toLowerCase() ?? "";
     return name.includes(searchLower) || phone.includes(searchLower);
   });
-  const activeConv = conversations.find((c) => c.id === selectedId);
+  // Fall back to `detail` so the right panel stays usable when the list is
+  // momentarily empty (e.g. during a transient WA disconnect + refetch cycle).
+  const activeConv =
+    (conversations.find((c) => c.id === selectedId) ??
+      detail) as ConversationListItem | undefined;
 
   // Clear the unread badge when an unread conversation is opened.
   const markReadMut = useMarkConversationRead();
@@ -673,7 +680,24 @@ export function InboxView() {
   // Reset first-load flag when conversation changes
   useEffect(() => {
     isFirstLoad.current = true;
+    orderTriggeredMsgIds.current.clear();
   }, [selectedId]);
+
+  // Auto-open the Order form when the customer expresses order intent.
+  const ORDER_INTENT_RE =
+    /\b(order|buy|purchase|i want this|i('ll| will) take|want to (order|buy|get|purchase)|how.*order|can i (order|buy)|place.*order)\b/i;
+  useEffect(() => {
+    if (!selectedId || orderFormOpen) return;
+    const last = [...messages].reverse().find(
+      (m) => m.senderType === "CUSTOMER" && !m.isDraft,
+    );
+    if (!last || orderTriggeredMsgIds.current.has(last.id)) return;
+    if (ORDER_INTENT_RE.test(last.content ?? "")) {
+      orderTriggeredMsgIds.current.add(last.id);
+      setOrderFormOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, selectedId]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedId) return;
@@ -852,10 +876,19 @@ export function InboxView() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-col items-center py-10 text-[var(--ink-mute)]"
+                className="flex flex-col items-center py-10 px-4 text-center text-[var(--ink-mute)]"
               >
                 <Bot size={28} className="mb-2 opacity-40" />
-                <p className="text-[12.5px]">No conversations yet</p>
+                {!waConnected ? (
+                  <>
+                    <p className="text-[12.5px] font-medium">WhatsApp disconnected</p>
+                    <p className="text-[11px] mt-0.5 opacity-70">
+                      Conversations will reappear once reconnected.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-[12.5px]">No conversations yet</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1169,6 +1202,51 @@ export function InboxView() {
                               </div>
                             )}
                           </div>
+                        ) : msg.mediaType === "AUDIO" && msg.mediaUrl ? (
+                          <div
+                            className={cn(
+                              "rounded-[18px] overflow-hidden",
+                              isOutbound
+                                ? "bg-[var(--accent)]"
+                                : "bg-[var(--surface-2)] border border-[var(--line)]",
+                            )}
+                          >
+                            <AudioBubble
+                              url={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
+                              outbound={isOutbound}
+                            />
+                          </div>
+                        ) : msg.mediaType === "VIDEO" && msg.mediaUrl ? (
+                          <div className="rounded-[14px] overflow-hidden max-w-[260px] bg-black">
+                            <video
+                              src={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
+                              controls
+                              className="w-full"
+                              style={{ maxHeight: 200 }}
+                            />
+                            {msg.content && (
+                              <p className="px-2.5 py-1.5 text-[12.5px] text-white leading-snug">
+                                {msg.content}
+                              </p>
+                            )}
+                          </div>
+                        ) : msg.mediaType === "DOCUMENT" && msg.mediaUrl ? (
+                          <a
+                            href={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              "bubble flex items-center gap-2.5",
+                              !isOutbound && "received",
+                              isOutbound && "sent",
+                            )}
+                          >
+                            <FileText size={18} className="flex-shrink-0" />
+                            <span className="text-[13px] underline underline-offset-2 truncate max-w-[160px]">
+                              {msg.content || "Document"}
+                            </span>
+                            <Download size={14} className="flex-shrink-0 opacity-70" />
+                          </a>
                         ) : (
                           <div
                             className={cn(
