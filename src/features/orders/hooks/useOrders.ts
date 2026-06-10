@@ -100,3 +100,13 @@ export function useDeleteOrder() {
     onError: (e) => toast.error(extractErrorMessage(e, 'Failed to delete order')),
   });
 }
+
+/** Returns DRAFT orders linked to a specific conversation. Refreshes on SSE new-draft-order events. */
+export function useDraftOrdersForConversation(conversationId: string | null) {
+  return useQuery({
+    queryKey: ['orders', 'draft', conversationId],
+    queryFn: () => getOrders({ conversationId: conversationId!, status: 'DRAFT', limit: 10 }),
+    enabled: !!conversationId,
+    staleTime: 0,
+  });
+}
