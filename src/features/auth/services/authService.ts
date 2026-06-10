@@ -59,3 +59,34 @@ export async function updateMe(data: { firstName?: string; lastName?: string; ph
   const res = await apiClient.patch<{ success: true; data: UserResponse }>('/auth/me', data);
   return res.data.data;
 }
+
+export interface MemberItem {
+  membershipId: string;
+  userId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  roleName: string;
+  roleId: string;
+  joinedAt: string;
+}
+
+export async function getMembers(): Promise<MemberItem[]> {
+  const res = await apiClient.get<{ success: true; data: MemberItem[] }>('/auth/members');
+  return res.data.data;
+}
+
+export async function inviteUser(data: { email: string; roleId?: string }) {
+  const res = await apiClient.post('/auth/invite', data);
+  return res.data;
+}
+
+export async function removeMember(membershipId: string) {
+  const res = await apiClient.delete(`/auth/members/${membershipId}`);
+  return res.data;
+}
+
+export async function changeMemberRole(membershipId: string, roleId: string) {
+  const res = await apiClient.put(`/auth/members/${membershipId}/role`, { roleId });
+  return res.data;
+}

@@ -76,13 +76,13 @@ export function ImageUploader({
   if (value) {
     return (
       <div
-        className={cn(`relative ${h} overflow-hidden rounded-lg`, className)}
+        className={cn(`relative ${h} overflow-hidden rounded-lg bg-[var(--surface-2)]`, className)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={getImageUrl(value)}
           alt="Product"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}

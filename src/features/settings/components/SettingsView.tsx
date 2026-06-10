@@ -3,21 +3,22 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
   User, Bell, Link, Crown, Shield, Activity,
-  Upload, Check, RefreshCw, Zap, Cloud, Lock, Sparkles,
-  Users, Building2, Loader2, Bot, Store,
+  Upload, Check, Zap, Cloud, Lock, Sparkles,
+  Users, Building2, Loader2, Bot, Store, Trash2,
 } from 'lucide-react';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import { CRMSwitch } from '@/shared/ui/CRMSwitch';
-import { ChannelBadge } from '@/shared/ui/ChannelBadge';
-import { useAppStore } from '@/lib/appStore';
-import { useMe, useUpdateMe } from '@/features/auth/hooks/useAuth';
+import { WAConnectDialog } from '@/shared/ui/WAConnectDialog';
+import { useMe, useUpdateMe, useMembers, useInviteUser, useRemoveMember } from '@/features/auth/hooks/useAuth';
 import { usePresignedUpload } from '@/features/inventory/hooks/useProducts';
+import { useWAStatus } from '@/features/channels/hooks/useWhatsApp';
+import { useNotificationPreferences, useUpdateNotificationPreference } from '@/features/notifications/hooks/useNotifications';
+import type { NotificationType } from '@/features/notifications/types';
 import { WorkspacesManagementView } from './WorkspacesManagementView';
 import { ChatbotSection } from './ChatbotSection';
 import { BusinessSection } from './BusinessSection';
-import { SECTION_NAV, CHANNELS_DATA, SYSTEM_STATS } from '../types';
+import { SECTION_NAV, SYSTEM_STATS } from '../types';
 import type { SettingsSection } from '../types';
-import type { NotifSettings } from '../types';
 
 const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
   profile:    User,
@@ -216,37 +217,75 @@ function ProfileSection() {
 }
 
 // ──────────────────── Notifications Section ────────────────────
-function NotifSection() {
-  const { notifSettings, updateNotifSettings } = useAppStore();
+const NOTIF_META: Record<NotificationType, { title: string; desc: string }> = {
+  NEW_MESSAGE:          { title: 'New message',          desc: 'When a lead sends you a new message.' },
+  CHAT_ESCALATED:       { title: 'Chat escalated',       desc: 'When a conversation is flagged for attention.' },
+  NEW_LEAD:             { title: 'New lead',             desc: 'When a new lead is created or imported.' },
+  LEAD_ASSIGNED:        { title: 'Lead assigned',        desc: 'When a lead is assigned to you.' },
+  ORDER_CREATED:        { title: 'Order created',        desc: 'When a new order is placed.' },
+  ORDER_STATUS_CHANGED: { title: 'Order status changed', desc: 'When an order status is updated.' },
+  MEMBER_INVITED:       { title: 'Member invited',       desc: 'When someone is invited to your workspace.' },
+  MEMBER_JOINED:        { title: 'Member joined',        desc: 'When an invited member accepts and joins.' },
+  BROADCAST_COMPLETED:  { title: 'Broadcast completed',  desc: 'When a broadcast campaign finishes.' },
+  NEW_LOGIN:            { title: 'New login',            desc: 'When your account is accessed from a new device.' },
+  BILLING:              { title: 'Billing',              desc: 'Payment confirmations and plan changes.' },
+};
 
-  const NOTIF_ITEMS: Array<{ k: keyof NotifSettings; title: string; desc: string }> = [
-    { k: 'hotLeads',     title: 'Hot lead alerts',      desc: 'Toast + sound when AI flags a hot intent.' },
-    { k: 'dailyDigest',  title: 'Daily digest',         desc: 'Morning summary of overnight conversations.' },
-    { k: 'weeklyReport', title: 'Weekly performance',   desc: 'Sunday email with funnel + revenue.' },
-    { k: 'soundOn',      title: 'Sound on new message', desc: 'Soft chime when a new message lands.' },
-    { k: 'push',         title: 'Push notifications',   desc: 'Browser push for urgent actions.' },
-  ];
+function NotifSection() {
+  const { data: prefs = [], isLoading } = useNotificationPreferences();
+  const { mutate: update, isPending } = useUpdateNotificationPreference();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-40">
+        <Loader2 size={22} className="animate-spin text-[var(--accent)]" />
+      </div>
+    );
+  }
 
   return (
     <>
       <h2 className="text-[20px] font-semibold">Notifications</h2>
-      <div className="card p-[18px]">
-        {NOTIF_ITEMS.map((item, i) => (
-          <div
-            key={item.k}
-            className={cn('flex items-center justify-between py-3.5 px-1', i < NOTIF_ITEMS.length - 1 && 'border-b border-[var(--line-soft)]')}
-          >
-            <div>
-              <div className="font-medium text-[13.5px]">{item.title}</div>
-              <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">{item.desc}</div>
+      <div className="card overflow-hidden">
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_64px_64px] gap-2 px-4 py-2 border-b border-[var(--line)] bg-[var(--surface-2)] text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
+          <span>Event</span>
+          <span className="text-center">In-app</span>
+          <span className="text-center">Email</span>
+        </div>
+        {(Object.keys(NOTIF_META) as NotificationType[]).map((type, i) => {
+          const pref = prefs.find((p) => p.type === type);
+          const meta = NOTIF_META[type];
+          const last = i === Object.keys(NOTIF_META).length - 1;
+          return (
+            <div
+              key={type}
+              className={cn(
+                'grid grid-cols-[1fr_64px_64px] gap-2 items-center px-4 py-3',
+                !last && 'border-b border-[var(--line-soft)]',
+              )}
+            >
+              <div>
+                <div className="font-medium text-[13.5px]">{meta.title}</div>
+                <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">{meta.desc}</div>
+              </div>
+              <div className="flex justify-center">
+                <CRMSwitch
+                  on={pref?.inApp ?? true}
+                  onChange={(v) => update({ type, inApp: v })}
+                  size="md"
+                />
+              </div>
+              <div className="flex justify-center">
+                <CRMSwitch
+                  on={pref?.email ?? false}
+                  onChange={(v) => update({ type, email: v })}
+                  size="md"
+                />
+              </div>
             </div>
-            <CRMSwitch
-              on={!!notifSettings[item.k]}
-              onChange={v => updateNotifSettings({ [item.k]: v })}
-              size="md"
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="text-[11.5px] flex items-center gap-1.5 text-[var(--ink-mute)]">
         <Check size={12} className="text-[#15803D]" /> Preferences save automatically
@@ -257,33 +296,48 @@ function NotifSection() {
 
 // ──────────────────── Channels Section ────────────────────
 function ChannelsSection() {
+  const { data: statusData } = useWAStatus();
+  const [waOpen, setWaOpen] = useState(false);
+  const status = statusData?.status ?? 'DISCONNECTED';
+
   return (
     <>
       <h2 className="text-[20px] font-semibold">Connected Channels</h2>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
-        {CHANNELS_DATA.map(c => (
-          <div key={c.ch} className="card p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <span className={`ch-${c.ch} w-[34px] h-[34px] rounded-[9px] inline-flex items-center justify-center flex-shrink-0`}>
-                <ChannelBadge channel={c.ch} size="xs" iconOnly />
-              </span>
-              <div className="flex-1">
-                <div className="font-medium text-[13.5px]">{c.name}</div>
-                <div className="text-[12px] text-[var(--ink-mute)]">{c.acct}</div>
-              </div>
-              <span className={cn('badge font-medium', c.status === 'connected' ? 'bg-[rgba(34,197,94,0.12)] text-[#15803D]' : 'bg-[rgba(148,163,184,0.16)] text-[var(--ink-soft)]')}>
-                {c.status === 'connected' ? 'Connected' : 'Disconnected'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-[var(--ink-mute)]">
-              <span>{c.date}</span>
-              <button className="btn btn-outline py-1 px-2.5 text-[12px]">
-                <RefreshCw size={11} /> {c.status === 'connected' ? 'Reconnect' : 'Connect'}
-              </button>
+      <div className="card p-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#25D366' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              <path d="M11.996 1.998C6.478 1.998 2 6.476 2 11.994c0 1.762.461 3.416 1.268 4.853L2 22l5.294-1.247a9.95 9.95 0 0 0 4.702 1.19c5.518 0 9.996-4.477 9.996-9.995 0-5.518-4.478-9.95-9.996-9.95zm0 18.19a8.187 8.187 0 0 1-4.18-1.148l-.3-.178-3.115.733.779-3.023-.196-.31A8.153 8.153 0 0 1 3.81 11.994c0-4.516 3.672-8.187 8.186-8.187s8.187 3.671 8.187 8.187c0 4.515-3.673 8.187-8.187 8.187z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-[14px]">WhatsApp Business</div>
+            <div className="text-[12px] text-[var(--ink-mute)] mt-px">
+              {status === 'CONNECTED'
+                ? `Connected · +${statusData?.phoneNumber ?? ''}`
+                : 'Not connected — scan QR to link your number'}
             </div>
           </div>
-        ))}
+          <span className={cn(
+            'badge font-medium px-2.5 py-1',
+            status === 'CONNECTED' ? 'bg-[rgba(34,197,94,0.12)] text-[#15803D]' : 'bg-[var(--surface-2)] text-[var(--ink-mute)]',
+          )}>
+            <span className={cn(
+              'w-[6px] h-[6px] rounded-full mr-1.5 inline-block',
+              status === 'CONNECTED' ? 'bg-[#15803D]' : 'bg-[var(--ink-mute)]',
+            )} />
+            {status === 'CONNECTED' ? 'Connected' : status === 'PENDING' ? 'Connecting…' : 'Disconnected'}
+          </span>
+          <button
+            className="btn btn-outline text-[12.5px]"
+            onClick={() => setWaOpen(true)}
+          >
+            {status === 'CONNECTED' ? 'Manage' : 'Connect'}
+          </button>
+        </div>
       </div>
+      <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
     </>
   );
 }
@@ -320,70 +374,147 @@ function TierSection() {
 }
 
 // ──────────────────── Access Section ────────────────────
-function AccessSection() {
-  const { teamUsers } = useAppStore();
-  const [role, setRole] = useState('owner');
+const ROLE_META: Record<string, { desc: string; color: string }> = {
+  OWNER:   { desc: 'Full access: billing, integrations, all data.', color: 'bg-[rgba(124,58,237,0.12)] text-[#7C3AED]' },
+  ADMIN:   { desc: 'Manage leads, inventory, replies. No billing.',  color: 'bg-[rgba(59,130,246,0.12)] text-[#2563EB]' },
+  MANAGER: { desc: 'Manage leads, inventory, replies. No billing.',  color: 'bg-[rgba(59,130,246,0.12)] text-[#2563EB]' },
+  AGENT:   { desc: 'Inbox + assigned leads only.',                   color: 'bg-[rgba(16,185,129,0.12)] text-[#059669]' },
+};
 
-  const ROLES = [
-    { id: 'owner',   name: 'Owner',   desc: 'Full access. Billing, integrations, all data.', count: 1 },
-    { id: 'manager', name: 'Manager', desc: 'Manage leads, inventory, replies. No billing.',  count: 3 },
-    { id: 'agent',   name: 'Agent',   desc: 'Inbox + assigned leads only.',                   count: 8 },
-  ];
+function AccessSection() {
+  const { data: members = [], isLoading } = useMembers();
+  const { mutate: removeM, isPending: isRemoving } = useRemoveMember();
+  const inviteMut = useInviteUser();
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [showInvite, setShowInvite] = useState(false);
+
+  const byRole = members.reduce<Record<string, number>>((acc, m) => {
+    acc[m.roleName] = (acc[m.roleName] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const handleInvite = () => {
+    if (!inviteEmail.trim()) return;
+    inviteMut.mutate(
+      { email: inviteEmail.trim() },
+      { onSuccess: () => { setInviteEmail(''); setShowInvite(false); } },
+    );
+  };
 
   return (
     <>
       <h2 className="text-[20px] font-semibold">Access Control</h2>
-      <div className="grid grid-cols-3 gap-3">
-        {ROLES.map(r => (
-          <div
-            key={r.id}
-            className={cn(
-              'card cursor-pointer flex flex-col gap-2 h-full p-4',
-              role === r.id ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] bg-[var(--surface)]',
-            )}
-            onClick={() => setRole(r.id)}
-          >
-            <div className="flex items-center justify-between">
-              <h4 className="text-[14px] font-medium">{r.name}</h4>
-              <span className="badge bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
-                {r.count}
-              </span>
+
+      {/* Role summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {(['OWNER', 'ADMIN', 'MANAGER', 'AGENT'] as const).map((r) => (
+          <div key={r} className="card p-3.5">
+            <div className="text-[11.5px] font-medium text-[var(--ink-mute)]">{r}</div>
+            <div className="text-[22px] font-semibold mt-0.5">{byRole[r] ?? 0}</div>
+            <div className="text-[11px] text-[var(--ink-mute)] mt-1 leading-snug">
+              {ROLE_META[r]?.desc}
             </div>
-            <div className="text-[12.5px] leading-relaxed flex-1 text-[var(--ink-soft)]">{r.desc}</div>
-            <button className="btn btn-outline justify-center mt-1">
-              <Users size={13} /> Manage members
-            </button>
           </div>
         ))}
       </div>
-      <div className="card p-[18px]">
-        <h4 className="text-[13.5px] font-semibold mb-3">
-          Team Members <span className="font-normal text-[12px] text-[var(--ink-mute)]">· manage in Team &amp; Access</span>
-        </h4>
-        <table className="tbl">
-          <thead>
-            <tr><th>Name</th><th>Email</th><th>Role</th><th>Last active</th></tr>
-          </thead>
-          <tbody>
-            {teamUsers.slice(0, 4).map((u, i) => (
-              <tr key={i}>
-                <td>
-                  <div className="flex items-center gap-2.5">
-                    <CRMAvatar name={u.name} size={28} />
-                    <span className="font-medium">{u.name}</span>
-                  </div>
-                </td>
-                <td className="text-[var(--ink-mute)]">{u.email}</td>
-                <td>
-                  <span className="badge font-medium bg-[var(--accent-soft)] text-[var(--accent)]">
-                    {u.role}
-                  </span>
-                </td>
-                <td className="text-[var(--ink-mute)] text-[12px]">{u.last}</td>
+
+      {/* Members table */}
+      <div className="card overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--line)]">
+          <h4 className="text-[13.5px] font-semibold">
+            Team Members
+            {!isLoading && (
+              <span className="font-normal text-[12px] text-[var(--ink-mute)] ml-1.5">· {members.length}</span>
+            )}
+          </h4>
+          <button
+            className="btn btn-outline text-[12.5px] py-1.5 px-3"
+            onClick={() => setShowInvite((v) => !v)}
+          >
+            <Users size={13} /> Invite member
+          </button>
+        </div>
+
+        {/* Invite row */}
+        {showInvite && (
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--line)] bg-[var(--surface-2)]">
+            <input
+              className="input flex-1 text-[13px]"
+              placeholder="colleague@email.com"
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+              autoFocus
+            />
+            <button
+              className="btn btn-grad text-[12.5px]"
+              onClick={handleInvite}
+              disabled={inviteMut.isPending || !inviteEmail.trim()}
+            >
+              {inviteMut.isPending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+              Send invite
+            </button>
+            <button className="btn btn-ghost p-2" onClick={() => setShowInvite(false)}>
+              <Zap size={13} className="rotate-45 opacity-60" />
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 size={20} className="animate-spin text-[var(--accent)]" />
+          </div>
+        ) : members.length === 0 ? (
+          <div className="py-10 text-center text-[var(--ink-mute)] text-[13px]">No members yet.</div>
+        ) : (
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {members.map((m) => {
+                const name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
+                const roleColor = ROLE_META[m.roleName]?.color ?? 'bg-[var(--surface-2)] text-[var(--ink-soft)]';
+                return (
+                  <tr key={m.membershipId}>
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <CRMAvatar name={name} size={28} />
+                        <span className="font-medium">{name}</span>
+                      </div>
+                    </td>
+                    <td className="text-[var(--ink-mute)] text-[12.5px]">{m.email}</td>
+                    <td>
+                      <span className={cn('badge font-medium', roleColor)}>{m.roleName}</span>
+                    </td>
+                    <td className="text-[var(--ink-mute)] text-[12px]">
+                      {new Date(m.joinedAt).toLocaleDateString()}
+                    </td>
+                    <td className="text-right">
+                      {m.roleName !== 'OWNER' && (
+                        <button
+                          className="btn btn-ghost p-1.5 text-[#DC2626]"
+                          title="Remove member"
+                          onClick={() => removeM(m.membershipId)}
+                          disabled={isRemoving}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </>
   );

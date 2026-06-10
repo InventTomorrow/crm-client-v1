@@ -6,6 +6,7 @@ import { extractErrorMessage } from '@/lib/utils';
 import {
   login, register, logout, forgotPassword, resetPassword,
   acceptInvite, verifyEmail, resendVerification, getMe, updateMe,
+  getMembers, inviteUser, removeMember, changeMemberRole,
 } from '../services/authService';
 import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
 
@@ -108,10 +109,50 @@ export function useUpdateMe() {
   return useMutation({
     mutationFn: updateMe,
     onSuccess: (updated) => {
-      // Update cache optimistically
       queryClient.setQueryData(['me'], updated);
       toast.success('Profile saved.');
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useMembers() {
+  return useQuery({ queryKey: ['members'], queryFn: getMembers });
+}
+
+export function useInviteUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inviteUser,
+    onSuccess: () => {
+      toast.success('Invitation sent.');
+      qc.invalidateQueries({ queryKey: ['members'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send invite')),
+  });
+}
+
+export function useRemoveMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: removeMember,
+    onSuccess: () => {
+      toast.success('Member removed.');
+      qc.invalidateQueries({ queryKey: ['members'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to remove member')),
+  });
+}
+
+export function useChangeMemberRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, roleId }: { membershipId: string; roleId: string }) =>
+      changeMemberRole(membershipId, roleId),
+    onSuccess: () => {
+      toast.success('Role updated.');
+      qc.invalidateQueries({ queryKey: ['members'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to change role')),
   });
 }
