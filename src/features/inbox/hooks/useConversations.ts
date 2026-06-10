@@ -335,6 +335,9 @@ export function useConversationStream() {
           queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
           queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
         }
+        if (data.type === 'new-draft-order') {
+          queryClient.invalidateQueries({ queryKey: ['orders', 'draft', data.conversationId] });
+        }
       } catch {
         /* malformed payload — ignore */
       }

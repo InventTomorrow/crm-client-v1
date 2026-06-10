@@ -58,6 +58,20 @@ export interface OrderListItem {
   lead: OrderLeadRef | null;
 }
 
+export interface OrderShippingDetail {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  email: string | null;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+  notes: string | null;
+}
+
 /** Full detail shape returned by GET /orders/:id. */
 export interface Order extends Omit<OrderListItem, 'items'> {
   leadId: string;
@@ -68,6 +82,7 @@ export interface Order extends Omit<OrderListItem, 'items'> {
   placedAt: string | null;
   items: OrderItem[];
   statusHistory: OrderStatusHistoryEntry[];
+  shippingDetail: OrderShippingDetail | null;
 }
 
 export interface OrdersSummary {
@@ -81,6 +96,7 @@ export interface OrderFilters {
   status?: OrderStatus;
   platform?: OrderPlatform;
   leadId?: string;
+  conversationId?: string;
   dateFrom?: string;
   dateTo?: string;
 }

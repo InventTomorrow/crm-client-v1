@@ -54,7 +54,11 @@ import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog"
 import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
 import { OrderForm } from "../../orders/components/OrderForm";
-import { useCreateOrder } from "../../orders/hooks/useOrders";
+import {
+  useCreateOrder,
+  useDraftOrdersForConversation,
+  useUpdateOrderStatus,
+} from "../../orders/hooks/useOrders";
 import {
   filterConversations,
   useAgentTyping,
@@ -585,7 +589,10 @@ export function InboxView() {
     return {};
   });
   const [orderFormOpen, setOrderFormOpen] = useState(false);
+  const [editingDraftOrderId, setEditingDraftOrderId] = useState<string | null>(null);
   const createOrder = useCreateOrder();
+  const updateOrderStatus = useUpdateOrderStatus();
+  const { data: draftOrders } = useDraftOrdersForConversation(selectedId);
   const [pendingFile, setPendingFile] = useState<{
     file: File;
     previewUrl: string;
@@ -1627,6 +1634,62 @@ export function InboxView() {
                 </div>
               )}
 
+              {/* Draft order cards */}
+              {draftOrders && draftOrders.length > 0 && (
+                <div className="px-2 pt-2 flex flex-col gap-2">
+                  {draftOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-3 py-2.5 flex flex-col gap-1.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <ShoppingCart size={13} className="text-[var(--accent)] flex-shrink-0" />
+                          <span className="text-[12px] font-semibold text-[var(--ink)]">
+                            Draft Order #{order.orderNumber}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-[var(--ink-mute)]">
+                          {order.currency} {order.total}
+                        </span>
+                      </div>
+                      <div className="text-[11.5px] text-[var(--ink-soft)] leading-relaxed">
+                        {order.items.length} item(s)
+                        {order.customerName && (
+                          <> · {order.customerName}</>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <button
+                          className="flex-1 h-7 rounded-lg bg-[var(--accent)] text-white text-[11.5px] font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+                          disabled={updateOrderStatus.isPending}
+                          onClick={() =>
+                            updateOrderStatus.mutate({ id: order.id, status: "PENDING", note: "Approved by agent" })
+                          }
+                        >
+                          <Check size={12} /> Approve
+                        </button>
+                        <button
+                          className="h-7 px-2.5 rounded-lg border border-[var(--line)] text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1 hover:bg-[var(--surface-2)]"
+                          onClick={() => setEditingDraftOrderId(order.id)}
+                        >
+                          <Edit2 size={11} /> Edit
+                        </button>
+                        <button
+                          className="h-7 px-2.5 rounded-lg border border-[var(--line)] text-[11.5px] text-[#EF4444] flex items-center gap-1 hover:bg-[#FEF2F2] disabled:opacity-50"
+                          disabled={updateOrderStatus.isPending}
+                          onClick={() =>
+                            updateOrderStatus.mutate({ id: order.id, status: "CANCELLED", note: "Rejected by agent" })
+                          }
+                        >
+                          <X size={11} /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Single-row input */}
               <div className="px-2 py-2 relative">
                 {!waConnected && (
@@ -1870,6 +1933,21 @@ export function InboxView() {
           onSubmit={(values) =>
             createOrder.mutate(values, {
               onSuccess: () => setOrderFormOpen(false),
+            })
+          }
+        />
+      )}
+
+      {editingDraftOrderId && (
+        <OrderForm
+          open={!!editingDraftOrderId}
+          onClose={() => setEditingDraftOrderId(null)}
+          presetLeadId={activeConv?.lead.id}
+          presetConversationId={activeConv?.id}
+          isSubmitting={createOrder.isPending}
+          onSubmit={(values) =>
+            createOrder.mutate(values, {
+              onSuccess: () => setEditingDraftOrderId(null),
             })
           }
         />
