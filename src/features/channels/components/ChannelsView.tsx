@@ -250,21 +250,6 @@ export function ChannelsView() {
         )}
       </div>
 
-      {/* Coming soon channels */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {[
-          { name: 'Instagram', color: '#E1306C', icon: '📸' },
-          { name: 'Facebook', color: '#1877F2', icon: '📘' },
-        ].map((ch) => (
-          <div key={ch.name} className="card p-4 opacity-50 flex items-center gap-3">
-            <span className="text-2xl">{ch.icon}</span>
-            <div>
-              <p className="text-[13px] font-medium text-[var(--ink)]">{ch.name}</p>
-              <p className="text-[11.5px] text-[var(--ink-mute)]">Coming soon</p>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

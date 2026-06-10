@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, Search, Bell } from 'lucide-react';
 import { useAppStore } from '@/lib/appStore';
 import { useNotificationStream, useUnreadCount } from '@/features/notifications/hooks/useNotifications';
+import { WAConnectDialog, WAStatusButton } from '@/shared/ui/WAConnectDialog';
 import { NotificationsPanel } from './NotificationsPanel';
 import { SearchPalette } from './SearchPalette';
 
@@ -27,6 +28,7 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const { workspaces, currentWorkspaceId } = useAppStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
 
   // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
   useNotificationStream();
@@ -84,6 +86,10 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
       <button className="btn btn-ghost show-mobile-only p-2" onClick={() => setSearchOpen(true)}>
         <Search size={17} />
       </button>
+
+      {/* WhatsApp status */}
+      <WAStatusButton onClick={() => setWaOpen(true)} />
+      <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
 
       {/* Notifications */}
       <div data-header-popover className="relative">

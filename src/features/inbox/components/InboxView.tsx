@@ -956,7 +956,7 @@ export function InboxView() {
 
               {/* Action buttons */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                {/* Create an order for this conversation's customer */}
+                {/* Create order */}
                 <button
                   onClick={() => setOrderFormOpen(true)}
                   title="Create an order for this customer"
@@ -965,59 +965,69 @@ export function InboxView() {
                   <ShoppingCart size={12} />
                   <span className="hide-mobile">Order</span>
                 </button>
-                {/* Per-chat AI toggle — when off, this chat is handled manually */}
-                <button
-                  onClick={() => selectedId && aiModeMut.mutate()}
-                  disabled={aiModeMut.isPending}
-                  title={
-                    activeConv?.aiEnabled
-                      ? "AI is replying to this chat — click to take over manually"
-                      : "AI is off for this chat — click to let AI reply"
-                  }
-                  className={cn(
-                    "btn btn-outline py-[5px] px-[10px] text-[11.5px] gap-1.5",
-                    activeConv?.aiEnabled
-                      ? "text-[var(--accent)] border-[var(--accent)] bg-[var(--accent-soft)]"
-                      : "text-[var(--ink-mute)]",
-                  )}
-                >
-                  {aiModeMut.isPending ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={12} />
-                  )}
-                  <span className="hide-mobile">
-                    AI {activeConv?.aiEnabled ? "On" : "Off"}
-                  </span>
-                </button>
-                {activeConv?.escalationStatus !== "RESOLVED" && (
+
+                {/* Radio-style status togglers */}
+                <div className="flex items-center rounded-lg border border-[var(--line)] overflow-hidden divide-x divide-[var(--line)] flex-shrink-0">
+                  {/* AI toggle */}
+                  <button
+                    onClick={() => selectedId && aiModeMut.mutate()}
+                    disabled={aiModeMut.isPending}
+                    title={activeConv?.aiEnabled ? "AI On — click to take over manually" : "AI Off — click to let AI reply"}
+                    className={cn(
+                      "flex items-center gap-1.5 px-[10px] py-[5px] text-[11.5px] transition-colors",
+                      activeConv?.aiEnabled
+                        ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium"
+                        : "bg-[var(--surface)] text-[var(--ink-mute)] hover:bg-[var(--surface-2)]",
+                    )}
+                  >
+                    {aiModeMut.isPending ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    <span className="hide-mobile">AI</span>
+                  </button>
+
+                  {/* Done toggle */}
                   <button
                     onClick={() => selectedId && resolveMut.mutate(selectedId)}
                     disabled={resolveMut.isPending}
-                    className="btn btn-outline py-[5px] px-[10px] text-[11.5px] text-[#15803D] border-[#BBF7D0]"
+                    title={activeConv?.escalationStatus === "RESOLVED" ? "Already resolved" : "Mark as done"}
+                    className={cn(
+                      "flex items-center gap-1.5 px-[10px] py-[5px] text-[11.5px] transition-colors",
+                      activeConv?.escalationStatus === "RESOLVED"
+                        ? "bg-[rgba(21,128,61,0.1)] text-[#15803D] font-medium"
+                        : "bg-[var(--surface)] text-[var(--ink-mute)] hover:bg-[var(--surface-2)]",
+                    )}
                   >
                     {resolveMut.isPending ? (
                       <Loader2 size={12} className="animate-spin" />
                     ) : (
                       <CheckCheck size={12} />
                     )}
-                    <span className="hide-mobile">Mark Done</span>
+                    <span className="hide-mobile">Done</span>
                   </button>
-                )}
-                {activeConv?.escalationStatus !== "ESCALATED" && (
+
+                  {/* Flag toggle */}
                   <button
                     onClick={() => selectedId && escalateMut.mutate(selectedId)}
                     disabled={escalateMut.isPending}
-                    className="btn btn-outline py-[5px] px-[10px] text-[11.5px]"
+                    title={activeConv?.escalationStatus === "ESCALATED" ? "Already flagged" : "Flag for attention"}
+                    className={cn(
+                      "flex items-center gap-1.5 px-[10px] py-[5px] text-[11.5px] transition-colors",
+                      activeConv?.escalationStatus === "ESCALATED"
+                        ? "bg-[rgba(239,68,68,0.1)] text-[#EF4444] font-medium"
+                        : "bg-[var(--surface)] text-[var(--ink-mute)] hover:bg-[var(--surface-2)]",
+                    )}
                   >
                     {escalateMut.isPending ? (
                       <Loader2 size={12} className="animate-spin" />
                     ) : (
-                      <Flame size={12} className="text-[#EF4444]" />
+                      <Flame size={12} />
                     )}
                     <span className="hide-mobile">Flag</span>
                   </button>
-                )}
+                </div>
               </div>
             </div>
 

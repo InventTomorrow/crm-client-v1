@@ -1,14 +1,14 @@
 "use client";
-import { Inbox, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { pkr } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
+import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
 import LeadStatusSelect from "../LeadStatusSelect";
+import { Inbox, Pencil, Trash2 } from "lucide-react";
 
-// ──────────────────── Table View ────────────────────
 export default function TableView({
   leads,
   filter,
@@ -28,90 +28,120 @@ export default function TableView({
 }) {
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
 
-  return (
-    <div className="card overflow-auto flex-1 min-h-0">
-      <table className="tbl">
-        <thead>
-          <tr>
-            <th className="min-w-[200px]">Name</th>
-            <th>Channel</th>
-            <th>Status</th>
-            <th>City</th>
-            <th>Last activity</th>
-            <th className="text-right">Est. value</th>
-            <th className="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((l) => (
-            <tr key={l.id} onClick={() => onSelect(l)} className="cursor-pointer">
-              <td>
-                <div className="flex items-center gap-2.5">
-                  <CRMAvatar name={l.name} size={30} />
-                  <div>
-                    <div className="font-medium">{l.name}</div>
-                    <div className="text-[11px] text-[var(--ink-mute)]">
-                      {l.lastMsg.length > 40
-                        ? l.lastMsg.slice(0, 40) + "…"
-                        : l.lastMsg}
-                    </div>
-                  </div>
+  const columns: ColumnDef<Lead, unknown>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        accessorFn: (l) => l.name,
+        header: "Name",
+        enableSorting: true,
+        cell: ({ row }) => {
+          const l = row.original;
+          return (
+            <div
+              className="flex items-center gap-2.5 cursor-pointer"
+              onClick={() => onSelect(l)}
+            >
+              <CRMAvatar name={l.name} size={30} />
+              <div>
+                <div className="font-medium text-[13px]">{l.name}</div>
+                <div className="text-[11px] text-[var(--ink-mute)]">
+                  {l.lastMsg.length > 40 ? l.lastMsg.slice(0, 40) + "…" : l.lastMsg}
                 </div>
-              </td>
-              <td>
-                <ChannelBadge channel={l.channel} size="xs" />
-              </td>
-              <td>
-                <LeadStatusSelect
-                  value={l.status}
-                  onChange={(s) => onStatusChange(l.id, s)}
-                />
-              </td>
-              <td className="text-[var(--ink-soft)]">{l.city}</td>
-              <td className="text-[var(--ink-mute)] text-[12px]">
-                {l.time} ago
-              </td>
-              <td className="text-right font-[var(--font-mono)] font-medium">
-                {l.value > 0 ? (
-                  pkr(l.value)
-                ) : (
-                  <span className="text-[var(--ink-mute)]">—</span>
-                )}
-              </td>
-              <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="btn btn-ghost p-1.5"
-                  title="Open chat"
-                  onClick={() => onOpenChat(l)}
-                >
-                  <Inbox size={13} />
-                </button>
-                <button
-                  className="btn btn-ghost p-1.5"
-                  title="Edit lead"
-                  onClick={() => onEdit(l)}
-                >
-                  <Pencil size={13} />
-                </button>
-                <button
-                  className="btn btn-ghost p-1.5 text-[#DC2626]"
-                  title="Delete lead"
-                  onClick={() => onDelete(l)}
-                >
-                  <Trash2 size={13} />
-                </button>
-              </td>
-            </tr>
-          ))}
-          {filtered.length === 0 && (
-            <tr>
-              <td colSpan={7} className="text-center text-[var(--ink-mute)] p-8">
-                No matching leads.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "channel",
+        accessorFn: (l) => l.channel,
+        header: "Channel",
+        enableSorting: true,
+        cell: ({ row }) => <ChannelBadge channel={row.original.channel} size="xs" />,
+      },
+      {
+        id: "status",
+        accessorFn: (l) => l.status,
+        header: "Status",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div onClick={(e) => e.stopPropagation()}>
+            <LeadStatusSelect
+              value={row.original.status}
+              onChange={(s) => onStatusChange(row.original.id, s)}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "city",
+        accessorFn: (l) => l.city,
+        header: "City",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="text-[var(--ink-soft)]">{row.original.city}</span>
+        ),
+      },
+      {
+        id: "time",
+        accessorFn: (l) => l.time,
+        header: "Last activity",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="text-[var(--ink-mute)] text-[12px]">{row.original.time} ago</span>
+        ),
+      },
+      {
+        id: "value",
+        accessorFn: (l) => l.value,
+        header: "Est. value",
+        enableSorting: true,
+        cell: ({ row }) =>
+          row.original.value > 0 ? (
+            <span className="font-[var(--font-mono)] font-medium">{pkr(row.original.value)}</span>
+          ) : (
+            <span className="text-[var(--ink-mute)]">—</span>
+          ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const l = row.original;
+          return (
+            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <button className="btn btn-ghost p-1.5" title="Open chat" onClick={() => onOpenChat(l)}>
+                <Inbox size={13} />
+              </button>
+              <button className="btn btn-ghost p-1.5" title="Edit" onClick={() => onEdit(l)}>
+                <Pencil size={13} />
+              </button>
+              <button
+                className="btn btn-ghost p-1.5 text-[#DC2626]"
+                title="Delete"
+                onClick={() => onDelete(l)}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [onSelect, onStatusChange, onOpenChat, onEdit, onDelete],
+  );
+
+  return (
+    <DataTable
+      data={filtered}
+      columns={columns}
+      selectable
+      onDeleteSelected={(rows) => rows.forEach((l) => onDelete(l))}
+      emptyMessage="No matching leads."
+      defaultPageSize={20}
+      className="flex-1 min-h-0"
+    />
   );
 }

@@ -25,11 +25,11 @@ import {
   Cloud,
   Copy,
   Crown,
-  Filter,
   Grid2x2,
   ImageIcon,
   Link,
   List,
+  Lock,
   Package,
   Pencil,
   Plus,
@@ -40,6 +40,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { SearchableSelect } from "../../orders/components/SearchableSelect";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -65,6 +66,7 @@ import {
   TIERS,
   productSchema,
 } from "../types";
+import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { BulkAddDialog } from "./BulkAddDialog";
 
 function stockStatus(stock: number): Product["status"] {
@@ -216,11 +218,15 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <select className="input" {...field} disabled={busy}>
-                        {CATEGORIES.map((c) => (
-                          <option key={c}>{c}</option>
-                        ))}
-                      </select>
+                      <SearchableSelect<string>
+                        options={CATEGORIES.map((c) => ({ value: c, search: c, data: c }))}
+                        value={field.value}
+                        onChange={(v) => field.onChange(v)}
+                        placeholder="Select category"
+                        renderRow={(c) => <span className="text-[13px]">{c}</span>}
+                        renderSelected={(c) => <span className="text-[13px]">{c}</span>}
+                        disabled={busy}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -232,7 +238,7 @@ function ProductDialog({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price (PKR) *</FormLabel>
+                    <FormLabel>Price *</FormLabel>
                     <FormControl>
                       <input
                         className="input"
@@ -349,25 +355,45 @@ function TierCard({
   onClick: () => void;
 }) {
   const Icon = TIER_ICONS[tier.id - 1];
+  const disabled = tier.id > 1;
+
   return (
     <div
-      className={`card cursor-pointer flex flex-col gap-2 h-full p-[14px] ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--line)] bg-[var(--surface)]"}`}
-      onClick={onClick}
+      className={cn(
+        "card relative flex flex-col gap-2 h-full p-[14px]",
+        disabled
+          ? "opacity-60 cursor-not-allowed border-[var(--line)] bg-[var(--surface-2)]"
+          : active
+            ? "cursor-pointer border-[var(--accent)] bg-[var(--accent-soft)]"
+            : "cursor-pointer border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]",
+      )}
+      onClick={disabled ? undefined : onClick}
     >
+      {disabled && (
+        <span className="absolute top-2 right-2">
+          <Lock size={11} className="text-[var(--ink-mute)]" />
+        </span>
+      )}
       <div className="flex items-center justify-between">
         <div
           className={[
             "w-8 h-8 rounded-[9px] flex items-center justify-center",
-            active
+            active && !disabled
               ? "bg-[var(--accent)] text-white"
               : "bg-[var(--surface-2)] text-[var(--accent)] border border-[var(--line)]",
           ].join(" ")}
         >
           <Icon size={15} />
         </div>
-        <span className="badge font-medium bg-[var(--surface-2)] text-[var(--ink-mute)] border border-[var(--line)]">
-          Tier {tier.id}
-        </span>
+        {disabled ? (
+          <span className="badge font-medium bg-[var(--surface-2)] text-[var(--ink-mute)] border border-[var(--line)] text-[10px]">
+            Coming soon
+          </span>
+        ) : (
+          <span className="badge font-medium bg-[var(--surface-2)] text-[var(--ink-mute)] border border-[var(--line)]">
+            Tier {tier.id}
+          </span>
+        )}
       </div>
       <div>
         <h4 className="text-[13.5px] font-medium">{tier.name}</h4>
@@ -377,7 +403,7 @@ function TierCard({
       </div>
       <div className="flex items-center justify-between mt-auto pt-1">
         <span className="text-[11px] text-[var(--ink-mute)]">{tier.count}</span>
-        {active && <Check size={13} className="text-[var(--accent)]" />}
+        {active && !disabled && <Check size={13} className="text-[var(--accent)]" />}
       </div>
     </div>
   );
@@ -518,6 +544,8 @@ export function InventoryView() {
 
   const [tier, setTier] = useState(1);
   const [search, setSearch] = useState("");
+  const [filterCat, setFilterCat] = useState<string>("");
+  const [filterStock, setFilterStock] = useState<"" | "in" | "low" | "out">("");
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [singleOpen, setSingleOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -539,9 +567,13 @@ export function InventoryView() {
     return () => document.removeEventListener("mousedown", handler);
   }, [addMenuOpen]);
 
-  const filtered = products.filter((p: Product) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = products.filter((p: Product) => {
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterCat && p.cat !== filterCat) return false;
+    const stock = stockStatus(p.stock);
+    if (filterStock && stock !== filterStock) return false;
+    return true;
+  });
 
   const closeDialog = () => {
     setSingleOpen(false);
@@ -674,92 +706,143 @@ export function InventoryView() {
       {/* ── Tier 1: Manual Catalog ── */}
       {tier === 1 && (
         <div>
-          <div className="card flex items-center gap-2.5 flex-wrap mb-3 p-[10px]">
-            <div className="relative min-w-[200px] flex-[1_1_220px]">
-              <Search
-                size={13}
-                className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
-              />
-              <input
-                className="input pl-8"
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-outline">
-              <Filter size={12} /> Filter
-            </button>
-            <div className="flex-1" />
-            <div className="seg">
-              {VIEW_BTNS.map(({ id, label, Icon }) => (
+          <div className="card flex flex-col gap-2.5 mb-3 p-[10px]">
+            {/* Row 1: search + view toggle + add */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="relative min-w-[200px] flex-[1_1_220px]">
+                <Search
+                  size={13}
+                  className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
+                />
+                <input
+                  className="input pl-8"
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <div className="flex-1" />
+              <div className="seg">
+                {VIEW_BTNS.map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    className={inventoryView === id ? "on" : ""}
+                    onClick={() => setInventoryView(id)}
+                  >
+                    <Icon size={12} /> {label}
+                  </button>
+                ))}
+              </div>
+              <div ref={addMenuRef} className="relative">
                 <button
-                  key={id}
-                  className={inventoryView === id ? "on" : ""}
-                  onClick={() => setInventoryView(id)}
+                  className="btn btn-grad"
+                  onClick={() => setAddMenuOpen((v) => !v)}
                 >
-                  <Icon size={12} /> {label}
+                  <Plus size={13} /> Add product <ChevronDown size={11} />
+                </button>
+                {addMenuOpen && (
+                  <div className="card-2 fade-up absolute right-0 top-[calc(100%+6px)] z-40 p-1.5 min-w-[220px] bg-[var(--surface)]">
+                    <AddMenuItem
+                      Icon={Plus}
+                      title="Add a product"
+                      sub="Single item, manual entry"
+                      onClick={() => {
+                        setAddMenuOpen(false);
+                        setEditing(null);
+                        setSingleOpen(true);
+                      }}
+                    />
+                    <AddMenuItem
+                      Icon={Copy}
+                      title="Bulk add"
+                      sub="Multiple at once with preview"
+                      onClick={() => {
+                        setAddMenuOpen(false);
+                        setBulkOpen(true);
+                      }}
+                    />
+                    <div className="h-px mx-1 my-1 bg-[var(--line)]" />
+                    <AddMenuItem
+                      Icon={Upload}
+                      title="Import from CSV"
+                      sub="Spreadsheet format"
+                      onClick={() => {
+                        setAddMenuOpen(false);
+                        importType.current = "csv";
+                        importRef.current?.click();
+                      }}
+                    />
+                    <AddMenuItem
+                      Icon={Upload}
+                      title="Import from JSON"
+                      sub="API export format"
+                      onClick={() => {
+                        setAddMenuOpen(false);
+                        importType.current = "json";
+                        importRef.current?.click();
+                      }}
+                    />
+                  </div>
+                )}
+                <input
+                  ref={importRef}
+                  type="file"
+                  accept=".csv,.json"
+                  className="hidden"
+                  onChange={handleImport}
+                />
+              </div>
+            </div>
+
+            {/* Row 2: filter chips */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-medium text-[var(--ink-mute)] mr-1">Filter:</span>
+              {/* Category chips */}
+              {(["", ...CATEGORIES] as string[]).map((cat) => (
+                <button
+                  key={cat || "all-cat"}
+                  onClick={() => setFilterCat(cat)}
+                  className={cn(
+                    "text-[11.5px] px-2.5 py-1 rounded-full border transition-colors",
+                    filterCat === cat
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "bg-[var(--surface-2)] text-[var(--ink-mute)] border-[var(--line)] hover:border-[var(--accent)]",
+                  )}
+                >
+                  {cat || "All"}
                 </button>
               ))}
-            </div>
-            <div ref={addMenuRef} className="relative">
-              <button
-                className="btn btn-grad"
-                onClick={() => setAddMenuOpen((v) => !v)}
-              >
-                <Plus size={13} /> Add product <ChevronDown size={11} />
-              </button>
-              {addMenuOpen && (
-                <div className="card-2 fade-up absolute right-0 top-[calc(100%+6px)] z-40 p-1.5 min-w-[220px] bg-[var(--surface)]">
-                  <AddMenuItem
-                    Icon={Plus}
-                    title="Add a product"
-                    sub="Single item, manual entry"
-                    onClick={() => {
-                      setAddMenuOpen(false);
-                      setEditing(null);
-                      setSingleOpen(true);
-                    }}
-                  />
-                  <AddMenuItem
-                    Icon={Copy}
-                    title="Bulk add"
-                    sub="Multiple at once with preview"
-                    onClick={() => {
-                      setAddMenuOpen(false);
-                      setBulkOpen(true);
-                    }}
-                  />
-                  <div className="h-px mx-1 my-1 bg-[var(--line)]" />
-                  <AddMenuItem
-                    Icon={Upload}
-                    title="Import from CSV"
-                    sub="Spreadsheet format"
-                    onClick={() => {
-                      setAddMenuOpen(false);
-                      importType.current = "csv";
-                      importRef.current?.click();
-                    }}
-                  />
-                  <AddMenuItem
-                    Icon={Upload}
-                    title="Import from JSON"
-                    sub="API export format"
-                    onClick={() => {
-                      setAddMenuOpen(false);
-                      importType.current = "json";
-                      importRef.current?.click();
-                    }}
-                  />
-                </div>
+              <div className="w-px h-4 bg-[var(--line)] mx-1" />
+              {/* Stock status chips */}
+              {(
+                [
+                  { id: "", label: "Any stock" },
+                  { id: "in", label: "In stock" },
+                  { id: "low", label: "Low stock" },
+                  { id: "out", label: "Out" },
+                ] as const
+              ).map(({ id, label }) => (
+                <button
+                  key={id || "any"}
+                  onClick={() => setFilterStock(id)}
+                  className={cn(
+                    "text-[11.5px] px-2.5 py-1 rounded-full border transition-colors",
+                    filterStock === id
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "bg-[var(--surface-2)] text-[var(--ink-mute)] border-[var(--line)] hover:border-[var(--accent)]",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+              {(filterCat || filterStock) && (
+                <button
+                  onClick={() => { setFilterCat(""); setFilterStock(""); }}
+                  className="text-[11px] text-[var(--ink-mute)] hover:text-[var(--destructive)] flex items-center gap-1 ml-1"
+                >
+                  <X size={11} /> Clear
+                </button>
               )}
-              <input
-                ref={importRef}
-                type="file"
-                accept=".csv,.json"
-                className="hidden"
-                onChange={handleImport}
-              />
             </div>
           </div>
 
@@ -804,108 +887,118 @@ export function InventoryView() {
           )}
 
           {!isLoading && inventoryView === "list" && (
-            <div className="card overflow-hidden">
-              <table className="tbl">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>SKU</th>
-                    <th>Category</th>
-                    <th className="text-right">Price</th>
-                    <th className="text-right">Stock</th>
-                    <th>Status</th>
-                    <th className="text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((p: Product) => (
-                    <tr key={p.id}>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          {p.imageUrls && p.imageUrls.length > 0 ? (
-                            <ShimmerImage
-                              src={getImageUrl(p.imageUrls[0])}
-                              alt={p.name}
-                              wrapperClassName="w-9 h-9 rounded-lg bg-[var(--surface-2)] flex-shrink-0"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="placeholder-img w-9 h-9 rounded-lg flex items-center justify-center text-[var(--ink-mute)] opacity-40 bg-[var(--surface-2)] flex-shrink-0">
-                              <ImageIcon size={14} />
-                            </div>
-                          )}
-                          <span className="font-medium">{p.name}</span>
-                        </div>
-                      </td>
-                      <td className="font-[var(--font-mono)] text-[11.5px] text-[var(--ink-mute)]">
-                        {p.sku || "—"}
-                      </td>
-                      <td>
-                        <span className="badge bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
-                          {p.cat}
-                        </span>
-                      </td>
-                      <td className="text-right font-medium font-[var(--font-mono)]">
-                        {pkr(p.price)}
-                      </td>
-                      <td className="text-right font-[var(--font-mono)]">
-                        {p.stock}
-                      </td>
-                      <td>
-                        {p.status === "in" && (
-                          <span className="badge font-medium bg-[rgba(34,197,94,0.12)] text-[#15803D]">
-                            In stock
-                          </span>
+            <DataTable<Product>
+              data={filtered}
+              columns={[
+                {
+                  id: "name",
+                  accessorFn: (p) => p.name,
+                  header: "Product",
+                  enableSorting: true,
+                  cell: ({ row }) => {
+                    const p = row.original;
+                    return (
+                      <div className="flex items-center gap-3">
+                        {p.imageUrls && p.imageUrls.length > 0 ? (
+                          <ShimmerImage
+                            src={getImageUrl(p.imageUrls[0])}
+                            alt={p.name}
+                            wrapperClassName="w-9 h-9 rounded-lg bg-[var(--surface-2)] flex-shrink-0"
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="placeholder-img w-9 h-9 rounded-lg flex items-center justify-center text-[var(--ink-mute)] opacity-40 bg-[var(--surface-2)] flex-shrink-0">
+                            <ImageIcon size={14} />
+                          </div>
                         )}
-                        {p.status === "low" && (
-                          <span className="badge font-medium bg-[rgba(245,158,11,0.14)] text-[#B45309]">
-                            Low
-                          </span>
-                        )}
-                        {p.status === "out" && (
-                          <span className="badge font-medium bg-[rgba(239,68,68,0.12)] text-[#DC2626]">
-                            Out
-                          </span>
-                        )}
-                      </td>
-                      <td className="text-right">
-                        <button
-                          className="btn btn-ghost p-1.5"
-                          onClick={() => {
-                            setEditing(p);
-                            setSingleOpen(true);
-                          }}
-                        >
+                        <span className="font-medium">{p.name}</span>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  id: "sku",
+                  accessorFn: (p) => p.sku,
+                  header: "SKU",
+                  enableSorting: true,
+                  cell: ({ row }) => (
+                    <span className="font-[var(--font-mono)] text-[11.5px] text-[var(--ink-mute)]">
+                      {row.original.sku || "—"}
+                    </span>
+                  ),
+                },
+                {
+                  id: "cat",
+                  accessorFn: (p) => p.cat,
+                  header: "Category",
+                  enableSorting: true,
+                  cell: ({ row }) => (
+                    <span className="badge bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
+                      {row.original.cat}
+                    </span>
+                  ),
+                },
+                {
+                  id: "price",
+                  accessorFn: (p) => p.price,
+                  header: "Price",
+                  enableSorting: true,
+                  cell: ({ row }) => (
+                    <span className="font-medium font-[var(--font-mono)]">{pkr(row.original.price)}</span>
+                  ),
+                },
+                {
+                  id: "stock",
+                  accessorFn: (p) => p.stock,
+                  header: "Stock",
+                  enableSorting: true,
+                  cell: ({ row }) => (
+                    <span className="font-[var(--font-mono)]">{row.original.stock}</span>
+                  ),
+                },
+                {
+                  id: "status",
+                  accessorFn: (p) => p.status,
+                  header: "Status",
+                  enableSorting: true,
+                  cell: ({ row }) => {
+                    const s = row.original.status;
+                    return s === "in" ? (
+                      <span className="badge font-medium bg-[rgba(34,197,94,0.12)] text-[#15803D]">In stock</span>
+                    ) : s === "low" ? (
+                      <span className="badge font-medium bg-[rgba(245,158,11,0.14)] text-[#B45309]">Low</span>
+                    ) : (
+                      <span className="badge font-medium bg-[rgba(239,68,68,0.12)] text-[#DC2626]">Out</span>
+                    );
+                  },
+                },
+                {
+                  id: "actions",
+                  header: "Actions",
+                  enableSorting: false,
+                  cell: ({ row }) => {
+                    const p = row.original;
+                    return (
+                      <div className="flex items-center gap-0.5">
+                        <button className="btn btn-ghost p-1.5" onClick={() => { setEditing(p); setSingleOpen(true); }}>
                           <Pencil size={13} />
                         </button>
-                        <button
-                          className="btn btn-ghost p-1.5"
-                          onClick={() => duplicateProduct.mutate(p)}
-                        >
+                        <button className="btn btn-ghost p-1.5" onClick={() => duplicateProduct.mutate(p)}>
                           <Copy size={13} />
                         </button>
-                        <button
-                          className="btn btn-ghost p-1.5 text-[#DC2626]"
-                          onClick={() => deleteProduct.mutate(p.id)}
-                        >
+                        <button className="btn btn-ghost p-1.5 text-[#DC2626]" onClick={() => deleteProduct.mutate(p.id)}>
                           <Trash2 size={13} />
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {filtered.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="p-8 text-center text-[var(--ink-mute)]"
-                      >
-                        No products match.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    );
+                  },
+                },
+              ] as ColumnDef<Product, unknown>[]}
+              selectable
+              onDeleteSelected={(rows) => rows.forEach((p) => deleteProduct.mutate(p.id))}
+              emptyMessage="No products match your filters."
+              isLoading={isLoading}
+            />
           )}
         </div>
       )}
