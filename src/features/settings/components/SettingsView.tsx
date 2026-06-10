@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
   User, Bell, Link, Crown, Shield, Activity,
-  Upload, Check, Zap, Cloud, Lock, Sparkles,
+  Upload, Check, Zap, Cloud, Lock, Star,
   Users, Building2, Loader2, Bot, Store, Trash2,
 } from 'lucide-react';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
@@ -521,7 +521,7 @@ function AccessSection() {
 }
 
 // ──────────────────── System Section ────────────────────
-const SYSTEM_ICONS = [Sparkles, Activity, Lock, Cloud] as const;
+const SYSTEM_ICONS = [Star, Activity, Lock, Cloud] as const;
 
 function SystemSection() {
   return (

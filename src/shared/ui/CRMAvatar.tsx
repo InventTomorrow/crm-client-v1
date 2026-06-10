@@ -8,7 +8,30 @@ interface CRMAvatarProps {
   ring?: boolean;
 }
 
+/** Returns true when the string has no real letter characters (phone numbers, empty, etc.) */
+function isNameless(name: string): boolean {
+  return !name || name === '?' || !/[^\d\s+\-().]/u.test(name);
+}
+
+function DefaultSilhouette({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ borderRadius: '50%', flexShrink: 0, display: 'block' }}
+    >
+      <circle cx="50" cy="50" r="50" fill="#F0F2F5" />
+      <circle cx="50" cy="37" r="18" fill="#B4B9BE" />
+      <path d="M 7 92 C 7 64 93 64 93 92 Z" fill="#B4B9BE" />
+    </svg>
+  );
+}
+
 export function CRMAvatar({ name = '?', src, size = 40, ring = false }: CRMAvatarProps) {
+  const showSilhouette = !src && isNameless(name);
+
   const inner = src ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -23,6 +46,8 @@ export function CRMAvatar({ name = '?', src, size = 40, ring = false }: CRMAvata
         flexShrink: 0,
       }}
     />
+  ) : showSilhouette ? (
+    <DefaultSilhouette size={size} />
   ) : (
     <div
       className="avatar"

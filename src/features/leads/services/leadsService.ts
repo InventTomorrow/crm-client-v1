@@ -30,6 +30,12 @@ export const fetchLeads = async (): Promise<Lead[]> => {
   return response.data.data.data.map(mapBackendToFrontend);
 };
 
+export const searchLeads = async (q: string): Promise<Lead[]> => {
+  if (!q.trim()) return [];
+  const response = await apiClient.get('/leads', { params: { search: q.trim(), limit: 6 } });
+  return response.data.data.data.map(mapBackendToFrontend);
+};
+
 export const fetchLeadsCount = async (): Promise<number> => {
   const response = await apiClient.get('/leads?limit=1');
   return response.data.data.meta?.total ?? 0;

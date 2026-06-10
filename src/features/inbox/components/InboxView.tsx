@@ -5,6 +5,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
 import { Skeleton, Spinner } from "@/shared/ui/Motion";
@@ -21,32 +25,36 @@ import {
   FileText,
   Flame,
   Image,
+  Link2,
   Loader2,
   Megaphone,
   Mic,
   MoreVertical,
+  Palette,
   Paperclip,
   Pause,
   Phone,
   Play,
-  Search,
+  Plus,
   Send,
   ShoppingCart,
-  Sparkles,
+  Smile,
+  Star,
   Trash2,
   User,
   Video,
   X,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
-import { OrderForm } from "../../orders/components/OrderForm";
-import { useCreateOrder } from "../../orders/hooks/useOrders";
 import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
+import { OrderForm } from "../../orders/components/OrderForm";
+import { useCreateOrder } from "../../orders/hooks/useOrders";
 import {
   filterConversations,
   useAgentTyping,
@@ -72,10 +80,32 @@ import type {
   MobilePane,
 } from "../types";
 
-const FILTERS: { id: ConversationFilter; label: string }[] = [
+
+const CHAT_BG_PRESETS = [
+  { id: "default", label: "Default", value: "" },
+  { id: "wa-classic", label: "Classic", value: "#ECE5DD" },
+  { id: "wa-dark", label: "Night", value: "#0B141A" },
+  { id: "teal", label: "Teal", value: "linear-gradient(160deg,#075E54,#128C7E)" },
+  { id: "mint", label: "Mint", value: "linear-gradient(160deg,#d4f1c5,#a8e6b0)" },
+  { id: "slate", label: "Slate", value: "#1e293b" },
+  { id: "blush", label: "Blush", value: "linear-gradient(160deg,#fce4ec,#f8bbd0)" },
+  { id: "ocean", label: "Ocean", value: "linear-gradient(160deg,#e3f2fd,#bbdefb)" },
+];
+
+const BUILT_IN_TABS = [
   { id: "all", label: "All" },
+  { id: "unread", label: "Unread" },
+  { id: "favorites", label: "Favorites" },
   { id: "escalated", label: "Needs Attention" },
 ];
+
+const EMOJI_LIST = [
+  "😊","😂","❤️","👍","🙏","😍","😭","🤗","👋","🎉",
+  "🔥","💯","✅","🙌","😎","🤝","💪","🚀","👀","📦",
+  "💬","📞","🌟","⭐","🎁","💰","😁","🥰","😅","🤔",
+];
+
+interface CustomTab { id: string; label: string; }
 
 // ─── Skeleton loaders ─────────────────────────────────────────────────────────
 
@@ -490,7 +520,9 @@ function ConversationRow({
           <span
             className={cn(
               "text-[12.5px] truncate flex-1",
-              unread ? "text-[var(--ink)] font-medium" : "text-[var(--ink-soft)]",
+              unread
+                ? "text-[var(--ink)] font-medium"
+                : "text-[var(--ink-soft)]",
             )}
           >
             {lastMsg?.senderType === "AI" && (
@@ -518,15 +550,40 @@ export function InboxView() {
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<ConversationFilter>("all");
-  const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
-    null,
-  );
   const [mobPane, setMobPane] = useState<MobilePane>("list");
-  const [showProfile, setShowProfile] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
   const [showBroadcast, setShowBroadcast] = useState(false);
+  const [bgPickerOpen, setBgPickerOpen] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [chatBg, setChatBg] = useState<string>(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("asaanrabta_chat_bg") ?? "";
+    return "";
+  });
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("asaanrabta_favorites");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    }
+    return new Set();
+  });
+  const [customTabs, setCustomTabs] = useState<CustomTab[]>(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("asaanrabta_custom_tabs");
+      return s ? JSON.parse(s) : [];
+    }
+    return [];
+  });
+  const [addingTab, setAddingTab] = useState(false);
+  const [newTabLabel, setNewTabLabel] = useState("");
+  const [tabAssignments, setTabAssignments] = useState<Record<string, string[]>>(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("asaanrabta_tab_assignments");
+      return s ? JSON.parse(s) : {};
+    }
+    return {};
+  });
   const [orderFormOpen, setOrderFormOpen] = useState(false);
   const createOrder = useCreateOrder();
   const [pendingFile, setPendingFile] = useState<{
@@ -542,7 +599,6 @@ export function InboxView() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingCancelledRef = useRef(false); // true → discard on stop, don't send
-  const orderTriggeredMsgIds = useRef<Set<string>>(new Set());
 
   const {
     data: conversationsData,
@@ -584,18 +640,58 @@ export function InboxView() {
   const { onType: notifyAgentTyping, stop: stopAgentTyping } =
     useAgentTyping(selectedId);
 
-  const searchLower = search.trim().toLowerCase();
-  const filtered = filterConversations(conversations, filter).filter((c) => {
-    if (!searchLower) return true;
-    const name = c.lead.name?.toLowerCase() ?? "";
-    const phone = c.lead.phone?.toLowerCase() ?? "";
-    return name.includes(searchLower) || phone.includes(searchLower);
-  });
+  const filtered = filterConversations(conversations, filter, favorites, tabAssignments);
+
+  const assignToTab = (convId: string, tabId: string) => {
+    setTabAssignments((prev) => {
+      const ids = prev[tabId] ?? [];
+      if (ids.includes(convId)) return prev;
+      const next = { ...prev, [tabId]: [...ids, convId] };
+      localStorage.setItem("asaanrabta_tab_assignments", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeFromTab = (convId: string, tabId: string) => {
+    setTabAssignments((prev) => {
+      const next = { ...prev, [tabId]: (prev[tabId] ?? []).filter((id) => id !== convId) };
+      localStorage.setItem("asaanrabta_tab_assignments", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("asaanrabta_favorites", JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const createCustomTab = () => {
+    if (!newTabLabel.trim()) return;
+    const tab: CustomTab = { id: `custom_${Date.now()}`, label: newTabLabel.trim() };
+    const updated = [...customTabs, tab];
+    setCustomTabs(updated);
+    localStorage.setItem("asaanrabta_custom_tabs", JSON.stringify(updated));
+    setFilter(tab.id);
+    setNewTabLabel("");
+    setAddingTab(false);
+  };
+
+  const removeCustomTab = (id: string) => {
+    const updated = customTabs.filter((t) => t.id !== id);
+    setCustomTabs(updated);
+    localStorage.setItem("asaanrabta_custom_tabs", JSON.stringify(updated));
+    if (filter === id) setFilter("all");
+  };
+
+  const unreadCount = conversations.filter((c) => c.unreadCount > 0).length;
   // Fall back to `detail` so the right panel stays usable when the list is
   // momentarily empty (e.g. during a transient WA disconnect + refetch cycle).
-  const activeConv =
-    (conversations.find((c) => c.id === selectedId) ??
-      detail) as ConversationListItem | undefined;
+  const activeConv = (conversations.find((c) => c.id === selectedId) ??
+    detail) as ConversationListItem | undefined;
 
   // Clear the unread badge when an unread conversation is opened.
   const markReadMut = useMarkConversationRead();
@@ -680,24 +776,7 @@ export function InboxView() {
   // Reset first-load flag when conversation changes
   useEffect(() => {
     isFirstLoad.current = true;
-    orderTriggeredMsgIds.current.clear();
   }, [selectedId]);
-
-  // Auto-open the Order form when the customer expresses order intent.
-  const ORDER_INTENT_RE =
-    /\b(order|buy|purchase|i want this|i('ll| will) take|want to (order|buy|get|purchase)|how.*order|can i (order|buy)|place.*order)\b/i;
-  useEffect(() => {
-    if (!selectedId || orderFormOpen) return;
-    const last = [...messages].reverse().find(
-      (m) => m.senderType === "CUSTOMER" && !m.isDraft,
-    );
-    if (!last || orderTriggeredMsgIds.current.has(last.id)) return;
-    if (ORDER_INTENT_RE.test(last.content ?? "")) {
-      orderTriggeredMsgIds.current.add(last.id);
-      setOrderFormOpen(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, selectedId]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedId) return;
@@ -828,42 +907,86 @@ export function InboxView() {
       <div
         className={`card inbox-list w-[320px] flex-shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
       >
-        <div className="px-3.5 pt-3 pb-2">
-          <div className="flex gap-2 mb-2">
-            <div className="relative flex-1">
-              <Search
-                size={13}
-                className="absolute left-[11px] top-[11px] text-[var(--ink-mute)]"
-              />
-              <input
-                className="input pl-8 w-full"
-                placeholder="Search by name or phone…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+        <div className="px-3.5 pt-3 pb-2 space-y-2.5">
+          <button
+            onClick={() => setShowBroadcast(true)}
+            className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold"
+          >
+            <Megaphone size={14} />+ New Broadcast
+          </button>
+          {/* Filter tabs row */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden">
+              {BUILT_IN_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilter(tab.id)}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap flex-shrink-0 transition-colors",
+                    filter === tab.id ? "btn-grad" : "btn-ghost",
+                  )}
+                >
+                  {tab.label}
+                  {tab.id === "unread" && unreadCount > 0 && (
+                    <span className={cn(
+                      "text-[10px] font-bold min-w-[14px] h-[14px] rounded-full px-0.5 inline-flex items-center justify-center",
+                      filter === tab.id ? "bg-white/30 text-white" : "bg-[var(--accent)] text-white",
+                    )}>
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+              {customTabs.map((tab) => (
+                <div key={tab.id} className="flex items-center gap-0.5 group flex-shrink-0">
+                  <button
+                    onClick={() => setFilter(tab.id)}
+                    className={cn(
+                      "rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap transition-colors",
+                      filter === tab.id ? "btn-grad" : "btn-ghost",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                  <button
+                    onClick={() => removeCustomTab(tab.id)}
+                    className="hidden group-hover:flex w-[16px] h-[16px] items-center justify-center rounded-full text-[var(--ink-mute)] hover:text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+                    title="Remove tab"
+                  >
+                    <X size={9} />
+                  </button>
+                </div>
+              ))}
+              {addingTab ? (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <input
+                    autoFocus
+                    value={newTabLabel}
+                    onChange={(e) => setNewTabLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") createCustomTab();
+                      if (e.key === "Escape") { setAddingTab(false); setNewTabLabel(""); }
+                    }}
+                    className="input text-[11.5px] h-[26px] py-0 px-2 w-24"
+                    placeholder="Tab name…"
+                  />
+                  <button onClick={createCustomTab} className="btn btn-grad p-[3px] h-auto">
+                    <Check size={11} />
+                  </button>
+                  <button onClick={() => { setAddingTab(false); setNewTabLabel(""); }} className="btn btn-ghost p-[3px] h-auto">
+                    <X size={11} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAddingTab(true)}
+                  className="btn btn-ghost text-[11px] gap-0.5 text-[var(--ink-mute)] whitespace-nowrap flex-shrink-0 py-[4px] px-[8px]"
+                >
+                  <Plus size={11} /> Tab
+                </button>
+              )}
             </div>
-            <button
-              className="btn btn-outline p-2 h-auto text-[var(--ink-soft)] hover:text-[var(--accent)]"
-              onClick={() => setShowBroadcast(true)}
-              title="Broadcast Announcement"
-            >
-              <Megaphone size={16} />
-            </button>
-            <WAStatusBadge showLabel={false} className="self-center" />
-          </div>
-          <div className="flex gap-1.5">
-            {FILTERS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={cn(
-                  "btn rounded-full text-[11.5px] h-auto py-1 px-[10px] whitespace-nowrap",
-                  filter === f.id ? "btn-grad" : "btn-ghost",
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+            <WAStatusBadge showLabel={false} className="self-center flex-shrink-0" />
           </div>
         </div>
         <div className="h-px bg-[var(--line)]" />
@@ -884,6 +1007,22 @@ export function InboxView() {
                     <p className="text-[12.5px] font-medium">WhatsApp disconnected</p>
                     <p className="text-[11px] mt-0.5 opacity-70">
                       Conversations will reappear once reconnected.
+                    </p>
+                  </>
+                ) : filter === "unread" ? (
+                  <p className="text-[12.5px]">All caught up — no unread messages</p>
+                ) : filter === "favorites" ? (
+                  <>
+                    <p className="text-[12.5px] font-medium">No favorites yet</p>
+                    <p className="text-[11px] mt-0.5 opacity-70">
+                      Open a chat → tap ⋮ → Add to Favorites
+                    </p>
+                  </>
+                ) : customTabs.some((t) => t.id === filter) ? (
+                  <>
+                    <p className="text-[12.5px] font-medium">This tab is empty</p>
+                    <p className="text-[11px] mt-0.5 opacity-70">
+                      Open a chat → tap ⋮ → Move to Tab
                     </p>
                   </>
                 ) : (
@@ -914,7 +1053,7 @@ export function InboxView() {
 
       {/* ── Chat Thread ── */}
       <div
-        className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 ${mobPane === "chat" ? "mob-on" : ""}`}
+        className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 relative ${mobPane === "chat" ? "mob-on" : ""}`}
       >
         {!selectedId ? (
           <div className="flex-1 flex flex-col items-center justify-center text-[var(--ink-mute)]">
@@ -924,118 +1063,124 @@ export function InboxView() {
         ) : (
           <>
             {/* Chat header */}
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-[var(--line)] bg-[var(--surface)] flex-shrink-0">
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--line)] bg-[var(--surface)] flex-shrink-0">
               <button
                 onClick={() => setMobPane("list")}
                 className="btn btn-ghost inbox-back-mobile p-1.5"
               >
                 <ChevronLeft size={18} />
               </button>
+
+              {/* Lead info — click to toggle profile panel */}
               <button
                 onClick={() => setShowProfile((v) => !v)}
-                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer p-1 -m-1 rounded-lg text-left border-none bg-transparent"
+                className="flex items-center gap-2.5 flex-1 min-w-0 rounded-lg p-1 text-left border-none bg-transparent hover:bg-[var(--surface-2)] transition-colors"
               >
                 <CRMAvatar name={displayName} size={34} />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="text-[14px] truncate">{displayName}</h4>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <h4 className="text-[14px] font-semibold truncate text-[var(--ink)]">{displayName}</h4>
                     {activeConv?.escalationStatus === "ESCALATED" && (
-                      <span className="flex-shrink-0">
-                        <Flame size={13} className="text-[#EF4444]" />
-                      </span>
+                      <Flame size={12} className="text-[#EF4444] flex-shrink-0" />
                     )}
                   </div>
-                  <div className="text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1.5">
-                    <Phone size={10} /> {activeConv?.lead.phone ?? "—"}
+                  <div className="text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1">
+                    <Phone size={9} className="flex-shrink-0" />
+                    <span className="truncate">{activeConv?.lead.phone ?? "—"}</span>
                     {activeConv?.escalationStatus === "RESOLVED" && (
-                      <span className="text-[#15803D] font-medium">· Done</span>
+                      <span className="text-[#15803D] font-medium flex-shrink-0">· Done</span>
                     )}
                   </div>
                 </div>
               </button>
 
-              {/* Action buttons */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {/* Create order */}
-                <button
-                  onClick={() => setOrderFormOpen(true)}
-                  title="Create an order for this customer"
-                  className="btn btn-outline py-[5px] px-[10px] text-[11.5px] gap-1.5"
-                >
-                  <ShoppingCart size={12} />
-                  <span className="hide-mobile">Order</span>
-                </button>
+              {/* AI toggle pill */}
+              <button
+                onClick={() => selectedId && aiModeMut.mutate()}
+                disabled={aiModeMut.isPending}
+                title={activeConv?.aiEnabled ? "AI is replying — click to take over" : "AI off — click to enable"}
+                className={cn(
+                  "flex-shrink-0 flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full",
+                  activeConv?.aiEnabled
+                    ? "bg-[#DCFCE7] text-[#15803D]"
+                    : "bg-[var(--surface-2)] text-[var(--ink-mute)] border border-[var(--line)]",
+                )}
+              >
+                {aiModeMut.isPending
+                  ? <Loader2 size={11} className="animate-spin" />
+                  : <Zap size={11} />
+                }
+                <span className="hide-mobile">{activeConv?.aiEnabled ? "AI active" : "AI off"}</span>
+              </button>
 
-                {/* Radio-style status togglers */}
-                <div className="flex items-center rounded-lg border border-[var(--line)] overflow-hidden divide-x divide-[var(--line)] flex-shrink-0">
-                  {/* AI toggle */}
-                  <button
-                    onClick={() => selectedId && aiModeMut.mutate()}
-                    disabled={aiModeMut.isPending}
-                    title={activeConv?.aiEnabled ? "AI On — click to take over manually" : "AI Off — click to let AI reply"}
-                    className={cn(
-                      "flex items-center gap-1.5 px-[10px] py-[5px] text-[11.5px] transition-colors",
-                      activeConv?.aiEnabled
-                        ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium"
-                        : "bg-[var(--surface)] text-[var(--ink-mute)] hover:bg-[var(--surface-2)]",
-                    )}
-                  >
-                    {aiModeMut.isPending ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={12} />
-                    )}
-                    <span className="hide-mobile">AI</span>
+              {/* Three-dot menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-1.5 flex-shrink-0 text-[var(--ink-mute)] rounded-lg">
+                    <MoreVertical size={16} />
                   </button>
-
-                  {/* Done toggle */}
-                  <button
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setOrderFormOpen(true)}>
+                    <ShoppingCart size={13} className="mr-2" /> Create Order
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => selectedId && toggleFavorite(selectedId)}>
+                    <Star size={13} className={cn("mr-2", selectedId && favorites.has(selectedId) ? "text-[#CA8A04]" : "")} />
+                    {selectedId && favorites.has(selectedId) ? "Remove from Favorites" : "Add to Favorites"}
+                  </DropdownMenuItem>
+                  {customTabs.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Plus size={13} className="mr-2" /> Move to Tab
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-44">
+                        {customTabs.map((tab) => {
+                          const assigned = selectedId ? (tabAssignments[tab.id] ?? []).includes(selectedId) : false;
+                          return (
+                            <DropdownMenuItem
+                              key={tab.id}
+                              onClick={() => {
+                                if (!selectedId) return;
+                                if (assigned) removeFromTab(selectedId, tab.id);
+                                else assignToTab(selectedId, tab.id);
+                              }}
+                            >
+                              <span className="flex-1">{tab.label}</span>
+                              {assigned && <Check size={11} className="text-[var(--accent)]" />}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
                     onClick={() => selectedId && resolveMut.mutate(selectedId)}
                     disabled={resolveMut.isPending}
-                    title={activeConv?.escalationStatus === "RESOLVED" ? "Already resolved" : "Mark as done"}
-                    className={cn(
-                      "flex items-center gap-1.5 px-[10px] py-[5px] text-[11.5px] transition-colors",
-                      activeConv?.escalationStatus === "RESOLVED"
-                        ? "bg-[rgba(21,128,61,0.1)] text-[#15803D] font-medium"
-                        : "bg-[var(--surface)] text-[var(--ink-mute)] hover:bg-[var(--surface-2)]",
-                    )}
                   >
-                    {resolveMut.isPending ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <CheckCheck size={12} />
-                    )}
-                    <span className="hide-mobile">Done</span>
-                  </button>
-
-                  {/* Flag toggle */}
-                  <button
+                    <CheckCheck size={13} className="mr-2 text-[#15803D]" />
+                    {activeConv?.escalationStatus === "RESOLVED" ? "Already resolved" : "Mark as Done"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => selectedId && escalateMut.mutate(selectedId)}
                     disabled={escalateMut.isPending}
-                    title={activeConv?.escalationStatus === "ESCALATED" ? "Already flagged" : "Flag for attention"}
-                    className={cn(
-                      "flex items-center gap-1.5 px-[10px] py-[5px] text-[11.5px] transition-colors",
-                      activeConv?.escalationStatus === "ESCALATED"
-                        ? "bg-[rgba(239,68,68,0.1)] text-[#EF4444] font-medium"
-                        : "bg-[var(--surface)] text-[var(--ink-mute)] hover:bg-[var(--surface-2)]",
-                    )}
                   >
-                    {escalateMut.isPending ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Flame size={12} />
-                    )}
-                    <span className="hide-mobile">Flag</span>
-                  </button>
-                </div>
-              </div>
+                    <Flame size={13} className="mr-2 text-[#EF4444]" />
+                    {activeConv?.escalationStatus === "ESCALATED" ? "Already flagged" : "Flag for attention"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setBgPickerOpen((v) => !v)}>
+                    <Palette size={13} className="mr-2" /> Chat wallpaper
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Messages */}
             <div
               ref={scrollRef}
-              className="scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px]"
-              style={{ overscrollBehavior: "contain" }}
+              className="scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px] relative"
+              style={{ overscrollBehavior: "contain", ...(chatBg ? { background: chatBg } : {}) }}
             >
               {messagesLoading && <MessageSkeleton />}
               <div
@@ -1090,7 +1235,7 @@ export function InboxView() {
                       <div className="flex items-center gap-1 px-1 mb-1">
                         {isAI && (
                           <span className="flex items-center gap-1 text-[10.5px] text-[var(--accent)] font-medium">
-                            <Sparkles size={10} /> AI Agent
+                            <Zap size={10} /> AsaanRabta AI
                           </span>
                         )}
                         {isAgent && (
@@ -1255,7 +1400,10 @@ export function InboxView() {
                             <span className="text-[13px] underline underline-offset-2 truncate max-w-[160px]">
                               {msg.content || "Document"}
                             </span>
-                            <Download size={14} className="flex-shrink-0 opacity-70" />
+                            <Download
+                              size={14}
+                              className="flex-shrink-0 opacity-70"
+                            />
                           </a>
                         ) : (
                           <div
@@ -1336,6 +1484,45 @@ export function InboxView() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Wallpaper picker overlay */}
+            {bgPickerOpen && (
+              <div className="absolute bottom-20 right-3 z-40 card p-4 w-[248px] shadow-xl border border-[var(--line)]">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[13px] font-semibold text-[var(--ink)]">Chat Wallpaper</span>
+                  <button onClick={() => setBgPickerOpen(false)} className="btn btn-ghost p-1 text-[var(--ink-mute)]">
+                    <X size={13} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {CHAT_BG_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      title={p.label}
+                      onClick={() => {
+                        setChatBg(p.value);
+                        localStorage.setItem("asaanrabta_chat_bg", p.value);
+                        setBgPickerOpen(false);
+                      }}
+                      className={cn(
+                        "h-12 w-full rounded-lg border-2 relative transition-all",
+                        chatBg === p.value
+                          ? "border-[var(--accent)] shadow-[0_0_0_2px_var(--accent-soft)]"
+                          : "border-[var(--line)] hover:border-[var(--ink-mute)]",
+                      )}
+                      style={{ background: p.value || "var(--surface)" }}
+                    >
+                      {chatBg === p.value && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <Check size={14} style={{ filter: "drop-shadow(0 0 3px white)" }} className="text-[var(--accent)]" />
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10.5px] text-[var(--ink-mute)] mt-2.5 text-center">Saved automatically</p>
+              </div>
+            )}
 
             {/* Input area */}
             <div className="flex-shrink-0 border-t border-[var(--line)]">
@@ -1440,19 +1627,60 @@ export function InboxView() {
                 </div>
               )}
 
-              {/* Text input + toolbar */}
-              <div className="p-2.5">
+              {/* Single-row input */}
+              <div className="px-2 py-2 relative">
                 {!waConnected && (
                   <Link
                     href="/channels"
                     className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E] hover:opacity-90"
                   >
                     <AlertTriangle size={12} className="flex-shrink-0" />
-                    WhatsApp isn’t connected — reconnect in Channels to send
-                    messages.
+                    WhatsApp isn’t connected — reconnect in Channels to send messages.
                   </Link>
                 )}
-                <div className="flex items-end gap-1 p-1 rounded-xl border border-[var(--line)] bg-[var(--surface-2)]">
+                <div className="flex items-end gap-1.5">
+                  {/* + attachment dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        disabled={!waConnected}
+                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-40 mb-0.5"
+                        title="Attach"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="start" className="w-44">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          fileInputRef.current?.setAttribute("accept", "image/*");
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <Image size={14} className="mr-2" /> Photo
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          fileInputRef.current?.setAttribute("accept", ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv");
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <Paperclip size={14} className="mr-2" /> Document
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled>
+                        <Video size={14} className="mr-2 opacity-40" />
+                        <span className="opacity-40">Video</span>
+                        <span className="ml-auto text-[10px] text-[var(--ink-mute)]">Soon</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled>
+                        <Link2 size={14} className="mr-2 opacity-40" />
+                        <span className="opacity-40">Link</span>
+                        <span className="ml-auto text-[10px] text-[var(--ink-mute)]">Soon</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Textarea */}
                   <textarea
                     rows={1}
                     value={draft}
@@ -1472,99 +1700,69 @@ export function InboxView() {
                       !waConnected
                         ? "Connect WhatsApp to send messages…"
                         : editingMessageId
-                          ? "Edit your message… (Enter to update)"
-                          : "Type a reply… (Enter to send)"
+                          ? "Edit your message…"
+                          : "Type a message…"
                     }
-                    className="flex-1 resize-none border-none bg-transparent outline-none p-2 min-h-[36px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)] disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex-1 resize-none rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] outline-none px-3.5 py-2 min-h-[38px] max-h-[120px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)] disabled:opacity-60 disabled:cursor-not-allowed overflow-y-auto"
                   />
+
+                  {/* Emoji */}
                   <button
-                    className="btn btn-grad py-2 px-[14px] flex-shrink-0"
+                    onClick={() => setEmojiPickerOpen((v) => !v)}
+                    disabled={!waConnected}
+                    className="flex-shrink-0 w-8 h-8 rounded-full text-[var(--ink-mute)] flex items-center justify-center disabled:opacity-40 mb-0.5"
+                    title="Emoji"
+                  >
+                    <Smile size={18} />
+                  </button>
+
+                  {/* Mic */}
+                  <button
+                    onClick={startRecording}
+                    disabled={!waConnected}
+                    className="flex-shrink-0 w-8 h-8 rounded-full text-[var(--ink-mute)] flex items-center justify-center disabled:opacity-40 mb-0.5"
+                    title="Voice message"
+                  >
+                    <Mic size={18} />
+                  </button>
+
+                  {/* Send */}
+                  <button
                     onClick={handleSend}
                     disabled={
-                      !waConnected ||
-                      !draft.trim() ||
-                      (editingMessageId
-                        ? editMut.isPending
-                        : sendReplyMut.isPending)
+                      !waConnected || !draft.trim() ||
+                      (editingMessageId ? editMut.isPending : sendReplyMut.isPending)
                     }
+                    className="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-transform active:scale-95"
                   >
-                    {editingMessageId ? (
-                      editMut.isPending ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <span className="text-[12.5px] font-semibold">
-                          Update
-                        </span>
-                      )
-                    ) : sendReplyMut.isPending ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <Send size={13} />
-                    )}
+                    {(editingMessageId ? editMut.isPending : sendReplyMut.isPending)
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : editingMessageId
+                        ? <Check size={14} />
+                        : <Send size={14} className="ml-0.5" />
+                    }
                   </button>
                 </div>
 
-                {/* Attachment toolbar */}
-                <div className="flex items-center gap-1 mt-1.5 px-0.5">
-                  <span className="text-[10.5px] text-[var(--ink-mute)] flex items-center gap-1 mr-1">
-                    <User size={10} /> Human reply
-                  </span>
-                  <div className="ml-auto flex items-center gap-0.5">
-                    {/* Image */}
-                    <button
-                      title="Send image"
-                      disabled={!waConnected}
-                      onClick={() => {
-                        fileInputRef.current?.setAttribute("accept", "image/*");
-                        fileInputRef.current?.click();
-                      }}
-                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Image size={15} />
-                    </button>
-                    {/* Video */}
-                    <button
-                      title="Send video"
-                      disabled={!waConnected}
-                      onClick={() => {
-                        fileInputRef.current?.setAttribute("accept", "video/*");
-                        fileInputRef.current?.click();
-                      }}
-                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Video size={15} />
-                    </button>
-                    {/* Document */}
-                    <button
-                      title="Send document"
-                      disabled={!waConnected}
-                      onClick={() => {
-                        fileInputRef.current?.setAttribute(
-                          "accept",
-                          ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv",
-                        );
-                        fileInputRef.current?.click();
-                      }}
-                      className="btn btn-ghost p-1.5 text-[var(--ink-mute)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Paperclip size={15} />
-                    </button>
-                    {/* Voice — starts recording; the recording bar owns stop/cancel/send */}
-                    <button
-                      title="Record voice message"
-                      onClick={startRecording}
-                      disabled={isRecording || !waConnected}
-                      className={cn(
-                        "btn btn-ghost p-1.5 disabled:opacity-50 disabled:cursor-not-allowed",
-                        isRecording
-                          ? "text-[#EF4444]"
-                          : "text-[var(--ink-mute)] hover:text-[var(--accent)]",
-                      )}
-                    >
-                      <Mic size={15} />
-                    </button>
+                {/* Emoji picker popup */}
+                {emojiPickerOpen && (
+                  <div className="absolute bottom-full right-2 mb-2 z-50 card p-2 shadow-xl border border-[var(--line)] w-[264px]">
+                    <div className="grid grid-cols-8 gap-0.5">
+                      {EMOJI_LIST.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            setDraft((d) => d + emoji);
+                            setEmojiPickerOpen(false);
+                          }}
+                          className="flex items-center justify-center h-8 w-8 rounded-lg hover:bg-[var(--surface-2)] text-[18px] transition-colors"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <input
                   ref={fileInputRef}
@@ -1670,7 +1868,9 @@ export function InboxView() {
           presetConversationId={activeConv.id}
           isSubmitting={createOrder.isPending}
           onSubmit={(values) =>
-            createOrder.mutate(values, { onSuccess: () => setOrderFormOpen(false) })
+            createOrder.mutate(values, {
+              onSuccess: () => setOrderFormOpen(false),
+            })
           }
         />
       )}

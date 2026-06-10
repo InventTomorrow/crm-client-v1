@@ -35,10 +35,10 @@ import {
   Plus,
   Search,
   Shield,
-  Sparkles,
   Trash2,
   Upload,
   X,
+  Zap,
 } from "lucide-react";
 import { SearchableSelect } from "../../orders/components/SearchableSelect";
 import { useEffect, useRef, useState } from "react";
@@ -1017,7 +1017,7 @@ export function InventoryView() {
               placeholder="https://daraz.pk/products/lawn-suit-3-piece-..."
             />
             <button className="btn btn-grad">
-              <Sparkles size={13} /> Extract
+              <Zap size={13} /> Extract
             </button>
           </div>
           <div className="card flex gap-3 items-center p-3">
