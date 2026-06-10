@@ -42,7 +42,24 @@ export function useMarkConversationRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => markConversationRead(id),
-    onSuccess: () => {
+    onMutate: (id: string) => {
+      // Optimistically zero-out unreadCount so the unread tab updates instantly.
+      queryClient.setQueriesData(
+        { queryKey: ['conversations', 'infinite'] },
+        (old: any) => {
+          if (!old?.pages) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: ConversationListItem[]) =>
+              page.map((c: ConversationListItem) =>
+                c.id === id ? { ...c, unreadCount: 0 } : c,
+              ),
+            ),
+          };
+        },
+      );
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
@@ -205,8 +222,17 @@ export function useResolve() {
 export function filterConversations(
   conversations: ConversationListItem[],
   filter: ConversationFilter,
+  favorites?: Set<string>,
+  tabAssignments?: Record<string, string[]>,
 ): ConversationListItem[] {
   if (filter === 'escalated') return conversations.filter((c) => c.escalationStatus === 'ESCALATED');
+  if (filter === 'unread') return conversations.filter((c) => c.unreadCount > 0);
+  if (filter === 'favorites') return conversations.filter((c) => favorites?.has(c.id) ?? false);
+  // Custom tab: only show assigned conversations
+  if (tabAssignments && filter in tabAssignments) {
+    const ids = tabAssignments[filter];
+    return conversations.filter((c) => ids.includes(c.id));
+  }
   return conversations;
 }
 

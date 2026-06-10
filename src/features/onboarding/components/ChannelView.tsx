@@ -18,8 +18,6 @@ import { useEffect, useState } from "react";
 import { useOnboardingStatus, useSkipOnboarding } from "../hooks/useOnboarding";
 import { OnboardingShell } from "./OnboardingShell";
 
-// ── Channel cards definition ────────────────────────────────────────────────
-
 // ── QR panel (inline for onboarding, not a modal) ───────────────────────────
 
 function QRFrame({ src }: { src: string }) {

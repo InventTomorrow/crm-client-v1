@@ -22,6 +22,26 @@
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
 
+  /* ── WhatsApp brand palette ───────────────────────────────────────────────
+     Named tokens for use in Tailwind utilities:
+       text-wa-teal-dark   bg-wa-teal-dark   border-wa-teal-dark
+       text-wa-teal        bg-wa-teal        border-wa-teal
+       text-wa-green       bg-wa-green       border-wa-green
+       text-wa-tea         bg-wa-tea         border-wa-tea
+       text-wa-blue        bg-wa-blue        border-wa-blue
+       text-wa-gray        bg-wa-gray        border-wa-gray
+  */
+  --color-wa-teal-dark: var(--wa-teal-dark);
+  --color-wa-teal:      var(--wa-teal);
+  --color-wa-green:     var(--wa-green);
+  --color-wa-tea:       var(--wa-tea);
+  --color-wa-blue:      var(--wa-blue);
+  --color-wa-gray:      var(--wa-gray);
+  --color-wa-dark-bg:   var(--wa-dark-bg);
+  --color-wa-dark-surface: var(--wa-dark-surface);
+  --color-wa-dark-sent: var(--wa-dark-sent);
+  --color-wa-dark-ink:  var(--wa-dark-ink);
+
   /* Shadows */
   --shadow-1: var(--shadow-1);
   --shadow-2: var(--shadow-2);
@@ -30,20 +50,34 @@
 }
 
 :root {
-  --accent: #7C3AED;
-  --accent-2: #4FC3F7;
-  --accent-soft: rgba(124, 58, 237, 0.08);
-  --grad-h: linear-gradient(90deg, #4FC3F7 0%, #7C3AED 100%);
-  --grad-v: linear-gradient(180deg, #4FC3F7 0%, #7C3AED 100%);
+  /* ── WhatsApp brand palette ───────────────────────────────────────────── */
+  /* oklch() values for consistent gamut mapping                            */
+  --wa-teal-dark: oklch(0.369 0.082 188);   /* #075E54 */
+  --wa-teal:      oklch(0.572 0.092 188);   /* #128C7E */
+  --wa-green:     oklch(0.782 0.164 154);   /* #25D366 */
+  --wa-tea:       oklch(0.963 0.058 140);   /* #DCF8C6 */
+  --wa-blue:      oklch(0.731 0.109 216);   /* #34B7F1 */
+  --wa-gray:      oklch(0.925 0.013 68);    /* #ECE5DD */
+  --wa-dark-bg:      oklch(0.152 0.014 243); /* #0B141A */
+  --wa-dark-surface: oklch(0.228 0.017 237); /* #1F2C34 */
+  --wa-dark-sent:    oklch(0.345 0.083 186); /* #005C4B */
+  --wa-dark-ink:     oklch(0.949 0.009 234); /* #E9EDEF */
 
-  --bg:       #F6F7FB;
-  --surface:  #FFFFFF;
-  --surface-2:#FBFBFD;
-  --ink:      #0F172A;
-  --ink-soft: #475569;
-  --ink-mute: #94A3B8;
-  --line:     #E5E7EB;
-  --line-soft:#EEF0F3;
+  /* ── Accent remapped to WhatsApp teal ─────────────────────────────────── */
+  --accent:      oklch(0.572 0.092 188);    /* #128C7E */
+  --accent-2:    oklch(0.782 0.164 154);    /* #25D366 */
+  --accent-soft: oklch(0.572 0.092 188 / 0.10);
+  --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.369 0.082 188) 100%);
+  --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.369 0.082 188) 100%);
+
+  --bg:       oklch(0.964 0.006 248);       /* #F0F2F5 */
+  --surface:  oklch(1 0 0);                 /* #FFFFFF */
+  --surface-2:oklch(0.978 0.003 248);       /* #F7F8FA */
+  --ink:      oklch(0.176 0.018 243);       /* #111B21 */
+  --ink-soft: oklch(0.356 0.022 236);       /* #3B4A54 */
+  --ink-mute: oklch(0.618 0.018 229);       /* #8696A0 */
+  --line:     oklch(0.949 0.009 234);       /* #E9EDEF */
+  --line-soft:oklch(0.964 0.006 248);       /* #F0F2F5 */
 
   --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-2: 0 4px 14px rgba(15, 23, 42, 0.06);
@@ -90,21 +124,26 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* Dark Mode Overrides */
+/* Dark Mode Overrides — WhatsApp dark palette */
 html.dark {
-  --bg:       #0B0F19;
-  --surface:  #131826;
-  --surface-2:#171C2B;
-  --ink:      #E2E8F0;
-  --ink-soft: #94A3B8;
-  --ink-mute: #64748B;
-  --line:     #1F2535;
-  --line-soft:#191E2C;
-  --accent-soft: rgba(124, 58, 237, 0.18);
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.30);
-  --shadow-2: 0 4px 14px rgba(0,0,0,0.40);
-  --shadow-3: 0 16px 40px rgba(0,0,0,0.55);
-  --shadow-pop: 0 24px 56px rgba(0,0,0,0.60);
+  --accent:      oklch(0.628 0.103 188);    /* #00A884 */
+  --accent-2:    oklch(0.782 0.164 154);    /* #25D366 */
+  --accent-soft: oklch(0.628 0.103 188 / 0.18);
+  --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.628 0.103 188) 100%);
+  --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.628 0.103 188) 100%);
+
+  --bg:       oklch(0.152 0.014 243);       /* #0B141A */
+  --surface:  oklch(0.228 0.017 237);       /* #1F2C34 */
+  --surface-2:oklch(0.188 0.015 241);       /* #182129 */
+  --ink:      oklch(0.949 0.009 234);       /* #E9EDEF */
+  --ink-soft: oklch(0.744 0.015 229);       /* #AEBAC1 */
+  --ink-mute: oklch(0.523 0.018 232);       /* #667781 */
+  --line:     oklch(0.272 0.020 238);       /* #2A3942 */
+  --line-soft:oklch(0.210 0.017 240);       /* #1A2733 */
+  --shadow-1: 0 1px 2px oklch(0 0 0 / 0.40);
+  --shadow-2: 0 4px 14px oklch(0 0 0 / 0.55);
+  --shadow-3: 0 16px 40px oklch(0 0 0 / 0.70);
+  --shadow-pop: 0 24px 56px oklch(0 0 0 / 0.75);
 }
 
 * { box-sizing: border-box; }
@@ -184,7 +223,8 @@ input, textarea, select { font-family: inherit; color: inherit; font-weight: 400
   color: white;
   border: 1px solid var(--accent);
 }
-.btn-grad:hover { background: #6D28D9; border-color: #6D28D9; }
+.btn-grad:hover { background: var(--wa-teal-dark); border-color: var(--wa-teal-dark); }
+html.dark .btn-grad:hover { background: oklch(0.495 0.095 186); border-color: oklch(0.495 0.095 186); }
 
 .btn-outline {
   background: var(--surface);
@@ -212,7 +252,8 @@ html.dark .btn-outline:hover { background: #1A2031; border-color: #2A3146; }
     transition: border 150ms, box-shadow 150ms;
     font-weight: 400;
   }
-  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px oklch(0.572 0.092 188 / 0.15); }
+  html.dark .input:focus { box-shadow: 0 0 0 3px oklch(0.628 0.103 188 / 0.20); }
 }
 
 .badge {
@@ -264,30 +305,36 @@ html.dark .nav-item:hover { background: #1A2031; }
 }
 .nav-item.active .nav-ic { color: var(--accent); }
 
-/* chat bubbles */
+/* chat bubbles — WhatsApp style */
 .bubble {
   max-width: 78%;
-  padding: 9px 13px;
-  border-radius: 14px;
+  padding: 7px 12px 8px;
+  border-radius: 7.5px;
   font-size: 13.5px;
   line-height: 1.5;
   word-wrap: break-word;
   position: relative;
+  box-shadow: 0 1px 0.5px oklch(0.176 0.018 243 / 0.13);
 }
 .bubble.sent {
-  background: var(--accent);
-  color: white;
-  border-bottom-right-radius: 4px;
+  background: var(--wa-tea);
+  color: oklch(0.176 0.018 243);           /* #111B21 */
+  border-top-right-radius: 0;
 }
 .bubble.received {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  border-bottom-left-radius: 4px;
+  background: oklch(1 0 0);               /* white */
+  color: oklch(0.176 0.018 243);
+  border-top-left-radius: 0;
+}
+html.dark .bubble.sent {
+  background: var(--wa-dark-sent);
+  color: var(--wa-dark-ink);
+  box-shadow: 0 1px 0.5px oklch(0 0 0 / 0.40);
 }
 html.dark .bubble.received {
-  background: #1A2031;
-  border-color: #232A3D;
+  background: var(--wa-dark-surface);
+  color: var(--wa-dark-ink);
+  box-shadow: 0 1px 0.5px oklch(0 0 0 / 0.40);
 }
 
 /* entity chip */

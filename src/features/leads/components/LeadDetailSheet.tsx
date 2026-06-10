@@ -8,7 +8,7 @@ import {
   Loader2,
   MapPin,
   Pencil,
-  Sparkles,
+  Zap,
   Trash2,
   X,
 } from "lucide-react";
@@ -89,7 +89,7 @@ export default function LeadDetailSheet({
           </div>
           <div className="card p-3 bg-[var(--surface-2)]">
             <div className="text-[11px] uppercase tracking-wider font-semibold mb-1.5 flex items-center gap-1.5 text-[var(--ink-mute)]">
-              <Sparkles size={11} className="text-[var(--accent)]" />{" "}
+              <Zap size={11} className="text-[var(--accent)]" />{" "}
               AI-Suggested Next Action
             </div>
             <div className="text-[12.5px] leading-relaxed text-[var(--ink-soft)]">

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Users, Flame, Zap, Sparkles, Upload, Check, Target, BoltIcon } from 'lucide-react';
+import { Users, Flame, Zap, TrendingUp, Upload, Check, Target, BoltIcon } from 'lucide-react';
 import { Sparkline } from '@/shared/ui/Sparkline';
 import { sparkData } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
@@ -116,7 +116,7 @@ const KPIS: KPI[] = [
   { label: 'Avg Response',    value: '42s',  delta: '−31%', up: true },
   { label: 'AI Resolution',   value: '76%',  delta: '+8%',  up: true },
 ];
-const KPI_ICONS = [Users, Flame, Zap, Zap, Sparkles];
+const KPI_ICONS = [Users, Flame, Zap, Zap, TrendingUp];
 
 const VELOCITY = [12, 18, 22, 28, 24, 30, 38, 45, 42, 48, 55, 62];
 const MONTHS = ['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'];

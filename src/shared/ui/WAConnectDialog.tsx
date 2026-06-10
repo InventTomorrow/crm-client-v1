@@ -6,6 +6,7 @@ import {
   useWAStatus,
 } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Loader2,
@@ -17,12 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "./Dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./Dialog";
 
 interface WAConnectDialogProps {
   open: boolean;
@@ -32,22 +28,23 @@ interface WAConnectDialogProps {
 function QRFrame({ src }: { src: string }) {
   return (
     <div className="relative flex items-center justify-center">
-      {/* Outer border with corner accents */}
       <div className="relative w-[220px] h-[220px]">
-        {/* Corner decorators */}
         {(["tl", "tr", "bl", "br"] as const).map((pos) => (
           <span
             key={pos}
             className={cn(
               "absolute w-[22px] h-[22px] border-[var(--accent)]",
-              pos === "tl" && "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[6px]",
-              pos === "tr" && "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[6px]",
-              pos === "bl" && "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[6px]",
-              pos === "br" && "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[6px]",
+              pos === "tl" &&
+                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[6px]",
+              pos === "tr" &&
+                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[6px]",
+              pos === "bl" &&
+                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[6px]",
+              pos === "br" &&
+                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[6px]",
             )}
           />
         ))}
-        {/* QR image */}
         <div className="absolute inset-[8px] rounded-xl overflow-hidden bg-white p-2 shadow-sm border border-[var(--line)]">
           <Image
             src={src}
@@ -63,48 +60,81 @@ function QRFrame({ src }: { src: string }) {
   );
 }
 
+function QRPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="w-[220px] h-[220px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
+      <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
+      <p className="text-[12.5px] text-[var(--ink-mute)]">{label}</p>
+    </div>
+  );
+}
+
 export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
+  const qc = useQueryClient();
   const { data: statusData } = useWAStatus();
   const connectMut = useWAConnect();
   const disconnectMut = useWADisconnect();
   const [streamActive, setStreamActive] = useState(false);
-  const { qr, liveStatus, livePhone, liveError } = useWAEventStream(streamActive);
+  // Tracks whether we've just fired the connect call — shows loading UI immediately.
+  const [starting, setStarting] = useState(false);
+
+  const { qr, liveStatus, livePhone, liveError } =
+    useWAEventStream(streamActive);
 
   const status = liveStatus ?? statusData?.status ?? "DISCONNECTED";
   const phoneNumber = livePhone ?? statusData?.phoneNumber;
   const qrCode = qr ?? statusData?.qr;
   const connectionError = liveError ?? statusData?.error;
 
-  // Close stream when disconnected
+  // Sync query cache instantly when SSE emits a definitive status.
   useEffect(() => {
+    if (!liveStatus) return;
+    qc.setQueryData(["wa-status"], (old: any) => ({
+      ...old,
+      status: liveStatus,
+      phoneNumber: livePhone ?? old?.phoneNumber,
+      error: liveError ?? null,
+    }));
+    if (liveStatus !== "PENDING") setStarting(false);
     if (liveStatus === "DISCONNECTED") setStreamActive(false);
-  }, [liveStatus]);
+  }, [liveStatus, livePhone, liveError, qc]);
 
-  // Auto-start on open if disconnected
+  // Auto-start on open if disconnected.
   useEffect(() => {
-    if (open && status === "DISCONNECTED" && !streamActive && !connectMut.isPending) {
+    if (
+      open &&
+      status === "DISCONNECTED" &&
+      !streamActive &&
+      !connectMut.isPending
+    ) {
       handleConnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleConnect = () => {
+    setStarting(true);
     setStreamActive(true);
     connectMut.mutate();
   };
 
   const handleDisconnect = () => {
     setStreamActive(false);
+    setStarting(false);
     disconnectMut.mutate();
   };
 
   const handleRefreshQR = () => {
+    setStarting(true);
     setStreamActive(false);
     setTimeout(() => {
       setStreamActive(true);
       connectMut.mutate();
     }, 300);
   };
+
+  // Show loading placeholder while waiting for first SSE event after clicking connect.
+  const showLoading = starting && !qrCode && status !== "CONNECTED";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,16 +151,18 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <DialogTitle className="text-[15px] font-semibold">WhatsApp</DialogTitle>
+            <DialogTitle className="text-[15px] font-semibold">
+              WhatsApp
+            </DialogTitle>
             <p className="text-[11.5px] text-[var(--ink-mute)] mt-px">
               {status === "CONNECTED"
                 ? `Connected · +${phoneNumber ?? ""}`
-                : status === "PENDING"
+                : status === "PENDING" || showLoading
                   ? "Waiting for scan…"
                   : "Not connected"}
             </p>
           </div>
-          <StatusDot status={status} />
+          <StatusDot status={status} loading={showLoading} />
         </DialogHeader>
 
         {/* Body */}
@@ -168,8 +200,15 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
             </>
           )}
 
-          {/* PENDING - show QR or loading */}
-          {status === "PENDING" && (
+          {/* Loading — clicked connect but SSE not fired yet */}
+          {showLoading && (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <QRPlaceholder label="Starting connection…" />
+            </div>
+          )}
+
+          {/* PENDING - QR or waiting */}
+          {!showLoading && status === "PENDING" && (
             <>
               {qrCode ? (
                 <>
@@ -190,32 +229,28 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   <button
                     onClick={handleRefreshQR}
                     className="btn btn-outline text-[12px] w-full justify-center"
-                    disabled={connectMut.isPending}
                   >
                     <RefreshCw size={12} /> Refresh QR
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-center gap-3 py-10">
-                  <div className="w-[220px] h-[220px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
-                    <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
-                    <p className="text-[12.5px] text-[var(--ink-mute)]">
-                      Generating QR code…
-                    </p>
-                  </div>
+                <div className="flex flex-col items-center gap-3 py-6">
+                  <QRPlaceholder label="Generating QR code…" />
                 </div>
               )}
             </>
           )}
 
           {/* DISCONNECTED */}
-          {status === "DISCONNECTED" && (
+          {!showLoading && status === "DISCONNECTED" && (
             <>
               {connectionError && (
                 <div className="w-full flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
                   <WifiOff size={15} className="flex-shrink-0 mt-px" />
                   <div>
-                    <p className="text-[12.5px] font-semibold">Connection failed</p>
+                    <p className="text-[12.5px] font-semibold">
+                      Connection failed
+                    </p>
                     <p className="text-[11.5px] mt-0.5 opacity-80 break-all">
                       {connectionError}
                     </p>
@@ -224,7 +259,10 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
               )}
               <div className="flex flex-col items-center gap-3 py-6 w-full">
                 <div className="w-[220px] h-[220px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
-                  <QrCode size={36} className="text-[var(--ink-mute)] opacity-40" />
+                  <QrCode
+                    size={36}
+                    className="text-[var(--ink-mute)] opacity-40"
+                  />
                   <p className="text-[12.5px] text-[var(--ink-mute)]">
                     No QR generated
                   </p>
@@ -240,17 +278,12 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                 ) : (
                   <QrCode size={14} />
                 )}
-                {connectMut.isPending
-                  ? "Starting…"
-                  : connectionError
-                    ? "Retry Connection"
-                    : "Generate QR Code"}
+                {connectionError ? "Retry Connection" : "Generate QR Code"}
               </button>
             </>
           )}
         </div>
 
-        {/* Footer instructions */}
         {status !== "CONNECTED" && (
           <div className="px-5 pb-4 flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
             <Smartphone size={13} className="flex-shrink-0 mt-px" />
@@ -265,26 +298,22 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   );
 }
 
-// Small status dot for the header
-function StatusDot({ status }: { status: string }) {
+function StatusDot({ status, loading }: { status: string; loading?: boolean }) {
   return (
     <span
       className={cn(
         "w-2.5 h-2.5 rounded-full flex-shrink-0",
         status === "CONNECTED" && "bg-[#25D366]",
-        status === "PENDING" && "bg-[#CA8A04] animate-pulse",
-        status === "DISCONNECTED" && "bg-[var(--ink-mute)] opacity-40",
+        (status === "PENDING" || loading) && "bg-[#CA8A04] animate-pulse",
+        status === "DISCONNECTED" &&
+          !loading &&
+          "bg-[var(--ink-mute)] opacity-40",
       )}
     />
   );
 }
 
-// Compact trigger button for the top bar
-export function WAStatusButton({
-  onClick,
-}: {
-  onClick: () => void;
-}) {
+export function WAStatusButton({ onClick }: { onClick: () => void }) {
   const { data: statusData } = useWAStatus();
   const status = statusData?.status ?? "DISCONNECTED";
 

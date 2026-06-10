@@ -1,42 +1,74 @@
-'use client';
-import { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+"use client";
 import {
-  User, Bell, Link, Crown, Shield, Activity,
-  Upload, Check, Zap, Cloud, Lock, Sparkles,
-  Users, Building2, Loader2, Bot, Store, Trash2,
-} from 'lucide-react';
-import { CRMAvatar } from '@/shared/ui/CRMAvatar';
-import { CRMSwitch } from '@/shared/ui/CRMSwitch';
-import { WAConnectDialog } from '@/shared/ui/WAConnectDialog';
-import { useMe, useUpdateMe, useMembers, useInviteUser, useRemoveMember } from '@/features/auth/hooks/useAuth';
-import { usePresignedUpload } from '@/features/inventory/hooks/useProducts';
-import { useWAStatus } from '@/features/channels/hooks/useWhatsApp';
-import { useNotificationPreferences, useUpdateNotificationPreference } from '@/features/notifications/hooks/useNotifications';
-import type { NotificationType } from '@/features/notifications/types';
-import { WorkspacesManagementView } from './WorkspacesManagementView';
-import { ChatbotSection } from './ChatbotSection';
-import { BusinessSection } from './BusinessSection';
-import { SECTION_NAV, SYSTEM_STATS } from '../types';
-import type { SettingsSection } from '../types';
+  useInviteUser,
+  useMe,
+  useMembers,
+  useRemoveMember,
+  useUpdateMe,
+} from "@/features/auth/hooks/useAuth";
+import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
+import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
+import {
+  useNotificationPreferences,
+  useUpdateNotificationPreference,
+} from "@/features/notifications/hooks/useNotifications";
+import type { NotificationType } from "@/features/notifications/types";
+import { cn } from "@/lib/utils";
+import { CRMAvatar } from "@/shared/ui/CRMAvatar";
+import { CRMSwitch } from "@/shared/ui/CRMSwitch";
+import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
+import {
+  Activity,
+  Bell,
+  Bot,
+  Building2,
+  Check,
+  Cloud,
+  Crown,
+  Link,
+  Loader2,
+  Lock,
+  Shield,
+  Star,
+  Store,
+  Trash2,
+  Upload,
+  User,
+  Users,
+  Zap,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { SettingsSection } from "../types";
+import { SECTION_NAV, SYSTEM_STATS } from "../types";
+import { BusinessSection } from "./BusinessSection";
+import { ChatbotSection } from "./ChatbotSection";
+import { WorkspacesManagementView } from "./WorkspacesManagementView";
 
 const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
-  profile:    User,
-  notif:      Bell,
-  chatbot:    Bot,
-  business:   Store,
-  channels:   Link,
-  tier:       Crown,
-  access:     Shield,
+  profile: User,
+  notif: Bell,
+  chatbot: Bot,
+  business: Store,
+  channels: Link,
+  tier: Crown,
+  access: Shield,
   workspaces: Building2,
-  system:     Activity,
+  system: Activity,
 };
 
 // ──────────────────── Field (label wrapper) ────────────────────
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="block text-[12px] font-semibold mb-1.5 text-[var(--ink-soft)]">{label}</label>
+      <label className="block text-[12px] font-semibold mb-1.5 text-[var(--ink-soft)]">
+        {label}
+      </label>
       {children}
     </div>
   );
@@ -46,10 +78,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Metric({ label, v, pct }: { label: string; v: string; pct: number }) {
   return (
     <div className="card p-3 bg-[var(--surface)]">
-      <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">{label}</div>
-      <div className="font-semibold mt-1 text-[18px] text-[var(--ink)] font-[var(--font-head)]">{v}</div>
+      <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
+        {label}
+      </div>
+      <div className="font-semibold mt-1 text-[18px] text-[var(--ink)] font-[var(--font-head)]">
+        {v}
+      </div>
       <div className="h-1 rounded-full overflow-hidden mt-2 bg-[var(--line)]">
-        <div className="h-full bg-[var(--accent)]" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full bg-[var(--accent)]"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );
@@ -59,49 +98,51 @@ function Metric({ label, v, pct }: { label: string; v: string; pct: number }) {
 function ProfileSection() {
   const { user, isLoading } = useMe();
   const { mutate: saveProfile, isPending: isSaving } = useUpdateMe();
-  const { upload: uploadImage, isPending: isUploading } = usePresignedUpload('avatars');
+  const { upload: uploadImage, isPending: isUploading } =
+    usePresignedUpload("avatars");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState(false);
 
   const [draft, setDraft] = useState({
-    firstName: '',
-    lastName:  '',
-    phone:     '',
-    avatarUrl: '',
+    firstName: "",
+    lastName: "",
+    phone: "",
+    avatarUrl: "",
   });
 
   useEffect(() => {
     if (user) {
       setDraft({
-        firstName: user.firstName ?? '',
-        lastName:  user.lastName  ?? '',
-        phone:     user.phone ?? '',
-        avatarUrl: user.avatarUrl ?? '',
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+        phone: user.phone ?? "",
+        avatarUrl: user.avatarUrl ?? "",
       });
     }
   }, [user]);
 
-  const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Your Name';
-  const displayEmail = user?.email ?? '';
+  const fullName =
+    `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "Your Name";
+  const displayEmail = user?.email ?? "";
   const currentMembership = user?.memberships?.[0];
-  const workspaceName = currentMembership?.tenant?.name ?? '';
-  const roleName      = currentMembership?.role?.name  ?? '';
+  const workspaceName = currentMembership?.tenant?.name ?? "";
+  const roleName = currentMembership?.role?.name ?? "";
 
   const originalDraft = {
-    firstName: user?.firstName ?? '',
-    lastName:  user?.lastName  ?? '',
-    phone:     user?.phone ?? '',
-    avatarUrl: user?.avatarUrl ?? '',
+    firstName: user?.firstName ?? "",
+    lastName: user?.lastName ?? "",
+    phone: user?.phone ?? "",
+    avatarUrl: user?.avatarUrl ?? "",
   };
   const dirty = JSON.stringify(originalDraft) !== JSON.stringify(draft);
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    e.target.value = '';
+    e.target.value = "";
     try {
       const url = await uploadImage(file);
-      setDraft(d => ({ ...d, avatarUrl: url }));
+      setDraft((d) => ({ ...d, avatarUrl: url }));
       saveProfile({ avatarUrl: url });
     } catch {
       // error toast already shown by usePresignedUpload's onError
@@ -112,8 +153,8 @@ function ProfileSection() {
     saveProfile(
       {
         firstName: draft.firstName || undefined,
-        lastName:  draft.lastName  || undefined,
-        phone:     draft.phone     || undefined,
+        lastName: draft.lastName || undefined,
+        phone: draft.phone || undefined,
         avatarUrl: draft.avatarUrl || undefined,
       },
       {
@@ -138,11 +179,18 @@ function ProfileSection() {
       <h2 className="text-[20px] font-semibold">Profile</h2>
       <div className="card p-[22px]">
         <div className="flex items-center gap-4 mb-5">
-          <CRMAvatar name={fullName} src={draft.avatarUrl || null} size={64} ring />
+          <CRMAvatar
+            name={fullName}
+            src={draft.avatarUrl || null}
+            size={64}
+            ring
+          />
           <div>
             <h4 className="text-[15px] font-semibold">{fullName}</h4>
             <div className="text-[12.5px] text-[var(--ink-mute)]">
-              {workspaceName}{workspaceName && roleName ? ' · ' : ''}{roleName}
+              {workspaceName}
+              {workspaceName && roleName ? " · " : ""}
+              {roleName}
             </div>
             <input
               ref={photoInputRef}
@@ -156,9 +204,15 @@ function ProfileSection() {
               onClick={() => photoInputRef.current?.click()}
               disabled={isUploading}
             >
-              {isUploading
-                ? <><Loader2 size={12} className="animate-spin" /> Uploading…</>
-                : <><Upload size={12} /> Upload photo</>}
+              {isUploading ? (
+                <>
+                  <Loader2 size={12} className="animate-spin" /> Uploading…
+                </>
+              ) : (
+                <>
+                  <Upload size={12} /> Upload photo
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -167,47 +221,71 @@ function ProfileSection() {
             <input
               className="input"
               value={draft.firstName}
-              onChange={e => setDraft(d => ({ ...d, firstName: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, firstName: e.target.value }))
+              }
             />
           </Field>
           <Field label="Last name">
             <input
               className="input"
               value={draft.lastName}
-              onChange={e => setDraft(d => ({ ...d, lastName: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, lastName: e.target.value }))
+              }
             />
           </Field>
           <Field label="Email">
-            <input className="input opacity-60 cursor-not-allowed" value={displayEmail} readOnly />
+            <input
+              className="input opacity-60 cursor-not-allowed"
+              value={displayEmail}
+              readOnly
+            />
           </Field>
           <Field label="Phone">
             <input
               className="input"
               value={draft.phone}
               placeholder="+92 300 0000000"
-              onChange={e => setDraft(d => ({ ...d, phone: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, phone: e.target.value }))
+              }
             />
           </Field>
         </div>
         <div className="flex justify-between items-center mt-4">
-          <div className={`text-[12.5px] flex items-center gap-1.5 ${saved ? 'text-[#15803D]' : 'text-[var(--ink-mute)]'}`}>
-            {saved && <><Check size={13} /> Saved successfully</>}
-            {!saved && dirty && 'Unsaved changes'}
+          <div
+            className={`text-[12.5px] flex items-center gap-1.5 ${saved ? "text-[#15803D]" : "text-[var(--ink-mute)]"}`}
+          >
+            {saved && (
+              <>
+                <Check size={13} /> Saved successfully
+              </>
+            )}
+            {!saved && dirty && "Unsaved changes"}
           </div>
           <div className="flex gap-2">
             <button
               className="btn btn-outline"
               onClick={() => setDraft(originalDraft)}
               disabled={!dirty || isSaving}
-            >Cancel</button>
+            >
+              Cancel
+            </button>
             <button
               className="btn btn-grad"
               onClick={handleSave}
               disabled={!dirty || isSaving}
             >
-              {isSaving
-                ? <><Loader2 size={13} className="animate-spin" /> Saving…</>
-                : <><Check size={14} /> Save changes</>}
+              {isSaving ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" /> Saving…
+                </>
+              ) : (
+                <>
+                  <Check size={14} /> Save changes
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -218,17 +296,50 @@ function ProfileSection() {
 
 // ──────────────────── Notifications Section ────────────────────
 const NOTIF_META: Record<NotificationType, { title: string; desc: string }> = {
-  NEW_MESSAGE:          { title: 'New message',          desc: 'When a lead sends you a new message.' },
-  CHAT_ESCALATED:       { title: 'Chat escalated',       desc: 'When a conversation is flagged for attention.' },
-  NEW_LEAD:             { title: 'New lead',             desc: 'When a new lead is created or imported.' },
-  LEAD_ASSIGNED:        { title: 'Lead assigned',        desc: 'When a lead is assigned to you.' },
-  ORDER_CREATED:        { title: 'Order created',        desc: 'When a new order is placed.' },
-  ORDER_STATUS_CHANGED: { title: 'Order status changed', desc: 'When an order status is updated.' },
-  MEMBER_INVITED:       { title: 'Member invited',       desc: 'When someone is invited to your workspace.' },
-  MEMBER_JOINED:        { title: 'Member joined',        desc: 'When an invited member accepts and joins.' },
-  BROADCAST_COMPLETED:  { title: 'Broadcast completed',  desc: 'When a broadcast campaign finishes.' },
-  NEW_LOGIN:            { title: 'New login',            desc: 'When your account is accessed from a new device.' },
-  BILLING:              { title: 'Billing',              desc: 'Payment confirmations and plan changes.' },
+  NEW_MESSAGE: {
+    title: "New message",
+    desc: "When a lead sends you a new message.",
+  },
+  CHAT_ESCALATED: {
+    title: "Chat escalated",
+    desc: "When a conversation is flagged for attention.",
+  },
+  NEW_LEAD: {
+    title: "New lead",
+    desc: "When a new lead is created or imported.",
+  },
+  LEAD_ASSIGNED: {
+    title: "Lead assigned",
+    desc: "When a lead is assigned to you.",
+  },
+  ORDER_CREATED: {
+    title: "Order created",
+    desc: "When a new order is placed.",
+  },
+  ORDER_STATUS_CHANGED: {
+    title: "Order status changed",
+    desc: "When an order status is updated.",
+  },
+  MEMBER_INVITED: {
+    title: "Member invited",
+    desc: "When someone is invited to your workspace.",
+  },
+  MEMBER_JOINED: {
+    title: "Member joined",
+    desc: "When an invited member accepts and joins.",
+  },
+  BROADCAST_COMPLETED: {
+    title: "Broadcast completed",
+    desc: "When a broadcast campaign finishes.",
+  },
+  NEW_LOGIN: {
+    title: "New login",
+    desc: "When your account is accessed from a new device.",
+  },
+  BILLING: {
+    title: "Billing",
+    desc: "Payment confirmations and plan changes.",
+  },
 };
 
 function NotifSection() {
@@ -261,13 +372,15 @@ function NotifSection() {
             <div
               key={type}
               className={cn(
-                'grid grid-cols-[1fr_64px_64px] gap-2 items-center px-4 py-3',
-                !last && 'border-b border-[var(--line-soft)]',
+                "grid grid-cols-[1fr_64px_64px] gap-2 items-center px-4 py-3",
+                !last && "border-b border-[var(--line-soft)]",
               )}
             >
               <div>
                 <div className="font-medium text-[13.5px]">{meta.title}</div>
-                <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">{meta.desc}</div>
+                <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
+                  {meta.desc}
+                </div>
               </div>
               <div className="flex justify-center">
                 <CRMSwitch
@@ -288,7 +401,8 @@ function NotifSection() {
         })}
       </div>
       <div className="text-[11.5px] flex items-center gap-1.5 text-[var(--ink-mute)]">
-        <Check size={12} className="text-[#15803D]" /> Preferences save automatically
+        <Check size={12} className="text-[#15803D]" /> Preferences save
+        automatically
       </div>
     </>
   );
@@ -298,14 +412,17 @@ function NotifSection() {
 function ChannelsSection() {
   const { data: statusData } = useWAStatus();
   const [waOpen, setWaOpen] = useState(false);
-  const status = statusData?.status ?? 'DISCONNECTED';
+  const status = statusData?.status ?? "DISCONNECTED";
 
   return (
     <>
       <h2 className="text-[20px] font-semibold">Connected Channels</h2>
       <div className="card p-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#25D366' }}>
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "#25D366" }}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
               <path d="M11.996 1.998C6.478 1.998 2 6.476 2 11.994c0 1.762.461 3.416 1.268 4.853L2 22l5.294-1.247a9.95 9.95 0 0 0 4.702 1.19c5.518 0 9.996-4.477 9.996-9.995 0-5.518-4.478-9.95-9.996-9.95zm0 18.19a8.187 8.187 0 0 1-4.18-1.148l-.3-.178-3.115.733.779-3.023-.196-.31A8.153 8.153 0 0 1 3.81 11.994c0-4.516 3.672-8.187 8.186-8.187s8.187 3.671 8.187 8.187c0 4.515-3.673 8.187-8.187 8.187z" />
@@ -314,26 +431,38 @@ function ChannelsSection() {
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-[14px]">WhatsApp Business</div>
             <div className="text-[12px] text-[var(--ink-mute)] mt-px">
-              {status === 'CONNECTED'
-                ? `Connected · +${statusData?.phoneNumber ?? ''}`
-                : 'Not connected — scan QR to link your number'}
+              {status === "CONNECTED"
+                ? `Connected · +${statusData?.phoneNumber ?? ""}`
+                : "Not connected — scan QR to link your number"}
             </div>
           </div>
-          <span className={cn(
-            'badge font-medium px-2.5 py-1',
-            status === 'CONNECTED' ? 'bg-[rgba(34,197,94,0.12)] text-[#15803D]' : 'bg-[var(--surface-2)] text-[var(--ink-mute)]',
-          )}>
-            <span className={cn(
-              'w-[6px] h-[6px] rounded-full mr-1.5 inline-block',
-              status === 'CONNECTED' ? 'bg-[#15803D]' : 'bg-[var(--ink-mute)]',
-            )} />
-            {status === 'CONNECTED' ? 'Connected' : status === 'PENDING' ? 'Connecting…' : 'Disconnected'}
+          <span
+            className={cn(
+              "badge font-medium px-2.5 py-1",
+              status === "CONNECTED"
+                ? "bg-[rgba(34,197,94,0.12)] text-[#15803D]"
+                : "bg-[var(--surface-2)] text-[var(--ink-mute)]",
+            )}
+          >
+            <span
+              className={cn(
+                "w-[6px] h-[6px] rounded-full mr-1.5 inline-block",
+                status === "CONNECTED"
+                  ? "bg-[#15803D]"
+                  : "bg-[var(--ink-mute)]",
+              )}
+            />
+            {status === "CONNECTED"
+              ? "Connected"
+              : status === "PENDING"
+                ? "Connecting…"
+                : "Disconnected"}
           </span>
           <button
             className="btn btn-outline text-[12.5px]"
             onClick={() => setWaOpen(true)}
           >
-            {status === 'CONNECTED' ? 'Manage' : 'Connect'}
+            {status === "CONNECTED" ? "Manage" : "Connect"}
           </button>
         </div>
       </div>
@@ -354,19 +483,26 @@ function TierSection() {
           </span>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-[17px] font-semibold">Tier 3 · Storefront API</h3>
-              <span className="badge font-medium text-white bg-[var(--accent)]">Current</span>
+              <h3 className="text-[17px] font-semibold">
+                Tier 3 · Storefront API
+              </h3>
+              <span className="badge font-medium text-white bg-[var(--accent)]">
+                Current
+              </span>
             </div>
             <div className="text-[13px] mt-1 text-[var(--ink-soft)]">
-              Live two-way sync with Shopify + Daraz. AI suggestions enabled. 12,000 messages / month.
+              Live two-way sync with Shopify + Daraz. AI suggestions enabled.
+              12,000 messages / month.
             </div>
           </div>
-          <button className="btn btn-grad flex-shrink-0"><Zap size={14} /> Upgrade to ERP</button>
+          <button className="btn btn-grad flex-shrink-0">
+            <Zap size={14} /> Upgrade to ERP
+          </button>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
           <Metric label="Messages used" v="8,420 / 12K" pct={70} />
-          <Metric label="AI credits"    v="4.2K / 10K"  pct={42} />
-          <Metric label="Storage"       v="2.1 / 50 GB" pct={4}  />
+          <Metric label="AI credits" v="4.2K / 10K" pct={42} />
+          <Metric label="Storage" v="2.1 / 50 GB" pct={4} />
         </div>
       </div>
     </>
@@ -375,17 +511,29 @@ function TierSection() {
 
 // ──────────────────── Access Section ────────────────────
 const ROLE_META: Record<string, { desc: string; color: string }> = {
-  OWNER:   { desc: 'Full access: billing, integrations, all data.', color: 'bg-[rgba(124,58,237,0.12)] text-[#7C3AED]' },
-  ADMIN:   { desc: 'Manage leads, inventory, replies. No billing.',  color: 'bg-[rgba(59,130,246,0.12)] text-[#2563EB]' },
-  MANAGER: { desc: 'Manage leads, inventory, replies. No billing.',  color: 'bg-[rgba(59,130,246,0.12)] text-[#2563EB]' },
-  AGENT:   { desc: 'Inbox + assigned leads only.',                   color: 'bg-[rgba(16,185,129,0.12)] text-[#059669]' },
+  OWNER: {
+    desc: "Full access: billing, integrations, all data.",
+    color: "bg-[rgba(124,58,237,0.12)] text-[#7C3AED]",
+  },
+  ADMIN: {
+    desc: "Manage leads, inventory, replies. No billing.",
+    color: "bg-[rgba(59,130,246,0.12)] text-[#2563EB]",
+  },
+  MANAGER: {
+    desc: "Manage leads, inventory, replies. No billing.",
+    color: "bg-[rgba(59,130,246,0.12)] text-[#2563EB]",
+  },
+  AGENT: {
+    desc: "Inbox + assigned leads only.",
+    color: "bg-[rgba(16,185,129,0.12)] text-[#059669]",
+  },
 };
 
 function AccessSection() {
   const { data: members = [], isLoading } = useMembers();
   const { mutate: removeM, isPending: isRemoving } = useRemoveMember();
   const inviteMut = useInviteUser();
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteEmail, setInviteEmail] = useState("");
   const [showInvite, setShowInvite] = useState(false);
 
   const byRole = members.reduce<Record<string, number>>((acc, m) => {
@@ -397,7 +545,12 @@ function AccessSection() {
     if (!inviteEmail.trim()) return;
     inviteMut.mutate(
       { email: inviteEmail.trim() },
-      { onSuccess: () => { setInviteEmail(''); setShowInvite(false); } },
+      {
+        onSuccess: () => {
+          setInviteEmail("");
+          setShowInvite(false);
+        },
+      },
     );
   };
 
@@ -407,10 +560,14 @@ function AccessSection() {
 
       {/* Role summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {(['OWNER', 'ADMIN', 'MANAGER', 'AGENT'] as const).map((r) => (
+        {(["OWNER", "ADMIN", "MANAGER", "AGENT"] as const).map((r) => (
           <div key={r} className="card p-3.5">
-            <div className="text-[11.5px] font-medium text-[var(--ink-mute)]">{r}</div>
-            <div className="text-[22px] font-semibold mt-0.5">{byRole[r] ?? 0}</div>
+            <div className="text-[11.5px] font-medium text-[var(--ink-mute)]">
+              {r}
+            </div>
+            <div className="text-[22px] font-semibold mt-0.5">
+              {byRole[r] ?? 0}
+            </div>
             <div className="text-[11px] text-[var(--ink-mute)] mt-1 leading-snug">
               {ROLE_META[r]?.desc}
             </div>
@@ -424,7 +581,9 @@ function AccessSection() {
           <h4 className="text-[13.5px] font-semibold">
             Team Members
             {!isLoading && (
-              <span className="font-normal text-[12px] text-[var(--ink-mute)] ml-1.5">· {members.length}</span>
+              <span className="font-normal text-[12px] text-[var(--ink-mute)] ml-1.5">
+                · {members.length}
+              </span>
             )}
           </h4>
           <button
@@ -444,7 +603,7 @@ function AccessSection() {
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
               autoFocus
             />
             <button
@@ -452,10 +611,17 @@ function AccessSection() {
               onClick={handleInvite}
               disabled={inviteMut.isPending || !inviteEmail.trim()}
             >
-              {inviteMut.isPending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+              {inviteMut.isPending ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <Check size={13} />
+              )}
               Send invite
             </button>
-            <button className="btn btn-ghost p-2" onClick={() => setShowInvite(false)}>
+            <button
+              className="btn btn-ghost p-2"
+              onClick={() => setShowInvite(false)}
+            >
               <Zap size={13} className="rotate-45 opacity-60" />
             </button>
           </div>
@@ -466,7 +632,9 @@ function AccessSection() {
             <Loader2 size={20} className="animate-spin text-[var(--accent)]" />
           </div>
         ) : members.length === 0 ? (
-          <div className="py-10 text-center text-[var(--ink-mute)] text-[13px]">No members yet.</div>
+          <div className="py-10 text-center text-[var(--ink-mute)] text-[13px]">
+            No members yet.
+          </div>
         ) : (
           <table className="tbl">
             <thead>
@@ -480,8 +648,12 @@ function AccessSection() {
             </thead>
             <tbody>
               {members.map((m) => {
-                const name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
-                const roleColor = ROLE_META[m.roleName]?.color ?? 'bg-[var(--surface-2)] text-[var(--ink-soft)]';
+                const name =
+                  [m.firstName, m.lastName].filter(Boolean).join(" ") ||
+                  m.email;
+                const roleColor =
+                  ROLE_META[m.roleName]?.color ??
+                  "bg-[var(--surface-2)] text-[var(--ink-soft)]";
                 return (
                   <tr key={m.membershipId}>
                     <td>
@@ -490,15 +662,19 @@ function AccessSection() {
                         <span className="font-medium">{name}</span>
                       </div>
                     </td>
-                    <td className="text-[var(--ink-mute)] text-[12.5px]">{m.email}</td>
+                    <td className="text-[var(--ink-mute)] text-[12.5px]">
+                      {m.email}
+                    </td>
                     <td>
-                      <span className={cn('badge font-medium', roleColor)}>{m.roleName}</span>
+                      <span className={cn("badge font-medium", roleColor)}>
+                        {m.roleName}
+                      </span>
                     </td>
                     <td className="text-[var(--ink-mute)] text-[12px]">
                       {new Date(m.joinedAt).toLocaleDateString()}
                     </td>
                     <td className="text-right">
-                      {m.roleName !== 'OWNER' && (
+                      {m.roleName !== "OWNER" && (
                         <button
                           className="btn btn-ghost p-1.5 text-[#DC2626]"
                           title="Remove member"
@@ -521,7 +697,7 @@ function AccessSection() {
 }
 
 // ──────────────────── System Section ────────────────────
-const SYSTEM_ICONS = [Sparkles, Activity, Lock, Cloud] as const;
+const SYSTEM_ICONS = [Star, Activity, Lock, Cloud] as const;
 
 function SystemSection() {
   return (
@@ -530,22 +706,37 @@ function SystemSection() {
       <div className="card p-[22px] bg-[#0F172A] text-white border border-[rgba(255,255,255,0.08)]">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="text-[15px] font-semibold text-white">All systems operational</h3>
-            <div className="text-[12px] mt-1 text-[rgba(255,255,255,0.6)]">Last checked just now</div>
+            <h3 className="text-[15px] font-semibold text-white">
+              All systems operational
+            </h3>
+            <div className="text-[12px] mt-1 text-[rgba(255,255,255,0.6)]">
+              Last checked just now
+            </div>
           </div>
-          <span className="badge font-medium bg-[rgba(34,197,94,0.2)] text-[#86EFAC]">● Healthy</span>
+          <span className="badge font-medium bg-[rgba(34,197,94,0.2)] text-[#86EFAC]">
+            ● Healthy
+          </span>
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
           {SYSTEM_STATS.map((s, i) => {
             const Icon = SYSTEM_ICONS[i];
             return (
-              <div key={i} className="rounded-[10px] p-3.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]">
+              <div
+                key={i}
+                className="rounded-[10px] p-3.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]"
+              >
                 <div className="flex items-center justify-between">
                   <Icon size={15} className="text-[#C4B5FD]" />
-                  <span className={`dot ${s.ok ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
+                  <span
+                    className={`dot ${s.ok ? "bg-[#22C55E]" : "bg-[#EF4444]"}`}
+                  />
                 </div>
-                <div className="font-semibold mt-2 text-[18px] font-[var(--font-head)]">{s.v}</div>
-                <div className="text-[11.5px] text-[rgba(255,255,255,0.65)]">{s.l}</div>
+                <div className="font-semibold mt-2 text-[18px] font-[var(--font-head)]">
+                  {s.v}
+                </div>
+                <div className="text-[11.5px] text-[rgba(255,255,255,0.65)]">
+                  {s.l}
+                </div>
               </div>
             );
           })}
@@ -557,7 +748,7 @@ function SystemSection() {
 
 // ──────────────────── SettingsView (root) ────────────────────
 export function SettingsView() {
-  const [section, setSection] = useState<SettingsSection>('profile');
+  const [section, setSection] = useState<SettingsSection>("profile");
 
   return (
     <div className="flex gap-3.5 h-full overflow-hidden p-[18px]">
@@ -566,7 +757,7 @@ export function SettingsView() {
         <div className="text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1.5 text-[var(--ink-mute)]">
           Settings
         </div>
-        {SECTION_NAV.map(s => {
+        {SECTION_NAV.map((s) => {
           const Icon = SECTION_ICONS[s.id];
           const active = section === s.id;
           return (
@@ -574,10 +765,10 @@ export function SettingsView() {
               key={s.id}
               onClick={() => setSection(s.id)}
               className={cn(
-                'flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left transition-colors cursor-pointer w-full border-none',
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left transition-colors cursor-pointer w-full border-none",
                 active
-                  ? 'bg-[rgba(124,58,237,0.10)] text-[#6D28D9] font-semibold'
-                  : 'bg-transparent text-[var(--ink-soft)] font-medium',
+                  ? "bg-[rgba(124,58,237,0.10)] text-[#6D28D9] font-semibold"
+                  : "bg-transparent text-[var(--ink-soft)] font-medium",
               )}
             >
               <Icon size={15} />
@@ -588,19 +779,21 @@ export function SettingsView() {
       </div>
 
       {/* Content */}
-      <div className={cn(
-        'scroll flex-1 overflow-y-auto flex flex-col gap-3.5',
-        section === 'workspaces' && 'p-0 gap-0',
-      )}>
-        {section === 'profile'    && <ProfileSection />}
-        {section === 'notif'      && <NotifSection />}
-        {section === 'chatbot'    && <ChatbotSection />}
-        {section === 'business'   && <BusinessSection />}
-        {section === 'channels'   && <ChannelsSection />}
-        {section === 'tier'       && <TierSection />}
-        {section === 'access'     && <AccessSection />}
-        {section === 'workspaces' && <WorkspacesManagementView />}
-        {section === 'system'     && <SystemSection />}
+      <div
+        className={cn(
+          "scroll flex-1 overflow-y-auto flex flex-col gap-3.5",
+          section === "workspaces" && "p-0 gap-0",
+        )}
+      >
+        {section === "profile" && <ProfileSection />}
+        {section === "notif" && <NotifSection />}
+        {section === "chatbot" && <ChatbotSection />}
+        {section === "business" && <BusinessSection />}
+        {section === "channels" && <ChannelsSection />}
+        {section === "tier" && <TierSection />}
+        {section === "access" && <AccessSection />}
+        {section === "workspaces" && <WorkspacesManagementView />}
+        {section === "system" && <SystemSection />}
       </div>
     </div>
   );

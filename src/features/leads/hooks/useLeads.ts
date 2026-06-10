@@ -7,6 +7,7 @@ import { extractErrorMessage } from '@/lib/utils';
 import {
   fetchLeads,
   fetchLeadsCount,
+  searchLeads,
   createLead,
   updateLead,
   updateLeadStatus,
@@ -127,6 +128,15 @@ export function useBulkCreateLeads() {
       toast.error(extractErrorMessage(error) || 'Failed to import leads');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
+  });
+}
+
+export function useSearchLeads(q: string) {
+  return useQuery({
+    queryKey: ['leads', 'search', q],
+    queryFn: () => searchLeads(q),
+    enabled: q.trim().length > 1,
+    staleTime: 10_000,
   });
 }
 

@@ -43,5 +43,5 @@ export interface ConversationDetail extends Omit<ConversationListItem, 'messages
   messages: ConversationMessage[];
 }
 
-export type ConversationFilter = 'all' | 'escalated';
+export type ConversationFilter = 'all' | 'escalated' | 'unread' | 'favorites' | string;
 export type MobilePane = 'list' | 'chat' | 'profile';

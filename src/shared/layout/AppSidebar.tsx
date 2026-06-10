@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, ChevronRight, Search, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
+import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, ChevronRight, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/appStore';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
@@ -65,14 +65,15 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         {/* Logo + collapse */}
         <div className={cn('flex items-center gap-2.5', collapsed ? 'justify-center px-0 pt-[14px] pb-1.5' : 'justify-between px-[14px] pt-[14px] pb-1.5')}>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-[26px] h-[26px] rounded-[7px] bg-[linear-gradient(90deg,#4FC3F7,#7C3AED)] flex items-center justify-center flex-shrink-0">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                <path d="M4 14 L10 8 L14 12 L20 6" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+            <div
+              className="w-8 h-8 rounded-[9px] flex items-center justify-center flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #25D366 0%, #075E54 100%)' }}
+            >
+              <span className="text-white font-bold text-[12px] tracking-tight select-none">AR</span>
             </div>
             {!collapsed && (
-              <span className="font-[var(--font-head)] font-semibold text-[13.5px] tracking-[-0.01em] text-[var(--ink)]">
-                SaleFlow <span className="text-[var(--ink-mute)] font-medium text-[10.5px] tracking-[0.16em] ml-1">CRM</span>
+              <span className="font-[var(--font-head)] font-bold text-[14px] tracking-[-0.02em] text-[var(--ink)]">
+                Asaan<span className="text-[#25D366]">Rabta</span>
               </span>
             )}
           </div>
@@ -85,16 +86,6 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
 
         <WorkspaceSwitcher collapsed={collapsed} />
 
-        {/* Search shortcut */}
-        {!collapsed && (
-          <div className="px-[14px] pb-[10px]">
-            <button className="btn btn-outline w-full justify-start gap-2 text-[var(--ink-mute)] font-normal text-[12.5px]">
-              <Search size={14} />
-              <span>Search</span>
-              <span className="ml-auto font-[var(--font-mono)] text-[10.5px] text-[var(--ink-mute)]">⌘K</span>
-            </button>
-          </div>
-        )}
 
         {/* Nav items */}
         <nav className={cn('flex flex-col gap-0.5 flex-1', collapsed ? 'px-[10px] py-1' : 'px-3 py-1')}>

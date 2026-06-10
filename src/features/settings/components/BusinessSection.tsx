@@ -1,6 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, Loader2, Plus, Zap, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import {
@@ -96,7 +96,7 @@ export function BusinessSection() {
               onClick={handleGenerate}
               disabled={isGenerating || (description ?? '').trim().length < 10}
             >
-              {isGenerating ? <><Loader2 size={13} className="animate-spin" /> Generating…</> : <><Sparkles size={13} /> Generate with AI</>}
+              {isGenerating ? <><Loader2 size={13} className="animate-spin" /> Generating…</> : <><Zap size={13} /> Generate with AI</>}
             </button>
           </div>
           <textarea
