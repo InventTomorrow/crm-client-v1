@@ -12,6 +12,7 @@ interface AppState {
   // Layout (not persisted)
   sidebarCollapsed: boolean;
   mobileMenuOpen: boolean;
+  isFullScreen: boolean;
 
   // Overlay state (not persisted)
   escalatingLead: Lead | null;
@@ -37,6 +38,7 @@ interface AppState {
   // Actions
   toggleSidebar: () => void;
   setMobileMenuOpen: (open: boolean) => void;
+  toggleFullScreen: () => void;
   setTheme: (t: 'light' | 'dark') => void;
   toggleTheme: () => void;
   setEscalatingLead: (lead: Lead | null) => void;
@@ -60,6 +62,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       sidebarCollapsed: false,
       mobileMenuOpen: false,
+      isFullScreen: false,
       escalatingLead: null,
       hotLead: null,
       isSwitchingWorkspace: false,
@@ -76,6 +79,7 @@ export const useAppStore = create<AppState>()(
 
       toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
+      toggleFullScreen: () => set(s => ({ isFullScreen: !s.isFullScreen })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
       setEscalatingLead: (escalatingLead) => set({ escalatingLead }),

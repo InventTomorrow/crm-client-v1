@@ -18,7 +18,7 @@ export function CRMSwitch({ on, onChange, size = 'sm' }: CRMSwitchProps) {
         borderRadius: 999,
         border: 'none',
         cursor: 'pointer',
-        background: on ? 'linear-gradient(90deg,#4FC3F7,#7C3AED)' : 'rgba(15,23,42,0.18)',
+        background: on ? 'var(--accent)' : 'var(--line)',
         position: 'relative',
         transition: 'background 200ms',
         padding: 2,

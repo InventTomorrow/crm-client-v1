@@ -760,19 +760,24 @@ export function SettingsView() {
         {SECTION_NAV.map((s) => {
           const Icon = SECTION_ICONS[s.id];
           const active = section === s.id;
+          const disabled = (["tier", "access", "system"] as SettingsSection[]).includes(s.id);
           return (
             <button
               key={s.id}
-              onClick={() => setSection(s.id)}
+              onClick={() => !disabled && setSection(s.id)}
+              disabled={disabled}
               className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left transition-colors cursor-pointer w-full border-none",
-                active
-                  ? "bg-[rgba(124,58,237,0.10)] text-[#6D28D9] font-semibold"
-                  : "bg-transparent text-[var(--ink-soft)] font-medium",
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left transition-colors w-full border-none",
+                disabled
+                  ? "opacity-35 cursor-not-allowed text-[var(--ink-soft)] font-medium"
+                  : active
+                    ? "bg-[var(--accent-soft)] text-[var(--accent)] font-semibold cursor-pointer"
+                    : "bg-transparent text-[var(--ink-soft)] font-medium hover:bg-[var(--surface-2)] hover:text-[var(--ink)] cursor-pointer",
               )}
             >
               <Icon size={15} />
-              {s.label}
+              <span className="flex-1">{s.label}</span>
+              {disabled && <span className="text-[9.5px] font-medium tracking-wide uppercase text-[var(--ink-mute)] opacity-70">Soon</span>}
             </button>
           );
         })}

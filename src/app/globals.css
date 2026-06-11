@@ -64,9 +64,9 @@
   --wa-dark-ink:     oklch(0.949 0.009 234); /* #E9EDEF */
 
   /* ── Accent remapped to WhatsApp teal ─────────────────────────────────── */
-  --accent:      oklch(0.572 0.092 188);    /* #128C7E */
+  --accent:      oklch(0.628 0.103 188);    /* #00A884 */
   --accent-2:    oklch(0.782 0.164 154);    /* #25D366 */
-  --accent-soft: oklch(0.572 0.092 188 / 0.10);
+  --accent-soft: oklch(0.628 0.103 188 / 0.10);
   --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.369 0.082 188) 100%);
   --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.369 0.082 188) 100%);
 
@@ -304,6 +304,16 @@ html.dark .nav-item:hover { background: #1A2031; }
   font-weight: 600;
 }
 .nav-item.active .nav-ic { color: var(--accent); }
+
+/* WhatsApp chat background — cream in light, ink-dark in dark */
+.wa-bg {
+  background-color: #EFEAE2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='40' cy='10' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='70' cy='10' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='25' cy='25' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='55' cy='25' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='10' cy='40' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='40' cy='40' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='70' cy='40' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='25' cy='55' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='55' cy='55' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='10' cy='70' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='40' cy='70' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3Ccircle cx='70' cy='70' r='1.5' fill='%23c8bfb0' fill-opacity='0.45'/%3E%3C/svg%3E");
+}
+html.dark .wa-bg {
+  background-color: #0B141A;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='40' cy='10' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='70' cy='10' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='25' cy='25' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='55' cy='25' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='10' cy='40' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='40' cy='40' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='70' cy='40' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='25' cy='55' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='55' cy='55' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='10' cy='70' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='40' cy='70' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='70' cy='70' r='1.5' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/svg%3E");
+}
 
 /* chat bubbles — WhatsApp style */
 .bubble {
