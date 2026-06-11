@@ -381,6 +381,27 @@ export function ChannelsView() {
               />
             </div>
 
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[rgba(239,68,68,0.08)] flex items-center justify-center flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium">Allow Order Cancellation via Chat</p>
+                  <p className="text-[12px] text-[var(--ink-mute)] mt-px">
+                    {config?.allowOrderCancellation
+                      ? "Customers can cancel PENDING or CONFIRMED orders through the chatbot"
+                      : "Customers are directed to contact support for cancellations"}
+                  </p>
+                </div>
+              </div>
+              <Toggle
+                enabled={config?.allowOrderCancellation ?? true}
+                onChange={(v) => updateConfigMut.mutate({ allowOrderCancellation: v })}
+                disabled={updateConfigMut.isPending}
+              />
+            </div>
+
             {config?.aiEnabled ? (
               <p className="text-[12px] text-[#15803D] bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-3 py-2">
                 AI is enabled — responding to lead messages

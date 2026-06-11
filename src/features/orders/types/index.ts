@@ -77,6 +77,7 @@ export interface Order extends Omit<OrderListItem, 'items'> {
   leadId: string;
   conversationId: string | null;
   notes: string | null;
+  cancellationReason: string | null;
   subtotal: string;
   discount: string;
   placedAt: string | null;

@@ -114,6 +114,13 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 </div>
               )}
 
+              {order.status === 'CANCELLED' && order.cancellationReason && (
+                <div className="rounded-md bg-[rgba(239,68,68,0.06)] border border-[rgba(239,68,68,0.15)] px-3 py-2.5">
+                  <div className="text-[11px] uppercase tracking-wide text-[rgba(239,68,68,0.7)] mb-1">Cancellation Reason</div>
+                  <p className="text-[13px] text-[var(--ink-soft)] whitespace-pre-wrap">{order.cancellationReason}</p>
+                </div>
+              )}
+
               {/* Status timeline */}
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">Timeline</div>
