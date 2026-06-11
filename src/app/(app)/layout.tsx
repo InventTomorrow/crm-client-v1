@@ -7,19 +7,39 @@ import { EscalateDialog } from '@/shared/layout/EscalateDialog';
 import { HotToast } from '@/shared/layout/HotToast';
 import { WorkspaceSwitchingOverlay } from '@/shared/layout/WorkspaceSwitchingOverlay';
 import { Toaster } from '@/shared/ui/Sonner';
+import { Minimize2 } from 'lucide-react';
+
+function FullScreenBar() {
+  const { toggleFullScreen } = useAppStore();
+  return (
+    <div className="h-8 flex-shrink-0 flex items-center justify-end px-3 bg-[var(--surface)] border-b border-[var(--line)]">
+      <button
+        onClick={toggleFullScreen}
+        className="btn btn-ghost p-1 text-[var(--ink-mute)] text-[11px] flex items-center gap-1.5"
+        title="Exit full screen"
+      >
+        <Minimize2 size={13} />
+        <span>Exit full screen</span>
+      </button>
+    </div>
+  );
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { mobileMenuOpen, setMobileMenuOpen, escalatingLead, hotLead, setEscalatingLead, setHotLead } = useAppStore();
+  const { mobileMenuOpen, setMobileMenuOpen, escalatingLead, hotLead, setEscalatingLead, setHotLead, isFullScreen, currentWorkspaceId } = useAppStore();
 
   return (
     <div className="app-shell">
-      <AppSidebar
-        mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
-      />
+      {!isFullScreen && (
+        <AppSidebar
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
+      )}
       <div className="app-main">
-        <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
-        <main className="app-content">
+        {!isFullScreen && <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />}
+        {isFullScreen && <FullScreenBar />}
+        <main key={currentWorkspaceId} className="app-content">
           {children}
         </main>
       </div>
