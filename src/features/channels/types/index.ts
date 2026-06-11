@@ -15,4 +15,5 @@ export interface WAConfig {
 
 export type WASSEEvent =
   | { type: 'qr'; qr: string }
-  | { type: 'status'; status: WASessionStatus; phoneNumber?: string; error?: string };
+  | { type: 'status'; status: WASessionStatus; phoneNumber?: string; error?: string }
+  | { type: 'phone-conflict'; phoneNumber: string; conflictWorkspaces: string[] };

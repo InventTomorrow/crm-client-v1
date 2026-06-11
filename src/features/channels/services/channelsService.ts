@@ -19,6 +19,14 @@ export const disconnectWA = async (): Promise<void> => {
   await apiClient.delete('/whatsapp/disconnect');
 };
 
+export const confirmWATakeover = async (): Promise<void> => {
+  await apiClient.post('/whatsapp/takeover/confirm');
+};
+
+export const denyWATakeover = async (): Promise<void> => {
+  await apiClient.post('/whatsapp/takeover/deny');
+};
+
 export const updateWAConfig = async (config: Partial<WAConfig>): Promise<void> => {
   await apiClient.patch('/whatsapp/config', config);
 };

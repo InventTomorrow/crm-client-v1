@@ -3,11 +3,14 @@ import {
   useWAConnect,
   useWADisconnect,
   useWAEventStream,
+  useWATakeoverConfirm,
+  useWATakeoverDeny,
   useWAStatus,
 } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeftRight,
   CheckCircle2,
   Loader2,
   Power,
@@ -75,11 +78,12 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   const { data: statusData } = useWAStatus();
   const connectMut = useWAConnect();
   const disconnectMut = useWADisconnect();
+  const takeoverConfirmMut = useWATakeoverConfirm();
+  const takeoverDenyMut = useWATakeoverDeny();
   const [streamActive, setStreamActive] = useState(false);
-  // Tracks whether we've just fired the connect call — shows loading UI immediately.
   const [starting, setStarting] = useState(false);
 
-  const { qr, liveStatus, livePhone, liveError } =
+  const { qr, liveStatus, livePhone, liveError, conflict } =
     useWAEventStream(streamActive);
 
   const status = liveStatus ?? statusData?.status ?? "DISCONNECTED";
@@ -168,75 +172,107 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
 
         {/* Body */}
         <div className="p-5 flex flex-col items-center gap-4">
-          {/* CONNECTED */}
-          {status === "CONNECTED" && (
+          {/* PHONE CONFLICT — number already linked to another workspace */}
+          {conflict && (
+            <div className="flex flex-col items-center gap-4 w-full py-2">
+              <div className="w-16 h-16 rounded-full bg-[rgba(202,138,4,0.1)] flex items-center justify-center">
+                <ArrowLeftRight size={28} className="text-[#CA8A04]" />
+              </div>
+              <div className="text-center">
+                <p className="text-[15px] font-semibold text-[var(--ink)]">Number Already Linked</p>
+                <p className="text-[13px] text-[var(--ink-mute)] mt-1">
+                  <span className="font-medium text-[var(--ink)]">+{conflict.phoneNumber}</span> is currently
+                  connected to{" "}
+                  <span className="font-medium text-[var(--ink)]">
+                    {conflict.conflictWorkspaces.join(", ")}
+                  </span>.
+                </p>
+                <p className="text-[12px] text-[var(--ink-mute)] mt-2">
+                  Switch here? The other workspace will be disconnected.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 w-full">
+                <button
+                  onClick={() => takeoverConfirmMut.mutate()}
+                  disabled={takeoverConfirmMut.isPending || takeoverDenyMut.isPending}
+                  className="btn btn-grad w-full justify-center"
+                >
+                  {takeoverConfirmMut.isPending
+                    ? <Loader2 size={13} className="animate-spin" />
+                    : <CheckCircle2 size={13} />}
+                  Yes, switch here
+                </button>
+                <button
+                  onClick={() => {
+                    takeoverDenyMut.mutate(undefined, {
+                      onSuccess: () => {
+                        setStarting(true);
+                        setTimeout(() => { connectMut.mutate(); }, 300);
+                      },
+                    });
+                  }}
+                  disabled={takeoverDenyMut.isPending || takeoverConfirmMut.isPending}
+                  className="btn btn-outline w-full justify-center text-[12.5px]"
+                >
+                  {takeoverDenyMut.isPending
+                    ? <Loader2 size={13} className="animate-spin" />
+                    : <QrCode size={13} />}
+                  No, use a different number
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CONNECTED / QR / DISCONNECTED — hidden while conflict prompt is shown */}
+          {!conflict && status === "CONNECTED" && (
             <>
               <div className="flex flex-col items-center gap-3 py-4 w-full">
-                {/* Animated success ring */}
                 <div className="relative flex items-center justify-center w-20 h-20">
                   <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-10 animate-ping" style={{ animationDuration: '2s' }} />
-                  <span className="absolute inset-[6px] rounded-full bg-[#25D366] opacity-8" />
+                  <span className="absolute inset-[6px] rounded-full bg-[#25D366] opacity-[0.08]" />
                   <div className="relative w-16 h-16 rounded-full bg-[rgba(37,211,102,0.13)] flex items-center justify-center">
                     <CheckCircle2 size={32} className="text-[#25D366]" />
                   </div>
                 </div>
                 <div className="text-center">
                   <p className="text-[15px] font-semibold text-[var(--ink)]">WhatsApp Connected</p>
-                  {phoneNumber && (
-                    <p className="text-[13px] text-[var(--ink-mute)] mt-1">+{phoneNumber}</p>
-                  )}
+                  {phoneNumber && <p className="text-[13px] text-[var(--ink-mute)] mt-1">+{phoneNumber}</p>}
                 </div>
               </div>
-
-              {/* Primary — close */}
               <button onClick={() => onOpenChange(false)} className="btn btn-grad w-full justify-center gap-2">
                 <X size={13} /> Close
               </button>
-
-              {/* Secondary — disconnect, subtle */}
               <button
                 onClick={handleDisconnect}
                 disabled={disconnectMut.isPending}
                 className="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)] hover:text-[#EF4444] transition-colors duration-150 py-1"
               >
-                {disconnectMut.isPending
-                  ? <Loader2 size={11} className="animate-spin" />
-                  : <Power size={11} />}
+                {disconnectMut.isPending ? <Loader2 size={11} className="animate-spin" /> : <Power size={11} />}
                 Disconnect WhatsApp
               </button>
             </>
           )}
 
-          {/* Loading — clicked connect but SSE not fired yet */}
-          {showLoading && (
+          {!conflict && showLoading && (
             <div className="flex flex-col items-center gap-3 py-6">
               <QRPlaceholder label="Starting connection…" />
             </div>
           )}
 
-          {/* PENDING - QR or waiting */}
-          {!showLoading && status === "PENDING" && (
+          {!conflict && !showLoading && status === "PENDING" && (
             <>
               {qrCode ? (
                 <>
                   <QRFrame src={qrCode} />
                   <div className="text-center space-y-1">
-                    <p className="text-[13.5px] font-semibold text-[var(--ink)]">
-                      Scan with WhatsApp
-                    </p>
+                    <p className="text-[13.5px] font-semibold text-[var(--ink)]">Scan with WhatsApp</p>
                     <p className="text-[12px] text-[var(--ink-mute)] leading-relaxed max-w-[280px]">
-                      Open WhatsApp → tap{" "}
-                      <span className="font-medium">Linked Devices</span> →{" "}
-                      <span className="font-medium">Link a Device</span>
+                      Open WhatsApp → tap <span className="font-medium">Linked Devices</span> → <span className="font-medium">Link a Device</span>
                     </p>
-                    <p className="text-[11px] text-[var(--ink-mute)]">
-                      QR expires in ~60 seconds
-                    </p>
+                    <p className="text-[11px] text-[var(--ink-mute)]">QR expires in ~60 seconds</p>
                   </div>
-                  <button
-                    onClick={handleRefreshQR}
-                    className="btn btn-outline text-[12px] w-full justify-center"
-                  >
+                  <button onClick={handleRefreshQR} className="btn btn-outline text-[12px] w-full justify-center">
                     <RefreshCw size={12} /> Refresh QR
                   </button>
                 </>
@@ -248,50 +284,32 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
             </>
           )}
 
-          {/* DISCONNECTED */}
-          {!showLoading && status === "DISCONNECTED" && (
+          {!conflict && !showLoading && status === "DISCONNECTED" && (
             <>
               {connectionError && (
                 <div className="w-full flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
                   <WifiOff size={15} className="flex-shrink-0 mt-px" />
                   <div>
-                    <p className="text-[12.5px] font-semibold">
-                      Connection failed
-                    </p>
-                    <p className="text-[11.5px] mt-0.5 opacity-80 break-all">
-                      {connectionError}
-                    </p>
+                    <p className="text-[12.5px] font-semibold">Connection failed</p>
+                    <p className="text-[11.5px] mt-0.5 opacity-80 break-all">{connectionError}</p>
                   </div>
                 </div>
               )}
               <div className="flex flex-col items-center gap-3 py-6 w-full">
                 <div className="w-[220px] h-[220px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
-                  <QrCode
-                    size={36}
-                    className="text-[var(--ink-mute)] opacity-40"
-                  />
-                  <p className="text-[12.5px] text-[var(--ink-mute)]">
-                    No QR generated
-                  </p>
+                  <QrCode size={36} className="text-[var(--ink-mute)] opacity-40" />
+                  <p className="text-[12.5px] text-[var(--ink-mute)]">No QR generated</p>
                 </div>
               </div>
-              <button
-                onClick={handleConnect}
-                disabled={connectMut.isPending}
-                className="btn btn-grad w-full justify-center"
-              >
-                {connectMut.isPending ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <QrCode size={14} />
-                )}
+              <button onClick={handleConnect} disabled={connectMut.isPending} className="btn btn-grad w-full justify-center">
+                {connectMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />}
                 {connectionError ? "Retry Connection" : "Generate QR Code"}
               </button>
             </>
           )}
         </div>
 
-        {status !== "CONNECTED" && (
+        {!conflict && status !== "CONNECTED" && (
           <div className="px-5 pb-4 flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
             <Smartphone size={13} className="flex-shrink-0 mt-px" />
             <span>

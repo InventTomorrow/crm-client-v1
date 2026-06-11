@@ -4,7 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
+  confirmWATakeover,
   connectWA,
+  denyWATakeover,
   disconnectWA,
   getWAConfig,
   getWAStatus,
@@ -30,9 +32,7 @@ export function useWAConnect() {
     mutationFn: connectWA,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wa-status"] }),
     onError: (error) =>
-      toast.error(
-        extractErrorMessage(error, "Failed to start WhatsApp session"),
-      ),
+      toast.error(extractErrorMessage(error, "Failed to start WhatsApp session")),
   });
 }
 
@@ -49,6 +49,24 @@ export function useWADisconnect() {
   });
 }
 
+export function useWATakeoverConfirm() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: confirmWATakeover,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wa-status"] }),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to confirm takeover")),
+  });
+}
+
+export function useWATakeoverDeny() {
+  return useMutation({
+    mutationFn: denyWATakeover,
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to deny takeover")),
+  });
+}
+
 export function useUpdateWAConfig() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -56,7 +74,7 @@ export function useUpdateWAConfig() {
     onMutate: async (next) => {
       await queryClient.cancelQueries({ queryKey: ["wa-config"] });
       const prev = queryClient.getQueryData<WAConfig>(["wa-config"]);
-      queryClient.setQueryData<WAConfig>(["wa-config"], (old) => ({
+      queryClient.setQueryData<WAConfig>(["wa-config"], (old: WAConfig | undefined) => ({
         ...old!,
         ...next,
       }));
@@ -79,7 +97,7 @@ export function useWAStatusStream() {
       try {
         const event = JSON.parse(e.data as string) as WASSEEvent;
         if (event.type === "status") {
-          queryClient.setQueryData<WAState>(["wa-status"], (old) => ({
+          queryClient.setQueryData<WAState>(["wa-status"], (old: WAState | undefined) => ({
             status: event.status,
             phoneNumber: event.phoneNumber ?? old?.phoneNumber,
             error: event.error,
@@ -92,26 +110,29 @@ export function useWAStatusStream() {
   }, [queryClient]);
 }
 
-/** Opens an SSE connection to /whatsapp/qr-stream and returns live QR + status. */
+export interface ConflictInfo {
+  phoneNumber: string;
+  conflictWorkspaces: string[];
+}
+
+/** Opens an SSE connection to /whatsapp/qr-stream and returns live QR + status + conflict info. */
 export function useWAEventStream(enabled: boolean) {
   const [qr, setQr] = useState<string | null>(null);
   const [liveStatus, setLiveStatus] = useState<WASessionStatus | null>(null);
   const [livePhone, setLivePhone] = useState<string | null>(null);
   const [liveError, setLiveError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState<ConflictInfo | null>(null);
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
-    // Fresh stream — clear any state left over from a previous session so a
-    // retry doesn't briefly show the old QR / error before new events arrive.
     setQr(null);
     setLiveStatus(null);
     setLivePhone(null);
     setLiveError(null);
-    const base = "/api/v1";
-    const es = new EventSource(`${base}/whatsapp/qr-stream`, {
-      withCredentials: true,
-    });
+    setConflict(null);
+
+    const es = new EventSource("/api/v1/whatsapp/qr-stream", { withCredentials: true });
     esRef.current = es;
 
     es.onmessage = (e: MessageEvent) => {
@@ -120,12 +141,18 @@ export function useWAEventStream(enabled: boolean) {
         setQr(event.qr);
         setLiveStatus("PENDING");
         setLiveError(null);
+        setConflict(null);
       } else if (event.type === "status") {
         setLiveStatus(event.status);
         setLivePhone(event.phoneNumber ?? null);
         setLiveError(event.error ?? null);
+        setConflict(null);
         if (event.status === "CONNECTED") setQr(null);
         if (event.status === "PENDING") setLiveError(null);
+      } else if (event.type === "phone-conflict") {
+        setConflict({ phoneNumber: event.phoneNumber, conflictWorkspaces: event.conflictWorkspaces });
+        setLiveStatus("PENDING");
+        setQr(null);
       }
     };
 
@@ -141,5 +168,5 @@ export function useWAEventStream(enabled: boolean) {
     };
   }, [enabled]);
 
-  return { qr, liveStatus, livePhone, liveError };
+  return { qr, liveStatus, livePhone, liveError, conflict };
 }
