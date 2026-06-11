@@ -14,6 +14,9 @@ const DEFAULTS: BusinessProfileForm = {
   businessDescription: '',
   businessInfoMessage: '',
   businessFaqs: [],
+  supportName: '',
+  supportPhone: '',
+  supportEmail: '',
 };
 
 export function BusinessSection() {
@@ -43,6 +46,9 @@ export function BusinessSection() {
         businessDescription: data.config.businessDescription ?? '',
         businessInfoMessage: data.config.businessInfoMessage ?? '',
         businessFaqs: data.config.businessFaqs ?? [],
+        supportName: data.config.supportName ?? '',
+        supportPhone: data.config.supportPhone ?? '',
+        supportEmail: data.config.supportEmail ?? '',
       });
     }
   }, [data, reset]);
@@ -154,6 +160,30 @@ export function BusinessSection() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Support contact */}
+        <div className="card p-[22px] flex flex-col gap-3">
+          <div>
+            <h4 className="text-[13.5px] font-semibold">Support Contact</h4>
+            <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+              The AI uses these details when directing customers to support (e.g. blocked cancellations, shipped orders).
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Team / Person name</label>
+              <input className="input text-[13px]" placeholder="e.g. Support Team" {...register('supportName')} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[12px] font-medium text-[var(--ink-soft)]">WhatsApp / Phone</label>
+              <input className="input text-[13px]" placeholder="+92 300 0000000" {...register('supportPhone')} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Email</label>
+              <input className="input text-[13px]" type="email" placeholder="support@yourbusiness.com" {...register('supportEmail')} />
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end">

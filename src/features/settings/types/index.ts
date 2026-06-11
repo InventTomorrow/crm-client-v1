@@ -45,6 +45,9 @@ export const businessProfileSchema = z.object({
   businessDescription: z.string().max(2000),
   businessInfoMessage: z.string().max(2000),
   businessFaqs: z.array(businessFaqSchema).max(50),
+  supportName: z.string().max(100),
+  supportPhone: z.string().max(30),
+  supportEmail: z.string().max(200),
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
@@ -59,6 +62,9 @@ export interface ChatbotConfigResponse {
     businessDescription: string | null;
     businessInfoMessage: string | null;
     businessFaqs: BusinessFaq[] | null;
+    supportName: string | null;
+    supportPhone: string | null;
+    supportEmail: string | null;
   } | null;
   workspaceName: string | null;
 }
