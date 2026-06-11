@@ -42,6 +42,26 @@ export function useOrdersSummary() {
   return useQuery({ queryKey: keys.summary, queryFn: getOrdersSummary });
 }
 
+export function usePendingOrdersCount() {
+  return useQuery({
+    queryKey: [...keys.summary, 'pending-count'],
+    queryFn: async () => {
+      const summary = await getOrdersSummary();
+      return summary.byStatus.find((s) => s.status === 'PENDING')?.count ?? 0;
+    },
+    refetchInterval: 30_000,
+  });
+}
+
+export function useLeadOrders(leadId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['orders', 'lead', leadId],
+    queryFn: () => getOrders({ leadId: leadId!, limit: 10 }),
+    enabled: !!leadId,
+    staleTime: 30_000,
+  });
+}
+
 export function useOrder(id: string | null) {
   return useQuery({
     queryKey: keys.detail(id ?? ''),
@@ -102,11 +122,3 @@ export function useDeleteOrder() {
 }
 
 /** Returns DRAFT orders linked to a specific conversation. Refreshes on SSE new-draft-order events. */
-export function useDraftOrdersForConversation(conversationId: string | null) {
-  return useQuery({
-    queryKey: ['orders', 'draft', conversationId],
-    queryFn: () => getOrders({ conversationId: conversationId!, status: 'DRAFT', limit: 10 }),
-    enabled: !!conversationId,
-    staleTime: 0,
-  });
-}

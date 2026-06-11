@@ -43,10 +43,11 @@ export const sendMediaMessage = async (
   mediaUrl: string,
   mimeType: string,
   caption?: string,
+  fileName?: string,
 ): Promise<ConversationMessage> => {
   const res = await apiClient.post(
     `/conversations/${conversationId}/send-media`,
-    { mediaUrl, mimeType, caption },
+    { mediaUrl, mimeType, caption, fileName },
     { headers: { 'Content-Type': 'application/json' } }, // explicit so it survives the 401-refresh retry
   );
   return res.data.data;

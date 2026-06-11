@@ -1,5 +1,5 @@
 export type Channel = 'wa' | 'ig' | 'fb' | 'tk';
-export type LeadStatus = 'hot' | 'warm' | 'cold' | 'prospect';
+export type LeadStatus = 'hot' | 'warm' | 'cold' | 'prospect' | 'closed';
 export type LeadIntent = 'checkout' | 'inquiry' | 'browse' | 'order' | 'catalog';
 
 export interface Lead {

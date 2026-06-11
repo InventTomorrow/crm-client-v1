@@ -171,8 +171,8 @@ export function DataTable<TData>({
       )}
 
       {/* Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="card overflow-x-auto">
+        <div>
           <table className="w-full text-[13px]">
             <thead>
               {table.getHeaderGroups().map((hg) => (

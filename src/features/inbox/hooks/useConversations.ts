@@ -147,8 +147,8 @@ export function useSendHumanReply(conversationId: string) {
 export function useSendMedia(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ mediaUrl, mimeType, caption }: { mediaUrl: string; mimeType: string; caption?: string }) =>
-      sendMediaMessage(conversationId, mediaUrl, mimeType, caption),
+    mutationFn: ({ mediaUrl, mimeType, caption, fileName }: { mediaUrl: string; mimeType: string; caption?: string; fileName?: string }) =>
+      sendMediaMessage(conversationId, mediaUrl, mimeType, caption, fileName),
     onSuccess: () => {
       toast.success('Media sent');
       queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
@@ -334,9 +334,6 @@ export function useConversationStream() {
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
           queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
           queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
-        }
-        if (data.type === 'new-draft-order') {
-          queryClient.invalidateQueries({ queryKey: ['orders', 'draft', data.conversationId] });
         }
       } catch {
         /* malformed payload — ignore */

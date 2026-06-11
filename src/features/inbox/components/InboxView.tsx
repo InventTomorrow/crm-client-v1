@@ -22,14 +22,16 @@ import {
   ChevronLeft,
   Download,
   Edit2,
+  FileAudio,
   FileText,
   Flame,
   Image,
-  Link2,
   Loader2,
+  Mail,
   Megaphone,
   Mic,
   MoreVertical,
+  Package,
   Palette,
   Paperclip,
   Pause,
@@ -51,14 +53,10 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
-import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
+import { STATUS_META } from "../../leads/types";
 import { OrderForm } from "../../orders/components/OrderForm";
-import {
-  useCreateOrder,
-  useDraftOrdersForConversation,
-  useUpdateOrderStatus,
-} from "../../orders/hooks/useOrders";
+import { useCreateOrder, useLeadOrders } from "../../orders/hooks/useOrders";
 import {
   filterConversations,
   useAgentTyping,
@@ -637,10 +635,7 @@ export function InboxView() {
     return {};
   });
   const [orderFormOpen, setOrderFormOpen] = useState(false);
-  const [editingDraftOrderId, setEditingDraftOrderId] = useState<string | null>(null);
   const createOrder = useCreateOrder();
-  const updateOrderStatus = useUpdateOrderStatus();
-  const { data: draftOrders } = useDraftOrdersForConversation(selectedId);
   const [pendingFile, setPendingFile] = useState<{
     file: File;
     previewUrl: string;
@@ -654,7 +649,6 @@ export function InboxView() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingCancelledRef = useRef(false); // true → discard on stop, don't send
-  const orderTriggeredMsgIds = useRef<Set<string>>(new Set());
 
   const {
     data: conversationsData,
@@ -664,6 +658,11 @@ export function InboxView() {
     isFetchingNextPage: fetchingNextConvs,
   } = useInfiniteConversations();
   const conversations = conversationsData?.pages.flat() || [];
+  const selectedLeadId =
+    conversations.find((c) => c.id === selectedId)?.lead.id ?? null;
+  const { data: leadOrders, isLoading: leadOrdersLoading } = useLeadOrders(
+    showProfile ? selectedLeadId : null,
+  );
 
   const { data: detail } = useConversationDetail(selectedId);
   const {
@@ -844,24 +843,7 @@ export function InboxView() {
   // Reset first-load flag when conversation changes
   useEffect(() => {
     isFirstLoad.current = true;
-    orderTriggeredMsgIds.current.clear();
   }, [selectedId]);
-
-  // Auto-open the Order form when the customer expresses order intent.
-  const ORDER_INTENT_RE =
-    /\b(order|buy|purchase|i want this|i('ll| will) take|want to (order|buy|get|purchase)|how.*order|can i (order|buy)|place.*order)\b/i;
-  useEffect(() => {
-    if (!selectedId || orderFormOpen) return;
-    const last = [...messages]
-      .reverse()
-      .find((m) => m.senderType === "CUSTOMER" && !m.isDraft);
-    if (!last || orderTriggeredMsgIds.current.has(last.id)) return;
-    if (ORDER_INTENT_RE.test(last.content ?? "")) {
-      orderTriggeredMsgIds.current.add(last.id);
-      setOrderFormOpen(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, selectedId]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedId) return;
@@ -905,6 +887,7 @@ export function InboxView() {
       await sendMediaMut.mutateAsync({
         mediaUrl: url,
         mimeType: pendingFile.mimeType,
+        fileName: pendingFile.file.name,
       });
       URL.revokeObjectURL(pendingFile.previewUrl);
       setPendingFile(null);
@@ -1090,10 +1073,10 @@ export function InboxView() {
                 </button>
               )}
             </div>
-            <WAStatusBadge
+            {/* <WAStatusBadge
               showLabel={false}
               className="self-center flex-shrink-0"
-            />
+            /> */}
           </div>
         </div>
         <div className="h-px bg-[var(--line)]" />
@@ -1797,62 +1780,6 @@ export function InboxView() {
                 </div>
               )}
 
-              {/* Draft order cards */}
-              {draftOrders && draftOrders.length > 0 && (
-                <div className="px-2 pt-2 flex flex-col gap-2">
-                  {draftOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-3 py-2.5 flex flex-col gap-1.5"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <ShoppingCart size={13} className="text-[var(--accent)] flex-shrink-0" />
-                          <span className="text-[12px] font-semibold text-[var(--ink)]">
-                            Draft Order #{order.orderNumber}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-[var(--ink-mute)]">
-                          {order.currency} {order.total}
-                        </span>
-                      </div>
-                      <div className="text-[11.5px] text-[var(--ink-soft)] leading-relaxed">
-                        {order.items.length} item(s)
-                        {order.customerName && (
-                          <> · {order.customerName}</>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 pt-0.5">
-                        <button
-                          className="flex-1 h-7 rounded-lg bg-[var(--accent)] text-white text-[11.5px] font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-                          disabled={updateOrderStatus.isPending}
-                          onClick={() =>
-                            updateOrderStatus.mutate({ id: order.id, status: "PENDING", note: "Approved by agent" })
-                          }
-                        >
-                          <Check size={12} /> Approve
-                        </button>
-                        <button
-                          className="h-7 px-2.5 rounded-lg border border-[var(--line)] text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1 hover:bg-[var(--surface-2)]"
-                          onClick={() => setEditingDraftOrderId(order.id)}
-                        >
-                          <Edit2 size={11} /> Edit
-                        </button>
-                        <button
-                          className="h-7 px-2.5 rounded-lg border border-[var(--line)] text-[11.5px] text-[#EF4444] flex items-center gap-1 hover:bg-[#FEF2F2] disabled:opacity-50"
-                          disabled={updateOrderStatus.isPending}
-                          onClick={() =>
-                            updateOrderStatus.mutate({ id: order.id, status: "CANCELLED", note: "Rejected by agent" })
-                          }
-                        >
-                          <X size={11} /> Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
               {/* Single-row input */}
               <div className="px-2 py-2 relative">
                 {!waConnected && (
@@ -1904,19 +1831,27 @@ export function InboxView() {
                       >
                         <Paperclip size={14} className="mr-2" /> Document
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        <Video size={14} className="mr-2 opacity-40" />
-                        <span className="opacity-40">Video</span>
-                        <span className="ml-auto text-[10px] text-[var(--ink-mute)]">
-                          Soon
-                        </span>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          fileInputRef.current?.setAttribute(
+                            "accept",
+                            "video/*",
+                          );
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <Video size={14} className="mr-2" /> Video
                       </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        <Link2 size={14} className="mr-2 opacity-40" />
-                        <span className="opacity-40">Link</span>
-                        <span className="ml-auto text-[10px] text-[var(--ink-mute)]">
-                          Soon
-                        </span>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          fileInputRef.current?.setAttribute(
+                            "accept",
+                            "audio/mp3,audio/mp4,audio/mpeg,audio/ogg,audio/wav,audio/aac,audio/*",
+                          );
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <FileAudio size={14} className="mr-2" /> Audio
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -2037,47 +1972,167 @@ export function InboxView() {
             <ChevronLeft size={18} /> Back
           </button>
 
+          {/* Avatar + name */}
           <div className="flex flex-col items-center gap-2 pt-2">
             <CRMAvatar name={displayName} size={60} />
             <h4 className="text-[15px] font-semibold text-[var(--ink)] mt-1">
               {displayName}
             </h4>
-            <EscalationBadge status={activeConv.escalationStatus} />
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <EscalationBadge status={activeConv.escalationStatus} />
+              {(() => {
+                const meta =
+                  STATUS_META[
+                    (activeConv as any).lead?.status?.toLowerCase?.() ??
+                      "prospect"
+                  ] ?? STATUS_META.prospect;
+                return (
+                  <span
+                    className="badge flex items-center gap-1 text-[10.5px] font-medium px-[7px] py-[2px]"
+                    style={{
+                      color: meta.color,
+                      background: meta.tint,
+                      border: `1px solid ${meta.tint}`,
+                    }}
+                  >
+                    <span
+                      className="dot w-[6px] h-[6px]"
+                      style={{ background: meta.color }}
+                    />
+                    {meta.label}
+                  </span>
+                );
+              })()}
+            </div>
           </div>
 
+          {/* Lead info */}
           <div className="card p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px]">
+            <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)] mb-0.5">
+              Lead Information
+            </p>
             <div className="flex items-center gap-2">
-              <Phone size={11} className="text-[var(--ink-mute)]" />
-              <span className="text-[var(--ink-mute)]">Phone:</span>
-              <span className="font-medium text-[var(--ink)]">
+              <Phone
+                size={11}
+                className="text-[var(--ink-mute)] flex-shrink-0"
+              />
+              <span className="text-[var(--ink-mute)]">Phone</span>
+              <span className="font-medium text-[var(--ink)] ml-auto">
                 {activeConv.lead.phone ?? "—"}
               </span>
             </div>
+            {(activeConv as any).lead?.email && (
+              <div className="flex items-center gap-2">
+                <Mail
+                  size={11}
+                  className="text-[var(--ink-mute)] flex-shrink-0"
+                />
+                <span className="text-[var(--ink-mute)]">Email</span>
+                <span className="font-medium text-[var(--ink)] ml-auto truncate max-w-[140px]">
+                  {(activeConv as any).lead.email}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
-              <Bot size={11} className="text-[var(--ink-mute)]" />
-              <span className="text-[var(--ink-mute)]">Channel:</span>
-              <span className="font-medium text-[var(--ink)]">WhatsApp</span>
+              <Bot size={11} className="text-[var(--ink-mute)] flex-shrink-0" />
+              <span className="text-[var(--ink-mute)]">Channel</span>
+              <span className="font-medium text-[var(--ink)] ml-auto">
+                WhatsApp
+              </span>
             </div>
-          </div>
-
-          {/* Message count */}
-          <div className="card p-3 bg-[var(--surface-2)]">
-            <div className="flex justify-between items-center mb-1 text-[11px] text-[var(--ink-mute)] uppercase tracking-[0.06em] font-semibold">
-              <span>Messages</span>
-              <span className="text-[var(--accent)] font-semibold text-[14px] font-[var(--font-head)]">
+            <div className="flex items-center gap-2">
+              <AlertTriangle
+                size={11}
+                className="text-[var(--ink-mute)] flex-shrink-0"
+              />
+              <span className="text-[var(--ink-mute)]">Messages</span>
+              <span className="font-medium text-[var(--ink)] ml-auto">
                 {detail?.messages.filter((m: any) => !m.isDraft).length ?? 0}
               </span>
             </div>
-            {detail?.messages.some((m) => m.isDraft) && (
-              <div className="flex items-center gap-1.5 mt-1 text-[11.5px] text-[var(--accent)]">
-                <AlertTriangle size={11} />
-                {detail.messages.filter((m) => m.isDraft).length} draft
-                {detail.messages.filter((m) => m.isDraft).length > 1
-                  ? "s"
-                  : ""}{" "}
-                pending review
+          </div>
+
+          {/* Order history */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
+                Order History
+              </p>
+              {leadOrders && leadOrders.length > 0 && (
+                <span className="badge bg-[var(--surface-2)] text-[var(--ink-mute)] border border-[var(--line)] text-[10.5px] px-[7px] py-[2px]">
+                  {leadOrders.length}
+                </span>
+              )}
+            </div>
+            {leadOrdersLoading && (
+              <div className="flex justify-center py-3">
+                <Loader2
+                  size={14}
+                  className="animate-spin text-[var(--ink-mute)]"
+                />
               </div>
             )}
+            {!leadOrdersLoading && (!leadOrders || leadOrders.length === 0) && (
+              <div className="card p-3 bg-[var(--surface-2)] flex items-center gap-2 text-[12px] text-[var(--ink-mute)]">
+                <Package size={13} /> No orders yet
+              </div>
+            )}
+            {leadOrders &&
+              leadOrders.map((order) => {
+                const ORDER_COLOR: Record<string, string> = {
+                  PENDING: "#F59E0B",
+                  CONFIRMED: "#3B82F6",
+                  PAID: "#8B5CF6",
+                  SHIPPED: "#10B981",
+                  DELIVERED: "#16A34A",
+                  COMPLETED: "#15803D",
+                  CANCELLED: "#EF4444",
+                  REFUNDED: "#94A3B8",
+                };
+                const color = ORDER_COLOR[order.status] ?? "#94A3B8";
+                return (
+                  <div
+                    key={order.id}
+                    className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12px] font-semibold text-[var(--ink)]">
+                        #{order.orderNumber}
+                      </span>
+                      <span
+                        className="badge text-[10px] font-medium px-[6px] py-[2px]"
+                        style={{
+                          color,
+                          background: `${color}15`,
+                          border: `1px solid ${color}30`,
+                        }}
+                      >
+                        {order.status.charAt(0) +
+                          order.status
+                            .slice(1)
+                            .toLowerCase()
+                            .replace(/_/g, " ")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-[var(--ink-mute)]">
+                      <span>
+                        {order.items.length} item
+                        {order.items.length !== 1 ? "s" : ""}
+                      </span>
+                      <span className="font-semibold text-[var(--ink)]">
+                        {order.currency} {order.total}
+                      </span>
+                    </div>
+                    <span className="text-[10.5px] text-[var(--ink-mute)]">
+                      {new Date(order.createdAt).toLocaleDateString("en-PK", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                );
+              })}
           </div>
 
           {/* Escalation actions */}
@@ -2119,21 +2174,6 @@ export function InboxView() {
           onSubmit={(values) =>
             createOrder.mutate(values, {
               onSuccess: () => setOrderFormOpen(false),
-            })
-          }
-        />
-      )}
-
-      {editingDraftOrderId && (
-        <OrderForm
-          open={!!editingDraftOrderId}
-          onClose={() => setEditingDraftOrderId(null)}
-          presetLeadId={activeConv?.lead.id}
-          presetConversationId={activeConv?.id}
-          isSubmitting={createOrder.isPending}
-          onSubmit={(values) =>
-            createOrder.mutate(values, {
-              onSuccess: () => setEditingDraftOrderId(null),
             })
           }
         />

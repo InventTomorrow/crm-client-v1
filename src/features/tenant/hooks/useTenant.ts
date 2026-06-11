@@ -39,6 +39,9 @@ export function useCreateTenant() {
         await queryClient.invalidateQueries({ queryKey: ['tenants'] });
         await queryClient.invalidateQueries({ queryKey: ['leads'] });
         await queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        queryClient.removeQueries({ queryKey: ['conversations'] });
+        queryClient.removeQueries({ queryKey: ['conversation'] });
+        queryClient.removeQueries({ queryKey: ['orders'] });
 
         await new Promise(r => setTimeout(r, 600));
       } catch (err: any) {
@@ -70,6 +73,9 @@ export function useSwitchWorkspace() {
       await queryClient.invalidateQueries({ queryKey: ['inventory'] });
       await queryClient.invalidateQueries({ queryKey: ['analytics'] });
       await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.removeQueries({ queryKey: ['conversations'] });
+      queryClient.removeQueries({ queryKey: ['conversation'] });
+      queryClient.removeQueries({ queryKey: ['orders'] });
       // Give a moment for queries to settle
       await new Promise(r => setTimeout(r, 600));
       setWorkspaceSwitching(false);

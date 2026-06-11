@@ -11,6 +11,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { useMe } from '@/features/auth/hooks/useAuth';
 import { useInboxUnreadCount } from '@/features/inbox/hooks/useConversations';
 import { useLeadsCount } from '@/features/leads/hooks/useLeads';
+import { usePendingOrdersCount } from '@/features/orders/hooks/useOrders';
 
 const NAV_ITEMS = [
   { href: '/inbox',     label: 'Inbox',         Icon: Inbox },
@@ -34,8 +35,13 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const { user } = useMe();
   const { data: inboxUnread } = useInboxUnreadCount();
   const { data: leadsCount } = useLeadsCount();
-  const badgeFor = (href: string): number | undefined =>
-    href === '/inbox' ? inboxUnread || undefined : href === '/leads' ? leadsCount || undefined : undefined;
+  const { data: pendingOrders } = usePendingOrdersCount();
+  const badgeFor = (href: string): number | undefined => {
+    if (href === '/inbox') return inboxUnread || undefined;
+    if (href === '/leads') return leadsCount || undefined;
+    if (href === '/orders') return pendingOrders || undefined;
+    return undefined;
+  };
   const [profileOpen, setProfileOpen] = useState(false);
   const collapsed = sidebarCollapsed;
 
