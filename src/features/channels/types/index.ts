@@ -10,6 +10,7 @@ export interface WAState {
 export interface WAConfig {
   aiEnabled: boolean;
   autoReply: boolean;
+  allowOrderCancellation: boolean;
 }
 
 export type WASSEEvent =

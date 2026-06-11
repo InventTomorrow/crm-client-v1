@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, Search, Bell } from 'lucide-react';
+import { Maximize2, Minimize2, Menu, Search, Bell } from 'lucide-react';
 import { useAppStore } from '@/lib/appStore';
 import { useNotificationStream, useUnreadCount } from '@/features/notifications/hooks/useNotifications';
+import { useWAStatusStream } from '@/features/channels/hooks/useWhatsApp';
 import { WAConnectDialog, WAStatusButton } from '@/shared/ui/WAConnectDialog';
 import { NotificationsPanel } from './NotificationsPanel';
 import { SearchPalette } from './SearchPalette';
@@ -25,11 +26,13 @@ interface AppTopBarProps {
 
 export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const pathname = usePathname();
-  const { workspaces, currentWorkspaceId } = useAppStore();
+  const { workspaces, currentWorkspaceId, toggleFullScreen, isFullScreen } = useAppStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
 
+  // Always-on WA status stream so the header icon updates instantly on connect/disconnect.
+  useWAStatusStream();
   // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
   useNotificationStream();
   const { data: unread = 0 } = useUnreadCount();
@@ -90,6 +93,22 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
       {/* WhatsApp status */}
       <WAStatusButton onClick={() => setWaOpen(true)} />
       <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
+
+      {/* Full screen toggle */}
+      <button
+        onClick={toggleFullScreen}
+        className="btn btn-ghost p-2 text-[var(--ink-mute)] overflow-hidden"
+        title={isFullScreen ? "Exit full screen" : "Full screen view"}
+      >
+        <span
+          className="block transition-all duration-200"
+          style={{
+            transform: isFullScreen ? 'rotate(180deg) scale(1)' : 'rotate(0deg) scale(1)',
+          }}
+        >
+          {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </span>
+      </button>
 
       {/* Notifications */}
       <div data-header-popover className="relative">

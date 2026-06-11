@@ -10,7 +10,7 @@ import {
   getWAStatus,
   updateWAConfig,
 } from "../services/channelsService";
-import type { WAConfig, WASSEEvent, WASessionStatus } from "../types";
+import type { WAConfig, WASSEEvent, WASessionStatus, WAState } from "../types";
 
 export function useWAStatus() {
   return useQuery({
@@ -68,6 +68,28 @@ export function useUpdateWAConfig() {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["wa-config"] }),
   });
+}
+
+/** Always-on SSE subscriber — keeps the wa-status query cache in sync without polling. */
+export function useWAStatusStream() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const es = new EventSource("/api/v1/whatsapp/qr-stream", { withCredentials: true });
+    es.onmessage = (e: MessageEvent) => {
+      try {
+        const event = JSON.parse(e.data as string) as WASSEEvent;
+        if (event.type === "status") {
+          queryClient.setQueryData<WAState>(["wa-status"], (old) => ({
+            status: event.status,
+            phoneNumber: event.phoneNumber ?? old?.phoneNumber,
+            error: event.error,
+          }));
+        }
+      } catch { /* ignore malformed */ }
+    };
+    es.onerror = () => es.close();
+    return () => es.close();
+  }, [queryClient]);
 }
 
 /** Opens an SSE connection to /whatsapp/qr-stream and returns live QR + status. */
