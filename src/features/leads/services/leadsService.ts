@@ -16,8 +16,7 @@ const mapBackendToFrontend = (data: any): Lead => ({
   phone: data.phone || undefined,
   email: data.email || undefined,
   conversationId: data.conversations?.[0]?.id ?? undefined,
-  // Fields not present in basic backend model, mocked for UI consistency
-  lastMsg: 'No message history',
+  lastMsg: data.conversations?.[0]?.messages?.[0]?.content || '',
   time: data.lastContactedAt ? new Date(data.lastContactedAt).toLocaleDateString() : 'New',
   unread: 0,
   value: 0,

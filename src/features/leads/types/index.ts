@@ -21,4 +21,5 @@ export const STATUS_META: Record<string, { label: string; color: string; tint: s
   cold:     { label: 'Cold',     color: '#38BDF8', tint: 'rgba(56,189,248,0.10)' },
   warm:     { label: 'Warm',     color: '#F59E0B', tint: 'rgba(245,158,11,0.10)' },
   hot:      { label: 'Hot',      color: '#EF4444', tint: 'rgba(239,68,68,0.08)' },
+  closed:   { label: 'Closed',   color: '#8B5CF6', tint: 'rgba(139,92,246,0.10)' },
 };

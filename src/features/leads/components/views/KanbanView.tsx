@@ -29,6 +29,7 @@ export default function KanbanView({
       cold: [],
       warm: [],
       hot: [],
+      closed: [],
     };
     filtered.forEach((l) => {
       g[l.status]?.push(l);
@@ -46,7 +47,7 @@ export default function KanbanView({
   };
 
   return (
-    <div className="leads-kanban grid gap-3 flex-1 min-h-0 grid-cols-[repeat(4,minmax(0,1fr))]">
+    <div className="leads-kanban grid gap-3 flex-1 min-h-0 grid-cols-[repeat(5,minmax(220px,1fr))] overflow-x-auto">
       {Object.entries(STATUS_META).map(([key, c]) => (
         <div
           key={key}
@@ -80,7 +81,7 @@ export default function KanbanView({
               <Plus size={13} />
             </button>
           </div>
-          <div className="scroll overflow-y-auto flex flex-col gap-2 pr-0.5 min-h-[80px]">
+          <div className="scroll overflow-y-auto flex-1 flex flex-col gap-2 pr-0.5 min-h-[80px]">
             {grouped[key]?.map((l) => (
               <LeadCard
                 key={l.id}

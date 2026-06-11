@@ -49,7 +49,7 @@ export default function LeadStatusSelect({
         <ChevronDown size={10} strokeWidth={2.4} />
       </button>
       {open && (
-        <div className="card-2 fade-up absolute left-0 top-[calc(100%+4px)] z-40 p-1 min-w-[140px] bg-[var(--surface)]">
+        <div className="card-2 fade-up absolute left-0 top-[calc(100%+4px)] z-[200] p-1 min-w-[140px] bg-[var(--surface)]">
           {Object.entries(STATUS_META).map(([k, v]) => (
             <button
               key={k}
