@@ -3,8 +3,8 @@ import { Suspense } from 'react';
 import { AcceptInviteView } from '@/features/auth/components/AcceptInviteView';
 
 export const metadata: Metadata = {
-  title: 'Accept invitation — SaleFlow CRM',
-  description: 'Join your team on SaleFlow CRM',
+  title: 'Accept invitation',
+  description: 'Join your team on AsaanRabta',
 };
 
 export default function AcceptInvitePage() {

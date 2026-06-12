@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRegister } from "../hooks/useAuth";
 import { registerSchema, type RegisterData } from "../types";
+import { AuthFormError } from "./AuthFormError";
 
 /* ── Register View ── */
 
@@ -40,7 +41,7 @@ function passwordStrength(pw: string): number {
 export function RegisterView() {
   const [showPw, setShowPw] = useState(false);
   const router = useRouter();
-  const { mutate, isPending } = useRegister();
+  const { mutate, isPending, error } = useRegister();
 
   const form = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
@@ -50,6 +51,7 @@ export function RegisterView() {
       email: "",
       password: "",
       tenantName: "",
+      acceptTerms: false,
     },
   });
 
@@ -65,7 +67,7 @@ export function RegisterView() {
             Create your workspace
           </h1>
           <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
-            Start selling smarter with SaleFlow CRM
+            Start selling smarter with AsaanRabta
           </p>
         </div>
 
@@ -81,6 +83,8 @@ export function RegisterView() {
             )}
             className="flex flex-col gap-3.5"
           >
+            <AuthFormError error={error} />
+
             {/* Name row */}
             <div className="grid grid-cols-2 gap-2.5">
               <FormField
@@ -238,19 +242,34 @@ export function RegisterView() {
               )}
             />
 
-            <label className="flex items-start gap-2 text-[12px] text-[var(--ink-soft)] cursor-pointer mt-0.5">
-              <Checkbox className="mt-0.5" />
-              <span>
-                I agree to the{" "}
-                <Link href="#" className="text-[var(--accent)] hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="#" className="text-[var(--accent)] hover:underline">
-                  Privacy Policy
-                </Link>
-              </span>
-            </label>
+            <FormField
+              control={form.control}
+              name="acceptTerms"
+              render={({ field }) => (
+                <FormItem className="mt-0.5">
+                  <div className="flex items-start gap-2">
+                    <FormControl>
+                      <Checkbox
+                        className="mt-0.5"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <span className="text-[12px] text-[var(--ink-soft)]">
+                      I agree to the{" "}
+                      <Link href="#" className="text-[var(--accent)] hover:underline">
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link href="#" className="text-[var(--accent)] hover:underline">
+                        Privacy Policy
+                      </Link>
+                    </span>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <Button
               type="submit"

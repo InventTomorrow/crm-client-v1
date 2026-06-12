@@ -8,7 +8,7 @@ import { useVerifyEmail } from '../hooks/useAuth';
 export function VerifyEmailConfirmView() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
-  const { mutate, isPending, isSuccess, isError, error } = useVerifyEmail();
+  const { mutate, isSuccess, isError, error } = useVerifyEmail();
   const called = useRef(false);
 
   useEffect(() => {
@@ -35,17 +35,6 @@ export function VerifyEmailConfirmView() {
     );
   }
 
-  if (isPending) {
-    return (
-      <div className="w-full max-w-[400px] mx-auto text-center">
-        <div className="card p-8 flex flex-col items-center gap-4">
-          <Loader2 size={36} className="animate-spin text-[var(--accent)]" />
-          <p className="text-[14px] text-[var(--ink-mute)]">Verifying your email…</p>
-        </div>
-      </div>
-    );
-  }
-
   if (isSuccess) {
     return (
       <div className="w-full max-w-[400px] mx-auto text-center">
@@ -62,19 +51,31 @@ export function VerifyEmailConfirmView() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="w-full max-w-[400px] mx-auto text-center">
+        <div className="card p-8 flex flex-col items-center gap-4">
+          <XCircle size={40} className="text-[#DC2626]" />
+          <div>
+            <h2 className="text-[18px] font-semibold text-[var(--ink)]">Verification failed</h2>
+            <p className="text-[13px] mt-1.5 text-[var(--ink-mute)]">
+              {error instanceof Error ? error.message : 'This link may have expired or already been used.'}
+            </p>
+          </div>
+          <Link href="/auth/login" className="btn btn-outline mt-1">
+            <ArrowLeft size={13} /> Back to sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: idle (before the request fires) and pending — never flash failure.
   return (
     <div className="w-full max-w-[400px] mx-auto text-center">
       <div className="card p-8 flex flex-col items-center gap-4">
-        <XCircle size={40} className="text-[#DC2626]" />
-        <div>
-          <h2 className="text-[18px] font-semibold text-[var(--ink)]">Verification failed</h2>
-          <p className="text-[13px] mt-1.5 text-[var(--ink-mute)]">
-            {isError && error instanceof Error ? error.message : 'This link may have expired or already been used.'}
-          </p>
-        </div>
-        <Link href="/auth/login" className="btn btn-outline mt-1">
-          <ArrowLeft size={13} /> Back to sign in
-        </Link>
+        <Loader2 size={36} className="animate-spin text-[var(--accent)]" />
+        <p className="text-[14px] text-[var(--ink-mute)]">Verifying your email…</p>
       </div>
     </div>
   );
