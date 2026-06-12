@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, ChevronRight, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -71,15 +72,17 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         {/* Logo + collapse */}
         <div className={cn('flex items-center gap-2.5', collapsed ? 'justify-center px-0 pt-[14px] pb-1.5' : 'justify-between px-[14px] pt-[14px] pb-1.5')}>
           <div className="flex items-center gap-2 min-w-0">
-            <div
-              className="w-8 h-8 rounded-[9px] flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #25D366 0%, #075E54 100%)' }}
-            >
-              <span className="text-white font-bold text-[12px] tracking-tight select-none">AR</span>
-            </div>
+            <Image
+              src="/asaanrabta-icon.png"
+              alt="AsaanRabta"
+              width={32}
+              height={32}
+              priority
+              className="w-8 h-8 rounded-[9px] flex-shrink-0"
+            />
             {!collapsed && (
               <span className="font-[var(--font-head)] font-bold text-[14px] tracking-[-0.02em] text-[var(--ink)]">
-                Asaan<span className="text-[#25D366]">Rabta</span>
+                Asaan<span className="text-[var(--accent)]">Rabta</span>
               </span>
             )}
           </div>

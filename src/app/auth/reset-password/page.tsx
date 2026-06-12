@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { ResetPasswordView } from '@/features/auth/components/ResetPasswordView';
 
 export const metadata: Metadata = {
-  title: 'Reset password — SaleFlow CRM',
+  title: 'Reset password',
   description: 'Set a new password for your account',
 };
 

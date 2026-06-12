@@ -17,6 +17,9 @@ export const registerSchema = z.object({
   email: z.string().email('Enter a valid email'),
   password: passwordSchema,
   tenantName: z.string().min(2, 'Workspace name is required'),
+  acceptTerms: z.boolean().refine((v) => v === true, {
+    message: 'Please accept the Terms and Privacy Policy to continue',
+  }),
 });
 
 export const forgotPasswordSchema = z.object({

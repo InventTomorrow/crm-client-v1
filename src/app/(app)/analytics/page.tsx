@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AnalyticsView } from '@/features/analytics/components/AnalyticsView';
 
 export const metadata: Metadata = {
-  title: 'Analytics — SaleFlow CRM',
+  title: 'Analytics',
   description: 'Lead velocity, channel breakdown, funnel analytics and phase rollout tracking',
 };
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { WorkspacesManagementView } from '@/features/settings/components/WorkspacesManagementView';
 
 export const metadata: Metadata = {
-  title: 'Workspaces — SaleFlow CRM',
+  title: 'Workspaces',
   description: 'Manage all your workspaces — view stats, switch context, create or delete workspaces.',
 };
 

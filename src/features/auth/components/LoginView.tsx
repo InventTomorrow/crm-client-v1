@@ -16,11 +16,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLogin } from "../hooks/useAuth";
 import { loginSchema, type LoginData } from "../types";
+import { AuthFormError } from "./AuthFormError";
 
 /* ── Login View ── */
 export function LoginView() {
   const [showPw, setShowPw] = useState(false);
-  const { mutate, isPending } = useLogin();
+  const { mutate, isPending, error } = useLogin();
 
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -48,6 +49,8 @@ export function LoginView() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-3.5"
           >
+            <AuthFormError error={error} />
+
             <FormField
               control={form.control}
               name="email"

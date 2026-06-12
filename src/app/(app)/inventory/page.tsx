@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InventoryView } from '@/features/inventory/components/InventoryView';
 
 export const metadata: Metadata = {
-  title: 'Inventory — SaleFlow CRM',
+  title: 'Inventory',
   description: 'Manage your product catalog with manual, URL sync, and storefront integrations',
 };
 

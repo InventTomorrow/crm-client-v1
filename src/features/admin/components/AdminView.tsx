@@ -285,7 +285,7 @@ export function AdminView() {
         <div>
           <h2 className="text-[20px] font-semibold">Team &amp; Access</h2>
           <div className="text-[12.5px] mt-0.5 text-[var(--ink-mute)]">
-            Manage who can sign in to your SaleFlow workspace and what they can do.
+            Manage who can sign in to your AsaanRabta workspace and what they can do.
           </div>
         </div>
         <div className="flex gap-2">

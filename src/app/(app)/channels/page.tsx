@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ChannelsView } from '@/features/channels/components/ChannelsView';
 
 export const metadata: Metadata = {
-  title: 'Channels — SaleFlow CRM',
+  title: 'Channels',
   description: 'Connect and manage your messaging channels',
 };
 

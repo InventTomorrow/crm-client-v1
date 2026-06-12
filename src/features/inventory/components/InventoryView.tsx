@@ -25,6 +25,7 @@ import {
   Cloud,
   Copy,
   Crown,
+  Download,
   Grid2x2,
   ImageIcon,
   Link,
@@ -73,6 +74,34 @@ function stockStatus(stock: number): Product["status"] {
   if (stock === 0) return "out";
   if (stock <= 12) return "low";
   return "in";
+}
+
+const STOCK_LABEL: Record<Product["status"], string> = {
+  in: "In stock",
+  low: "Low stock",
+  out: "Out of stock",
+};
+
+function exportProductsCsv(rows: Product[]): void {
+  const headers = ["Name", "SKU", "Category", "Price", "Stock", "Status"];
+  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [headers.join(",")];
+  for (const p of rows) {
+    lines.push(
+      [p.name, p.sku, p.cat, p.price, p.stock, STOCK_LABEL[stockStatus(p.stock)]]
+        .map(esc)
+        .join(","),
+    );
+  }
+  const csv = lines.join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `inventory_export_${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function ProductDialog({
@@ -722,6 +751,14 @@ export function InventoryView() {
                 />
               </div>
               <div className="flex-1" />
+              <button
+                className="btn btn-outline"
+                onClick={() => exportProductsCsv(filtered)}
+                disabled={filtered.length === 0}
+                title="Export current products to CSV"
+              >
+                <Download size={13} /> Export
+              </button>
               <div className="seg">
                 {VIEW_BTNS.map(({ id, label, Icon }) => (
                   <button

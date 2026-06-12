@@ -173,7 +173,7 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
 ];
 
 export const INITIAL_WORKSPACES: Workspace[] = [
-  { id: 'W1', name: 'SaleFlow Boutique', short: 'SB', plan: 'Tier 3', planLabel: 'Storefront API', members: 8,  leads: 142, role: 'Owner',   color: 'linear-gradient(135deg,#4FC3F7,#7C3AED)' },
+  { id: 'W1', name: 'AsaanRabta Boutique', short: 'SB', plan: 'Tier 3', planLabel: 'Storefront API', members: 8,  leads: 142, role: 'Owner',   color: 'linear-gradient(135deg,#4FC3F7,#7C3AED)' },
   { id: 'W2', name: 'Lahore Lawns Co.',  short: 'LL', plan: 'Tier 2', planLabel: 'URL Sync',        members: 3,  leads: 64,  role: 'Manager', color: 'linear-gradient(135deg,#22D3EE,#0EA5E9)' },
   { id: 'W3', name: 'Karachi Karahi',    short: 'KK', plan: 'Tier 1', planLabel: 'Manual Catalog',  members: 2,  leads: 28,  role: 'Agent',   color: 'linear-gradient(135deg,#F472B6,#7C3AED)' },
 ];
@@ -182,7 +182,7 @@ export const INITIAL_PROFILE: UserProfile = {
   name: 'Ahmed Raza',
   email: 'ahmed@saleflow.pk',
   phone: '+92 321 4567890',
-  business: 'SaleFlow Boutique',
+  business: 'AsaanRabta Boutique',
   city: 'Lahore',
   timezone: 'PKT (UTC+5)',
 };
