@@ -18,7 +18,12 @@ export function useWAStatus() {
   return useQuery({
     queryKey: ["wa-status"],
     queryFn: getWAStatus,
-    refetchInterval: 10_000,
+    // Poll fast while connecting/disconnected so the UI catches a backend status
+    // flip (e.g. `ready` firing late on a slow host) within seconds instead of
+    // 10s — and so it never depends solely on the flaky long-lived SSE. Back off
+    // once CONNECTED, where live changes arrive over the stream anyway.
+    refetchInterval: (query) =>
+      query.state.data?.status === "CONNECTED" ? 15_000 : 3_000,
   });
 }
 
@@ -32,7 +37,9 @@ export function useWAConnect() {
     mutationFn: connectWA,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wa-status"] }),
     onError: (error) =>
-      toast.error(extractErrorMessage(error, "Failed to start WhatsApp session")),
+      toast.error(
+        extractErrorMessage(error, "Failed to start WhatsApp session"),
+      ),
   });
 }
 
@@ -74,10 +81,13 @@ export function useUpdateWAConfig() {
     onMutate: async (next) => {
       await queryClient.cancelQueries({ queryKey: ["wa-config"] });
       const prev = queryClient.getQueryData<WAConfig>(["wa-config"]);
-      queryClient.setQueryData<WAConfig>(["wa-config"], (old: WAConfig | undefined) => ({
-        ...old!,
-        ...next,
-      }));
+      queryClient.setQueryData<WAConfig>(
+        ["wa-config"],
+        (old: WAConfig | undefined) => ({
+          ...old!,
+          ...next,
+        }),
+      );
       return { prev };
     },
     onError: (error, _vars, ctx) => {
@@ -92,18 +102,25 @@ export function useUpdateWAConfig() {
 export function useWAStatusStream() {
   const queryClient = useQueryClient();
   useEffect(() => {
-    const es = new EventSource("/api/v1/whatsapp/qr-stream", { withCredentials: true });
+    const es = new EventSource("/api/v1/whatsapp/qr-stream", {
+      withCredentials: true,
+    });
     es.onmessage = (e: MessageEvent) => {
       try {
         const event = JSON.parse(e.data as string) as WASSEEvent;
         if (event.type === "status") {
-          queryClient.setQueryData<WAState>(["wa-status"], (old: WAState | undefined) => ({
-            status: event.status,
-            phoneNumber: event.phoneNumber ?? old?.phoneNumber,
-            error: event.error,
-          }));
+          queryClient.setQueryData<WAState>(
+            ["wa-status"],
+            (old: WAState | undefined) => ({
+              status: event.status,
+              phoneNumber: event.phoneNumber ?? old?.phoneNumber,
+              error: event.error,
+            }),
+          );
         }
-      } catch { /* ignore malformed */ }
+      } catch {
+        /* ignore malformed */
+      }
     };
     es.onerror = () => es.close();
     return () => es.close();
@@ -132,7 +149,9 @@ export function useWAEventStream(enabled: boolean) {
     setLiveError(null);
     setConflict(null);
 
-    const es = new EventSource("/api/v1/whatsapp/qr-stream", { withCredentials: true });
+    const es = new EventSource("/api/v1/whatsapp/qr-stream", {
+      withCredentials: true,
+    });
     esRef.current = es;
 
     es.onmessage = (e: MessageEvent) => {
@@ -150,16 +169,25 @@ export function useWAEventStream(enabled: boolean) {
         if (event.status === "CONNECTED") setQr(null);
         if (event.status === "PENDING") setLiveError(null);
       } else if (event.type === "phone-conflict") {
-        setConflict({ phoneNumber: event.phoneNumber, conflictWorkspaces: event.conflictWorkspaces });
+        setConflict({
+          phoneNumber: event.phoneNumber,
+          conflictWorkspaces: event.conflictWorkspaces,
+        });
         setLiveStatus("PENDING");
         setQr(null);
       }
     };
 
     es.onerror = () => {
-      es.close();
-      setLiveStatus("DISCONNECTED");
-      setLiveError("Stream connection failed. Please try again.");
+      // A transient SSE drop (idle-proxy timeout, brief network blip) is NOT a
+      // session disconnect. Forcing DISCONNECTED here used to mask a real
+      // CONNECTED: the long-lived QR stream gets cut while the user scans, the
+      // phone links, the server goes CONNECTED — but the stale DISCONNECTED
+      // shadowed the polled /status and the CRM stayed stuck.
+      //
+      // Don't close and don't override status: EventSource auto-reconnects, and
+      // the server re-sends the current status on each (re)open. The polled
+      // useWAStatus query remains the source of truth meanwhile.
     };
 
     return () => {
