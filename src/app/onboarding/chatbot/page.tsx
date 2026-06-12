@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ChatbotView } from '@/features/onboarding/components/ChatbotView';
 
 export const metadata: Metadata = {
-  title: 'Configure chatbot — SaleFlow CRM',
+  title: 'Configure chatbot',
   description: 'Set up your AI chatbot responses',
 };
 

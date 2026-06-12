@@ -37,7 +37,7 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   useNotificationStream();
   const { data: unread = 0 } = useUnreadCount();
   const ws = workspaces.find(w => w.id === currentWorkspaceId) || workspaces[0];
-  const title = Object.entries(TITLES).find(([k]) => pathname.startsWith(k))?.[1] ?? 'SaleFlow';
+  const title = Object.entries(TITLES).find(([k]) => pathname.startsWith(k))?.[1] ?? 'AsaanRabta';
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -68,7 +68,7 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
       <div className="min-w-0">
         <h3 className="text-[15px] font-semibold">{title}</h3>
         <div className="text-[11px] text-[var(--ink-mute)] flex items-center gap-1.5">
-          <span>{ws?.name ?? 'SaleFlow Boutique'}</span>
+          <span>{ws?.name ?? 'AsaanRabta Boutique'}</span>
           <span>·</span>
           <span>{ws?.plan ?? 'Tier 3'}</span>
         </div>

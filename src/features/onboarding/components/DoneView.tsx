@@ -1,13 +1,23 @@
 'use client';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useOnboardingStatus } from '../hooks/useOnboarding';
+
+const REDIRECT_DELAY_MS = 4000;
 
 export function DoneView() {
   const router = useRouter();
   const { data: status } = useOnboardingStatus();
   const workspaceName = status?.workspaceName?.trim();
+
+  // Let the success state breathe, then take the user to the dashboard.
+  useEffect(() => {
+    const timer = setTimeout(() => router.push('/inbox'), REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
     <motion.div
@@ -48,14 +58,18 @@ export function DoneView() {
         ))}
       </div>
 
-      <button
-        type="button"
-        className="btn btn-grad px-8 justify-center"
-        onClick={() => router.push('/inbox')}
-      >
-        <ArrowRight size={14} />
-        Go to dashboard
-      </button>
+      <div className="flex flex-col items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 text-[13px] text-[var(--ink-mute)]">
+          <Loader2 size={14} className="animate-spin text-[var(--accent)]" />
+          Taking you to your dashboard…
+        </div>
+        <Link
+          href="/inbox"
+          className="text-[12.5px] text-[var(--accent)] hover:underline"
+        >
+          Go now
+        </Link>
+      </div>
     </motion.div>
   );
 }

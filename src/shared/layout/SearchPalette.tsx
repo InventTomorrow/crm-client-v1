@@ -275,7 +275,7 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
         </div>
 
         <div className="flex items-center justify-between px-4 py-[9px] border-t border-[var(--line)] text-[11px] text-[var(--ink-mute)]">
-          <span>SaleFlow CRM</span>
+          <span>AsaanRabta</span>
           <span>↑↓ navigate · ↵ open</span>
         </div>
       </div>

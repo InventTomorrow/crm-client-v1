@@ -1,10 +1,11 @@
 'use client';
+import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Bot, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveChatbotSchema, type SaveChatbotData } from '../types';
-import { useSaveChatbot } from '../hooks/useOnboarding';
+import { useSaveChatbot, useOnboardingStatus } from '../hooks/useOnboarding';
 import { OnboardingShell } from './OnboardingShell';
 
 const PERSONALITIES = [
@@ -13,24 +14,47 @@ const PERSONALITIES = [
   { key: 'PERSUASIVE' as const, label: 'Persuasive', desc: 'Confident & sales-driven' },
 ] as const;
 
+/** Personalized starter messages seeded with the workspace name. */
+function defaultMessages(workspace: string) {
+  return {
+    greetingMessage: `Hi! 👋 Welcome to ${workspace}. How can I help you today?`,
+    escalationMessage: `Let me connect you with someone from the ${workspace} team — please hold on a moment.`,
+    fallbackMessage: `Sorry, I didn't quite catch that. Could you rephrase it so I can help you better?`,
+  };
+}
+
 export function ChatbotView() {
   const { mutate: save, isPending } = useSaveChatbot();
+  const { data: status } = useOnboardingStatus();
+  const workspaceName = status?.workspaceName?.trim();
+
   const {
     register,
     handleSubmit,
     control,
     watch,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
   } = useForm<SaveChatbotData>({
     resolver: zodResolver(saveChatbotSchema),
     defaultValues: {
-      greetingMessage: 'Hi! Welcome to our store. How can I help you today?',
-      escalationMessage: 'Let me connect you with one of our agents. Please hold on.',
-      fallbackMessage: "I didn't quite understand that. Could you please rephrase?",
+      ...defaultMessages(workspaceName || 'our store'),
       aiPersonality: 'CASUAL',
       aiEnabled: true,
     },
   });
+
+  // Re-seed the messages with the real workspace name once it loads —
+  // only while the owner hasn't started editing.
+  useEffect(() => {
+    if (workspaceName && !isDirty) {
+      reset({
+        ...defaultMessages(workspaceName),
+        aiPersonality: 'CASUAL',
+        aiEnabled: true,
+      });
+    }
+  }, [workspaceName, isDirty, reset]);
 
   const aiEnabled = watch('aiEnabled');
 

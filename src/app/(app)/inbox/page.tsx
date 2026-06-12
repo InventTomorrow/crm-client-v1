@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { InboxView } from '@/features/inbox/components/InboxView';
 
 export const metadata: Metadata = {
-  title: 'Inbox — SaleFlow CRM',
+  title: 'Inbox',
   description: 'Unified inbox for all customer conversations',
 };
 
