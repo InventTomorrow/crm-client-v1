@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { VerifyEmailView } from '@/features/auth/components/VerifyEmailView';
 
 export const metadata: Metadata = {
-  title: 'Check your inbox — SalesHub CRM',
+  title: 'Check your inbox',
   description: 'Verify your email address to activate your account.',
 };
 

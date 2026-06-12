@@ -26,7 +26,7 @@ export function useLogin() {
       }
       router.push('/inbox');
     },
-    onError: (error) => toast.error(extractErrorMessage(error)),
+    // Error surfaced inline via <AuthFormError /> in the view (mutation.error).
   });
 }
 
@@ -35,7 +35,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterData) => register(data),
     onSuccess: () => router.push('/auth/verify-email'),
-    onError: (error) => toast.error(extractErrorMessage(error)),
+    // Error surfaced inline via <AuthFormError /> in the view (mutation.error).
   });
 }
 
