@@ -3,12 +3,13 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const STEPS = [
+  { key: 'WORKSPACE', label: 'Create workspace' },
   { key: 'CHANNEL', label: 'Connect WhatsApp' },
   { key: 'CHATBOT', label: 'Configure chatbot' },
 ];
 
 interface Props {
-  currentStep: 'CHANNEL' | 'CHATBOT';
+  currentStep: 'WORKSPACE' | 'CHANNEL' | 'CHATBOT';
   children: React.ReactNode;
 }
 

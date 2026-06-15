@@ -4,11 +4,11 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/utils';
 import {
-  login, register, logout, forgotPassword, resetPassword,
+  login, register, createWorkspace, logout, forgotPassword, resetPassword,
   acceptInvite, verifyEmail, resendVerification, getMe, updateMe,
   getMembers, inviteUser, removeMember, changeMemberRole,
 } from '../services/authService';
-import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
+import type { LoginData, RegisterData, CreateWorkspaceData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
 
 export function useLogin() {
   const router = useRouter();
@@ -17,6 +17,10 @@ export function useLogin() {
     onSuccess: (user) => {
       if (user.onboardingStatus === 'EMAIL_UNVERIFIED') {
         router.push('/auth/verify-email');
+        return;
+      }
+      if (!user.tenantId || user.onboardingStep === 'WORKSPACE') {
+        router.push('/onboarding/workspace');
         return;
       }
       if (user.onboardingStep && user.onboardingStep !== 'DONE') {
@@ -39,6 +43,20 @@ export function useRegister() {
   });
 }
 
+export function useCreateWorkspace() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateWorkspaceData) => createWorkspace(data),
+    onSuccess: () => {
+      // Fresh session cookies now carry the new tenantId — refetch identity.
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      router.push('/onboarding/channel');
+    },
+    // Error surfaced inline via <AuthFormError /> in the view (mutation.error).
+  });
+}
+
 export function useLogout() {
   const router = useRouter();
   return useMutation({
@@ -52,7 +70,7 @@ export function useVerifyEmail() {
   const router = useRouter();
   return useMutation({
     mutationFn: (token: string) => verifyEmail(token),
-    onSuccess: () => router.push('/onboarding/channel'),
+    onSuccess: () => router.push('/onboarding/workspace'),
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }

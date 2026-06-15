@@ -16,10 +16,13 @@ export const registerSchema = z.object({
   lastName: z.string().optional(),
   email: z.string().email('Enter a valid email'),
   password: passwordSchema,
-  tenantName: z.string().min(2, 'Workspace name is required'),
   acceptTerms: z.boolean().refine((v) => v === true, {
     message: 'Please accept the Terms and Privacy Policy to continue',
   }),
+});
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().min(2, 'Workspace name must be at least 2 characters'),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -54,6 +57,7 @@ export const resendVerificationSchema = z.object({
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterData = z.infer<typeof registerSchema>;
+export type CreateWorkspaceData = z.infer<typeof createWorkspaceSchema>;
 export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export type AcceptInviteData = z.infer<typeof acceptInviteSchema>;
@@ -67,7 +71,7 @@ export interface LoginResponse {
   tenantId: string | null;
   role: string;
   onboardingStatus: 'EMAIL_UNVERIFIED' | 'COMPLETE';
-  onboardingStep: 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
+  onboardingStep: 'WORKSPACE' | 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
   isTester: boolean;
 }
 

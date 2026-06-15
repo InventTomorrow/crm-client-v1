@@ -22,10 +22,10 @@ function BrandMark() {
       <Image
         src="/asaanrabta-logo.png"
         alt="AsaanRabta"
-        width={150}
-        height={49}
+        width={220}
+        height={72}
         priority
-        className="h-7 w-auto"
+        className="h-11 w-auto"
       />
     </Link>
   );

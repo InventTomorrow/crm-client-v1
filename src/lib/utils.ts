@@ -57,7 +57,25 @@ export function extractErrorMessage(
   const response = err?.response as Record<string, unknown> | undefined;
   const responseData = response?.data as Record<string, unknown> | undefined;
   if (responseData && typeof responseData.error === 'object' && responseData.error !== null) {
-    const apiMsg = (responseData.error as Record<string, unknown>).message;
+    const apiError = responseData.error as Record<string, unknown>;
+    const apiMsg = apiError.message;
+
+    // Prefer the first field-level message for validation errors — it's the
+    // friendly per-field copy (e.g. "Workspace name is required") rather than a
+    // raw "Validation failed: field — ..." dump from older API builds.
+    const details = apiError.details;
+    if (Array.isArray(details) && details.length > 0) {
+      const firstMsg = (details[0] as Record<string, unknown>)?.message;
+      if (typeof firstMsg === 'string' && firstMsg) {
+        return details.length > 1
+          ? `${firstMsg} (and ${details.length - 1} more ${details.length - 1 === 1 ? 'issue' : 'issues'})`
+          : firstMsg;
+      }
+    }
+
+    if (typeof apiMsg === 'string' && apiMsg && !/^validation failed:/i.test(apiMsg)) {
+      return apiMsg;
+    }
     if (typeof apiMsg === 'string' && apiMsg) return apiMsg;
   }
 

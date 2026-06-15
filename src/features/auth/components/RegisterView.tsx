@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -50,7 +50,6 @@ export function RegisterView() {
       lastName: "",
       email: "",
       password: "",
-      tenantName: "",
       acceptTerms: false,
     },
   });
@@ -64,10 +63,10 @@ export function RegisterView() {
       <div className="card p-8 flex flex-col gap-5 shadow-[var(--shadow-2)]">
         <div>
           <h1 className="text-[22px] font-semibold text-[var(--ink)]">
-            Create your workspace
+            Create your account
           </h1>
           <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
-            Start selling smarter with AsaanRabta
+            Start selling smarter with AsaanRabta — set up your workspace next.
           </p>
         </div>
 
@@ -126,33 +125,6 @@ export function RegisterView() {
                 )}
               />
             </div>
-
-            {/* Workspace name */}
-            <FormField
-              control={form.control}
-              name="tenantName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">
-                    Workspace / business name *
-                  </FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Building2
-                        size={13}
-                        className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
-                      />
-                      <Input
-                        className="input pl-8"
-                        placeholder="e.g. Karachi Karahi Co."
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Email */}
             <FormField
@@ -278,7 +250,7 @@ export function RegisterView() {
               disabled={isPending}
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}
-              {isPending ? "Creating workspace…" : "Create workspace"}
+              {isPending ? "Creating account…" : "Create account"}
             </Button>
           </form>
         </Form>

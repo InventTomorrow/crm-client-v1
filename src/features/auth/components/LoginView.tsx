@@ -136,55 +136,6 @@ export function LoginView() {
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {isPending ? "Signing in…" : "Sign in"}
             </button>
-
-            <div className="flex items-center gap-3 my-0.5">
-              <div className="flex-1 h-px bg-[var(--line)]" />
-              <span className="text-[11.5px] text-[var(--ink-mute)] whitespace-nowrap">
-                or continue with
-              </span>
-              <div className="flex-1 h-px bg-[var(--line)]" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="btn btn-outline justify-center gap-2"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.5 12.27c0-.78-.07-1.53-.2-2.27H12v4.51h5.9a5.04 5.04 0 0 1-2.18 3.31v2.75h3.53c2.07-1.9 3.26-4.71 3.26-8.3z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.95 0 5.42-.98 7.23-2.66l-3.53-2.74c-.98.66-2.24 1.04-3.7 1.04-2.84 0-5.25-1.92-6.11-4.5H2.25v2.82A11 11 0 0 0 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.89 14.14a6.6 6.6 0 0 1 0-4.28V7.04H2.25a11 11 0 0 0 0 9.92l3.64-2.82z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.46c1.6 0 3.04.55 4.17 1.63l3.13-3.13C17.42 2.13 14.95 1 12 1A11 11 0 0 0 2.25 7.04l3.64 2.82C6.75 7.38 9.16 5.46 12 5.46z"
-                  />
-                </svg>
-                Google
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline justify-center gap-2"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12-1.13.42-2.29 1.1-3.08.748-.85 2.05-1.5 3.064-1.57zM21.5 17.5c-.665 1.46-.99 2.11-1.847 3.4-1.197 1.81-2.886 4.06-4.978 4.08-1.86.02-2.34-1.21-4.86-1.2-2.52.01-3.05 1.22-4.91 1.2-2.09-.02-3.69-2.05-4.88-3.85C-.5 16.46-.86 9.97 2.42 6.74c1.31-1.29 3.06-2.11 4.93-2.11 1.86 0 3.03 1.02 4.55 1.02 1.49 0 2.4-1.02 4.55-1.02 1.66 0 3.42.9 4.66 2.46-4.1 2.25-3.43 8.1.39 10.41z" />
-                </svg>
-                Apple
-              </button>
-            </div>
           </form>
         </Form>
 

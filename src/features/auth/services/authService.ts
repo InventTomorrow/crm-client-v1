@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, LoginResponse, UserResponse } from '../types';
+import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse } from '../types';
 
 export async function login(data: LoginData): Promise<LoginResponse> {
   const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/login', data);
@@ -9,6 +9,11 @@ export async function login(data: LoginData): Promise<LoginResponse> {
 export async function register(data: RegisterData) {
   const res = await apiClient.post('/auth/register', data);
   return res.data;
+}
+
+export async function createWorkspace(data: CreateWorkspaceData): Promise<LoginResponse> {
+  const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/workspace', data);
+  return res.data.data;
 }
 
 export async function logout() {

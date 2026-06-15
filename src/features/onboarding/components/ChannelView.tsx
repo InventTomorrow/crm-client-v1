@@ -6,7 +6,6 @@ import {
 } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import {
-  Building2,
   CheckCircle2,
   Loader2,
   QrCode,
@@ -15,7 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useOnboardingStatus, useSkipOnboarding } from "../hooks/useOnboarding";
+import { useSkipOnboarding } from "../hooks/useOnboarding";
 import { OnboardingShell } from "./OnboardingShell";
 
 // ── QR panel (inline for onboarding, not a modal) ───────────────────────────
@@ -149,14 +148,7 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
 
 export function ChannelView() {
   const [connecting, setConnecting] = useState(false);
-  const [workspaceName, setWorkspaceName] = useState("");
-  const { data: status } = useOnboardingStatus();
   const { mutate: skip, isPending: isSkipping } = useSkipOnboarding();
-
-  useEffect(() => {
-    if (status?.workspaceName)
-      setWorkspaceName((prev) => prev || status.workspaceName);
-  }, [status?.workspaceName]);
 
   const handleConnected = () => {
     setTimeout(() => skip(), 1200);
@@ -174,23 +166,6 @@ export function ChannelView() {
       </div>
 
       <div className="card p-6 flex flex-col gap-5">
-        {/* Workspace name */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[12px] font-medium text-[var(--ink-soft)] flex items-center gap-1.5">
-            <Building2 size={13} className="text-[var(--accent)]" /> Workspace
-            name
-          </label>
-          <input
-            className="input text-[13px]"
-            placeholder="e.g. Acme Boutique"
-            value={workspaceName}
-            onChange={(e) => setWorkspaceName(e.target.value)}
-          />
-          <p className="text-[11px] text-[var(--ink-mute)]">
-            This is how your business appears across the app.
-          </p>
-        </div>
-
         {/* WhatsApp card */}
         {!connecting ? (
           <button
