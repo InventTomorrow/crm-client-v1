@@ -48,10 +48,8 @@ export function useCreateTenant() {
         queryClient.removeQueries({ queryKey: ["orders"] });
 
         await new Promise((r) => setTimeout(r, 600));
-      } catch (err: any) {
-        toast.error(
-          err?.response?.data?.message ?? "Could not switch to new workspace.",
-        );
+      } catch (err) {
+        toast.error(extractErrorMessage(err, "Could not switch to new workspace."));
       } finally {
         setWorkspaceSwitching(false);
       }
