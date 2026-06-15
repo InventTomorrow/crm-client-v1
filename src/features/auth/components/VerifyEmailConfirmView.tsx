@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { useVerifyEmail } from '../hooks/useAuth';
+import { extractErrorMessage } from '@/lib/utils';
 
 export function VerifyEmailConfirmView() {
   const searchParams = useSearchParams();
@@ -59,7 +60,7 @@ export function VerifyEmailConfirmView() {
           <div>
             <h2 className="text-[18px] font-semibold text-[var(--ink)]">Verification failed</h2>
             <p className="text-[13px] mt-1.5 text-[var(--ink-mute)]">
-              {error instanceof Error ? error.message : 'This link may have expired or already been used.'}
+              {extractErrorMessage(error, 'This link may have expired or already been used.')}
             </p>
           </div>
           <Link href="/auth/login" className="btn btn-outline mt-1">
