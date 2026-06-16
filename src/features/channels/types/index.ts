@@ -5,6 +5,7 @@ export interface WAState {
   phoneNumber?: string;
   qr?: string;
   error?: string;
+  conflict?: { phoneNumber: string; conflictWorkspaces: string[] };
 }
 
 export interface WAConfig {

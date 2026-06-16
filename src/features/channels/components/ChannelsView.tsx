@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeftRight,
   CheckCircle2,
   Loader2,
   MessageCircle,
@@ -20,6 +21,8 @@ import {
   useWADisconnect,
   useWAEventStream,
   useWAStatus,
+  useWATakeoverConfirm,
+  useWATakeoverDeny,
 } from "../hooks/useWhatsApp";
 import type { WASessionStatus } from "../types";
 
@@ -138,10 +141,12 @@ export function ChannelsView() {
   const connectMut = useWAConnect();
   const disconnectMut = useWADisconnect();
   const updateConfigMut = useUpdateWAConfig();
+  const takeoverConfirmMut = useWATakeoverConfirm();
+  const takeoverDenyMut = useWATakeoverDeny();
 
   const [streamActive, setStreamActive] = useState(false);
   const [starting, setStarting] = useState(false);
-  const { qr, liveStatus, livePhone, liveError } =
+  const { qr, liveStatus, livePhone, liveError, conflict: liveConflict } =
     useWAEventStream(streamActive);
 
   const status: WASessionStatus =
@@ -149,7 +154,11 @@ export function ChannelsView() {
   const phoneNumber = livePhone ?? statusData?.phoneNumber;
   const qrCode = qr ?? statusData?.qr;
   const connectionError = liveError ?? statusData?.error;
-  const showLoading = starting && !qrCode && status !== "CONNECTED";
+  // Conflict survives via the polled /status too, so the takeover prompt recovers
+  // even if the live SSE wasn't attached when the conflict fired (or reconnected).
+  const conflict = liveConflict ?? statusData?.conflict ?? null;
+  const showLoading =
+    starting && !qrCode && !conflict && status !== "CONNECTED";
 
   // Sync query cache immediately on any SSE event.
   useEffect(() => {
@@ -159,10 +168,11 @@ export function ChannelsView() {
       status: liveStatus,
       phoneNumber: livePhone ?? old?.phoneNumber,
       error: liveError ?? null,
+      conflict: liveConflict ?? undefined,
     }));
     if (liveStatus !== "PENDING") setStarting(false);
     if (liveStatus === "DISCONNECTED") setStreamActive(false);
-  }, [liveStatus, livePhone, liveError, qc]);
+  }, [liveStatus, livePhone, liveError, liveConflict, qc]);
 
   const handleConnect = () => {
     setStarting(true);
@@ -213,8 +223,73 @@ export function ChannelsView() {
 
         {/* Body */}
         <div className="p-5">
+          {/* ── PHONE CONFLICT — number already linked to another workspace ── */}
+          {conflict && (
+            <div className="flex flex-col items-center gap-4 w-full py-2">
+              <div className="w-16 h-16 rounded-full bg-[rgba(202,138,4,0.1)] flex items-center justify-center">
+                <ArrowLeftRight size={28} className="text-[#CA8A04]" />
+              </div>
+              <div className="text-center">
+                <p className="text-[15px] font-semibold text-[var(--ink)]">
+                  Number Already Linked
+                </p>
+                <p className="text-[13px] text-[var(--ink-mute)] mt-1">
+                  <span className="font-medium text-[var(--ink)]">
+                    +{conflict.phoneNumber}
+                  </span>{" "}
+                  is currently connected to{" "}
+                  <span className="font-medium text-[var(--ink)]">
+                    {conflict.conflictWorkspaces.join(", ")}
+                  </span>
+                  .
+                </p>
+                <p className="text-[12px] text-[var(--ink-mute)] mt-2">
+                  Switch here? The other workspace will be disconnected.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs">
+                <button
+                  onClick={() => takeoverConfirmMut.mutate()}
+                  disabled={
+                    takeoverConfirmMut.isPending || takeoverDenyMut.isPending
+                  }
+                  className="btn btn-grad w-full justify-center"
+                >
+                  {takeoverConfirmMut.isPending ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={13} />
+                  )}
+                  Yes, switch here
+                </button>
+                <button
+                  onClick={() =>
+                    takeoverDenyMut.mutate(undefined, {
+                      onSuccess: () => {
+                        setStarting(true);
+                        setStreamActive(true);
+                        setTimeout(() => connectMut.mutate(), 300);
+                      },
+                    })
+                  }
+                  disabled={
+                    takeoverDenyMut.isPending || takeoverConfirmMut.isPending
+                  }
+                  className="btn btn-outline w-full justify-center text-[12.5px]"
+                >
+                  {takeoverDenyMut.isPending ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <QrCode size={13} />
+                  )}
+                  No, use a different number
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ── CONNECTED ─────────────────────────────────────────────────── */}
-          {status === "CONNECTED" && (
+          {!conflict && status === "CONNECTED" && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]">
                 <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0">
@@ -262,7 +337,7 @@ export function ChannelsView() {
           )}
 
           {/* ── PENDING ───────────────────────────────────────────────────── */}
-          {!showLoading && status === "PENDING" && (
+          {!conflict && !showLoading && status === "PENDING" && (
             <div className="flex flex-col items-center gap-5 py-2">
               {qrCode ? (
                 <>
@@ -309,7 +384,7 @@ export function ChannelsView() {
           )}
 
           {/* ── DISCONNECTED ──────────────────────────────────────────────── */}
-          {!showLoading && status === "DISCONNECTED" && (
+          {!conflict && !showLoading && status === "DISCONNECTED" && (
             <div className="flex flex-col items-center gap-5 py-4">
               {connectionError && (
                 <div className="w-full flex items-start gap-2.5 px-4 py-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
