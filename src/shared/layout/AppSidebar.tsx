@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, ChevronRight, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
+import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/appStore';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
@@ -69,8 +69,8 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         className={`app-sidebar ${mobileOpen ? 'mobile-open' : ''}`}
         style={{ width, transition: 'width 240ms cubic-bezier(.22,.9,.4,1), transform 260ms cubic-bezier(.22,.9,.4,1)' }}
       >
-        {/* Logo + collapse */}
-        <div className={cn('flex items-center gap-2.5', collapsed ? 'justify-center px-0 pt-[14px] pb-1.5' : 'justify-between px-[14px] pt-[14px] pb-1.5')}>
+        {/* Logo + collapse — toggle always lives at the top in both states */}
+        <div className={cn('flex gap-2.5', collapsed ? 'flex-col items-center px-0 pt-[14px] pb-1.5' : 'items-center justify-between px-[14px] pt-[14px] pb-1.5')}>
           <div className="flex items-center gap-2 min-w-0">
             <Image
               src="/asaanrabta-icon.png"
@@ -86,11 +86,17 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               </span>
             )}
           </div>
-          {!collapsed && (
-            <button className="btn btn-ghost hide-mobile p-1" onClick={toggleSidebar} title="Collapse sidebar">
-              <ChevronLeft size={14} />
-            </button>
-          )}
+          <button
+            className="btn btn-ghost hide-mobile p-1 transition-colors"
+            onClick={toggleSidebar}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <ChevronLeft
+              size={14}
+              className={cn('transition-transform duration-300 ease-out', collapsed && 'rotate-180')}
+            />
+          </button>
         </div>
 
         <WorkspaceSwitcher collapsed={collapsed} />
@@ -167,12 +173,6 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               </div>
             )}
           </div>
-
-          {collapsed && (
-            <button className="btn btn-ghost justify-center p-2" onClick={toggleSidebar} title="Expand">
-              <ChevronRight size={15} />
-            </button>
-          )}
         </div>
       </aside>
     </>
