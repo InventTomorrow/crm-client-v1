@@ -6,7 +6,7 @@ import {
   useRemoveMember,
   useUpdateMe,
 } from "@/features/auth/hooks/useAuth";
-import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
+import { useWAState } from "@/features/channels/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import {
   useNotificationPreferences,
@@ -410,7 +410,7 @@ function NotifSection() {
 
 // ──────────────────── Channels Section ────────────────────
 function ChannelsSection() {
-  const { data: statusData } = useWAStatus();
+  const { data: statusData } = useWAState();
   const [waOpen, setWaOpen] = useState(false);
   const status = statusData?.status ?? "DISCONNECTED";
 

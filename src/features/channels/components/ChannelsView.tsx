@@ -1,39 +1,32 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeftRight,
   CheckCircle2,
+  ExternalLink,
   Loader2,
   MessageCircle,
   Power,
-  QrCode,
-  RefreshCw,
   WifiOff,
   Zap,
 } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
 import {
   useUpdateWAConfig,
   useWAConfig,
-  useWAConnect,
   useWADisconnect,
-  useWAEventStream,
-  useWAStatus,
-  useWATakeoverConfirm,
-  useWATakeoverDeny,
+  useWAEmbeddedSignup,
+  useWAState,
 } from "../hooks/useWhatsApp";
-import type { WASessionStatus } from "../types";
+import type { WAChannelStatus } from "../types";
 
-// ── Status pill ────────────────────────────────────────────────────────────────
-function StatusPill({ status }: { status: WASessionStatus }) {
+// ── Status pill ────────────────────────────────────────────────────────────
+
+function StatusPill({ status }: { status: WAChannelStatus }) {
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 text-[11.5px] font-medium px-2.5 py-1 rounded-full",
         status === "CONNECTED" && "bg-[#DCFCE7] text-[#15803D]",
-        status === "PENDING" && "bg-[#FEF9C3] text-[#854D0E]",
+        status === "ERROR" && "bg-[#FEF2F2] text-[#991B1B]",
         status === "DISCONNECTED" &&
           "bg-[var(--surface-2)] text-[var(--ink-mute)]",
       )}
@@ -42,20 +35,21 @@ function StatusPill({ status }: { status: WASessionStatus }) {
         className={cn(
           "w-[6px] h-[6px] rounded-full flex-shrink-0",
           status === "CONNECTED" && "bg-[#15803D]",
-          status === "PENDING" && "bg-[#CA8A04] animate-pulse",
+          status === "ERROR" && "bg-[#EF4444] animate-pulse",
           status === "DISCONNECTED" && "bg-[var(--ink-mute)]",
         )}
       />
       {status === "CONNECTED"
         ? "Connected"
-        : status === "PENDING"
-          ? "Connecting…"
+        : status === "ERROR"
+          ? "Error"
           : "Disconnected"}
     </span>
   );
 }
 
-// ── Toggle switch ──────────────────────────────────────────────────────────────
+// ── Toggle ─────────────────────────────────────────────────────────────────
+
 function Toggle({
   enabled,
   onChange,
@@ -87,41 +81,8 @@ function Toggle({
   );
 }
 
-// ── QR frame with corner accents ───────────────────────────────────────────────
-function QRFrame({ src }: { src: string }) {
-  return (
-    <div className="relative w-[216px] h-[216px] flex-shrink-0">
-      {(["tl", "tr", "bl", "br"] as const).map((pos) => (
-        <span
-          key={pos}
-          className={cn(
-            "absolute w-5 h-5 border-[var(--accent)]",
-            pos === "tl" &&
-              "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[5px]",
-            pos === "tr" &&
-              "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[5px]",
-            pos === "bl" &&
-              "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[5px]",
-            pos === "br" &&
-              "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[5px]",
-          )}
-        />
-      ))}
-      <div className="absolute inset-[7px] rounded-lg overflow-hidden bg-white p-1.5 shadow-sm border border-[var(--line)]">
-        <Image
-          src={src}
-          alt="WhatsApp QR code"
-          width={194}
-          height={194}
-          unoptimized
-          className="w-full h-full object-contain"
-        />
-      </div>
-    </div>
-  );
-}
+// ── Step badge ─────────────────────────────────────────────────────────────
 
-// ── Step badge ─────────────────────────────────────────────────────────────────
 function Step({ n, label }: { n: number; label: string }) {
   return (
     <div className="flex items-center gap-2.5">
@@ -133,58 +94,18 @@ function Step({ n, label }: { n: number; label: string }) {
   );
 }
 
-// ── Main view ──────────────────────────────────────────────────────────────────
+// ── Main view ──────────────────────────────────────────────────────────────
+
 export function ChannelsView() {
-  const qc = useQueryClient();
-  const { data: statusData } = useWAStatus();
+  const { data: stateData } = useWAState();
   const { data: config } = useWAConfig();
-  const connectMut = useWAConnect();
   const disconnectMut = useWADisconnect();
   const updateConfigMut = useUpdateWAConfig();
-  const takeoverConfirmMut = useWATakeoverConfirm();
-  const takeoverDenyMut = useWATakeoverDeny();
+  const { openSignup, isConnecting } = useWAEmbeddedSignup();
 
-  const [streamActive, setStreamActive] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const { qr, liveStatus, livePhone, liveError, conflict: liveConflict } =
-    useWAEventStream(streamActive);
-
-  const status: WASessionStatus =
-    liveStatus ?? statusData?.status ?? "DISCONNECTED";
-  const phoneNumber = livePhone ?? statusData?.phoneNumber;
-  const qrCode = qr ?? statusData?.qr;
-  const connectionError = liveError ?? statusData?.error;
-  // Conflict survives via the polled /status too, so the takeover prompt recovers
-  // even if the live SSE wasn't attached when the conflict fired (or reconnected).
-  const conflict = liveConflict ?? statusData?.conflict ?? null;
-  const showLoading =
-    starting && !qrCode && !conflict && status !== "CONNECTED";
-
-  // Sync query cache immediately on any SSE event.
-  useEffect(() => {
-    if (!liveStatus) return;
-    qc.setQueryData(["wa-status"], (old: any) => ({
-      ...old,
-      status: liveStatus,
-      phoneNumber: livePhone ?? old?.phoneNumber,
-      error: liveError ?? null,
-      conflict: liveConflict ?? undefined,
-    }));
-    if (liveStatus !== "PENDING") setStarting(false);
-    if (liveStatus === "DISCONNECTED") setStreamActive(false);
-  }, [liveStatus, livePhone, liveError, liveConflict, qc]);
-
-  const handleConnect = () => {
-    setStarting(true);
-    setStreamActive(true);
-    connectMut.mutate();
-  };
-
-  const handleDisconnect = () => {
-    setStreamActive(false);
-    setStarting(false);
-    disconnectMut.mutate();
-  };
+  const status: WAChannelStatus = stateData?.status ?? "DISCONNECTED";
+  const phoneNumber = stateData?.phoneNumber;
+  const errorMessage = stateData?.errorMessage;
 
   return (
     <div className="p-4 md:p-8 max-w-2xl space-y-6">
@@ -213,8 +134,8 @@ export function ChannelsView() {
               <p className="font-semibold text-[14.5px]">WhatsApp</p>
               <p className="text-[12px] text-[var(--ink-mute)] mt-px">
                 {status === "CONNECTED" && phoneNumber
-                  ? `+${phoneNumber}`
-                  : "Scan QR to connect your number"}
+                  ? phoneNumber
+                  : "Connect via Meta Business"}
               </p>
             </div>
           </div>
@@ -223,73 +144,8 @@ export function ChannelsView() {
 
         {/* Body */}
         <div className="p-5">
-          {/* ── PHONE CONFLICT — number already linked to another workspace ── */}
-          {conflict && (
-            <div className="flex flex-col items-center gap-4 w-full py-2">
-              <div className="w-16 h-16 rounded-full bg-[rgba(202,138,4,0.1)] flex items-center justify-center">
-                <ArrowLeftRight size={28} className="text-[#CA8A04]" />
-              </div>
-              <div className="text-center">
-                <p className="text-[15px] font-semibold text-[var(--ink)]">
-                  Number Already Linked
-                </p>
-                <p className="text-[13px] text-[var(--ink-mute)] mt-1">
-                  <span className="font-medium text-[var(--ink)]">
-                    +{conflict.phoneNumber}
-                  </span>{" "}
-                  is currently connected to{" "}
-                  <span className="font-medium text-[var(--ink)]">
-                    {conflict.conflictWorkspaces.join(", ")}
-                  </span>
-                  .
-                </p>
-                <p className="text-[12px] text-[var(--ink-mute)] mt-2">
-                  Switch here? The other workspace will be disconnected.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 w-full max-w-xs">
-                <button
-                  onClick={() => takeoverConfirmMut.mutate()}
-                  disabled={
-                    takeoverConfirmMut.isPending || takeoverDenyMut.isPending
-                  }
-                  className="btn btn-grad w-full justify-center"
-                >
-                  {takeoverConfirmMut.isPending ? (
-                    <Loader2 size={13} className="animate-spin" />
-                  ) : (
-                    <CheckCircle2 size={13} />
-                  )}
-                  Yes, switch here
-                </button>
-                <button
-                  onClick={() =>
-                    takeoverDenyMut.mutate(undefined, {
-                      onSuccess: () => {
-                        setStarting(true);
-                        setStreamActive(true);
-                        setTimeout(() => connectMut.mutate(), 300);
-                      },
-                    })
-                  }
-                  disabled={
-                    takeoverDenyMut.isPending || takeoverConfirmMut.isPending
-                  }
-                  className="btn btn-outline w-full justify-center text-[12.5px]"
-                >
-                  {takeoverDenyMut.isPending ? (
-                    <Loader2 size={13} className="animate-spin" />
-                  ) : (
-                    <QrCode size={13} />
-                  )}
-                  No, use a different number
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── CONNECTED ─────────────────────────────────────────────────── */}
-          {!conflict && status === "CONNECTED" && (
+          {/* ── CONNECTED ───────────────────────────────────────────────── */}
+          {status === "CONNECTED" && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]">
                 <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0">
@@ -297,17 +153,17 @@ export function ChannelsView() {
                 </div>
                 <div>
                   <p className="text-[13.5px] font-semibold text-[#15803D]">
-                    WhatsApp is active
+                    WhatsApp Business is active
                   </p>
                   <p className="text-[12px] text-[#166534] mt-px">
-                    {phoneNumber
-                      ? `+${phoneNumber}`
-                      : "Your number is linked and receiving messages"}
+                    {phoneNumber ??
+                      "Your number is linked and receiving messages"}
                   </p>
                 </div>
               </div>
+
               <button
-                onClick={handleDisconnect}
+                onClick={() => disconnectMut.mutate()}
                 disabled={disconnectMut.isPending}
                 className="btn btn-outline self-start text-[12.5px] text-[#EF4444] border-[#FECACA] hover:bg-[#FEF2F2]"
               >
@@ -321,108 +177,92 @@ export function ChannelsView() {
             </div>
           )}
 
-          {/* ── LOADING (waiting for first SSE event) ─────────────────────── */}
-          {showLoading && (
-            <div className="flex flex-col items-center gap-4 py-8">
-              <div className="w-[216px] h-[216px] rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
-                <Loader2
-                  size={28}
-                  className="animate-spin text-[var(--accent)]"
-                />
-                <p className="text-[12.5px] text-[var(--ink-mute)]">
-                  Starting connection…
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ── PENDING ───────────────────────────────────────────────────── */}
-          {!conflict && !showLoading && status === "PENDING" && (
-            <div className="flex flex-col items-center gap-5 py-2">
-              {qrCode ? (
-                <>
-                  <QRFrame src={qrCode} />
-                  <div className="w-full space-y-2 bg-[var(--surface-2)] rounded-xl p-4">
-                    <p className="text-[12px] font-semibold text-[var(--ink-soft)] mb-3">
-                      How to scan
-                    </p>
-                    <Step n={1} label="Open WhatsApp on your phone" />
-                    <Step n={2} label='Tap Menu → "Linked Devices"' />
-                    <Step n={3} label='"Link a Device" → scan this QR' />
-                  </div>
-                  <p className="text-[11.5px] text-[var(--ink-mute)]">
-                    QR expires in ~60 seconds
+          {/* ── ERROR ───────────────────────────────────────────────────── */}
+          {status === "ERROR" && (
+            <div className="flex flex-col gap-4 py-2">
+              <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
+                <WifiOff size={14} className="flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[12.5px] font-semibold">
+                    Connection error
                   </p>
-                  <button
-                    onClick={() => {
-                      setStarting(true);
-                      setStreamActive(false);
-                      setTimeout(() => {
-                        setStreamActive(true);
-                        connectMut.mutate();
-                      }, 300);
-                    }}
-                    className="btn btn-outline text-[12px]"
-                  >
-                    <RefreshCw size={12} /> Refresh QR
-                  </button>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-3 py-8">
-                  <div className="w-[216px] h-[216px] rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
-                    <Loader2
-                      size={28}
-                      className="animate-spin text-[var(--accent)]"
-                    />
-                    <p className="text-[12.5px] text-[var(--ink-mute)]">
-                      Generating QR code…
-                    </p>
-                  </div>
+                  <p className="text-[11.5px] mt-0.5 opacity-80 break-all">
+                    {errorMessage ?? "An unexpected error occurred."}
+                  </p>
                 </div>
-              )}
+              </div>
+              <button
+                onClick={openSignup}
+                disabled={isConnecting}
+                className="btn btn-grad self-start px-6 py-2.5"
+              >
+                {isConnecting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <ExternalLink size={14} />
+                )}
+                Reconnect via Meta
+              </button>
             </div>
           )}
 
-          {/* ── DISCONNECTED ──────────────────────────────────────────────── */}
-          {!conflict && !showLoading && status === "DISCONNECTED" && (
+          {/* ── DISCONNECTED ────────────────────────────────────────────── */}
+          {status === "DISCONNECTED" && (
             <div className="flex flex-col items-center gap-5 py-4">
-              {connectionError && (
-                <div className="w-full flex items-start gap-2.5 px-4 py-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
-                  <WifiOff size={14} className="flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[12.5px] font-semibold">
-                      Connection failed
-                    </p>
-                    <p className="text-[11.5px] mt-0.5 opacity-80 break-all">
-                      {connectionError}
-                    </p>
-                  </div>
+              {/* Illustration */}
+              <div className="w-[200px] h-[180px] rounded-2xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(37,211,102,0.12)" }}
+                >
+                  <MessageCircle
+                    size={30}
+                    style={{ color: "#25D366" }}
+                    fill="rgba(37,211,102,0.3)"
+                  />
                 </div>
-              )}
-              <div className="w-[216px] h-[216px] rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
-                <QrCode
-                  size={36}
-                  className="text-[var(--ink-mute)] opacity-30"
-                />
                 <p className="text-[12.5px] text-[var(--ink-mute)]">
                   Not connected
                 </p>
               </div>
-              <p className="text-[12.5px] text-[var(--ink-mute)] text-center max-w-xs">
-                Link your WhatsApp number so the AI can receive and reply to
-                customer messages automatically.
+
+              {/* Explainer */}
+              <div className="w-full space-y-2 bg-[var(--surface-2)] rounded-xl p-4">
+                <p className="text-[12px] font-semibold text-[var(--ink-soft)] mb-3">
+                  How to connect
+                </p>
+                <Step n={1} label="Click Connect via Meta below" />
+                <Step
+                  n={2}
+                  label="Log in to your Facebook / Meta Business account"
+                />
+                <Step
+                  n={3}
+                  label="Select your WhatsApp Business account and phone number"
+                />
+                <Step
+                  n={4}
+                  label="Done — messages start flowing automatically"
+                />
+              </div>
+
+              <p className="text-[12px] text-[var(--ink-mute)] text-center max-w-xs">
+                Uses the official Meta WhatsApp Business API — no phone ban
+                risk, fully TOS-compliant.
               </p>
+
               <button
-                onClick={handleConnect}
-                disabled={connectMut.isPending}
+                id="wa-connect-btn"
+                onClick={openSignup}
+                disabled={isConnecting}
                 className="btn btn-grad px-6 py-2.5"
               >
-                {connectMut.isPending ? (
+                {isConnecting ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <QrCode size={14} />
+                  <ExternalLink size={14} />
                 )}
-                {connectionError ? "Retry Connection" : "Generate QR Code"}
+                {isConnecting ? "Connecting…" : "Connect via Meta"}
               </button>
             </div>
           )}
@@ -459,10 +299,25 @@ export function ChannelsView() {
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[rgba(239,68,68,0.08)] flex items-center justify-center flex-shrink-0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#EF4444"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
                 </div>
                 <div>
-                  <p className="text-[13px] font-medium">Allow Order Cancellation via Chat</p>
+                  <p className="text-[13px] font-medium">
+                    Allow Order Cancellation via Chat
+                  </p>
                   <p className="text-[12px] text-[var(--ink-mute)] mt-px">
                     {config?.allowOrderCancellation
                       ? "Customers can cancel PENDING or CONFIRMED orders through the chatbot"
@@ -472,7 +327,9 @@ export function ChannelsView() {
               </div>
               <Toggle
                 enabled={config?.allowOrderCancellation ?? true}
-                onChange={(v) => updateConfigMut.mutate({ allowOrderCancellation: v })}
+                onChange={(v) =>
+                  updateConfigMut.mutate({ allowOrderCancellation: v })
+                }
                 disabled={updateConfigMut.isPending}
               />
             </div>

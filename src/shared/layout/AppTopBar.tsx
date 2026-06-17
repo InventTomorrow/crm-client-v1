@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation';
 import { Maximize2, Minimize2, Menu, Search, Bell } from 'lucide-react';
 import { useAppStore } from '@/lib/appStore';
 import { useNotificationStream, useUnreadCount } from '@/features/notifications/hooks/useNotifications';
-import { useWAStatusStream } from '@/features/channels/hooks/useWhatsApp';
 import { WAConnectDialog, WAStatusButton } from '@/shared/ui/WAConnectDialog';
 import { NotificationsPanel } from './NotificationsPanel';
 import { SearchPalette } from './SearchPalette';
@@ -31,8 +30,6 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
 
-  // Always-on WA status stream so the header icon updates instantly on connect/disconnect.
-  useWAStatusStream();
   // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
   useNotificationStream();
   const { data: unread = 0 } = useUnreadCount();

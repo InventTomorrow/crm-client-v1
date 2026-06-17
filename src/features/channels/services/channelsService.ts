@@ -1,30 +1,45 @@
 import { apiClient } from '@/lib/apiClient';
-import type { WAConfig, WAState } from '../types';
+import type { OAuthExchangePayload, WAConfig, WASignupConfig, WAState } from '../types';
 
-export const getWAStatus = async (): Promise<WAState> => {
-  const res = await apiClient.get('/whatsapp/status');
+// ── State ──────────────────────────────────────────────────────────────────
+
+/** Returns the current ChannelConnection state for the authenticated tenant. */
+export const getWAState = async (): Promise<WAState> => {
+  const res = await apiClient.get('/whatsapp/state');
   return res.data.data;
 };
 
-export const getWAConfig = async (): Promise<WAConfig> => {
-  const res = await apiClient.get('/whatsapp/config');
+// ── OAuth / Embedded Signup ────────────────────────────────────────────────
+
+/**
+ * Fetches the public FB JS SDK params needed to launch Embedded Signup
+ * (appId, configId, graphVersion). None are secret.
+ */
+export const getWASignupConfig = async (): Promise<WASignupConfig> => {
+  const res = await apiClient.get('/whatsapp/oauth/config');
   return res.data.data;
 };
 
-export const connectWA = async (): Promise<void> => {
-  await apiClient.post('/whatsapp/connect');
+/**
+ * Exchanges the Embedded Signup code (returned by FB.login) for a Meta access
+ * token. The server persists the encrypted token and returns the fresh WAState.
+ */
+export const exchangeWAOAuthCode = async (payload: OAuthExchangePayload): Promise<WAState> => {
+  const res = await apiClient.post('/whatsapp/oauth/exchange', payload);
+  return res.data.data;
 };
+
+// ── Disconnect ─────────────────────────────────────────────────────────────
 
 export const disconnectWA = async (): Promise<void> => {
   await apiClient.delete('/whatsapp/disconnect');
 };
 
-export const confirmWATakeover = async (): Promise<void> => {
-  await apiClient.post('/whatsapp/takeover/confirm');
-};
+// ── Config ─────────────────────────────────────────────────────────────────
 
-export const denyWATakeover = async (): Promise<void> => {
-  await apiClient.post('/whatsapp/takeover/deny');
+export const getWAConfig = async (): Promise<WAConfig> => {
+  const res = await apiClient.get('/whatsapp/config');
+  return res.data.data;
 };
 
 export const updateWAConfig = async (config: Partial<WAConfig>): Promise<void> => {

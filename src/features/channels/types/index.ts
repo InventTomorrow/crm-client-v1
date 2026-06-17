@@ -1,11 +1,12 @@
-export type WASessionStatus = 'PENDING' | 'CONNECTED' | 'DISCONNECTED';
+export type WAChannelStatus = 'CONNECTED' | 'DISCONNECTED' | 'ERROR';
 
 export interface WAState {
-  status: WASessionStatus;
-  phoneNumber?: string;
-  qr?: string;
-  error?: string;
-  conflict?: { phoneNumber: string; conflictWorkspaces: string[] };
+  status: WAChannelStatus;
+  phoneNumber: string | null;
+  wabaId: string | null;
+  phoneNumberId: string | null;
+  connectedAt: string | null;
+  errorMessage: string | null;
 }
 
 export interface WAConfig {
@@ -14,7 +15,14 @@ export interface WAConfig {
   allowOrderCancellation: boolean;
 }
 
-export type WASSEEvent =
-  | { type: 'qr'; qr: string }
-  | { type: 'status'; status: WASessionStatus; phoneNumber?: string; error?: string }
-  | { type: 'phone-conflict'; phoneNumber: string; conflictWorkspaces: string[] };
+export interface OAuthExchangePayload {
+  code: string;
+  wabaId: string;
+  phoneNumberId: string;
+}
+
+export interface WASignupConfig {
+  appId: string;
+  configId: string;
+  graphVersion: string;
+}

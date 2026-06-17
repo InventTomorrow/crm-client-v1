@@ -1,77 +1,79 @@
 "use client";
 import { extractErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
-  confirmWATakeover,
-  connectWA,
-  denyWATakeover,
   disconnectWA,
+  exchangeWAOAuthCode,
   getWAConfig,
-  getWAStatus,
+  getWASignupConfig,
+  getWAState,
   updateWAConfig,
 } from "../services/channelsService";
-import type { WAConfig, WASSEEvent, WASessionStatus, WAState } from "../types";
+import type { OAuthExchangePayload, WAConfig, WAState } from "../types";
 
-export function useWAStatus() {
-  return useQuery({
-    queryKey: ["wa-status"],
-    queryFn: getWAStatus,
-    // Poll fast while connecting/disconnected so the UI catches a backend status
-    // flip (e.g. `ready` firing late on a slow host) within seconds instead of
-    // 10s — and so it never depends solely on the flaky long-lived SSE. Back off
-    // once CONNECTED, where live changes arrive over the stream anyway.
-    refetchInterval: (query) =>
-      query.state.data?.status === "CONNECTED" ? 15_000 : 3_000,
+// ── Facebook JS SDK loader ───────────────────────────────────────────────────
+
+declare global {
+  interface Window {
+    FB?: {
+      init: (opts: Record<string, unknown>) => void;
+      login: (
+        cb: (resp: FBLoginResponse) => void,
+        opts: Record<string, unknown>,
+      ) => void;
+    };
+    fbAsyncInit?: () => void;
+  }
+}
+
+interface FBLoginResponse {
+  authResponse?: { code?: string } | null;
+  status?: string;
+}
+
+function loadFacebookSdk(appId: string, version: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (window.FB) {
+      resolve();
+      return;
+    }
+    window.fbAsyncInit = () => {
+      window.FB!.init({ appId, autoLogAppEvents: true, xfbml: false, version });
+      resolve();
+    };
+    if (document.getElementById("facebook-jssdk")) return; // init pending
+    const js = document.createElement("script");
+    js.id = "facebook-jssdk";
+    js.src = "https://connect.facebook.net/en_US/sdk.js";
+    js.async = true;
+    js.defer = true;
+    js.crossOrigin = "anonymous";
+    document.body.appendChild(js);
   });
 }
+
+// ── State polling ──────────────────────────────────────────────────────────
+
+/**
+ * Polls the server for the current WhatsApp channel state.
+ * Polls every 5 s while disconnected (catching a freshly completed OAuth),
+ * then backs off to 30 s once connected.
+ */
+export function useWAState() {
+  return useQuery<WAState>({
+    queryKey: ["wa-state"],
+    queryFn: getWAState,
+    refetchInterval: (query) =>
+      query.state.data?.status === "CONNECTED" ? 30_000 : 5_000,
+  });
+}
+
+// ── Config ─────────────────────────────────────────────────────────────────
 
 export function useWAConfig() {
   return useQuery({ queryKey: ["wa-config"], queryFn: getWAConfig });
-}
-
-export function useWAConnect() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: connectWA,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wa-status"] }),
-    onError: (error) =>
-      toast.error(
-        extractErrorMessage(error, "Failed to start WhatsApp session"),
-      ),
-  });
-}
-
-export function useWADisconnect() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: disconnectWA,
-    onSuccess: () => {
-      toast.success("WhatsApp disconnected");
-      queryClient.invalidateQueries({ queryKey: ["wa-status"] });
-    },
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "Failed to disconnect")),
-  });
-}
-
-export function useWATakeoverConfirm() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: confirmWATakeover,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wa-status"] }),
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "Failed to confirm takeover")),
-  });
-}
-
-export function useWATakeoverDeny() {
-  return useMutation({
-    mutationFn: denyWATakeover,
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "Failed to deny takeover")),
-  });
 }
 
 export function useUpdateWAConfig() {
@@ -81,13 +83,10 @@ export function useUpdateWAConfig() {
     onMutate: async (next) => {
       await queryClient.cancelQueries({ queryKey: ["wa-config"] });
       const prev = queryClient.getQueryData<WAConfig>(["wa-config"]);
-      queryClient.setQueryData<WAConfig>(
-        ["wa-config"],
-        (old: WAConfig | undefined) => ({
-          ...old!,
-          ...next,
-        }),
-      );
+      queryClient.setQueryData<WAConfig>(["wa-config"], (old: any) => ({
+        ...old,
+        ...next,
+      }));
       return { prev };
     },
     onError: (error, _vars, ctx) => {
@@ -98,103 +97,121 @@ export function useUpdateWAConfig() {
   });
 }
 
-/** Always-on SSE subscriber — keeps the wa-status query cache in sync without polling. */
-export function useWAStatusStream() {
+// ── Disconnect ─────────────────────────────────────────────────────────────
+
+export function useWADisconnect() {
   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: disconnectWA,
+    onSuccess: () => {
+      toast.success("WhatsApp disconnected");
+      queryClient.invalidateQueries({ queryKey: ["wa-state"] });
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to disconnect")),
+  });
+}
+
+// ── Embedded Signup / OAuth ────────────────────────────────────────────────
+
+/**
+ * Drives Meta's WhatsApp Embedded Signup:
+ *  1. Fetches the FB SDK params from the server and loads the SDK.
+ *  2. A `message` listener captures `waba_id` + `phone_number_id` from the
+ *     signup session (Meta posts these from facebook.com during the flow).
+ *  3. `FB.login({ config_id })` opens Meta's hosted popup; on finish it returns
+ *     a one-time `code`.
+ *  4. The code + captured ids are sent to /whatsapp/oauth/exchange, which
+ *     connects the WABA and returns the fresh WAState.
+ */
+export function useWAEmbeddedSignup() {
+  const queryClient = useQueryClient();
+  // Session info arrives via a separate message event, before FB.login's callback.
+  const sessionRef = useRef<{ wabaId?: string; phoneNumberId?: string }>({});
+
+  const exchangeMutation = useMutation({
+    mutationFn: (payload: OAuthExchangePayload) => exchangeWAOAuthCode(payload),
+    onSuccess: (data) => {
+      queryClient.setQueryData<WAState>(["wa-state"], data);
+      queryClient.invalidateQueries({ queryKey: ["wa-state"] });
+      toast.success(
+        `WhatsApp connected${data.phoneNumber ? ` — ${data.phoneNumber}` : ""}`,
+      );
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "WhatsApp connection failed")),
+  });
+
+  // Capture the WABA / phone-number ids Meta emits during Embedded Signup.
   useEffect(() => {
-    const es = new EventSource("/api/v1/whatsapp/qr-stream", {
-      withCredentials: true,
-    });
-    es.onmessage = (e: MessageEvent) => {
+    const handler = (event: MessageEvent) => {
+      if (!event.origin.endsWith("facebook.com")) return;
       try {
-        const event = JSON.parse(e.data as string) as WASSEEvent;
-        if (event.type === "status") {
-          queryClient.setQueryData<WAState>(
-            ["wa-status"],
-            (old: WAState | undefined) => ({
-              status: event.status,
-              phoneNumber: event.phoneNumber ?? old?.phoneNumber,
-              error: event.error,
-            }),
-          );
+        const data =
+          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data?.type !== "WA_EMBEDDED_SIGNUP") return;
+        if (data.event === "FINISH") {
+          sessionRef.current = {
+            wabaId: data.data?.waba_id,
+            phoneNumberId: data.data?.phone_number_id,
+          };
+        } else {
+          // CANCEL / ERROR — clear any stale capture.
+          sessionRef.current = {};
         }
       } catch {
-        /* ignore malformed */
+        // Non-JSON cross-frame chatter — ignore.
       }
     };
-    es.onerror = () => es.close();
-    return () => es.close();
-  }, [queryClient]);
-}
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
 
-export interface ConflictInfo {
-  phoneNumber: string;
-  conflictWorkspaces: string[];
-}
-
-/** Opens an SSE connection to /whatsapp/qr-stream and returns live QR + status + conflict info. */
-export function useWAEventStream(enabled: boolean) {
-  const [qr, setQr] = useState<string | null>(null);
-  const [liveStatus, setLiveStatus] = useState<WASessionStatus | null>(null);
-  const [livePhone, setLivePhone] = useState<string | null>(null);
-  const [liveError, setLiveError] = useState<string | null>(null);
-  const [conflict, setConflict] = useState<ConflictInfo | null>(null);
-  const esRef = useRef<EventSource | null>(null);
-
-  useEffect(() => {
-    if (!enabled) return;
-    setQr(null);
-    setLiveStatus(null);
-    setLivePhone(null);
-    setLiveError(null);
-    setConflict(null);
-
-    const es = new EventSource("/api/v1/whatsapp/qr-stream", {
-      withCredentials: true,
-    });
-    esRef.current = es;
-
-    es.onmessage = (e: MessageEvent) => {
-      const event: WASSEEvent = JSON.parse(e.data as string);
-      if (event.type === "qr") {
-        setQr(event.qr);
-        setLiveStatus("PENDING");
-        setLiveError(null);
-        setConflict(null);
-      } else if (event.type === "status") {
-        setLiveStatus(event.status);
-        setLivePhone(event.phoneNumber ?? null);
-        setLiveError(event.error ?? null);
-        setConflict(null);
-        if (event.status === "CONNECTED") setQr(null);
-        if (event.status === "PENDING") setLiveError(null);
-      } else if (event.type === "phone-conflict") {
-        setConflict({
-          phoneNumber: event.phoneNumber,
-          conflictWorkspaces: event.conflictWorkspaces,
-        });
-        setLiveStatus("PENDING");
-        setQr(null);
+  /** Opens the Embedded Signup popup. Call this from the "Connect WhatsApp" button. */
+  const openSignup = useCallback(async () => {
+    try {
+      const cfg = await getWASignupConfig();
+      if (!cfg.appId || !cfg.configId) {
+        toast.error("WhatsApp signup isn't configured yet.");
+        return;
       }
-    };
 
-    es.onerror = () => {
-      // A transient SSE drop (idle-proxy timeout, brief network blip) is NOT a
-      // session disconnect. Forcing DISCONNECTED here used to mask a real
-      // CONNECTED: the long-lived QR stream gets cut while the user scans, the
-      // phone links, the server goes CONNECTED — but the stale DISCONNECTED
-      // shadowed the polled /status and the CRM stayed stuck.
-      //
-      // Don't close and don't override status: EventSource auto-reconnects, and
-      // the server re-sends the current status on each (re)open. The polled
-      // useWAStatus query remains the source of truth meanwhile.
-    };
+      sessionRef.current = {};
+      await loadFacebookSdk(cfg.appId, cfg.graphVersion);
 
-    return () => {
-      es.close();
-      esRef.current = null;
-    };
-  }, [enabled]);
+      window.FB!.login(
+        (response) => {
+          const code = response?.authResponse?.code;
+          const { wabaId, phoneNumberId } = sessionRef.current;
 
-  return { qr, liveStatus, livePhone, liveError, conflict };
+          if (!code) {
+            toast.error("WhatsApp connection was cancelled.");
+            return;
+          }
+          if (!wabaId || !phoneNumberId) {
+            toast.error(
+              "Couldn't read your WhatsApp account. Please try again.",
+            );
+            return;
+          }
+          exchangeMutation.mutate({ code, wabaId, phoneNumberId });
+        },
+        {
+          config_id: cfg.configId,
+          response_type: "code",
+          override_default_response_type: true,
+          extras: { setup: {}, featureType: "", sessionInfoVersion: "3" },
+        },
+      );
+    } catch (error) {
+      toast.error(
+        extractErrorMessage(error, "Could not start WhatsApp signup"),
+      );
+    }
+  }, [exchangeMutation]);
+
+  return {
+    openSignup,
+    isConnecting: exchangeMutation.isPending,
+  };
 }
