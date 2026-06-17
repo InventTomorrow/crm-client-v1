@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { OAuthExchangePayload, WAConfig, WASignupConfig, WAState } from '../types';
+import type { ManualConnectData, OAuthExchangePayload, WAConfig, WASignupConfig, WAState } from '../types';
 
 // ── State ──────────────────────────────────────────────────────────────────
 
@@ -26,6 +26,16 @@ export const getWASignupConfig = async (): Promise<WASignupConfig> => {
  */
 export const exchangeWAOAuthCode = async (payload: OAuthExchangePayload): Promise<WAState> => {
   const res = await apiClient.post('/whatsapp/oauth/exchange', payload);
+  return res.data.data;
+};
+
+/**
+ * Dev / single-tenant connect using credentials pasted from the WhatsApp
+ * "API Setup" page. Bypasses Embedded Signup. The server verifies the token
+ * before persisting and returns the fresh WAState.
+ */
+export const manualConnectWA = async (payload: ManualConnectData): Promise<WAState> => {
+  const res = await apiClient.post('/whatsapp/connect-manual', payload);
   return res.data.data;
 };
 

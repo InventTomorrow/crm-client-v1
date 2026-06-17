@@ -1,7 +1,7 @@
 'use client';
 import { extractErrorMessage } from '@/lib/utils';
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import {
   approveDraft,
@@ -262,44 +262,13 @@ export function useEditMessage(conversationId: string) {
   });
 }
 
-// Safety auto-clear: the server emits a "stopped" event on flush, but if it is
-// missed we still drop the indicator after this long without a fresh keystroke.
-const LEAD_TYPING_TTL_MS = 8_000;
-
 /**
- * Subscribes to the WhatsApp SSE stream and returns the conversation id whose
- * lead is currently typing (or null). One stream powers both the thread
- * indicator and the conversation-list row.
+ * Lead "typing…" presence is unavailable on the Meta WhatsApp Cloud API —
+ * inbound webhooks carry no typing events (the old Baileys SSE stream that
+ * powered this is gone). Kept as a stable no-op so callers don't need to change.
  */
 export function useLeadTyping(): string | null {
-  const [typingConversationId, setTypingConversationId] = useState<string | null>(null);
-  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const es = new EventSource('/api/v1/whatsapp/qr-stream', { withCredentials: true });
-
-    es.onmessage = (e: MessageEvent) => {
-      const event = JSON.parse(e.data as string) as { type: string; conversationId?: string; isTyping?: boolean };
-      if (event.type !== 'typing' || !event.conversationId) return;
-
-      if (event.isTyping) {
-        setTypingConversationId(event.conversationId);
-        if (clearTimer.current) clearTimeout(clearTimer.current);
-        clearTimer.current = setTimeout(() => setTypingConversationId(null), LEAD_TYPING_TTL_MS);
-      } else {
-        setTypingConversationId((prev) => (prev === event.conversationId ? null : prev));
-      }
-    };
-
-    es.onerror = () => es.close();
-
-    return () => {
-      es.close();
-      if (clearTimer.current) clearTimeout(clearTimer.current);
-    };
-  }, []);
-
-  return typingConversationId;
+  return null;
 }
 
 const AGENT_TYPING_IDLE_MS = 2_500;

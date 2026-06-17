@@ -433,7 +433,7 @@ function ChannelsSection() {
             <div className="text-[12px] text-[var(--ink-mute)] mt-px">
               {status === "CONNECTED"
                 ? `Connected · +${statusData?.phoneNumber ?? ""}`
-                : "Not connected — scan QR to link your number"}
+                : "Not connected — link your number via Meta"}
             </div>
           </div>
           <span
@@ -454,8 +454,8 @@ function ChannelsSection() {
             />
             {status === "CONNECTED"
               ? "Connected"
-              : status === "PENDING"
-                ? "Connecting…"
+              : status === "ERROR"
+                ? "Error"
                 : "Disconnected"}
           </span>
           <button

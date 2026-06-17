@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircle2,
   ExternalLink,
@@ -9,14 +10,100 @@ import {
   WifiOff,
   Zap,
 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   useUpdateWAConfig,
   useWAConfig,
   useWADisconnect,
   useWAEmbeddedSignup,
+  useWAManualConnect,
   useWAState,
 } from "../hooks/useWhatsApp";
-import type { WAChannelStatus } from "../types";
+import {
+  manualConnectSchema,
+  type ManualConnectData,
+  type WAChannelStatus,
+} from "../types";
+
+// ── Dev manual connect ──────────────────────────────────────────────────────
+
+/**
+ * Collapsible form to connect via credentials pasted from Meta's "API Setup"
+ * page. A stopgap until the app is approved as a Tech Provider for Embedded Signup.
+ */
+function ManualConnect() {
+  const [open, setOpen] = useState(false);
+  const manualConnect = useWAManualConnect();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ManualConnectData>({ resolver: zodResolver(manualConnectSchema) });
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-[11.5px] text-[var(--ink-mute)] underline underline-offset-2 hover:text-[var(--ink-soft)]"
+      >
+        Connect manually with API credentials (developer)
+      </button>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit((data) => manualConnect.mutate(data))}
+      className="w-full space-y-2.5 bg-[var(--surface-2)] rounded-xl p-4 text-left"
+    >
+      <p className="text-[12px] font-semibold text-[var(--ink-soft)]">
+        Manual connect — paste from WhatsApp → API Setup
+      </p>
+      {(
+        [
+          { name: "phoneNumberId", label: "Phone number ID" },
+          { name: "wabaId", label: "WhatsApp Business Account ID" },
+          { name: "accessToken", label: "Access token" },
+        ] as const
+      ).map(({ name, label }) => (
+        <div key={name}>
+          <label className="text-[11.5px] text-[var(--ink-mute)]">{label}</label>
+          <input
+            {...register(name)}
+            type={name === "accessToken" ? "password" : "text"}
+            autoComplete="off"
+            className="w-full mt-0.5 px-2.5 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--bg)] text-[12.5px] outline-none focus:border-[var(--accent)]"
+          />
+          {errors[name] && (
+            <p className="text-[11px] text-[#EF4444] mt-0.5">
+              {errors[name]?.message}
+            </p>
+          )}
+        </div>
+      ))}
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="submit"
+          disabled={manualConnect.isPending}
+          className="btn btn-grad text-[12.5px] px-4 py-2"
+        >
+          {manualConnect.isPending ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : null}
+          Connect
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-[12px] text-[var(--ink-mute)]"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
 
 // ── Status pill ────────────────────────────────────────────────────────────
 
@@ -264,6 +351,8 @@ export function ChannelsView() {
                 )}
                 {isConnecting ? "Connecting…" : "Connect via Meta"}
               </button>
+
+              <ManualConnect />
             </div>
           )}
         </div>

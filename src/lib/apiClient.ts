@@ -3,7 +3,12 @@ import axios from 'axios';
 export const apiClient = axios.create({
   baseURL: '/api/v1',
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    // Bypasses ngrok's free-tier browser-warning interstitial (ERR_NGROK_6024)
+    // when the API is tunnelled through ngrok in dev. Ignored by real backends.
+    'ngrok-skip-browser-warning': 'true',
+  },
 });
 
 let isRefreshing = false;

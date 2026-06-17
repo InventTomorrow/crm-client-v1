@@ -9,9 +9,15 @@ import {
   getWAConfig,
   getWASignupConfig,
   getWAState,
+  manualConnectWA,
   updateWAConfig,
 } from "../services/channelsService";
-import type { OAuthExchangePayload, WAConfig, WAState } from "../types";
+import type {
+  ManualConnectData,
+  OAuthExchangePayload,
+  WAConfig,
+  WAState,
+} from "../types";
 
 // ── Facebook JS SDK loader ───────────────────────────────────────────────────
 
@@ -112,6 +118,28 @@ export function useWADisconnect() {
   });
 }
 
+// ── Manual / dev connect ───────────────────────────────────────────────────
+
+/**
+ * Connects WhatsApp using credentials pasted from the Meta "API Setup" page.
+ * Used until the app is approved as a Tech Provider for Embedded Signup.
+ */
+export function useWAManualConnect() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ManualConnectData) => manualConnectWA(payload),
+    onSuccess: (data) => {
+      queryClient.setQueryData<WAState>(["wa-state"], data);
+      queryClient.invalidateQueries({ queryKey: ["wa-state"] });
+      toast.success(
+        `WhatsApp connected${data.phoneNumber ? ` — ${data.phoneNumber}` : ""}`,
+      );
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "WhatsApp connection failed")),
+  });
+}
+
 // ── Embedded Signup / OAuth ────────────────────────────────────────────────
 
 /**
@@ -149,15 +177,25 @@ export function useWAEmbeddedSignup() {
       try {
         const data =
           typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        // Log every message Meta posts so we can see what (if anything) the
+        // signup session emits. A correct WhatsApp Embedded Signup config sends
+        // type "WA_EMBEDDED_SIGNUP" with event "FINISH" + data.{waba_id,phone_number_id}.
+        console.info("[WA Signup] message from facebook.com:", data);
         if (data?.type !== "WA_EMBEDDED_SIGNUP") return;
+        console.info(
+          `[WA Signup] WA_EMBEDDED_SIGNUP event="${data.event}" data=`,
+          data.data,
+        );
         if (data.event === "FINISH") {
           sessionRef.current = {
             wabaId: data.data?.waba_id,
             phoneNumberId: data.data?.phone_number_id,
           };
+          console.info("[WA Signup] captured session:", sessionRef.current);
         } else {
           // CANCEL / ERROR — clear any stale capture.
           sessionRef.current = {};
+          console.warn(`[WA Signup] session cleared (event=${data.event})`);
         }
       } catch {
         // Non-JSON cross-frame chatter — ignore.
@@ -177,23 +215,36 @@ export function useWAEmbeddedSignup() {
       }
 
       sessionRef.current = {};
+      console.info("[WA Signup] config:", { appId: cfg.appId, configId: cfg.configId, graphVersion: cfg.graphVersion });
       await loadFacebookSdk(cfg.appId, cfg.graphVersion);
+      console.info("[WA Signup] FB SDK loaded, opening FB.login…");
 
       window.FB!.login(
         (response) => {
           const code = response?.authResponse?.code;
           const { wabaId, phoneNumberId } = sessionRef.current;
+          console.info("[WA Signup] FB.login callback:", {
+            status: response?.status,
+            hasCode: !!code,
+            wabaId,
+            phoneNumberId,
+          });
 
           if (!code) {
+            console.warn("[WA Signup] no code in FB.login response", response);
             toast.error("WhatsApp connection was cancelled.");
             return;
           }
           if (!wabaId || !phoneNumberId) {
+            console.warn(
+              "[WA Signup] code received but no waba_id/phone_number_id — the message event never fired. Likely a non-WhatsApp-Embedded-Signup config_id.",
+            );
             toast.error(
               "Couldn't read your WhatsApp account. Please try again.",
             );
             return;
           }
+          console.info("[WA Signup] exchanging code with server…");
           exchangeMutation.mutate({ code, wabaId, phoneNumberId });
         },
         {
