@@ -1,0 +1,47 @@
+import Container from "../Container";
+import Reveal from "../Reveal";
+import { Button } from "@/shared/ui/Button";
+import { StopLosingLeadsPhone } from "../mockups";
+
+export default function StopLosingLeads() {
+  return (
+    <section className="py-20 md:py-24 bg-brand-mint">
+      <Container>
+        <div className="grid lg:grid-cols-2 gap-14 items-center">
+          <div>
+            <Reveal
+              as="h2"
+              className="text-4xl md:text-5xl lg:text-[56px] font-bold leading-[1.05] tracking-tight text-brand-dark"
+            >
+              Stop Losing Leads
+              <br /> Inside WhatsApp
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="mt-6 space-y-4 text-brand-text text-[16px] leading-relaxed max-w-md">
+                <p>
+                  Your customers ask about prices, availability, bookings,
+                  deliveries, and offers on WhatsApp.
+                </p>
+                <p>But when replies are late, leads go cold.</p>
+                <p>
+                  AsaanRabta helps you respond instantly, organize every
+                  inquiry, and follow up before customers move to competitors.
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <div className="mt-8">
+                <Button className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+                  Start Managing Leads Smarter
+                </Button>
+              </div>
+            </Reveal>
+          </div>
+          <Reveal>
+            <StopLosingLeadsPhone />
+          </Reveal>
+        </div>
+      </Container>
+    </section>
+  );
+}
