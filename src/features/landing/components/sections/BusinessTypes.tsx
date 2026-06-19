@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Container from "../Container";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
-import { Button } from "@/shared/ui/Button";
+import { PrimaryCta } from "../LandingCta";
 
 const INDUSTRIES = [
   { name: "Clothing brands", emoji: "👗", bg: "from-rose-200 to-rose-100" },
@@ -54,9 +54,9 @@ export default function BusinessTypes() {
         </div>
         <Reveal delay={0.3}>
           <div className="mt-12 flex justify-center">
-            <Button className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+            <PrimaryCta className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
               Create Your Account
-            </Button>
+            </PrimaryCta>
           </div>
         </Reveal>
       </Container>

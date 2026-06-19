@@ -1,6 +1,6 @@
 import Container from "../Container";
 import Reveal from "../Reveal";
-import { Button } from "@/shared/ui/Button";
+import { PrimaryCta } from "../LandingCta";
 import { StopLosingLeadsPhone } from "../mockups";
 
 export default function StopLosingLeads() {
@@ -31,9 +31,9 @@ export default function StopLosingLeads() {
             </Reveal>
             <Reveal delay={0.2}>
               <div className="mt-8">
-                <Button className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+                <PrimaryCta className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
                   Start Managing Leads Smarter
-                </Button>
+                </PrimaryCta>
               </div>
             </Reveal>
           </div>

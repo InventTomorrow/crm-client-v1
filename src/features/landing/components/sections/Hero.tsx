@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { HeroDashboardMockup } from "../mockups";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
+import { PrimaryCta } from "../LandingCta";
 import Container from "../Container";
 
 const HEADLINE = ["Turn", "WhatsApp", "Into", "Your", "24/7", "Sales", "Team"];
@@ -54,11 +56,14 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.75 }}
           className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
         >
-          <Button className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+          <PrimaryCta className="h-auto w-full sm:w-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
             Get Started
-          </Button>
-          <Button className="h-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50">
-            See How It Works
+          </PrimaryCta>
+          <Button
+            asChild
+            className="h-auto w-full sm:w-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50"
+          >
+            <Link href="#how-it-works">See How It Works</Link>
           </Button>
         </motion.div>
 

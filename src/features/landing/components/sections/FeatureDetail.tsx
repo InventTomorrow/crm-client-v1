@@ -1,5 +1,6 @@
 import Container from "../Container";
 import Reveal from "../Reveal";
+import { CtaTextLink } from "../LandingCta";
 import {
   AIRepliesMockup,
   CRMTableMockup,
@@ -60,12 +61,9 @@ export default function FeatureDetail() {
                 <p className="mt-3 text-brand-text text-[15px] leading-relaxed">
                   {body2}{" "}
                   {link && (
-                    <a
-                      href="#"
-                      className="font-semibold text-brand-dark underline underline-offset-4 hover:text-brand-green transition-colors"
-                    >
+                    <CtaTextLink className="font-semibold text-brand-dark underline underline-offset-4 hover:text-brand-green transition-colors">
                       {link}
-                    </a>
+                    </CtaTextLink>
                   )}
                 </p>
               </div>

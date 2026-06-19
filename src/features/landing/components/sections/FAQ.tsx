@@ -55,7 +55,7 @@ export default function FAQ() {
                 >
                   <button
                     onClick={() => setOpen(isOpen ? -1 : i)}
-                    className="w-full px-6 py-5 flex items-start justify-between text-left gap-4"
+                    className="w-full px-6 py-5 flex items-start justify-between text-left gap-4 transition-colors hover:bg-brand-mint cursor-pointer"
                   >
                     <div className="flex-1">
                       <h3 className="text-base md:text-lg font-bold text-brand-dark">

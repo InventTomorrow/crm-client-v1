@@ -64,7 +64,7 @@ export default function FeaturesGrid() {
               <MotionCard
                 whileHover={{ y: -6 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className={`relative rounded-2xl p-6 sm:p-8 text-center h-full flex flex-col items-center ring-0 transition-all duration-300 ${
+                className={`group/card relative rounded-2xl p-6 sm:p-8 text-center h-full flex flex-col items-center ring-0 transition-all duration-300 ${
                   f.featured
                     ? "bg-brand-green-deep text-white shadow-card hover:shadow-cta-hover"
                     : "bg-brand-mint-soft text-brand-dark shadow-none hover:bg-brand-green-deep hover:text-white hover:shadow-cta-hover"

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import Container from "../Container";
 import Reveal from "../Reveal";
+import { PrimaryCta } from "../LandingCta";
 import { CTAFloatingPhone } from "../mockups";
 
 export default function FinalCTA() {
@@ -20,12 +22,15 @@ export default function FinalCTA() {
                   inbox. Reply faster, manage leads better, and convert more
                   conversations into customers.
                 </p>
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Button className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+                <div className="mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+                  <PrimaryCta className="h-auto w-full sm:w-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
                     Get Started Today
-                  </Button>
-                  <Button className="h-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50">
-                    See How It Works
+                  </PrimaryCta>
+                  <Button
+                    asChild
+                    className="h-auto w-full sm:w-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50"
+                  >
+                    <Link href="#how-it-works">See How It Works</Link>
                   </Button>
                 </div>
               </div>

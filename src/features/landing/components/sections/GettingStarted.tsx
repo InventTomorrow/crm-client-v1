@@ -11,6 +11,7 @@ import {
   ChatIcon,
   ArrowRightIcon,
 } from "../icons";
+import { CtaTextLink } from "../LandingCta";
 import { QRLaptopMockup } from "../mockups";
 
 const STEPS = [
@@ -81,12 +82,9 @@ export default function GettingStarted() {
               Connect Your WhatsApp. No code. No integrations. Just scan and
               start replying smarter.
             </span>
-            <a
-              href="#"
-              className="font-semibold underline underline-offset-4 flex items-center gap-1 text-brand-dark hover:text-brand-green transition-colors"
-            >
+            <CtaTextLink className="font-semibold underline underline-offset-4 flex items-center gap-1 text-brand-dark hover:text-brand-green transition-colors">
               Connect WhatsApp <ArrowRightIcon className="w-4 h-4" />
-            </a>
+            </CtaTextLink>
           </div>
         </Reveal>
       </Container>
