@@ -39,12 +39,9 @@ export function OrdersView() {
       enableSorting: true,
       size: 90,
       cell: ({ row }) => (
-        <button
-          className="text-[13px] font-semibold text-[var(--ink)] hover:text-[var(--accent)] transition-colors"
-          onClick={() => setSelectedId(row.original.id)}
-        >
+        <span className="text-[13px] font-semibold text-[var(--ink)]">
           #{row.original.orderNumber}
-        </button>
+        </span>
       ),
     },
     {
@@ -171,6 +168,7 @@ export function OrdersView() {
         columns={columns}
         isLoading={isLoading}
         selectable
+        onRowClick={(o) => setSelectedId(o.id)}
         onExport={handleExport}
         emptyMessage="No orders yet."
         defaultPageSize={20}

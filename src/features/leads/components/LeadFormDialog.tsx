@@ -43,7 +43,7 @@ const leadFormSchema = z.object({
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   city: z.string().optional(),
   channel: z.enum(["wa", "ig", "fb", "tk"]),
-  status: z.enum(["prospect", "cold", "warm", "hot"]),
+  status: z.enum(["prospect", "cold", "warm", "hot", "closed"]),
 });
 export type LeadFormData = z.infer<typeof leadFormSchema>;
 
@@ -51,6 +51,7 @@ export default function LeadFormDialog({
   open,
   mode,
   initial,
+  defaultStatus,
   onClose,
   onSubmit,
   isSaving,
@@ -58,6 +59,8 @@ export default function LeadFormDialog({
   open: boolean;
   mode: "create" | "edit";
   initial?: Lead | null;
+  /** Pre-selected status for new leads (e.g. the Kanban column the user clicked). */
+  defaultStatus?: LeadFormData["status"];
   onClose: () => void;
   onSubmit: (data: LeadFormData) => void;
   isSaving?: boolean;
@@ -82,9 +85,12 @@ export default function LeadFormDialog({
       email: initial?.email ?? "",
       city: initial?.city && initial.city !== "Unknown" ? initial.city : "",
       channel: (initial?.channel as LeadFormData["channel"]) ?? "wa",
-      status: (initial?.status as LeadFormData["status"]) ?? "prospect",
+      status:
+        (initial?.status as LeadFormData["status"]) ??
+        defaultStatus ??
+        "prospect",
     });
-  }, [open, initial, form]);
+  }, [open, initial, defaultStatus, form]);
 
   return (
     <Dialog

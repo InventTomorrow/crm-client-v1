@@ -1,13 +1,17 @@
-'use client';
-import { useMemo, useState } from 'react';
-import { Loader2, Package, Pencil, Trash2, X } from 'lucide-react';
-import { getImageUrl } from '@/lib/utils';
-import { useProducts } from '@/features/inventory/hooks/useProducts';
-import { useDeleteOrder, useOrder, useUpdateOrderStatus } from '../hooks/useOrders';
-import type { Order } from '../types';
-import { formatMoney } from '../lib/format';
-import { OrderStatusBadge } from './OrderStatusBadge';
-import { OrderStatusSelect } from './OrderStatusSelect';
+"use client";
+import { Checkbox } from "@/shared/ui/Checkbox";
+import { Label } from "@/shared/ui/Label";
+import { Loader2, Pencil, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import {
+  useDeleteOrder,
+  useOrder,
+  useUpdateOrderStatus,
+} from "../hooks/useOrders";
+import { ORDER_STATUS_META, formatMoney } from "../lib/format";
+import type { Order, OrderStatus } from "../types";
+import { OrderStatusBadge } from "./OrderStatusBadge";
+import { OrderStatusSelect } from "./OrderStatusSelect";
 
 interface Props {
   orderId: string;
@@ -20,6 +24,23 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
   const changeStatus = useUpdateOrderStatus();
   const del = useDeleteOrder();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Status changes are staged locally and only sent to the API once the user
+  // reviews the change and clicks Save. The checkbox toggles customer notify.
+  const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
+  const [notifyCustomer, setNotifyCustomer] = useState(true);
+
+  const resetStatusChange = () => {
+    setPendingStatus(null);
+    setNotifyCustomer(true);
+  };
+
+  const saveStatusChange = () => {
+    if (!order || !pendingStatus) return;
+    changeStatus.mutate(
+      { id: order.id, status: pendingStatus },
+      { onSuccess: resetStatusChange },
+    );
+  };
 
   return (
     <>
@@ -28,7 +49,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
         <div className="flex items-center justify-between p-[18px] border-b border-[var(--line)]">
           <div className="flex items-center gap-2.5">
             <h3 className="text-[16px] font-semibold text-[var(--ink)]">
-              {order ? `Order #${order.orderNumber}` : 'Order'}
+              {order ? `Order #${order.orderNumber}` : "Order"}
             </h3>
             {order && <OrderStatusBadge status={order.status} />}
           </div>
@@ -46,9 +67,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
             <>
               {/* Customer */}
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">Customer</div>
+                <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">
+                  Customer
+                </div>
                 <div className="text-[14px] font-medium text-[var(--ink)]">
-                  {order.customerName || order.lead?.name || 'Unknown'}
+                  {order.customerName || order.lead?.name || "Unknown"}
                 </div>
                 {(order.customerPhone || order.lead?.phone) && (
                   <div className="text-[12.5px] text-[var(--ink-soft)]">
@@ -57,34 +80,95 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 )}
               </div>
 
-              {/* Status control */}
-              <div className="flex items-center gap-2">
-                <span className="text-[12.5px] text-[var(--ink-soft)]">Status</span>
-                <OrderStatusSelect
-                  value={order.status}
-                  disabled={changeStatus.isPending}
-                  onChange={(status) => changeStatus.mutate({ id: order.id, status })}
-                />
+              {/* Status control — staged, confirmed before saving */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[12.5px] text-[var(--ink-soft)]">
+                    Status
+                  </span>
+                  <OrderStatusSelect
+                    value={pendingStatus ?? order.status}
+                    disabled={changeStatus.isPending}
+                    onChange={(status) => {
+                      setNotifyCustomer(true);
+                      setPendingStatus(status === order.status ? null : status);
+                    }}
+                  />
+                </div>
+
+                {pendingStatus && pendingStatus !== order.status && (
+                  <div className="rounded-xl border border-[var(--accent)] bg-[var(--accent-soft)] p-3 flex flex-col gap-3">
+                    <p className="text-[12.5px] text-[var(--ink-soft)] leading-snug">
+                      Change status from{" "}
+                      <span className="font-medium text-[var(--ink)]">
+                        {ORDER_STATUS_META[order.status].label}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-medium text-[var(--ink)]">
+                        {ORDER_STATUS_META[pendingStatus].label}
+                      </span>
+                      .
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="order-notify-customer"
+                        checked={notifyCustomer}
+                        onCheckedChange={(v) => setNotifyCustomer(v === true)}
+                        className="flex-shrink-0"
+                      />
+                      <Label
+                        htmlFor="order-notify-customer"
+                        className="text-[12.5px] font-normal text-[var(--ink-soft)] cursor-pointer"
+                      >
+                        Notify the customer
+                      </Label>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="btn btn-outline text-[12.5px]"
+                        onClick={resetStatusChange}
+                        disabled={changeStatus.isPending}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-grad text-[12.5px]"
+                        onClick={saveStatusChange}
+                        disabled={changeStatus.isPending}
+                      >
+                        {changeStatus.isPending && (
+                          <Loader2 size={13} className="animate-spin" />
+                        )}
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Items */}
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">Items</div>
+                <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">
+                  Items
+                </div>
                 <div className="rounded-xl border border-[var(--line)] overflow-hidden">
-                  {order.items.map((it) => (
+                  {order.items.map((orderItem) => (
                     <div
-                      key={it.id}
+                      key={orderItem.id}
                       className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--line-soft)] last:border-0"
                     >
                       <div className="min-w-0">
-                        <div className="text-[13px] text-[var(--ink)] truncate">{it.name}</div>
+                        <div className="text-[13px] text-[var(--ink)] truncate">
+                          {orderItem?.name}
+                        </div>
                         <div className="text-[11.5px] text-[var(--ink-mute)]">
-                          {it.quantity} × {formatMoney(it.unitPrice, order.currency)}
-                          {it.sku ? ` · ${it.sku}` : ''}
+                          {orderItem?.quantity} ×{" "}
+                          {formatMoney(orderItem?.unitPrice, order?.currency)}
+                          {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
                         </div>
                       </div>
                       <div className="text-[13px] font-medium text-[var(--ink)]">
-                        {formatMoney(it.subtotal, order.currency)}
+                        {formatMoney(orderItem?.subtotal, order?.currency)}
                       </div>
                     </div>
                   ))}
@@ -109,34 +193,51 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
 
               {order.notes && (
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">Notes</div>
-                  <p className="text-[13px] text-[var(--ink-soft)] whitespace-pre-wrap">{order.notes}</p>
+                  <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">
+                    Notes
+                  </div>
+                  <p className="text-[13px] text-[var(--ink-soft)] whitespace-pre-wrap">
+                    {order.notes}
+                  </p>
                 </div>
               )}
 
-              {order.status === 'CANCELLED' && order.cancellationReason && (
+              {order.status === "CANCELLED" && order.cancellationReason && (
                 <div className="rounded-md bg-[rgba(239,68,68,0.06)] border border-[rgba(239,68,68,0.15)] px-3 py-2.5">
-                  <div className="text-[11px] uppercase tracking-wide text-[rgba(239,68,68,0.7)] mb-1">Cancellation Reason</div>
-                  <p className="text-[13px] text-[var(--ink-soft)] whitespace-pre-wrap">{order.cancellationReason}</p>
+                  <div className="text-[11px] uppercase tracking-wide text-[rgba(239,68,68,0.7)] mb-1">
+                    Cancellation Reason
+                  </div>
+                  <p className="text-[13px] text-[var(--ink-soft)] whitespace-pre-wrap">
+                    {order.cancellationReason}
+                  </p>
                 </div>
               )}
 
               {/* Status timeline */}
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">Timeline</div>
+                <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">
+                  Timeline
+                </div>
                 <div className="flex flex-col gap-2.5">
                   {order.statusHistory.map((h) => (
                     <div key={h.id} className="flex items-start gap-2.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-[7px] flex-shrink-0" />
                       <div className="text-[12.5px]">
                         <span className="text-[var(--ink)]">
-                          {h.fromStatus ? `${h.fromStatus} → ${h.toStatus}` : h.toStatus}
+                          {h.fromStatus
+                            ? `${h.fromStatus} → ${h.toStatus}`
+                            : h.toStatus}
                         </span>
                         <span className="text-[var(--ink-mute)]">
-                          {' '}· {new Date(h.createdAt).toLocaleString()}
-                          {h.changedBySystem ? ' · AI' : ''}
+                          {" "}
+                          · {new Date(h.createdAt).toLocaleString()}
+                          {h.changedBySystem ? " · AI" : ""}
                         </span>
-                        {h.note && <div className="text-[11.5px] text-[var(--ink-mute)]">{h.note}</div>}
+                        {h.note && (
+                          <div className="text-[11.5px] text-[var(--ink-mute)]">
+                            {h.note}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -150,8 +251,13 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
           <div className="p-[18px] border-t border-[var(--line)] flex justify-between gap-2">
             {confirmDelete ? (
               <div className="flex items-center gap-2 w-full">
-                <span className="text-[12.5px] text-[var(--ink-soft)] flex-1">Delete this order?</span>
-                <button className="btn btn-outline text-[12.5px]" onClick={() => setConfirmDelete(false)}>
+                <span className="text-[12.5px] text-[var(--ink-soft)] flex-1">
+                  Delete this order?
+                </span>
+                <button
+                  className="btn btn-outline text-[12.5px]"
+                  onClick={() => setConfirmDelete(false)}
+                >
                   Cancel
                 </button>
                 <button
@@ -159,16 +265,24 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   disabled={del.isPending}
                   onClick={() => del.mutate(order.id, { onSuccess: onClose })}
                 >
-                  {del.isPending && <Loader2 size={13} className="animate-spin" />}
+                  {del.isPending && (
+                    <Loader2 size={13} className="animate-spin" />
+                  )}
                   Delete
                 </button>
               </div>
             ) : (
               <>
-                <button className="btn btn-ghost text-[12.5px] text-[#DC2626]" onClick={() => setConfirmDelete(true)}>
+                <button
+                  className="btn btn-ghost text-[12.5px] text-[#DC2626]"
+                  onClick={() => setConfirmDelete(true)}
+                >
                   <Trash2 size={14} /> Delete
                 </button>
-                <button className="btn btn-outline text-[12.5px]" onClick={() => onEdit(order)}>
+                <button
+                  className="btn btn-outline text-[12.5px]"
+                  onClick={() => onEdit(order)}
+                >
                   <Pencil size={14} /> Edit
                 </button>
               </>

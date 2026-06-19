@@ -5,7 +5,6 @@ import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
 import {
   useAddLead,
   useDeleteLead,
@@ -14,6 +13,7 @@ import {
   useUpdateLeadStatus,
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
+import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
 import { ExportLeadsDialog } from "./ExportLeadsDialog";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
@@ -41,8 +41,10 @@ export function LeadsView() {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Lead | null>(null);
+  const [createStatus, setCreateStatus] = useState<LeadStatus | undefined>();
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [bulkDeleteTargets, setBulkDeleteTargets] = useState<Lead[]>([]);
 
   const hot = leads.filter((l: Lead) => l.status === "hot").length;
   const totalValue = leads.reduce(
@@ -54,9 +56,10 @@ export function LeadsView() {
     updateStatus.mutate({ id, status });
   };
 
-  const openCreate = () => {
+  const openCreate = (status?: LeadStatus) => {
     setFormMode("create");
     setEditing(null);
+    setCreateStatus(status);
     setFormOpen(true);
   };
   const openEdit = (lead: Lead) => {
@@ -91,6 +94,12 @@ export function LeadsView() {
     });
   };
 
+  const confirmBulkDelete = () => {
+    bulkDeleteTargets.forEach((lead) => deleteLead.mutate(lead.id));
+    setBulkDeleteTargets([]);
+    setSelected(null);
+  };
+
   const handleOpenChat = (lead: Lead) => {
     router.push(`/inbox?lead=${lead.id}`);
   };
@@ -122,7 +131,6 @@ export function LeadsView() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          <WAStatusBadge />
           <button
             className="btn btn-outline"
             onClick={() => setExportOpen(true)}
@@ -135,7 +143,7 @@ export function LeadsView() {
           >
             <Layers size={13} /> Import
           </button>
-          <button className="btn btn-grad" onClick={openCreate}>
+          <button className="btn btn-grad" onClick={() => openCreate()}>
             <Plus size={13} /> Add lead
           </button>
         </div>
@@ -200,6 +208,7 @@ export function LeadsView() {
           filter={filter}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
+          onAddLead={openCreate}
         />
       )}
       {!isLoading && leadsView === "list" && (
@@ -222,6 +231,8 @@ export function LeadsView() {
           onOpenChat={handleOpenChat}
           onEdit={openEdit}
           onDelete={handleDelete}
+          onBulkDelete={setBulkDeleteTargets}
+          onExport={downloadLeadsCsv}
         />
       )}
 
@@ -237,6 +248,7 @@ export function LeadsView() {
         open={formOpen}
         mode={formMode}
         initial={editing}
+        defaultStatus={createStatus}
         onClose={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}
         isSaving={isSavingForm}
@@ -261,6 +273,15 @@ export function LeadsView() {
             : undefined
         }
         confirmLabel="Delete lead"
+        loading={deleteLead.isPending}
+      />
+      <ConfirmDialog
+        open={bulkDeleteTargets.length > 0}
+        onClose={() => setBulkDeleteTargets([])}
+        onConfirm={confirmBulkDelete}
+        title={`Delete ${bulkDeleteTargets.length} lead${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
+        description="The selected leads will be permanently removed. This can't be undone."
+        confirmLabel="Delete leads"
         loading={deleteLead.isPending}
       />
     </div>

@@ -17,6 +17,8 @@ export default function TableView({
   onOpenChat,
   onEdit,
   onDelete,
+  onBulkDelete,
+  onExport,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
@@ -25,6 +27,8 @@ export default function TableView({
   onOpenChat: (l: Lead) => void;
   onEdit: (l: Lead) => void;
   onDelete: (l: Lead) => void;
+  onBulkDelete: (rows: Lead[]) => void;
+  onExport: (rows: Lead[]) => void;
 }) {
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
 
@@ -138,7 +142,8 @@ export default function TableView({
       data={filtered}
       columns={columns}
       selectable
-      onDeleteSelected={(rows) => rows.forEach((l) => onDelete(l))}
+      onDeleteSelected={onBulkDelete}
+      onExport={onExport}
       emptyMessage="No matching leads."
       defaultPageSize={20}
       className="flex-1 min-h-0"
