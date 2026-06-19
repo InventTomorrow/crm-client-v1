@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/shared/ui/Motion";
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -19,7 +19,6 @@ import {
   useWAConfig,
   useWAConnect,
   useWADisconnect,
-  useWAEventStream,
   useWAStatus,
   useWATakeoverConfirm,
   useWATakeoverDeny,
@@ -121,6 +120,52 @@ function QRFrame({ src }: { src: string }) {
   );
 }
 
+// ── QR slot placeholder ──────────────────────────────────────────────────────
+function QRSkeleton({
+  label,
+  animate = true,
+}: {
+  label?: string;
+  animate?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-2">
+      <div className="relative w-[216px] h-[216px] flex-shrink-0">
+        {(["tl", "tr", "bl", "br"] as const).map((pos) => (
+          <span
+            key={pos}
+            className={cn(
+              "absolute w-5 h-5 border-[var(--accent)]",
+              pos === "tl" &&
+                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[5px]",
+              pos === "tr" &&
+                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[5px]",
+              pos === "bl" &&
+                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[5px]",
+              pos === "br" &&
+                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[5px]",
+            )}
+          />
+        ))}
+        <div className="absolute inset-[7px] rounded-lg overflow-hidden bg-[var(--surface-2)]">
+          {animate && <Skeleton className="absolute inset-0 rounded-none" />}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <QrCode size={36} className="text-[var(--ink-mute)] opacity-30" />
+          </div>
+        </div>
+      </div>
+      {label && (
+        <div className="flex items-center gap-2">
+          {animate && (
+            <Loader2 size={14} className="animate-spin text-[var(--accent)]" />
+          )}
+          <p className="text-[12.5px] text-[var(--ink-mute)]">{label}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Step badge ─────────────────────────────────────────────────────────────────
 function Step({ n, label }: { n: number; label: string }) {
   return (
@@ -135,7 +180,6 @@ function Step({ n, label }: { n: number; label: string }) {
 
 // ── Main view ──────────────────────────────────────────────────────────────────
 export function ChannelsView() {
-  const qc = useQueryClient();
   const { data: statusData } = useWAStatus();
   const { data: config } = useWAConfig();
   const connectMut = useWAConnect();
@@ -144,44 +188,31 @@ export function ChannelsView() {
   const takeoverConfirmMut = useWATakeoverConfirm();
   const takeoverDenyMut = useWATakeoverDeny();
 
-  const [streamActive, setStreamActive] = useState(false);
+  // All live status/QR/conflict flows through the wa-status query cache
+  // (useWAStatusStream), so the cache is the single source of truth.
   const [starting, setStarting] = useState(false);
-  const { qr, liveStatus, livePhone, liveError, conflict: liveConflict } =
-    useWAEventStream(streamActive);
 
-  const status: WASessionStatus =
-    liveStatus ?? statusData?.status ?? "DISCONNECTED";
-  const phoneNumber = livePhone ?? statusData?.phoneNumber;
-  const qrCode = qr ?? statusData?.qr;
-  const connectionError = liveError ?? statusData?.error;
-  // Conflict survives via the polled /status too, so the takeover prompt recovers
-  // even if the live SSE wasn't attached when the conflict fired (or reconnected).
-  const conflict = liveConflict ?? statusData?.conflict ?? null;
+  const status: WASessionStatus = statusData?.status ?? "DISCONNECTED";
+  const phoneNumber = statusData?.phoneNumber;
+  const qrCode = statusData?.qr;
+  const connectionError = statusData?.error;
+  const conflict = statusData?.conflict ?? null;
   const showLoading =
     starting && !qrCode && !conflict && status !== "CONNECTED";
 
-  // Sync query cache immediately on any SSE event.
+  // Drop the "starting" shimmer once the stream produces something real.
   useEffect(() => {
-    if (!liveStatus) return;
-    qc.setQueryData(["wa-status"], (old: any) => ({
-      ...old,
-      status: liveStatus,
-      phoneNumber: livePhone ?? old?.phoneNumber,
-      error: liveError ?? null,
-      conflict: liveConflict ?? undefined,
-    }));
-    if (liveStatus !== "PENDING") setStarting(false);
-    if (liveStatus === "DISCONNECTED") setStreamActive(false);
-  }, [liveStatus, livePhone, liveError, liveConflict, qc]);
+    if (qrCode || conflict || connectionError || status === "CONNECTED") {
+      setStarting(false);
+    }
+  }, [qrCode, conflict, connectionError, status]);
 
   const handleConnect = () => {
     setStarting(true);
-    setStreamActive(true);
     connectMut.mutate();
   };
 
   const handleDisconnect = () => {
-    setStreamActive(false);
     setStarting(false);
     disconnectMut.mutate();
   };
@@ -267,7 +298,6 @@ export function ChannelsView() {
                     takeoverDenyMut.mutate(undefined, {
                       onSuccess: () => {
                         setStarting(true);
-                        setStreamActive(true);
                         setTimeout(() => connectMut.mutate(), 300);
                       },
                     })
@@ -321,20 +351,8 @@ export function ChannelsView() {
             </div>
           )}
 
-          {/* ── LOADING (waiting for first SSE event) ─────────────────────── */}
-          {showLoading && (
-            <div className="flex flex-col items-center gap-4 py-8">
-              <div className="w-[216px] h-[216px] rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
-                <Loader2
-                  size={28}
-                  className="animate-spin text-[var(--accent)]"
-                />
-                <p className="text-[12.5px] text-[var(--ink-mute)]">
-                  Starting connection…
-                </p>
-              </div>
-            </div>
-          )}
+          {/* ── LOADING (waiting for first stream event) ──────────────────── */}
+          {showLoading && <QRSkeleton label="Starting connection…" />}
 
           {/* ── PENDING ───────────────────────────────────────────────────── */}
           {!conflict && !showLoading && status === "PENDING" && (
@@ -356,11 +374,7 @@ export function ChannelsView() {
                   <button
                     onClick={() => {
                       setStarting(true);
-                      setStreamActive(false);
-                      setTimeout(() => {
-                        setStreamActive(true);
-                        connectMut.mutate();
-                      }, 300);
+                      connectMut.mutate();
                     }}
                     className="btn btn-outline text-[12px]"
                   >
@@ -368,17 +382,7 @@ export function ChannelsView() {
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-center gap-3 py-8">
-                  <div className="w-[216px] h-[216px] rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
-                    <Loader2
-                      size={28}
-                      className="animate-spin text-[var(--accent)]"
-                    />
-                    <p className="text-[12.5px] text-[var(--ink-mute)]">
-                      Generating QR code…
-                    </p>
-                  </div>
-                </div>
+                <QRSkeleton label="Generating QR code…" />
               )}
             </div>
           )}
@@ -399,15 +403,10 @@ export function ChannelsView() {
                   </div>
                 </div>
               )}
-              <div className="w-[216px] h-[216px] rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--surface-2)] flex flex-col items-center justify-center gap-3">
-                <QrCode
-                  size={36}
-                  className="text-[var(--ink-mute)] opacity-30"
-                />
-                <p className="text-[12.5px] text-[var(--ink-mute)]">
-                  Not connected
-                </p>
-              </div>
+              <QRSkeleton
+                animate={connectMut.isPending}
+                label={connectMut.isPending ? "Generating QR code…" : undefined}
+              />
               <p className="text-[12.5px] text-[var(--ink-mute)] text-center max-w-xs">
                 Link your WhatsApp number so the AI can receive and reply to
                 customer messages automatically.
@@ -459,10 +458,25 @@ export function ChannelsView() {
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[rgba(239,68,68,0.08)] flex items-center justify-center flex-shrink-0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#EF4444"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
                 </div>
                 <div>
-                  <p className="text-[13px] font-medium">Allow Order Cancellation via Chat</p>
+                  <p className="text-[13px] font-medium">
+                    Allow Order Cancellation via Chat
+                  </p>
                   <p className="text-[12px] text-[var(--ink-mute)] mt-px">
                     {config?.allowOrderCancellation
                       ? "Customers can cancel PENDING or CONFIRMED orders through the chatbot"
@@ -472,7 +486,9 @@ export function ChannelsView() {
               </div>
               <Toggle
                 enabled={config?.allowOrderCancellation ?? true}
-                onChange={(v) => updateConfigMut.mutate({ allowOrderCancellation: v })}
+                onChange={(v) =>
+                  updateConfigMut.mutate({ allowOrderCancellation: v })
+                }
                 disabled={updateConfigMut.isPending}
               />
             </div>

@@ -2,13 +2,11 @@
 import {
   useWAConnect,
   useWADisconnect,
-  useWAEventStream,
   useWATakeoverConfirm,
   useWATakeoverDeny,
   useWAStatus,
 } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -23,32 +21,41 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./Dialog";
+import { Skeleton } from "./Motion";
 
 interface WAConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+function FrameCorners() {
+  return (
+    <>
+      {(["tl", "tr", "bl", "br"] as const).map((pos) => (
+        <span
+          key={pos}
+          className={cn(
+            "absolute w-[22px] h-[22px] border-[var(--accent)]",
+            pos === "tl" &&
+              "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[6px]",
+            pos === "tr" &&
+              "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[6px]",
+            pos === "bl" &&
+              "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[6px]",
+            pos === "br" &&
+              "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[6px]",
+          )}
+        />
+      ))}
+    </>
+  );
+}
+
 function QRFrame({ src }: { src: string }) {
   return (
     <div className="relative flex items-center justify-center">
       <div className="relative w-[220px] h-[220px]">
-        {(["tl", "tr", "bl", "br"] as const).map((pos) => (
-          <span
-            key={pos}
-            className={cn(
-              "absolute w-[22px] h-[22px] border-[var(--accent)]",
-              pos === "tl" &&
-                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[6px]",
-              pos === "tr" &&
-                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[6px]",
-              pos === "bl" &&
-                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[6px]",
-              pos === "br" &&
-                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[6px]",
-            )}
-          />
-        ))}
+        <FrameCorners />
         <div className="absolute inset-[8px] rounded-xl overflow-hidden bg-white p-2 shadow-sm border border-[var(--line)]">
           <Image
             src={src}
@@ -64,81 +71,89 @@ function QRFrame({ src }: { src: string }) {
   );
 }
 
-function QRPlaceholder({ label }: { label: string }) {
+/**
+ * QR slot placeholder. Keeps the QR-frame footprint whenever there's no code
+ * yet; shimmers while a code is actively being fetched (`animate`) and falls
+ * back to a static muted box when idle.
+ */
+function QRSkeleton({
+  label,
+  animate = true,
+}: {
+  label?: string;
+  animate?: boolean;
+}) {
   return (
-    <div className="w-[220px] h-[220px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
-      <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
-      <p className="text-[12.5px] text-[var(--ink-mute)]">{label}</p>
+    <div className="flex flex-col items-center gap-3 py-6 w-full">
+      <div className="relative w-[220px] h-[220px]">
+        <FrameCorners />
+        <div className="absolute inset-[8px] rounded-xl overflow-hidden bg-[var(--surface-2)]">
+          {animate && <Skeleton className="absolute inset-0 rounded-none" />}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <QrCode size={36} className="text-[var(--ink-mute)] opacity-40" />
+          </div>
+        </div>
+      </div>
+      {label && (
+        <div className="flex items-center gap-2">
+          {animate && (
+            <Loader2 size={14} className="animate-spin text-[var(--accent)]" />
+          )}
+          <p className="text-[12.5px] text-[var(--ink-mute)]">{label}</p>
+        </div>
+      )}
     </div>
   );
 }
 
 export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
-  const qc = useQueryClient();
   const { data: statusData } = useWAStatus();
   const connectMut = useWAConnect();
   const disconnectMut = useWADisconnect();
   const takeoverConfirmMut = useWATakeoverConfirm();
   const takeoverDenyMut = useWATakeoverDeny();
-  const [streamActive, setStreamActive] = useState(false);
+  // Tracks the gap between clicking connect and the first SSE event landing in
+  // the cache. All live status/QR/conflict now flows through the wa-status
+  // query (useWAStatusStream), so the cache is the single source of truth.
   const [starting, setStarting] = useState(false);
 
-  const { qr, liveStatus, livePhone, liveError, conflict } =
-    useWAEventStream(streamActive);
-
-  const status = liveStatus ?? statusData?.status ?? "DISCONNECTED";
-  const phoneNumber = livePhone ?? statusData?.phoneNumber;
-  const qrCode = qr ?? statusData?.qr;
-  const connectionError = liveError ?? statusData?.error;
-
-  // Sync query cache instantly when SSE emits a definitive status.
-  useEffect(() => {
-    if (!liveStatus) return;
-    qc.setQueryData(["wa-status"], (old: any) => ({
-      ...old,
-      status: liveStatus,
-      phoneNumber: livePhone ?? old?.phoneNumber,
-      error: liveError ?? null,
-    }));
-    if (liveStatus !== "PENDING") setStarting(false);
-    if (liveStatus === "DISCONNECTED") setStreamActive(false);
-  }, [liveStatus, livePhone, liveError, qc]);
-
-  // Auto-start on open if disconnected.
-  useEffect(() => {
-    if (
-      open &&
-      status === "DISCONNECTED" &&
-      !streamActive &&
-      !connectMut.isPending
-    ) {
-      handleConnect();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  const status = statusData?.status ?? "DISCONNECTED";
+  const phoneNumber = statusData?.phoneNumber;
+  const qrCode = statusData?.qr;
+  const connectionError = statusData?.error;
+  const conflict = statusData?.conflict;
 
   const handleConnect = () => {
     setStarting(true);
-    setStreamActive(true);
     connectMut.mutate();
   };
 
   const handleDisconnect = () => {
-    setStreamActive(false);
     setStarting(false);
     disconnectMut.mutate();
   };
 
   const handleRefreshQR = () => {
     setStarting(true);
-    setStreamActive(false);
-    setTimeout(() => {
-      setStreamActive(true);
-      connectMut.mutate();
-    }, 300);
+    connectMut.mutate();
   };
 
-  // Show loading placeholder while waiting for first SSE event after clicking connect.
+  // Drop the "starting" shimmer as soon as the stream produces something real.
+  useEffect(() => {
+    if (qrCode || conflict || connectionError || status === "CONNECTED") {
+      setStarting(false);
+    }
+  }, [qrCode, conflict, connectionError, status]);
+
+  // Auto-start on open if disconnected.
+  useEffect(() => {
+    if (open && status === "DISCONNECTED" && !connectMut.isPending) {
+      handleConnect();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Show the shimmer while waiting for the first event after clicking connect.
   const showLoading = starting && !qrCode && status !== "CONNECTED";
 
   return (
@@ -255,9 +270,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
           )}
 
           {!conflict && showLoading && (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <QRPlaceholder label="Starting connection…" />
-            </div>
+            <QRSkeleton label="Starting connection…" />
           )}
 
           {!conflict && !showLoading && status === "PENDING" && (
@@ -277,9 +290,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col items-center gap-3 py-6">
-                  <QRPlaceholder label="Generating QR code…" />
-                </div>
+                <QRSkeleton label="Generating QR code…" />
               )}
             </>
           )}
@@ -295,12 +306,10 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   </div>
                 </div>
               )}
-              <div className="flex flex-col items-center gap-3 py-6 w-full">
-                <div className="w-[220px] h-[220px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
-                  <QrCode size={36} className="text-[var(--ink-mute)] opacity-40" />
-                  <p className="text-[12.5px] text-[var(--ink-mute)]">No QR generated</p>
-                </div>
-              </div>
+              <QRSkeleton
+                animate={connectMut.isPending}
+                label={connectMut.isPending ? "Generating QR code…" : undefined}
+              />
               <button onClick={handleConnect} disabled={connectMut.isPending} className="btn btn-grad w-full justify-center">
                 {connectMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />}
                 {connectionError ? "Retry Connection" : "Generate QR Code"}

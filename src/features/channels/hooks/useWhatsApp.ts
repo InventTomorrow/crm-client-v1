@@ -1,7 +1,7 @@
 "use client";
 import { extractErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   confirmWATakeover,
@@ -12,7 +12,7 @@ import {
   getWAStatus,
   updateWAConfig,
 } from "../services/channelsService";
-import type { WAConfig, WASSEEvent, WASessionStatus, WAState } from "../types";
+import type { WAConfig, WASSEEvent, WAState } from "../types";
 
 export function useWAStatus() {
   return useQuery({
@@ -98,7 +98,12 @@ export function useUpdateWAConfig() {
   });
 }
 
-/** Always-on SSE subscriber — keeps the wa-status query cache in sync without polling. */
+/**
+ * Always-on SSE subscriber and the single source of truth for live WhatsApp
+ * state. Folds every event type (qr / status / phone-conflict) into the
+ * `wa-status` query cache so the whole app — status button and connect dialog —
+ * reads one consistent value. Mount once near the app root.
+ */
 export function useWAStatusStream() {
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -108,93 +113,54 @@ export function useWAStatusStream() {
     es.onmessage = (e: MessageEvent) => {
       try {
         const event = JSON.parse(e.data as string) as WASSEEvent;
-        if (event.type === "status") {
-          queryClient.setQueryData<WAState>(
-            ["wa-status"],
-            (old: WAState | undefined) => ({
-              status: event.status,
-              phoneNumber: event.phoneNumber ?? old?.phoneNumber,
-              error: event.error,
-            }),
-          );
-        }
+        queryClient.setQueryData<WAState>(
+          ["wa-status"],
+          (old: WAState | undefined): WAState => {
+            switch (event.type) {
+              case "qr":
+                return {
+                  status: "PENDING",
+                  phoneNumber: old?.phoneNumber,
+                  qr: event.qr,
+                  error: undefined,
+                  conflict: undefined,
+                };
+              case "status":
+                return {
+                  status: event.status,
+                  phoneNumber: event.phoneNumber ?? old?.phoneNumber,
+                  error: event.error,
+                  // Keep the QR/conflict only while still pending; clear once a
+                  // definitive status (CONNECTED / DISCONNECTED) arrives.
+                  qr: event.status === "PENDING" ? old?.qr : undefined,
+                  conflict:
+                    event.status === "PENDING" ? old?.conflict : undefined,
+                };
+              case "phone-conflict":
+                return {
+                  status: "PENDING",
+                  phoneNumber: old?.phoneNumber,
+                  qr: undefined,
+                  error: undefined,
+                  conflict: {
+                    phoneNumber: event.phoneNumber,
+                    conflictWorkspaces: event.conflictWorkspaces,
+                  },
+                };
+              default:
+                return old ?? { status: "DISCONNECTED" };
+            }
+          },
+        );
       } catch {
         /* ignore malformed */
       }
     };
-    es.onerror = () => es.close();
+    // A transient SSE drop (idle-proxy timeout, brief network blip) is NOT a
+    // session disconnect. Don't close or override status here: EventSource
+    // auto-reconnects and the server re-sends current status on each (re)open.
+    // The polled useWAStatus query stays the backup source of truth meanwhile.
+    es.onerror = () => {};
     return () => es.close();
   }, [queryClient]);
-}
-
-export interface ConflictInfo {
-  phoneNumber: string;
-  conflictWorkspaces: string[];
-}
-
-/** Opens an SSE connection to /whatsapp/qr-stream and returns live QR + status + conflict info. */
-export function useWAEventStream(enabled: boolean) {
-  const [qr, setQr] = useState<string | null>(null);
-  const [liveStatus, setLiveStatus] = useState<WASessionStatus | null>(null);
-  const [livePhone, setLivePhone] = useState<string | null>(null);
-  const [liveError, setLiveError] = useState<string | null>(null);
-  const [conflict, setConflict] = useState<ConflictInfo | null>(null);
-  const esRef = useRef<EventSource | null>(null);
-
-  useEffect(() => {
-    if (!enabled) return;
-    setQr(null);
-    setLiveStatus(null);
-    setLivePhone(null);
-    setLiveError(null);
-    setConflict(null);
-
-    const es = new EventSource("/api/v1/whatsapp/qr-stream", {
-      withCredentials: true,
-    });
-    esRef.current = es;
-
-    es.onmessage = (e: MessageEvent) => {
-      const event: WASSEEvent = JSON.parse(e.data as string);
-      if (event.type === "qr") {
-        setQr(event.qr);
-        setLiveStatus("PENDING");
-        setLiveError(null);
-        setConflict(null);
-      } else if (event.type === "status") {
-        setLiveStatus(event.status);
-        setLivePhone(event.phoneNumber ?? null);
-        setLiveError(event.error ?? null);
-        setConflict(null);
-        if (event.status === "CONNECTED") setQr(null);
-        if (event.status === "PENDING") setLiveError(null);
-      } else if (event.type === "phone-conflict") {
-        setConflict({
-          phoneNumber: event.phoneNumber,
-          conflictWorkspaces: event.conflictWorkspaces,
-        });
-        setLiveStatus("PENDING");
-        setQr(null);
-      }
-    };
-
-    es.onerror = () => {
-      // A transient SSE drop (idle-proxy timeout, brief network blip) is NOT a
-      // session disconnect. Forcing DISCONNECTED here used to mask a real
-      // CONNECTED: the long-lived QR stream gets cut while the user scans, the
-      // phone links, the server goes CONNECTED — but the stale DISCONNECTED
-      // shadowed the polled /status and the CRM stayed stuck.
-      //
-      // Don't close and don't override status: EventSource auto-reconnects, and
-      // the server re-sends the current status on each (re)open. The polled
-      // useWAStatus query remains the source of truth meanwhile.
-    };
-
-    return () => {
-      es.close();
-      esRef.current = null;
-    };
-  }, [enabled]);
-
-  return { qr, liveStatus, livePhone, liveError, conflict };
 }
