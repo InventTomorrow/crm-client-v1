@@ -180,7 +180,11 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
   const parseFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const text = e.target?.result as string;
+      // Strip the UTF-8 BOM that MS Excel prepends to "CSV UTF-8" exports —
+      // otherwise the first header (e.g. "name") is read as "﻿name" and
+      // that column is silently dropped on the server.
+      const raw = (e.target?.result as string) ?? "";
+      const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
       try {
         const parsed = await parseCsv.mutateAsync(text);
         const mapped: LeadItem[] = parsed.map((p: any) => ({
