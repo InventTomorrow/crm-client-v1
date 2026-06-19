@@ -2,7 +2,8 @@
 import {
   useWAConnect,
   useWADisconnect,
-  useWAEventStream,
+  useWAStatus,
+  useWAStatusStream,
 } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import {
@@ -57,14 +58,20 @@ function QRFrame({ src }: { src: string }) {
 function QRPanel({ onSuccess }: { onSuccess: () => void }) {
   const { mutate: connectWA, isPending: isConnecting } = useWAConnect();
   const { mutate: disconnectWA } = useWADisconnect();
-  const [streamActive, setStreamActive] = useState(false);
-  const { qr, liveStatus, liveError } = useWAEventStream(streamActive);
+  // Onboarding has no AppTopBar, so open the SSE here to feed the wa-status
+  // cache, then read live QR/status/error from it (single source of truth).
+  useWAStatusStream();
+  const { data: statusData } = useWAStatus();
+  const [started, setStarted] = useState(false);
+
+  const liveStatus = statusData?.status;
+  const qr = statusData?.qr;
+  const liveError = statusData?.error;
 
   useEffect(() => {
     connectWA(undefined, {
-      onSuccess: () => setStreamActive(true),
+      onSuccess: () => setStarted(true),
     });
-    return () => setStreamActive(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,9 +81,9 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
 
   const handleRetry = () => {
     disconnectWA();
-    setStreamActive(false);
+    setStarted(false);
     setTimeout(() => {
-      connectWA(undefined, { onSuccess: () => setStreamActive(true) });
+      connectWA(undefined, { onSuccess: () => setStarted(true) });
     }, 800);
   };
 
@@ -125,7 +132,7 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div className="flex flex-col items-center gap-3 py-6">
-      {isConnecting || streamActive ? (
+      {isConnecting || started ? (
         <>
           <div className="w-[200px] h-[200px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
             <Loader2 size={24} className="animate-spin text-[#25D366]" />
