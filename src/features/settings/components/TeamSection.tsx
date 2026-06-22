@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Input } from "@/shared/ui/Input";
 import {
   Select,
@@ -57,7 +58,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CalendarDays,
   Check,
-  ChevronDown,
   Clock,
   Info,
   Loader2,
@@ -247,42 +247,21 @@ function RoleSelector({
   onChange: (roleId: string) => void;
   disabled?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const current = roles.find((r) => r.id === value);
-
   return (
-    <div className="relative">
-      <button
-        className="flex items-center gap-1.5 btn btn-ghost py-1 px-2 text-[12px] font-medium"
-        onClick={() => setOpen((v) => !v)}
-        disabled={disabled}
-      >
-        {current ? <RoleBadge name={current.name} /> : <span>—</span>}
-        <ChevronDown size={11} className="opacity-50" />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 card min-w-[140px] py-1 shadow-lg border border-[var(--line)]">
-            {roles
-              .filter((r) => r.name !== "OWNER")
-              .map((r) => (
-                <button
-                  key={r.id}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12.5px] hover:bg-[var(--surface-2)] transition-colors"
-                  onClick={() => {
-                    onChange(r.id);
-                    setOpen(false);
-                  }}
-                >
-                  <RoleBadge name={r.name} />
-                </button>
-              ))}
-          </div>
-        </>
-      )}
-    </div>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className="h-8 w-[140px] text-[12px]">
+        <SelectValue placeholder="—" />
+      </SelectTrigger>
+      <SelectContent>
+        {roles
+          .filter((r) => r.name !== "OWNER")
+          .map((r) => (
+            <SelectItem key={r.id} value={r.id}>
+              <RoleBadge name={r.name} />
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -849,6 +828,7 @@ function MembersTab() {
 
   const [showInvite, setShowInvite] = useState(false);
   const [detailMember, setDetailMember] = useState<MemberItem | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<MemberItem | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
@@ -969,13 +949,7 @@ function MembersTab() {
                 disabled={isRemoving}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (
-                    window.confirm(
-                      `Remove ${memberName(m)} from the workspace?`,
-                    )
-                  ) {
-                    removeM(m.membershipId);
-                  }
+                  setRemoveTarget(m);
                 }}
               >
                 <Trash2 className="size-3.5" />
@@ -992,7 +966,6 @@ function MembersTab() {
       isChangingRole,
       isRemoving,
       changeRole,
-      removeM,
     ],
   );
 
@@ -1111,6 +1084,23 @@ function MembersTab() {
         roles={roles}
         open={!!detailMember}
         onOpenChange={(v) => !v && setDetailMember(null)}
+      />
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={() => {
+          if (removeTarget) removeM(removeTarget.membershipId);
+          setRemoveTarget(null);
+        }}
+        title="Remove member"
+        description={
+          removeTarget
+            ? `Remove ${memberName(removeTarget)} from the workspace? They'll lose access immediately.`
+            : undefined
+        }
+        confirmLabel="Remove"
+        loading={isRemoving}
       />
     </div>
   );

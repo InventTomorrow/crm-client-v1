@@ -8,6 +8,7 @@ import {
   acceptInvite, verifyEmail, resendVerification, getMe, updateMe,
   getMembers, inviteUser, removeMember, changeMemberRole, getRoles, updateRolePermissions,
   validateInvite, getInvitations, cancelInvitation,
+  getMyInvitations, acceptMyInvitation, declineMyInvitation,
 } from '../services/authService';
 import type { LoginData, RegisterData, CreateWorkspaceData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
 
@@ -125,9 +126,38 @@ export function useValidateInvite(token: string) {
 export function useAcceptInvite(token: string) {
   const router = useRouter();
   return useMutation({
-    mutationFn: (data: AcceptInviteData) => acceptInvite(token, data),
+    mutationFn: (data?: AcceptInviteData) => acceptInvite(token, data),
     onSuccess: () => router.push('/inbox'),
     onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useMyInvitations() {
+  return useQuery({ queryKey: ['my-invitations'], queryFn: getMyInvitations });
+}
+
+export function useAcceptMyInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: acceptMyInvitation,
+    onSuccess: (res) => {
+      toast.success(res?.message ?? 'Joined the workspace.');
+      qc.invalidateQueries({ queryKey: ['my-invitations'] });
+      qc.invalidateQueries({ queryKey: ['me'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to accept invitation')),
+  });
+}
+
+export function useDeclineMyInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: declineMyInvitation,
+    onSuccess: () => {
+      toast.success('Invitation declined.');
+      qc.invalidateQueries({ queryKey: ['my-invitations'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to decline invitation')),
   });
 }
 

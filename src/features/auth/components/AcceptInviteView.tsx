@@ -75,12 +75,17 @@ export function AcceptInviteView() {
     return <InviteError title={copy.title} body={copy.body} />;
   }
 
+  // Existing account → no sign-up form, just a one-click accept.
+  const accountExists = !!validation?.accountExists;
+
   return (
     <div className="w-full max-w-[420px] mx-auto">
       <div className="card p-8 flex flex-col gap-5 shadow-[var(--shadow-2)]">
         <div>
           <h1 className="text-[22px] font-semibold text-[var(--ink)]">Accept invitation</h1>
-          <p className="text-[13px] mt-1 text-[var(--ink-mute)]">Set up your account to join the workspace</p>
+          <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
+            {accountExists ? 'Join this workspace with your existing account' : 'Set up your account to join the workspace'}
+          </p>
         </div>
 
         {validation?.status === 'VALID' && (
@@ -95,6 +100,19 @@ export function AcceptInviteView() {
           </div>
         )}
 
+        {accountExists ? (
+          <>
+            <button type="button" className="btn btn-grad w-full justify-center" disabled={isPending} onClick={() => mutate(undefined)}>
+              {isPending && <Loader2 size={14} className="animate-spin" />}
+              {isPending ? 'Joining…' : 'Accept & join workspace'}
+            </button>
+            <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
+              You may need to{' '}
+              <Link href="/auth/login" className="text-[var(--accent)] hover:underline font-medium">sign in</Link>{' '}
+              with {validation?.email} first.
+            </p>
+          </>
+        ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit((d) => mutate(d))} className="flex flex-col gap-3.5">
             <div className="grid grid-cols-2 gap-2.5">
@@ -150,11 +168,14 @@ export function AcceptInviteView() {
             </button>
           </form>
         </Form>
+        )}
 
-        <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
-          Already have an account?{' '}
-          <Link href="/auth/login" className="text-[var(--accent)] hover:underline font-medium">Sign in</Link>
-        </p>
+        {!accountExists && (
+          <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
+            Already have an account?{' '}
+            <Link href="/auth/login" className="text-[var(--accent)] hover:underline font-medium">Sign in</Link>
+          </p>
+        )}
       </div>
     </div>
   );

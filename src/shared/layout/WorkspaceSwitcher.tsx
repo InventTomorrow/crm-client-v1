@@ -181,6 +181,44 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
     });
   };
 
+  // Keep the original index so each workspace keeps a stable colour.
+  const indexed = memberships.map((m: Membership, index: number) => ({ m, index }));
+  const ownedGroup = indexed.filter(({ m }) => m.role.name === "OWNER");
+  const joinedGroup = indexed.filter(({ m }) => m.role.name !== "OWNER");
+
+  const renderWorkspaceRow = ({ m, index }: { m: Membership; index: number }) => {
+    const workspace = getDisplay(m, index);
+    const isActive = workspace.id === currentWorkspaceId;
+    return (
+      <button
+        key={workspace.id}
+        onClick={() => handleSwitch(m)}
+        className={cn(
+          "flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] hover:bg-[var(--accent-soft)] transition-colors",
+          isActive && "bg-[var(--accent-soft)]",
+        )}
+      >
+        <div
+          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-semibold text-[11.5px] flex-shrink-0"
+          style={{ background: workspace.color }}
+        >
+          {workspace.short}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium text-[var(--ink)]">
+            {workspace.name}
+          </div>
+          <div className="text-[11px] text-[var(--ink-mute)]">
+            {workspace.plan} · {workspace.role}
+          </div>
+        </div>
+        {isActive && (
+          <Check size={14} className="text-[var(--accent)] flex-shrink-0" />
+        )}
+      </button>
+    );
+  };
+
   return (
     <div
       ref={wrapRef}
@@ -245,45 +283,26 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
             width: collapsed ? 280 : "auto",
           }}
         >
-          <div className="px-[10px] pt-2 pb-1.5 text-[10.5px] text-[var(--ink-mute)] uppercase tracking-[0.08em] font-semibold">
-            Switch workspace
-          </div>
+          {ownedGroup.length > 0 && (
+            <>
+              <div className="px-[10px] pt-2 pb-1.5 text-[10.5px] text-[var(--ink-mute)] uppercase tracking-[0.08em] font-semibold">
+                Your workspaces
+              </div>
+              {ownedGroup.map(renderWorkspaceRow)}
+            </>
+          )}
 
-          {memberships.map((membership: Membership, index: number) => {
-            const workspace = getDisplay(membership, index);
-            const isActive = workspace.id === currentWorkspaceId;
-            return (
-              <button
-                key={workspace.id}
-                onClick={() => handleSwitch(membership)}
-                className={cn(
-                  "flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] hover:bg-[var(--accent-soft)] transition-colors",
-                  isActive && "bg-[var(--accent-soft)]",
-                )}
-              >
-                <div
-                  className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-semibold text-[11.5px] flex-shrink-0"
-                  style={{ background: workspace.color }}
-                >
-                  {workspace.short}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium text-[var(--ink)]">
-                    {workspace.name}
-                  </div>
-                  <div className="text-[11px] text-[var(--ink-mute)]">
-                    {workspace.plan} · {workspace.role}
-                  </div>
-                </div>
-                {isActive && (
-                  <Check
-                    size={14}
-                    className="text-[var(--accent)] flex-shrink-0"
-                  />
-                )}
-              </button>
-            );
-          })}
+          {joinedGroup.length > 0 && (
+            <>
+              {ownedGroup.length > 0 && (
+                <div className="h-px bg-[var(--line)] my-1" />
+              )}
+              <div className="px-[10px] pt-2 pb-1.5 text-[10.5px] text-[var(--ink-mute)] uppercase tracking-[0.08em] font-semibold">
+                Joined workspaces
+              </div>
+              {joinedGroup.map(renderWorkspaceRow)}
+            </>
+          )}
 
           {isOwner && (
             <>

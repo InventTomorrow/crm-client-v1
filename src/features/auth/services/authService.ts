@@ -47,6 +47,7 @@ export interface InviteValidation {
   tenantName?: string | null;
   roleName?: string | null;
   expiresAt?: string;
+  accountExists?: boolean;
 }
 
 export async function validateInvite(token: string): Promise<InviteValidation> {
@@ -56,13 +57,39 @@ export async function validateInvite(token: string): Promise<InviteValidation> {
   return res.data.data;
 }
 
-export async function acceptInvite(token: string, data: AcceptInviteData) {
+export async function acceptInvite(token: string, data?: AcceptInviteData) {
   const res = await apiClient.post('/auth/accept-invite', {
     token,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    password: data.password,
+    ...(data
+      ? { firstName: data.firstName, lastName: data.lastName, password: data.password }
+      : {}),
   });
+  return res.data;
+}
+
+export interface MyInvitationItem {
+  id: string;
+  tenantId: string;
+  tenantName: string | null;
+  roleName: string;
+  invitedByName: string | null;
+  createdAt: string;
+  expiresAt: string;
+  expired: boolean;
+}
+
+export async function getMyInvitations(): Promise<MyInvitationItem[]> {
+  const res = await apiClient.get<{ success: true; data: MyInvitationItem[] }>('/auth/my-invitations');
+  return res.data.data;
+}
+
+export async function acceptMyInvitation(id: string) {
+  const res = await apiClient.post(`/auth/my-invitations/${id}/accept`);
+  return res.data;
+}
+
+export async function declineMyInvitation(id: string) {
+  const res = await apiClient.post(`/auth/my-invitations/${id}/decline`);
   return res.data;
 }
 export async function getMe(): Promise<UserResponse> {

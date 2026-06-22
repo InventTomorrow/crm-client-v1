@@ -9,9 +9,80 @@ import {
   useUnreadCount,
 } from '@/features/notifications/hooks/useNotifications';
 import { notificationHref, notificationMeta, timeAgo } from '@/features/notifications/lib/meta';
+import {
+  useMyInvitations,
+  useAcceptMyInvitation,
+  useDeclineMyInvitation,
+} from '@/features/auth/hooks/useAuth';
+import type { MyInvitationItem } from '@/features/auth/services/authService';
 
 interface NotificationsPanelProps {
   onClose: () => void;
+}
+
+function PendingInvites() {
+  const { data: invites = [] as MyInvitationItem[] } = useMyInvitations();
+  const accept = useAcceptMyInvitation();
+  const decline = useDeclineMyInvitation();
+  const busy = accept.isPending || decline.isPending;
+
+  if (invites.length === 0) return null;
+
+  return (
+    <div className="border-b border-[var(--line)] bg-[var(--surface-2)]">
+      <div className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
+        Workspace invites
+      </div>
+      {invites.map((inv) => (
+        <div key={inv.id} className="px-4 py-3 flex flex-col gap-2 border-b border-[var(--line-soft)] last:border-b-0">
+          <div className="text-[13px] text-[var(--ink)] leading-snug">
+            <span className="inline-flex items-center gap-1.5">
+              <strong>{inv.tenantName ?? 'A workspace'}</strong>
+              {inv.expired && (
+                <span className="badge bg-[var(--surface-2)] text-[var(--ink-mute)] text-[10.5px]">Expired</span>
+              )}
+            </span>
+            {' · '}
+            <span className="text-[var(--ink-soft)]">{inv.roleName}</span>
+            {inv.invitedByName && (
+              <div className="text-[11.5px] text-[var(--ink-mute)] mt-0.5">Invited by {inv.invitedByName}</div>
+            )}
+          </div>
+          {inv.expired ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11.5px] text-[var(--ink-mute)]">
+                This invite expired. Ask your admin to resend it.
+              </span>
+              <button
+                className="btn btn-ghost py-1 px-3 text-[12px] ml-auto"
+                disabled={busy}
+                onClick={() => decline.mutate(inv.id)}
+              >
+                Dismiss
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-grad py-1 px-3 text-[12px]"
+                disabled={busy}
+                onClick={() => accept.mutate(inv.id)}
+              >
+                Accept
+              </button>
+              <button
+                className="btn btn-ghost py-1 px-3 text-[12px]"
+                disabled={busy}
+                onClick={() => decline.mutate(inv.id)}
+              >
+                Decline
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
@@ -26,6 +97,7 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
 
   return (
     <div className="card-2 fade-up absolute right-0 top-[calc(100%+8px)] w-[360px] z-[80] bg-[var(--surface)] overflow-hidden">
+      <PendingInvites />
       <div className="px-4 py-3 border-b border-[var(--line)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-[15px] font-semibold">Notifications</h3>
