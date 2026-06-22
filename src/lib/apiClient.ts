@@ -1,14 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
 export const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: "/api/v1",
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
-// While logging out we deliberately tear down the session, so any 401s from
-// in-flight/background requests must NOT bounce the user to /auth/login — the
-// logout flow sends them to the root landing page instead.
 let isLoggingOut = false;
 export const setLoggingOut = (value: boolean) => {
   isLoggingOut = value;
@@ -43,7 +40,7 @@ apiClient.interceptors.response.use(
     // Check if the error is due to an expired access token and is not already a retry
     if (
       error.response?.status === 401 &&
-      error.response?.data?.error?.code === 'auth/token_expired' &&
+      error.response?.data?.error?.code === "auth/token_expired" &&
       !originalRequest._retry
     ) {
       if (isRefreshing) {
@@ -62,7 +59,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await apiClient.post('/auth/refresh');
+        await apiClient.post("/auth/refresh");
         isRefreshing = false;
         processQueue(null);
         return apiClient(originalRequest);
@@ -70,8 +67,8 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         processQueue(refreshError);
 
-        if (typeof window !== 'undefined' && !isLoggingOut) {
-          window.location.href = '/auth/login';
+        if (typeof window !== "undefined" && !isLoggingOut) {
+          window.location.href = "/auth/login";
         }
         return Promise.reject(refreshError);
       }
@@ -79,19 +76,22 @@ apiClient.interceptors.response.use(
 
     // If it's a 401 error but NOT a token expiration issue, or if the refresh attempt itself failed
     if (error.response?.status === 401) {
-      const url = originalRequest.url ?? '';
-      const isAuthRoute = url.endsWith('/auth/login') || url.endsWith('/auth/refresh');
+      const url = originalRequest.url ?? "";
+      const isAuthRoute =
+        url.endsWith("/auth/login") || url.endsWith("/auth/refresh");
 
-      const publicRoutes = ['/'];
-      const isPublicRoute = typeof window !== 'undefined' && publicRoutes.includes(window.location.pathname);
+      const publicRoutes = ["/"];
+      const isPublicRoute =
+        typeof window !== "undefined" &&
+        publicRoutes.includes(window.location.pathname);
 
       if (!isAuthRoute && !isPublicRoute) {
-        if (typeof window !== 'undefined' && !isLoggingOut) {
-          window.location.href = '/auth/login';
+        if (typeof window !== "undefined" && !isLoggingOut) {
+          window.location.href = "/auth/login";
         }
       }
     }
-
+    //
     return Promise.reject(error);
   },
 );
