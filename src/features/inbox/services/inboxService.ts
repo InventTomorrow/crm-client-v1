@@ -38,6 +38,20 @@ export const sendHumanMessage = async (conversationId: string, content: string):
   return res.data.data;
 };
 
+export interface StartConversationInput {
+  leadId?: string;
+  phone?: string;
+  name?: string;
+  message: string;
+}
+
+export const startConversation = async (
+  input: StartConversationInput,
+): Promise<ConversationDetail> => {
+  const res = await apiClient.post('/conversations/start', input);
+  return res.data.data;
+};
+
 export const sendMediaMessage = async (
   conversationId: string,
   mediaUrl: string,

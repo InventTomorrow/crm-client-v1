@@ -17,8 +17,10 @@ import {
   sendHumanMessage,
   sendMediaMessage,
   sendTyping,
+  startConversation,
   toggleAiMode,
   uploadAttachment,
+  type StartConversationInput,
 } from '../services/inboxService';
 import type { ConversationDetail, ConversationFilter, ConversationListItem } from '../types';
 
@@ -141,6 +143,19 @@ export function useSendHumanReply(conversationId: string) {
       if (ctx?.prev) queryClient.setQueryData(['conversation', conversationId], ctx.prev);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }),
+  });
+}
+
+export function useStartConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StartConversationInput) => startConversation(input),
+    onSuccess: () => {
+      toast.success('Chat started');
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to start chat')),
   });
 }
 

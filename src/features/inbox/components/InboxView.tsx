@@ -64,6 +64,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
+import { NewChatDialog } from "./NewChatDialog";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
 import { STATUS_META } from "../../leads/types";
 import { OrderForm } from "../../orders/components/OrderForm";
@@ -679,6 +680,7 @@ export function InboxView() {
   const [mobPane, setMobPane] = useState<MobilePane>("list");
   const [showProfile, setShowProfile] = useState(false);
   const [showBroadcast, setShowBroadcast] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [chatBg, setChatBg] = useState<string>(() => {
@@ -1101,6 +1103,20 @@ export function InboxView() {
         className={`card inbox-list w-[320px] flex-shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
       >
         <div className="px-3.5 pt-3 pb-2 space-y-2.5">
+          <PermissionGuard permission="conversations:reply">
+            <button
+              onClick={() => setShowNewChat(true)}
+              disabled={!waConnected}
+              title={
+                !waConnected
+                  ? "Connect WhatsApp in Channels to start a chat"
+                  : undefined
+              }
+              className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus size={14} /> New Chat
+            </button>
+          </PermissionGuard>
           <PermissionGuard permission="broadcasts:create">
             <button
               onClick={() => setShowBroadcast(true)}
@@ -1110,7 +1126,7 @@ export function InboxView() {
                   ? "Connect WhatsApp in Channels to send a broadcast"
                   : undefined
               }
-              className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-outline w-full justify-center gap-2 text-[12.5px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Megaphone size={14} />+ New Broadcast
             </button>
@@ -2288,6 +2304,16 @@ export function InboxView() {
       <BroadcasterDialog
         open={showBroadcast}
         onClose={() => setShowBroadcast(false)}
+      />
+
+      <NewChatDialog
+        open={showNewChat}
+        onClose={() => setShowNewChat(false)}
+        waConnected={waConnected}
+        onStarted={(conversationId) => {
+          setSelectedId(conversationId);
+          setMobPane("chat");
+        }}
       />
 
       {/* Delete-chat confirmation (local to this inbox view) */}

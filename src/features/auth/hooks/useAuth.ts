@@ -1,4 +1,5 @@
 'use client';
+import { setLoggingOut } from '@/lib/apiClient';
 import { extractErrorMessage } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -82,16 +83,22 @@ export function useCreateWorkspace() {
 }
 
 export function useLogout() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: logout,
+    // Suppress the axios 401 interceptor so background requests firing after the
+    // session is torn down don't bounce the user to /auth/login.
+    onMutate: () => setLoggingOut(true),
     onSuccess: () => {
-      // Wipe the cache so the next user on this browser starts from a clean slate.
+      // Wipe the cache so the next user on this browser starts from a clean slate,
+      // then hard-redirect to the root landing page (not the login screen).
       queryClient.clear();
-      router.push('/');
+      window.location.replace('/');
     },
-    onError: (error) => toast.error(extractErrorMessage(error)),
+    onError: (error) => {
+      setLoggingOut(false);
+      toast.error(extractErrorMessage(error));
+    },
   });
 }
 

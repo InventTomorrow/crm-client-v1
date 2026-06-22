@@ -6,6 +6,14 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// While logging out we deliberately tear down the session, so any 401s from
+// in-flight/background requests must NOT bounce the user to /auth/login — the
+// logout flow sends them to the root landing page instead.
+let isLoggingOut = false;
+export const setLoggingOut = (value: boolean) => {
+  isLoggingOut = value;
+};
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
@@ -62,7 +70,7 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         processQueue(refreshError);
 
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !isLoggingOut) {
           window.location.href = '/auth/login';
         }
         return Promise.reject(refreshError);
@@ -75,7 +83,7 @@ apiClient.interceptors.response.use(
       const isAuthRoute = url.endsWith('/auth/login') || url.endsWith('/auth/refresh');
 
       if (!isAuthRoute) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !isLoggingOut) {
           window.location.href = '/auth/login';
         }
       }
