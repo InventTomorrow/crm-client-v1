@@ -1,28 +1,61 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { Inbox, Users, Package, TrendingUp, Shield, Settings, ChevronLeft, Sun, Moon, ChevronDown, Wifi, ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAppStore } from '@/lib/appStore';
-import { CRMAvatar } from '@/shared/ui/CRMAvatar';
-import { WorkspaceSwitcher } from './WorkspaceSwitcher';
-import { ProfileMenu } from './ProfileMenu';
-import { useMe } from '@/features/auth/hooks/useAuth';
-import { useInboxUnreadCount } from '@/features/inbox/hooks/useConversations';
-import { useLeadsCount } from '@/features/leads/hooks/useLeads';
-import { usePendingOrdersCount } from '@/features/orders/hooks/useOrders';
+"use client";
+import { useMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
+import { useLeadsCount } from "@/features/leads/hooks/useLeads";
+import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
+import { useAppStore } from "@/lib/appStore";
+import { cn } from "@/lib/utils";
+import { CRMAvatar } from "@/shared/ui/CRMAvatar";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Inbox,
+  Moon,
+  Package,
+  Settings,
+  ShoppingCart,
+  Sun,
+  TrendingUp,
+  Users,
+  Wifi,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ProfileMenu } from "./ProfileMenu";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
-const NAV_ITEMS = [
-  { href: '/inbox',     label: 'Inbox',         Icon: Inbox },
-  { href: '/leads',     label: 'Leads',         Icon: Users },
-  { href: '/orders',    label: 'Orders',        Icon: ShoppingCart },
-  { href: '/inventory', label: 'Inventory',     Icon: Package },
-  { href: '/channels',  label: 'Channels',      Icon: Wifi },
-  { href: '/analytics', label: 'Analytics',     Icon: TrendingUp },
-  { href: '/admin',     label: 'Team & Access', Icon: Shield },
-  { href: '/settings',  label: 'Settings',      Icon: Settings },
+const NAV_ITEMS: {
+  href: string;
+  label: string;
+  Icon: typeof Inbox;
+  perm?: string;
+}[] = [
+  { href: "/inbox", label: "Inbox", Icon: Inbox, perm: "conversations:view" },
+  { href: "/leads", label: "Leads", Icon: Users, perm: "leads:view" },
+  { href: "/orders", label: "Orders", Icon: ShoppingCart, perm: "orders:view" },
+  {
+    href: "/inventory",
+    label: "Inventory",
+    Icon: Package,
+    perm: "inventory:view",
+  },
+  { href: "/channels", label: "Channels", Icon: Wifi },
+  {
+    href: "/analytics",
+    label: "Analytics",
+    Icon: TrendingUp,
+    perm: "reports:view",
+  },
+  // { href: '/admin',     label: 'Team & Access', Icon: Shield,       perm: 'members:view' },
+  {
+    href: "/settings",
+    label: "Settings",
+    Icon: Settings,
+    perm: "settings:view",
+  },
 ];
 
 interface AppSidebarProps {
@@ -34,13 +67,17 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar, theme, toggleTheme } = useAppStore();
   const { user } = useMe();
+  const { can, isLoading: permsLoading } = usePermissions();
+  const navItems = NAV_ITEMS.filter(
+    (item) => permsLoading || !item.perm || can(item.perm),
+  );
   const { data: inboxUnread } = useInboxUnreadCount();
   const { data: leadsCount } = useLeadsCount();
   const { data: pendingOrders } = usePendingOrdersCount();
   const badgeFor = (href: string): number | undefined => {
-    if (href === '/inbox') return inboxUnread || undefined;
-    if (href === '/leads') return leadsCount || undefined;
-    if (href === '/orders') return pendingOrders || undefined;
+    if (href === "/inbox") return inboxUnread || undefined;
+    if (href === "/leads") return leadsCount || undefined;
+    if (href === "/orders") return pendingOrders || undefined;
     return undefined;
   };
   const [profileOpen, setProfileOpen] = useState(false);
@@ -49,16 +86,18 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   useEffect(() => {
     if (!profileOpen) return;
     const onClick = (e: MouseEvent) => {
-      if ((e.target as Element)?.closest?.('[data-header-popover]')) return;
+      if ((e.target as Element)?.closest?.("[data-header-popover]")) return;
       setProfileOpen(false);
     };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, [profileOpen]);
 
   const width = collapsed ? 68 : 232;
-  const profileName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : '';
-  const profileEmail = user?.email || '';
+  const profileName = user
+    ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
+    : "";
+  const profileEmail = user?.email || "";
 
   return (
     <>
@@ -66,11 +105,22 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         <div className="scrim show-mobile-only" onClick={onCloseMobile} />
       )}
       <aside
-        className={`app-sidebar ${mobileOpen ? 'mobile-open' : ''}`}
-        style={{ width, transition: 'width 240ms cubic-bezier(.22,.9,.4,1), transform 260ms cubic-bezier(.22,.9,.4,1)' }}
+        className={`app-sidebar ${mobileOpen ? "mobile-open" : ""}`}
+        style={{
+          width,
+          transition:
+            "width 240ms cubic-bezier(.22,.9,.4,1), transform 260ms cubic-bezier(.22,.9,.4,1)",
+        }}
       >
         {/* Logo + collapse — toggle always lives at the top in both states */}
-        <div className={cn('flex gap-2.5', collapsed ? 'flex-col items-center px-0 pt-[14px] pb-1.5' : 'items-center justify-between px-[14px] pt-[14px] pb-1.5')}>
+        <div
+          className={cn(
+            "flex gap-2.5",
+            collapsed
+              ? "flex-col items-center px-0 pt-[14px] pb-1.5"
+              : "items-center justify-between px-[14px] pt-[14px] pb-1.5",
+          )}
+        >
           <div className="flex items-center gap-2 min-w-0">
             <Image
               src="/asaanrabta-icon.png"
@@ -89,25 +139,34 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
           <button
             className="btn btn-ghost hide-mobile p-1 transition-colors"
             onClick={toggleSidebar}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <ChevronLeft
               size={14}
-              className={cn('transition-transform duration-300 ease-out', collapsed && 'rotate-180')}
+              className={cn(
+                "transition-transform duration-300 ease-out",
+                collapsed && "rotate-180",
+              )}
             />
           </button>
         </div>
 
         <WorkspaceSwitcher collapsed={collapsed} />
 
-
         {/* Nav items */}
-        <nav className={cn('flex flex-col gap-0.5 flex-1', collapsed ? 'px-[10px] py-1' : 'px-3 py-1')}>
-          {!collapsed && (
-            <div className="text-[10px] text-[var(--ink-mute)] uppercase tracking-[0.12em] font-semibold px-3 pt-[10px] pb-1.5">Workspace</div>
+        <nav
+          className={cn(
+            "flex flex-col gap-0.5 flex-1",
+            collapsed ? "px-[10px] py-1" : "px-3 py-1",
           )}
-          {NAV_ITEMS.map(item => {
+        >
+          {!collapsed && (
+            <div className="text-[10px] text-[var(--ink-mute)] uppercase tracking-[0.12em] font-semibold px-3 pt-[10px] pb-1.5">
+              Workspace
+            </div>
+          )}
+          {navItems.map((item) => {
             const active = pathname.startsWith(item.href);
             const badge = badgeFor(item.href);
             return (
@@ -115,13 +174,32 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={cn('nav-item no-underline', collapsed ? 'justify-center p-[10px]' : 'justify-start px-3 py-2', active ? 'active' : '')}
+                className={cn(
+                  "nav-item no-underline",
+                  collapsed
+                    ? "justify-center p-[10px]"
+                    : "justify-start px-3 py-2",
+                  active ? "active" : "",
+                )}
               >
-                <item.Icon size={17} className={cn('nav-ic flex-shrink-0', active ? 'text-[var(--accent)]' : 'text-[var(--ink-mute)]')} />
+                <item.Icon
+                  size={17}
+                  className={cn(
+                    "nav-ic flex-shrink-0",
+                    active ? "text-[var(--accent)]" : "text-[var(--ink-mute)]",
+                  )}
+                />
                 {!collapsed && <span className="flex-1">{item.label}</span>}
                 {!collapsed && !!badge && (
-                  <span className={cn('badge font-medium py-[1px] px-[7px] min-w-5 justify-center', active ? 'bg-[var(--accent)] text-white border-none' : 'bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]')}>
-                    {badge > 99 ? '99+' : badge}
+                  <span
+                    className={cn(
+                      "badge font-medium py-[1px] px-[7px] min-w-5 justify-center",
+                      active
+                        ? "bg-[var(--accent)] text-white border-none"
+                        : "bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]",
+                    )}
+                  >
+                    {badge > 99 ? "99+" : badge}
                   </span>
                 )}
               </Link>
@@ -133,42 +211,60 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         <div className="p-3 flex flex-col gap-2.5 border-t border-[var(--line)] relative">
           {!collapsed ? (
             <div className="theme-seg">
-              <button className={theme !== 'dark' ? 'on' : ''} onClick={() => theme === 'dark' && toggleTheme()}>
+              <button
+                className={theme !== "dark" ? "on" : ""}
+                onClick={() => theme === "dark" && toggleTheme()}
+              >
                 <Sun size={13} /> Light
               </button>
-              <button className={theme === 'dark' ? 'on' : ''} onClick={() => theme !== 'dark' && toggleTheme()}>
+              <button
+                className={theme === "dark" ? "on" : ""}
+                onClick={() => theme !== "dark" && toggleTheme()}
+              >
                 <Moon size={13} /> Dark
               </button>
             </div>
           ) : (
-            <button className="btn btn-ghost justify-center p-2" onClick={toggleTheme}>
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            <button
+              className="btn btn-ghost justify-center p-2"
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             </button>
           )}
 
           {/* Profile */}
           <div data-header-popover className="relative">
             <button
-              onClick={() => setProfileOpen(v => !v)}
+              onClick={() => setProfileOpen((v) => !v)}
               className={cn(
-                'flex items-center gap-2.5 w-full rounded-lg cursor-pointer border border-transparent font-[inherit] transition-colors hover:bg-[var(--surface-2)]',
-                collapsed ? 'justify-center p-1' : 'justify-start px-2 py-1.5',
-                profileOpen ? 'bg-[var(--surface-2)]' : 'bg-transparent',
+                "flex items-center gap-2.5 w-full rounded-lg cursor-pointer border border-transparent font-[inherit] transition-colors hover:bg-[var(--surface-2)]",
+                collapsed ? "justify-center p-1" : "justify-start px-2 py-1.5",
+                profileOpen ? "bg-[var(--surface-2)]" : "bg-transparent",
               )}
             >
               <CRMAvatar name={profileName} size={28} />
               {!collapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-[12.5px] font-medium text-[var(--ink)]">{profileName}</div>
-                    <div className="text-[10.5px] text-[var(--ink-mute)] truncate">{profileEmail}</div>
+                    <div className="text-[12.5px] font-medium text-[var(--ink)]">
+                      {profileName}
+                    </div>
+                    <div className="text-[10.5px] text-[var(--ink-mute)] truncate">
+                      {profileEmail}
+                    </div>
                   </div>
                   <ChevronDown size={13} className="text-[var(--ink-mute)]" />
                 </>
               )}
             </button>
             {profileOpen && (
-              <div className={cn('absolute bottom-[calc(100%+8px)] z-[80]', collapsed ? 'left-[calc(100%+8px)]' : 'left-0 right-0')}>
+              <div
+                className={cn(
+                  "absolute bottom-[calc(100%+8px)] z-[80]",
+                  collapsed ? "left-[calc(100%+8px)]" : "left-0 right-0",
+                )}
+              >
                 <ProfileMenu onClose={() => setProfileOpen(false)} />
               </div>
             )}

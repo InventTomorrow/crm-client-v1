@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
 import { Skeleton, Spinner } from "@/shared/ui/Motion";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -976,12 +977,14 @@ export function InboxView() {
         className={`card inbox-list w-[320px] flex-shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
       >
         <div className="px-3.5 pt-3 pb-2 space-y-2.5">
-          <button
-            onClick={() => setShowBroadcast(true)}
-            className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold"
-          >
-            <Megaphone size={14} />+ New Broadcast
-          </button>
+          <PermissionGuard permission="broadcasts:create">
+            <button
+              onClick={() => setShowBroadcast(true)}
+              className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold"
+            >
+              <Megaphone size={14} />+ New Broadcast
+            </button>
+          </PermissionGuard>
           {/* Filter tabs row */}
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden">

@@ -90,4 +90,8 @@ export interface UserResponse {
     tenant: { id: string; name: string; type: string };
     isActive?: boolean;
   }>;
+  // Active-membership convenience fields (resolved server-side from the JWT tenant)
+  roleId: string | null;
+  roleName: string | null;
+  permissions: string[];
 }

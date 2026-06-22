@@ -1,5 +1,6 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import {
   useCreateTenant,
   useDeleteTenant,
@@ -347,6 +348,7 @@ function WorkspaceCard({
 // ─────────────────────────────────────────────────────────────
 export function WorkspacesManagementView() {
   const { user, isLoading } = useMe();
+  const { isOwner } = usePermissions();
   const { currentWorkspaceId } = useAppStore();
   const { mutate: switchWorkspace, isPending: isSwitching } =
     useSwitchWorkspace();
@@ -386,9 +388,11 @@ export function WorkspacesManagementView() {
             · each with isolated data and members
           </p>
         </div>
-        <button className="btn btn-grad" onClick={() => setShowCreate(true)}>
-          <Plus size={14} /> New workspace
-        </button>
+        {isOwner && (
+          <button className="btn btn-grad" onClick={() => setShowCreate(true)}>
+            <Plus size={14} /> New workspace
+          </button>
+        )}
       </div>
 
       {/* Stats banner */}

@@ -1,6 +1,7 @@
 "use client";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Loader2, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
@@ -101,11 +102,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                     <p className="text-[12.5px] text-[var(--ink-soft)] leading-snug">
                       Change status from{" "}
                       <span className="font-medium text-[var(--ink)]">
-                        {ORDER_STATUS_META[order.status].label}
+                        {ORDER_STATUS_META[order.status]?.label ?? order.status}
                       </span>{" "}
                       to{" "}
                       <span className="font-medium text-[var(--ink)]">
-                        {ORDER_STATUS_META[pendingStatus].label}
+                        {ORDER_STATUS_META[pendingStatus]?.label}
                       </span>
                       .
                     </p>
@@ -273,18 +274,22 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
               </div>
             ) : (
               <>
-                <button
-                  className="btn btn-ghost text-[12.5px] text-[#DC2626]"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash2 size={14} /> Delete
-                </button>
-                <button
-                  className="btn btn-outline text-[12.5px]"
-                  onClick={() => onEdit(order)}
-                >
-                  <Pencil size={14} /> Edit
-                </button>
+                <PermissionGuard permission="orders:cancel">
+                  <button
+                    className="btn btn-ghost text-[12.5px] text-[#DC2626]"
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </PermissionGuard>
+                <PermissionGuard permission="orders:edit">
+                  <button
+                    className="btn btn-outline text-[12.5px]"
+                    onClick={() => onEdit(order)}
+                  >
+                    <Pencil size={14} /> Edit
+                  </button>
+                </PermissionGuard>
               </>
             )}
           </div>

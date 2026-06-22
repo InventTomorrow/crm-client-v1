@@ -141,6 +141,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   // Drop the "starting" shimmer as soon as the stream produces something real.
   useEffect(() => {
     if (qrCode || conflict || connectionError || status === "CONNECTED") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStarting(false);
     }
   }, [qrCode, conflict, connectionError, status]);
@@ -148,6 +149,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   // Auto-start on open if disconnected.
   useEffect(() => {
     if (open && status === "DISCONNECTED" && !connectMut.isPending) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       handleConnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -2,6 +2,7 @@
 import { useAppStore } from "@/lib/appStore";
 import { pkr } from "@/lib/utils";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -131,21 +132,25 @@ export function LeadsView() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          <button
-            className="btn btn-outline"
-            onClick={() => setExportOpen(true)}
-          >
-            <Download size={13} /> Export
-          </button>
-          <button
-            className="btn btn-outline"
-            onClick={() => setImportOpen(true)}
-          >
-            <Layers size={13} /> Import
-          </button>
-          <button className="btn btn-grad" onClick={() => openCreate()}>
-            <Plus size={13} /> Add lead
-          </button>
+          <PermissionGuard permission="leads:export">
+            <button
+              className="btn btn-outline"
+              onClick={() => setExportOpen(true)}
+            >
+              <Download size={13} /> Export
+            </button>
+          </PermissionGuard>
+          <PermissionGuard permission="leads:create">
+            <button
+              className="btn btn-outline"
+              onClick={() => setImportOpen(true)}
+            >
+              <Layers size={13} /> Import
+            </button>
+            <button className="btn btn-grad" onClick={() => openCreate()}>
+              <Plus size={13} /> Add lead
+            </button>
+          </PermissionGuard>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import {
 } from "@/shared/ui/Dialog";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
 import { Input } from "@/shared/ui/Input";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   Form,
@@ -791,6 +792,7 @@ export function InventoryView() {
                   </button>
                 ))}
               </div>
+              <PermissionGuard permission="inventory:edit">
               <div ref={addMenuRef} className="relative">
                 <button
                   className="btn btn-grad"
@@ -850,6 +852,7 @@ export function InventoryView() {
                   onChange={handleImport}
                 />
               </div>
+              </PermissionGuard>
             </div>
 
             {/* Row 2: filter chips */}

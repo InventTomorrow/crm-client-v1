@@ -1,5 +1,6 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import {
   useCreateTenant,
   useSwitchWorkspace,
@@ -15,6 +16,11 @@ import {
 } from "@/shared/ui/Dialog";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+type Membership = {
+  tenant: { id: string; name: string; type: string };
+  role: { name: string };
+};
 
 // ─────────────────────────────────────────────────────────────
 // Create Dialog — calls real API
@@ -66,7 +72,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
           <p className="text-[11.5px] text-[var(--ink-mute)] leading-relaxed">
-            You'll be the <strong>Owner</strong> of this workspace. Team members
+            You&apos;ll be the <strong>Owner</strong> of this workspace. Team members
             can be invited after setup.
           </p>
         </div>
@@ -118,6 +124,7 @@ const PALETTE = [
 export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   const { currentWorkspaceId } = useAppStore();
   const { user } = useMe();
+  const { isOwner } = usePermissions();
   const { mutate: switchWorkspace, isPending: isSwitching } =
     useSwitchWorkspace();
 
@@ -140,12 +147,12 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
 
   const currentMembership =
     memberships.find(
-      (membership: any) => membership.tenant.id === currentWorkspaceId,
+      (membership: Membership) => membership.tenant.id === currentWorkspaceId,
     ) ?? memberships[0];
 
   if (!currentMembership) return null;
 
-  const getDisplay = (m: (typeof memberships)[0], idx: number) => ({
+  const getDisplay = (m: Membership, idx: number) => ({
     id: m.tenant.id,
     name: m.tenant.name,
     short: m.tenant.name.substring(0, 2).toUpperCase(),
@@ -155,14 +162,14 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   });
 
   const currentIdx = memberships.findIndex(
-    (membership: any) => membership.tenant.id === currentMembership.tenant.id,
+    (membership: Membership) => membership.tenant.id === currentMembership.tenant.id,
   );
   const current = getDisplay(
     currentMembership,
     currentIdx < 0 ? 0 : currentIdx,
   );
 
-  const handleSwitch = (membership: any, idx: number) => {
+  const handleSwitch = (membership: Membership) => {
     if (membership.tenant.id === currentWorkspaceId) {
       setOpen(false);
       return;
@@ -242,13 +249,13 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
             Switch workspace
           </div>
 
-          {memberships.map((membership: any, index: number) => {
+          {memberships.map((membership: Membership, index: number) => {
             const workspace = getDisplay(membership, index);
             const isActive = workspace.id === currentWorkspaceId;
             return (
               <button
                 key={workspace.id}
-                onClick={() => handleSwitch(membership, index)}
+                onClick={() => handleSwitch(membership)}
                 className={cn(
                   "flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] hover:bg-[var(--accent-soft)] transition-colors",
                   isActive && "bg-[var(--accent-soft)]",
@@ -278,20 +285,24 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
             );
           })}
 
-          <div className="h-px bg-[var(--line)] my-1" />
+          {isOwner && (
+            <>
+              <div className="h-px bg-[var(--line)] my-1" />
 
-          <button
-            onClick={() => {
-              setOpen(false);
-              setShowCreate(true);
-            }}
-            className="flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] text-[var(--accent)] text-[13px] font-medium hover:bg-[var(--accent-soft)] transition-colors"
-          >
-            <span className="w-[30px] h-[30px] rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center border border-dashed border-[var(--accent)]">
-              <Plus size={14} />
-            </span>
-            Create new workspace
-          </button>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setShowCreate(true);
+                }}
+                className="flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] text-[var(--accent)] text-[13px] font-medium hover:bg-[var(--accent-soft)] transition-colors"
+              >
+                <span className="w-[30px] h-[30px] rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center border border-dashed border-[var(--accent)]">
+                  <Plus size={14} />
+                </span>
+                Create new workspace
+              </button>
+            </>
+          )}
         </div>
       )}
 

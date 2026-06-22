@@ -1,12 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { HeroDashboardMockup } from "../mockups";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
-import { PrimaryCta } from "../LandingCta";
+import { motion } from "framer-motion";
+import Link from "next/link";
 import Container from "../Container";
+import { PrimaryCta } from "../LandingCta";
+import { HeroDashboardMockup } from "../mockups";
 
 const HEADLINE = ["Turn", "WhatsApp", "Into", "Your", "24/7", "Sales", "Team"];
 

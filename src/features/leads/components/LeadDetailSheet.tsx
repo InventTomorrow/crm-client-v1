@@ -3,6 +3,7 @@ import { pkr } from "@/lib/utils";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import {
   Inbox,
   Link,
@@ -185,17 +186,21 @@ export default function LeadDetailSheet({
             <button className="btn btn-outline flex-1 justify-center" onClick={() => onOpenChat(lead)}>
               <Inbox size={14} /> Open Chat
             </button>
-            <button className="btn btn-outline flex-1 justify-center" onClick={() => onEdit(lead)}>
-              <Pencil size={14} /> Edit
-            </button>
-            <button
-              className="btn btn-outline justify-center text-[#DC2626] border-[#FECACA] hover:bg-[#FEF2F2]"
-              onClick={() => onDelete(lead)}
-              disabled={isDeleting}
-              title="Delete lead"
-            >
-              {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-            </button>
+            <PermissionGuard permission="leads:edit">
+              <button className="btn btn-outline flex-1 justify-center" onClick={() => onEdit(lead)}>
+                <Pencil size={14} /> Edit
+              </button>
+            </PermissionGuard>
+            <PermissionGuard permission="leads:delete">
+              <button
+                className="btn btn-outline justify-center text-[#DC2626] border-[#FECACA] hover:bg-[#FEF2F2]"
+                onClick={() => onDelete(lead)}
+                disabled={isDeleting}
+                title="Delete lead"
+              >
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              </button>
+            </PermissionGuard>
           </div>
           <button className="btn btn-grad w-full justify-center">
             <Link size={14} /> Generate Checkout

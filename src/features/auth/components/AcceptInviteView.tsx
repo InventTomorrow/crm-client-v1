@@ -2,12 +2,44 @@
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form';
 import { acceptInviteSchema, type AcceptInviteData } from '../types';
-import { useAcceptInvite } from '../hooks/useAuth';
+import { useAcceptInvite, useValidateInvite } from '../hooks/useAuth';
+
+const INVALID_COPY: Record<string, { title: string; body: string }> = {
+  NOT_FOUND: {
+    title: 'Invalid invite link',
+    body: 'This invitation could not be found. Ask your admin to resend it.',
+  },
+  EXPIRED: {
+    title: 'Invitation expired',
+    body: 'This invite link has expired. Ask your admin to send a new one.',
+  },
+  ACCEPTED: {
+    title: 'Invitation already used',
+    body: 'This invite has already been accepted. Try signing in instead.',
+  },
+};
+
+function InviteError({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="w-full max-w-[420px] mx-auto">
+      <div className="card p-6 flex items-start gap-3 border-[#FCA5A5] bg-[rgba(254,242,242,0.6)]">
+        <AlertCircle size={18} className="text-[#DC2626] flex-shrink-0 mt-0.5" />
+        <div>
+          <div className="text-[13.5px] font-medium text-[var(--ink)]">{title}</div>
+          <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">{body}</div>
+          <Link href="/auth/login" className="text-[12px] text-[var(--accent)] hover:underline font-medium mt-2 inline-block">
+            Go to sign in
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AcceptInviteView() {
   const searchParams = useSearchParams();
@@ -15,6 +47,7 @@ export function AcceptInviteView() {
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const { mutate, isPending } = useAcceptInvite(token);
+  const { data: validation, isLoading: isValidating } = useValidateInvite(token);
 
   const form = useForm<AcceptInviteData>({
     resolver: zodResolver(acceptInviteSchema),
@@ -22,17 +55,24 @@ export function AcceptInviteView() {
   });
 
   if (!token) {
+    return <InviteError title="Invalid invite link" body="This link is missing an invite token. Ask your admin to resend." />;
+  }
+
+  // Verify the token server-side before showing the form.
+  if (isValidating) {
     return (
-      <div className="w-full max-w-[400px] mx-auto">
-        <div className="card p-6 flex items-center gap-3 border-[#FCA5A5] bg-[rgba(254,242,242,0.6)]">
-          <AlertCircle size={18} className="text-[#DC2626] flex-shrink-0" />
-          <div>
-            <div className="text-[13.5px] font-medium text-[var(--ink)]">Invalid invite link</div>
-            <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">This link is missing an invite token. Ask your admin to resend.</div>
-          </div>
+      <div className="w-full max-w-[420px] mx-auto">
+        <div className="card p-8 flex items-center justify-center gap-2.5 text-[var(--ink-mute)]">
+          <Loader2 size={16} className="animate-spin" />
+          <span className="text-[13px]">Verifying your invitation…</span>
         </div>
       </div>
     );
+  }
+
+  if (validation && validation.status !== 'VALID') {
+    const copy = INVALID_COPY[validation.status] ?? INVALID_COPY.NOT_FOUND;
+    return <InviteError title={copy.title} body={copy.body} />;
   }
 
   return (
@@ -42,6 +82,18 @@ export function AcceptInviteView() {
           <h1 className="text-[22px] font-semibold text-[var(--ink)]">Accept invitation</h1>
           <p className="text-[13px] mt-1 text-[var(--ink-mute)]">Set up your account to join the workspace</p>
         </div>
+
+        {validation?.status === 'VALID' && (
+          <div className="flex items-start gap-2.5 rounded-[10px] bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.22)] px-3.5 py-3">
+            <ShieldCheck size={16} className="text-[#059669] flex-shrink-0 mt-0.5" />
+            <div className="text-[12.5px] text-[var(--ink-soft)] leading-snug">
+              You&apos;ve been invited to{' '}
+              <strong className="text-[var(--ink)]">{validation.tenantName ?? 'a workspace'}</strong>
+              {validation.roleName && <> as <strong className="text-[var(--ink)]">{validation.roleName}</strong></>}.
+              <div className="text-[11.5px] text-[var(--ink-mute)] mt-0.5">{validation.email}</div>
+            </div>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit((d) => mutate(d))} className="flex flex-col gap-3.5">

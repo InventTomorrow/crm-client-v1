@@ -8,6 +8,7 @@ import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderDetailSheet } from './OrderDetailSheet';
 import { OrderForm } from './OrderForm';
 import { DataTable, type ColumnDef } from '@/shared/ui/DataTable';
+import { PermissionGuard } from '@/shared/ui/PermissionGuard';
 
 export function OrdersView() {
   const [search, setSearch] = useState('');
@@ -141,9 +142,11 @@ export function OrdersView() {
               : 'Manage your orders'}
           </p>
         </div>
-        <button className="btn btn-grad" onClick={openCreate}>
-          <Plus size={15} /> New order
-        </button>
+        <PermissionGuard permission="orders:create">
+          <button className="btn btn-grad" onClick={openCreate}>
+            <Plus size={15} /> New order
+          </button>
+        </PermissionGuard>
       </div>
 
       {/* Summary cards */}
