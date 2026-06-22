@@ -8,6 +8,7 @@ import {
   createTenant,
   deleteTenant,
   getTenants,
+  restoreTenant,
 } from "../services/tenantService";
 import type { CreateTenantPayload } from "../types";
 
@@ -99,15 +100,31 @@ export function useDeleteTenant() {
   const { currentWorkspaceId } = useAppStore();
 
   return useMutation({
-    mutationFn: (id: string) => deleteTenant(id),
-    onSuccess: (_, deletedId) => {
-      toast.success("Workspace deleted successfully.");
+    mutationFn: ({ id, removeMembers }: { id: string; removeMembers?: boolean }) =>
+      deleteTenant(id, removeMembers),
+    onSuccess: (_, { id: deletedId }) => {
+      toast.success("Workspace scheduled for deletion. Restore within 60 days.");
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
       // If deleted the current ws, the server should reset to primary — just invalidate
       if (deletedId === currentWorkspaceId) {
         queryClient.invalidateQueries();
       }
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+/** Cancel a pending workspace deletion (owner only) */
+export function useRestoreTenant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => restoreTenant(id),
+    onSuccess: () => {
+      toast.success("Workspace restored.");
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });

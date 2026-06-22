@@ -27,8 +27,17 @@ export async function updateOrder(id: string, payload: Partial<OrderFormValues>)
   return res.data.data;
 }
 
-export async function updateOrderStatus(id: string, status: OrderStatus, note?: string) {
-  const res = await apiClient.patch<{ success: true; data: Order }>(`/orders/${id}/status`, { status, note });
+export async function updateOrderStatus(
+  id: string,
+  status: OrderStatus,
+  note?: string,
+  notifyCustomer?: boolean,
+) {
+  const res = await apiClient.patch<{ success: true; data: Order }>(`/orders/${id}/status`, {
+    status,
+    note,
+    notifyCustomer,
+  });
   return res.data.data;
 }
 

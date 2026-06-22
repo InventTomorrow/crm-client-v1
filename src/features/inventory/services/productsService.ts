@@ -11,6 +11,10 @@ interface ApiProduct {
   price: number;
   stock: number;
   description: string | null;
+  category: string | null;
+  size: string | null;
+  gender: string | null;
+  color: string | null;
   imageUrls: string[];
   variants?: unknown[];
   tenantId: string;
@@ -25,6 +29,10 @@ export interface CreateProductPayload {
   price: number;
   stock: number;
   description?: string;
+  category?: string;
+  size?: string;
+  gender?: string;
+  color?: string;
   imageUrls?: string[];
 }
 
@@ -34,6 +42,10 @@ export interface UpdateProductPayload {
   price?: number;
   stock?: number;
   description?: string;
+  category?: string;
+  size?: string;
+  gender?: string;
+  color?: string;
   imageUrls?: string[];
 }
 
@@ -54,7 +66,10 @@ function mapProduct(p: ApiProduct): Product {
     price: p.price,
     stock,
     status,
-    cat: 'Apparel',          // backend doesn't store cat yet — default gracefully
+    cat: p.category ?? 'Uncategorized',
+    size: p.size ?? '',
+    gender: p.gender ?? '',
+    color: p.color ?? '',
     desc: p.description ?? '',
     imageUrls: p.imageUrls ?? [],
   };
@@ -92,6 +107,10 @@ export const duplicateProduct = async (product: Product): Promise<Product> => {
     price: product.price,
     stock: product.stock,
     description: product.desc,
+    category: product.cat || undefined,
+    size: product.size || undefined,
+    gender: product.gender || undefined,
+    color: product.color || undefined,
     imageUrls: product.imageUrls ?? [],
   };
   return createProduct(payload);

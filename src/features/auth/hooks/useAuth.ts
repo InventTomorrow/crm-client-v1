@@ -1,16 +1,34 @@
 'use client';
+import { extractErrorMessage } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { extractErrorMessage } from '@/lib/utils';
 import {
-  login, register, createWorkspace, logout, forgotPassword, resetPassword,
-  acceptInvite, verifyEmail, resendVerification, getMe, updateMe,
-  getMembers, inviteUser, removeMember, changeMemberRole, getRoles, updateRolePermissions,
-  validateInvite, getInvitations, cancelInvitation,
-  getMyInvitations, acceptMyInvitation, declineMyInvitation,
+  acceptInvite,
+  acceptMyInvitation,
+  cancelInvitation,
+  changeMemberRole,
+  createWorkspace,
+  declineMyInvitation,
+  forgotPassword,
+  getInvitations,
+  getMe,
+  getMembers,
+  getMyInvitations,
+  getRoles,
+  inviteUser,
+  login,
+  logout,
+  register,
+  removeMember,
+  resendVerification,
+  resetPassword,
+  updateMe,
+  updateRolePermissions,
+  validateInvite,
+  verifyEmail,
 } from '../services/authService';
-import type { LoginData, RegisterData, CreateWorkspaceData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
+import type { AcceptInviteData, CreateWorkspaceData, ForgotPasswordData, LoginData, RegisterData, ResetPasswordData } from '../types';
 
 export function useLogin() {
   const router = useRouter();
@@ -71,7 +89,7 @@ export function useLogout() {
     onSuccess: () => {
       // Wipe the cache so the next user on this browser starts from a clean slate.
       queryClient.clear();
-      router.push('/auth/login');
+      router.push('/');
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });

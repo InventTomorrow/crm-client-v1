@@ -42,7 +42,7 @@ const leadFormSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   city: z.string().optional(),
-  channel: z.enum(["wa", "ig", "fb", "tk"]),
+  channel: z.enum(["wa"]),
   status: z.enum(["prospect", "cold", "warm", "hot", "closed"]),
 });
 export type LeadFormData = z.infer<typeof leadFormSchema>;
@@ -84,7 +84,7 @@ export default function LeadFormDialog({
       phone: initial?.phone ?? "",
       email: initial?.email ?? "",
       city: initial?.city && initial.city !== "Unknown" ? initial.city : "",
-      channel: (initial?.channel as LeadFormData["channel"]) ?? "wa",
+      channel: "wa",
       status:
         (initial?.status as LeadFormData["status"]) ??
         defaultStatus ??
@@ -213,9 +213,6 @@ export default function LeadFormDialog({
                       <FormControl>
                         <select className="input" {...field}>
                           <option value="wa">WhatsApp</option>
-                          <option value="ig">Instagram</option>
-                          <option value="fb">Facebook</option>
-                          <option value="tk">TikTok</option>
                         </select>
                       </FormControl>
                     </FormItem>

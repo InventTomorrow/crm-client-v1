@@ -2,7 +2,7 @@
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
-import { Loader2, Pencil, Trash2, X } from "lucide-react";
+import { Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
   useDeleteOrder,
@@ -38,7 +38,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
   const saveStatusChange = () => {
     if (!order || !pendingStatus) return;
     changeStatus.mutate(
-      { id: order.id, status: pendingStatus },
+      { id: order.id, status: pendingStatus, notifyCustomer },
       { onSuccess: resetStatusChange },
     );
   };
@@ -121,7 +121,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                         htmlFor="order-notify-customer"
                         className="text-[12.5px] font-normal text-[var(--ink-soft)] cursor-pointer"
                       >
-                        Notify the customer
+                        Notify the customer on WhatsApp
                       </Label>
                     </div>
                     <div className="flex justify-end gap-2">
@@ -191,6 +191,42 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   <span>{formatMoney(order.total, order.currency)}</span>
                 </div>
               </div>
+
+              {/* Delivery address */}
+              {order.shippingDetail && (
+                <div>
+                  <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5 flex items-center gap-1.5">
+                    <MapPin size={12} /> Delivery Address
+                  </div>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 text-[13px] text-[var(--ink-soft)] flex flex-col gap-0.5">
+                    <span className="font-medium text-[var(--ink)]">
+                      {order.shippingDetail.customerName}
+                    </span>
+                    {order.shippingDetail.customerPhone && (
+                      <span>{order.shippingDetail.customerPhone}</span>
+                    )}
+                    <span>{order.shippingDetail.addressLine1}</span>
+                    {order.shippingDetail.addressLine2 && (
+                      <span>{order.shippingDetail.addressLine2}</span>
+                    )}
+                    <span>
+                      {[
+                        order.shippingDetail.city,
+                        order.shippingDetail.state,
+                        order.shippingDetail.postalCode,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </span>
+                    <span>{order.shippingDetail.country}</span>
+                    {order.shippingDetail.notes && (
+                      <span className="text-[11.5px] text-[var(--ink-mute)] mt-1">
+                        {order.shippingDetail.notes}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {order.notes && (
                 <div>

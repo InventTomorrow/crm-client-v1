@@ -102,8 +102,17 @@ export function useUpdateOrder() {
 export function useUpdateOrderStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status, note }: { id: string; status: OrderStatus; note?: string }) =>
-      updateOrderStatus(id, status, note),
+    mutationFn: ({
+      id,
+      status,
+      note,
+      notifyCustomer,
+    }: {
+      id: string;
+      status: OrderStatus;
+      note?: string;
+      notifyCustomer?: boolean;
+    }) => updateOrderStatus(id, status, note, notifyCustomer),
     onSuccess: () => invalidateAll(qc),
     onError: (e) => toast.error(extractErrorMessage(e, 'Failed to change status')),
   });

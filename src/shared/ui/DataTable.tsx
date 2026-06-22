@@ -163,9 +163,10 @@ export function DataTable<TData>({
           )}
           {onExport && selectedRows.length === 0 && (
             <button
-              className="btn btn-outline text-[12.5px] py-1.5 px-3"
+              className="btn btn-outline text-[12.5px] py-1.5 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => onExport(data)}
-              title="Export all"
+              disabled={data.length === 0}
+              title={data.length === 0 ? "Nothing to export" : "Export all"}
             >
               <Download size={13} /> Export
             </button>

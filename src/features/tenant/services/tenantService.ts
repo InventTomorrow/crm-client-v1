@@ -6,8 +6,12 @@ export async function createTenant(data: CreateTenantPayload): Promise<Tenant> {
   return res.data.data;
 }
 
-export async function deleteTenant(id: string): Promise<void> {
-  await apiClient.delete(`/tenants/${id}`);
+export async function deleteTenant(id: string, removeMembers = false): Promise<void> {
+  await apiClient.delete(`/tenants/${id}`, { data: { removeMembers } });
+}
+
+export async function restoreTenant(id: string): Promise<void> {
+  await apiClient.post(`/tenants/${id}/restore`);
 }
 
 export async function getTenants(): Promise<Tenant[]> {

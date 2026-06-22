@@ -1,6 +1,6 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
-import { pkr } from "@/lib/utils";
+import { cn, pkr } from "@/lib/utils";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
@@ -117,8 +117,6 @@ export function LeadsView() {
   const CHANNEL_TABS = [
     { id: "all", label: "All" },
     { id: "wa", label: "WhatsApp" },
-    { id: "ig", label: "Instagram" },
-    { id: "fb", label: "Facebook" },
   ];
 
   return (
@@ -191,7 +189,11 @@ export function LeadsView() {
           {VIEW_BTNS.map(({ id, label, Icon }) => (
             <button
               key={id}
-              className={leadsView === id ? "on" : ""}
+              className={cn(
+                leadsView === id ? "on" : "",
+                // Kanban isn't usable on phones — hide the toggle there.
+                id === "kanban" && "hidden md:inline-flex",
+              )}
               onClick={() => setLeadsView(id)}
               title={label}
             >
@@ -208,13 +210,31 @@ export function LeadsView() {
       )}
 
       {!isLoading && leadsView === "kanban" && (
-        <KanbanView
-          leads={leads}
-          filter={filter}
-          onSelect={setSelected}
-          onStatusChange={handleStatusChange}
-          onAddLead={openCreate}
-        />
+        <>
+          {/* Kanban on desktop; phones fall back to the table view. */}
+          <div className="hidden md:flex md:flex-col flex-1 min-h-0">
+            <KanbanView
+              leads={leads}
+              filter={filter}
+              onSelect={setSelected}
+              onStatusChange={handleStatusChange}
+              onAddLead={openCreate}
+            />
+          </div>
+          <div className="flex md:hidden flex-col flex-1 min-h-0">
+            <TableView
+              leads={leads}
+              filter={filter}
+              onSelect={setSelected}
+              onStatusChange={handleStatusChange}
+              onOpenChat={handleOpenChat}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+              onBulkDelete={setBulkDeleteTargets}
+              onExport={downloadLeadsCsv}
+            />
+          </div>
+        </>
       )}
       {!isLoading && leadsView === "list" && (
         <ListView

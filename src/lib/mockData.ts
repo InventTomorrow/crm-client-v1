@@ -42,6 +42,9 @@ export interface Product {
   stock: number;
   status: 'in' | 'low' | 'out';
   cat: string;
+  size?: string;
+  gender?: string;
+  color?: string;
   desc?: string;
   imageUrls?: string[];
 }

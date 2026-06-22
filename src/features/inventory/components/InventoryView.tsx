@@ -44,11 +44,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { SearchableSelect } from "../../orders/components/SearchableSelect";
 import {
   useAddProduct,
   useBulkAddProducts,
@@ -66,11 +65,13 @@ import type {
 import {
   CATEGORIES,
   ERP_SYSTEMS,
+  GENDERS,
   STOREFRONTS,
   TIERS,
   productSchema,
 } from "../types";
 import { BulkAddDialog } from "./BulkAddDialog";
+import { CreatableCategorySelect } from "./CreatableCategorySelect";
 
 function stockStatus(stock: number): Product["status"] {
   if (stock === 0) return "out";
@@ -119,6 +120,7 @@ function ProductDialog({
   open,
   initial,
   title,
+  categoryOptions,
   isSaving,
   isDeleting,
   onClose,
@@ -128,6 +130,7 @@ function ProductDialog({
   open: boolean;
   initial?: Product | null;
   title?: string;
+  categoryOptions: string[];
   isSaving: boolean;
   isDeleting: boolean;
   onClose: () => void;
@@ -146,6 +149,9 @@ function ProductDialog({
         price: 0,
         stock: 0,
         cat: "Apparel",
+        size: "",
+        gender: "",
+        color: "",
         desc: "",
       },
     },
@@ -162,9 +168,22 @@ function ProductDialog({
               price: initial.price ?? 0,
               stock: initial.stock ?? 0,
               cat: initial.cat ?? "Apparel",
+              size: initial.size ?? "",
+              gender: initial.gender ?? "",
+              color: initial.color ?? "",
               desc: initial.desc ?? "",
             }
-          : { name: "", sku: "", price: 0, stock: 0, cat: "Apparel", desc: "" },
+          : {
+              name: "",
+              sku: "",
+              price: 0,
+              stock: 0,
+              cat: "Apparel",
+              size: "",
+              gender: "",
+              color: "",
+              desc: "",
+            },
       );
     }
   }, [open, initial, form]);
@@ -258,21 +277,69 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <SearchableSelect<string>
-                        options={CATEGORIES.map((c) => ({
-                          value: c,
-                          search: c,
-                          data: c,
-                        }))}
-                        value={field.value}
+                      <CreatableCategorySelect
+                        options={categoryOptions}
+                        value={field.value ?? ""}
                         onChange={(v) => field.onChange(v)}
-                        placeholder="Select category"
-                        renderRow={(c) => (
-                          <span className="text-[13px]">{c}</span>
-                        )}
-                        renderSelected={(c) => (
-                          <span className="text-[13px]">{c}</span>
-                        )}
+                        disabled={busy}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              <FormField
+                control={form.control}
+                name="size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Size</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="input"
+                        placeholder="M / 42 / 9"
+                        {...field}
+                        disabled={busy}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gender</FormLabel>
+                    <FormControl>
+                      <select
+                        className="input"
+                        {...field}
+                        disabled={busy}
+                      >
+                        <option value="">—</option>
+                        {GENDERS.map((g) => (
+                          <option key={g} value={g}>
+                            {g}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="input"
+                        placeholder="Maroon"
+                        {...field}
                         disabled={busy}
                       />
                     </FormControl>
@@ -600,6 +667,20 @@ export function InventoryView() {
   const [singleOpen, setSingleOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+
+  // Categories shown in the picker: the built-in set plus whatever existing
+  // products already use (so previously-created ones keep showing up).
+  const categoryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const c of [...CATEGORIES, ...products.map((p: Product) => p.cat)]) {
+      const key = c?.trim().toLowerCase();
+      if (!c || !key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(c);
+    }
+    return out;
+  }, [products]);
   const importRef = useRef<HTMLInputElement>(null);
   const importType = useRef<"csv" | "json">("csv");
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -638,6 +719,10 @@ export function InventoryView() {
       price: data.price,
       stock: data.stock,
       description: data.desc || undefined,
+      category: data.cat || undefined,
+      size: data.size || undefined,
+      gender: data.gender || undefined,
+      color: data.color || undefined,
       imageUrls: data.imageUrls,
     };
     if (editing?.id) {
@@ -861,7 +946,7 @@ export function InventoryView() {
                 Filter:
               </span>
               {/* Category chips */}
-              {(["", ...CATEGORIES] as string[]).map((cat) => (
+              {(["", ...categoryOptions] as string[]).map((cat) => (
                 <button
                   key={cat || "all-cat"}
                   onClick={() => setFilterCat(cat)}
@@ -1208,6 +1293,7 @@ export function InventoryView() {
         open={singleOpen}
         initial={editing}
         title={editing ? "Edit product" : "Add product"}
+        categoryOptions={categoryOptions}
         isSaving={isSaving}
         isDeleting={isDeleting}
         onClose={closeDialog}

@@ -87,7 +87,7 @@ export interface UserResponse {
   memberships: Array<{
     id: string;
     role: { id: string; name: string };
-    tenant: { id: string; name: string; type: string };
+    tenant: { id: string; name: string; type: string; deletedAt?: string | null };
     isActive?: boolean;
   }>;
   // Active-membership convenience fields (resolved server-side from the JWT tenant)

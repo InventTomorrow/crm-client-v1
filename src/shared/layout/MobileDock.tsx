@@ -13,7 +13,7 @@ const DOCK_ITEMS: { href: string; label: string; Icon: typeof Inbox; perm?: stri
   { href: '/inventory', label: 'Stock', Icon: Package,      perm: 'inventory:view' },
   { href: '/analytics', label: 'Stats', Icon: TrendingUp,   perm: 'reports:view' },
   { href: '/admin',     label: 'Team',  Icon: Shield,       perm: 'members:view' },
-  { href: '/settings',  label: 'More',  Icon: Settings,     perm: 'settings:view' },
+  { href: '/settings',  label: 'More',  Icon: Settings },
 ];
 
 export function MobileDock() {

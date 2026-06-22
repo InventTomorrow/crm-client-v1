@@ -146,6 +146,13 @@ const PERMISSION_GROUPS = [
     ],
   },
   {
+    group: "Channels",
+    perms: [
+      { key: "channels:view", label: "View Channels" },
+      { key: "channels:connect", label: "Connect / Disconnect WhatsApp" },
+    ],
+  },
+  {
     group: "Members",
     perms: [
       { key: "members:view", label: "View Members" },

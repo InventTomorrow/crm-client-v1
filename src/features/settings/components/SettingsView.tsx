@@ -1,5 +1,6 @@
 "use client";
 import { useMe, useUpdateMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import {
@@ -405,8 +406,10 @@ function NotifSection() {
 // ──────────────────── Channels Section ────────────────────
 function ChannelsSection() {
   const { data: statusData } = useWAStatus();
+  const { can } = usePermissions();
   const [waOpen, setWaOpen] = useState(false);
   const status = statusData?.status ?? "DISCONNECTED";
+  const canConnect = can("channels:connect");
 
   return (
     <>
@@ -452,13 +455,21 @@ function ChannelsSection() {
                 ? "Connecting…"
                 : "Disconnected"}
           </span>
-          <button
-            className="btn btn-outline text-[12.5px]"
-            onClick={() => setWaOpen(true)}
-          >
-            {status === "CONNECTED" ? "Manage" : "Connect"}
-          </button>
+          {canConnect && (
+            <button
+              className="btn btn-outline text-[12.5px]"
+              onClick={() => setWaOpen(true)}
+            >
+              {status === "CONNECTED" ? "Manage" : "Connect"}
+            </button>
+          )}
         </div>
+        {!canConnect && (
+          <p className="text-[11.5px] text-[var(--ink-mute)] mt-3">
+            You don’t have permission to connect or disconnect WhatsApp. Ask a
+            workspace owner.
+          </p>
+        )}
       </div>
       <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
     </>
@@ -553,9 +564,34 @@ function SystemSection() {
   );
 }
 
+// Per-tab permission gate. Tabs without an entry (profile, notifications) are
+// always available — they only expose the signed-in user's own data.
+const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
+  chatbot: "chatbot:view",
+  business: "settings:view",
+  channels: "channels:view",
+  access: "members:view",
+  workspaces: "settings:edit",
+};
+
 // ──────────────────── SettingsView (root) ────────────────────
 export function SettingsView() {
+  const { can, isLoading: permsLoading } = usePermissions();
   const [section, setSection] = useState<SettingsSection>("profile");
+
+  // Hide tabs the active role can't access (placeholder tabs stay visible but
+  // disabled, as before).
+  const visibleNav = SECTION_NAV.filter((s) => {
+    const perm = SECTION_PERMISSION[s.id];
+    return !perm || can(perm);
+  });
+
+  // If the current section became inaccessible, fall back to Profile.
+  useEffect(() => {
+    if (permsLoading) return;
+    if (!visibleNav.some((s) => s.id === section)) setSection("profile");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permsLoading, section]);
 
   return (
     <div className="flex gap-3.5 h-full overflow-hidden p-[18px]">
@@ -564,7 +600,7 @@ export function SettingsView() {
         <div className="text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1.5 text-[var(--ink-mute)]">
           Settings
         </div>
-        {SECTION_NAV.map((s) => {
+        {visibleNav.map((s) => {
           const Icon = SECTION_ICONS[s.id];
           const active = section === s.id;
           const disabled = (["tier", "system"] as SettingsSection[]).includes(

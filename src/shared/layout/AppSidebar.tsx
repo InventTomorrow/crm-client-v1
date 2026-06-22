@@ -42,7 +42,7 @@ const NAV_ITEMS: {
     Icon: Package,
     perm: "inventory:view",
   },
-  { href: "/channels", label: "Channels", Icon: Wifi },
+  { href: "/channels", label: "Channels", Icon: Wifi, perm: "channels:view" },
   {
     href: "/analytics",
     label: "Analytics",
@@ -50,11 +50,12 @@ const NAV_ITEMS: {
     perm: "reports:view",
   },
   // { href: '/admin',     label: 'Team & Access', Icon: Shield,       perm: 'members:view' },
+  // Settings is auth-only — every user can reach their Profile & Notifications;
+  // the inner tabs gate themselves by permission.
   {
     href: "/settings",
     label: "Settings",
     Icon: Settings,
-    perm: "settings:view",
   },
 ];
 
