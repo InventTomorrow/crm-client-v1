@@ -82,7 +82,10 @@ apiClient.interceptors.response.use(
       const url = originalRequest.url ?? '';
       const isAuthRoute = url.endsWith('/auth/login') || url.endsWith('/auth/refresh');
 
-      if (!isAuthRoute) {
+      const publicRoutes = ['/'];
+      const isPublicRoute = typeof window !== 'undefined' && publicRoutes.includes(window.location.pathname);
+
+      if (!isAuthRoute && !isPublicRoute) {
         if (typeof window !== 'undefined' && !isLoggingOut) {
           window.location.href = '/auth/login';
         }
