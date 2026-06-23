@@ -22,6 +22,9 @@ interface AppState {
   isSwitchingWorkspace: boolean;
   switchingToWorkspaceName: string | null;
 
+  // Full-screen branded loading during auth transitions (login/logout) — not persisted
+  authTransition: boolean;
+
   // Persisted UI
   theme: 'light' | 'dark';
   leadsView: 'kanban' | 'list' | 'table';
@@ -48,6 +51,7 @@ interface AppState {
   markAllRead: () => void;
   setCurrentWorkspace: (id: string) => void;
   setWorkspaceSwitching: (switching: boolean, name?: string) => void;
+  setAuthTransition: (v: boolean) => void;
   addWorkspace: (ws: Workspace) => void;
   updateProfile: (p: Partial<UserProfile>) => void;
   updateNotifSettings: (s: Partial<NotifSettings>) => void;
@@ -63,6 +67,7 @@ export const useAppStore = create<AppState>()(
       hotLead: null,
       isSwitchingWorkspace: false,
       switchingToWorkspaceName: null,
+      authTransition: false,
       theme: 'light',
       leadsView: 'kanban',
       inventoryView: 'grid',
@@ -92,6 +97,7 @@ export const useAppStore = create<AppState>()(
         isSwitchingWorkspace: switching,
         switchingToWorkspaceName: switching ? (name ?? null) : null,
       }),
+      setAuthTransition: (authTransition) => set({ authTransition }),
       addWorkspace: (ws) => set(s => ({ workspaces: [...s.workspaces, ws] })),
 
       updateProfile: (p) => set(s => ({ profile: { ...s.profile, ...p } })),

@@ -1,5 +1,6 @@
 'use client';
 import { setLoggingOut } from '@/lib/apiClient';
+import { useAppStore } from '@/lib/appStore';
 import { extractErrorMessage } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -34,9 +35,12 @@ import type { AcceptInviteData, CreateWorkspaceData, ForgotPasswordData, LoginDa
 export function useLogin() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const setAuthTransition = useAppStore((s) => s.setAuthTransition);
   return useMutation({
     mutationFn: (data: LoginData) => login(data),
     onSuccess: (user) => {
+      // Credentials verified — show the splash only now, while we redirect.
+      setAuthTransition(true);
       // Drop any cache left by a previously signed-in user in this browser so
       // the new session never renders the prior identity, role, or permissions.
       queryClient.clear();
@@ -84,12 +88,15 @@ export function useCreateWorkspace() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
+  const setAuthTransition = useAppStore((s) => s.setAuthTransition);
   return useMutation({
     mutationFn: logout,
     // Suppress the axios 401 interceptor so background requests firing after the
     // session is torn down don't bounce the user to /auth/login.
     onMutate: () => setLoggingOut(true),
     onSuccess: () => {
+      // Logout succeeded — show the splash only now, while we redirect.
+      setAuthTransition(true);
       // Wipe the cache so the next user on this browser starts from a clean slate,
       // then hard-redirect to the root landing page (not the login screen).
       queryClient.clear();
