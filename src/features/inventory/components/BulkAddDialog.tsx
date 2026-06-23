@@ -23,11 +23,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { parseCsv } from "@/lib/csv";
 import { presignedUpload } from "../services/productsService";
 import type { ProductFormData } from "../types";
 import { CATEGORIES, productSchema } from "../types";
 
-interface BulkItem extends ProductFormData {
+export interface BulkItem extends ProductFormData {
   imageUrl?: string;
 }
 
@@ -42,31 +43,20 @@ const EMPTY_ITEM = (): BulkItem => ({
 });
 
 function parseImageCol(o: Record<string, string>): string {
-  return o.image_url ?? o.imageurl ?? o.imageUrls ?? o.image ?? o.img ?? "";
+  return o.image_url ?? o.imageurl ?? o.imageurls ?? o.image ?? o.img ?? "";
 }
 
 function parseCSV(text: string): BulkItem[] {
-  const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  return lines
-    .slice(1)
-    .filter(Boolean)
-    .map((line) => {
-      const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-      const o: Record<string, string> = {};
-      headers.forEach((h, i) => {
-        o[h] = cells[i] ?? "";
-      });
-      return {
-        name: o.name ?? o.product ?? "",
-        sku: o.sku ?? "",
-        price: Number(o.price) || 0,
-        stock: Number(o.stock) || 0,
-        cat: o.category ?? o.cat ?? "Apparel",
-        desc: o.description ?? o.desc ?? "",
-        imageUrl: parseImageCol(o),
-      };
-    })
+  return parseCsv(text)
+    .map((o) => ({
+      name: o.name ?? o.product ?? "",
+      sku: o.sku ?? "",
+      price: Number(o.price) || 0,
+      stock: Number(o.stock) || 0,
+      cat: o.category ?? o.cat ?? "Apparel",
+      desc: o.description ?? o.desc ?? "",
+      imageUrl: parseImageCol(o),
+    }))
     .filter((p) => p.name);
 }
 
@@ -356,11 +346,17 @@ export function BulkAddDialog({
   onClose,
   onSaveAll,
   isSaving = false,
+  initialItems,
+  parsing = false,
 }: {
   open: boolean;
   onClose: () => void;
   onSaveAll: (items: BulkItem[]) => void;
   isSaving?: boolean;
+  /** Rows parsed from an imported file — seeded for review before saving. */
+  initialItems?: BulkItem[];
+  /** Show a parsing overlay while the imported file is being read. */
+  parsing?: boolean;
 }) {
   const [items, setItems] = useState<BulkItem[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -369,10 +365,12 @@ export function BulkAddDialog({
 
   useEffect(() => {
     if (open) {
-      setItems([]);
-      setSelectedIdx(null);
+      setItems(initialItems ?? []);
+      setSelectedIdx(initialItems && initialItems.length > 0 ? 0 : null);
     }
-  }, [open]);
+    // Only re-seed on open / when a fresh import arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialItems]);
 
   const addItems = (newItems: BulkItem[]) => {
     setItems((prev) => {
@@ -430,6 +428,19 @@ export function BulkAddDialog({
         className="flex flex-col gap-0 p-0 sm:max-w-[900px] h-[min(680px,92vh)] overflow-hidden"
         showCloseButton={false}
       >
+        {/* Parsing overlay — shown while an imported file is being read */}
+        {parsing && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[var(--surface)]/85 backdrop-blur-sm">
+            <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
+            <span className="text-[13px] font-medium text-[var(--ink-soft)]">
+              Reading your file…
+            </span>
+            <span className="text-[11.5px] text-[var(--ink-mute)]">
+              Review the rows before saving
+            </span>
+          </div>
+        )}
+
         {/* Header */}
         <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
           <div>

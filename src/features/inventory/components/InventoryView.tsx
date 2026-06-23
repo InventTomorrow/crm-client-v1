@@ -1,5 +1,6 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
+import { parseCsv } from "@/lib/csv";
 import { cn, getImageUrl, pkr } from "@/lib/utils";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import {
@@ -70,7 +71,7 @@ import {
   TIERS,
   productSchema,
 } from "../types";
-import { BulkAddDialog } from "./BulkAddDialog";
+import { BulkAddDialog, type BulkItem } from "./BulkAddDialog";
 import { CreatableCategorySelect } from "./CreatableCategorySelect";
 
 function stockStatus(stock: number): Product["status"] {
@@ -666,6 +667,10 @@ export function InventoryView() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [singleOpen, setSingleOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [importedItems, setImportedItems] = useState<BulkItem[] | undefined>(
+    undefined,
+  );
+  const [parsingImport, setParsingImport] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
 
   // Categories shown in the picker: the built-in set plus whatever existing
@@ -735,72 +740,61 @@ export function InventoryView() {
     }
   };
 
+  // Imported files are parsed into review cards and opened in the bulk dialog.
+  // Nothing is written to the DB until the user confirms there.
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImportedItems(undefined);
+    setParsingImport(true);
+    setBulkOpen(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
       try {
-        let parsed: any[] = [];
+        let rows: Record<string, string>[] = [];
         if (importType.current === "json") {
           const j = JSON.parse(text);
-          parsed = Array.isArray(j) ? j : (j.products ?? []);
+          rows = Array.isArray(j) ? j : (j.products ?? []);
         } else {
-          const lines = text.trim().split(/\r?\n/);
-          const headers = lines[0]!
-            .split(",")
-            .map((h: string) => h.trim().toLowerCase());
-          parsed = lines
-            .slice(1)
-            .filter(Boolean)
-            .map((line: string) => {
-              const cells = line
-                .split(",")
-                .map((c: string) => c.trim().replace(/^"|"$/g, ""));
-              const o: Record<string, string> = {};
-              headers.forEach((h: string, i: number) => {
-                o[h] = cells[i] ?? "";
-              });
-              return {
-                name: o["name"] ?? o["product"] ?? "",
-                sku: o["sku"] ?? "",
-                price: Number(o["price"]) || 0,
-                stock: Number(o["stock"]) || 0,
-                cat: o["category"] ?? o["cat"] ?? "Apparel",
-                desc: o["description"] ?? o["desc"] ?? "",
-                imageUrl:
-                  o["image_url"] ??
-                  o["imageurl"] ??
-                  o["imageUrls"] ??
-                  o["image"] ??
-                  o["img"] ??
-                  "",
-              };
-            });
+          rows = parseCsv(text);
         }
 
-        const payloads = parsed
-          .filter((p: any) => p.name)
-          .map((p: any) => ({
-            name: p.name,
-            sku: p.sku || undefined,
-            price: Number(p.price) || 0,
-            stock: Number(p.stock) || 0,
-            description: p.desc || p.description || undefined,
-            imageUrls: p.imageUrl
-              ? [p.imageUrl]
-              : p.imageUrls
-                ? Array.isArray(p.imageUrls)
-                  ? p.imageUrls
-                  : [p.imageUrls]
-                : [],
-          }));
+        const items: BulkItem[] = rows
+          .map((o) => ({
+            name: o["name"] ?? o["product"] ?? "",
+            sku: o["sku"] ?? "",
+            price: Number(o["price"]) || 0,
+            stock: Number(o["stock"]) || 0,
+            cat: o["category"] ?? o["cat"] ?? "Apparel",
+            desc: o["description"] ?? o["desc"] ?? "",
+            imageUrl:
+              o["image_url"] ??
+              o["imageurl"] ??
+              o["imageurls"] ??
+              o["image"] ??
+              o["img"] ??
+              "",
+          }))
+          .filter((p) => p.name);
 
-        if (payloads.length > 0) bulkAddProducts.mutate(payloads);
+        if (items.length === 0) {
+          toast.error("No valid rows found in the file");
+          setBulkOpen(false);
+        } else {
+          setImportedItems(items);
+        }
       } catch {
         toast.error("Failed to parse import file");
+        setBulkOpen(false);
+      } finally {
+        setParsingImport(false);
       }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read file");
+      setParsingImport(false);
+      setBulkOpen(false);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -1307,8 +1301,14 @@ export function InventoryView() {
 
       <BulkAddDialog
         open={bulkOpen}
-        onClose={() => setBulkOpen(false)}
+        onClose={() => {
+          setBulkOpen(false);
+          setImportedItems(undefined);
+          setParsingImport(false);
+        }}
         isSaving={bulkAddProducts.isPending}
+        initialItems={importedItems}
+        parsing={parsingImport}
         onSaveAll={(items) => {
           const payloads = items.map((p) => ({
             name: p.name,
