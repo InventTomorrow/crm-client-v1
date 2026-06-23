@@ -1,0 +1,171 @@
+"use client";
+
+import { motion } from "framer-motion";
+import Container from "../Container";
+import Reveal from "../Reveal";
+import SectionHeading from "../SectionHeading";
+import { PrimaryCta } from "../LandingCta";
+import { CheckIcon } from "../icons";
+
+const PLANS = [
+  {
+    name: "Starter",
+    tagline: "For solo owners getting started on WhatsApp.",
+    price: "2,500",
+    period: "/month",
+    cta: "Start With Starter",
+    featured: false,
+    comingSoon: false,
+    features: [
+      "1 workspace (business branch)",
+      "1 WhatsApp number connected",
+      "AI auto-replies for common questions",
+      "Lead CRM with pipeline & statuses",
+      "Broadcast campaigns to your leads",
+      "Excel / CSV lead import",
+      "Single team member",
+      "Email support",
+    ],
+  },
+  {
+    name: "Business",
+    tagline: "For growing teams running multiple branches.",
+    price: "5,900",
+    period: "/month",
+    cta: "Choose Business",
+    featured: true,
+    comingSoon: true,
+    features: [
+      "Unlimited workspaces (business branches)",
+      "One WhatsApp number per workspace",
+      "Unlimited AI auto-replies",
+      "Advanced Lead CRM & follow-ups",
+      "Unlimited broadcast campaigns",
+      "Excel / CSV lead import",
+      "Team members & roles per workspace",
+      "Priority WhatsApp support",
+    ],
+  },
+];
+
+export default function Pricing() {
+  return (
+    <section
+      id="pricing"
+      className="scroll-mt-28 py-16 sm:py-24 md:py-28 bg-brand-mint-3"
+    >
+      <Container>
+        <SectionHeading
+          title={
+            <>
+              Simple Pricing That
+              <br /> Grows With You
+            </>
+          }
+          subtitle="Start with one branch and upgrade to unlimited workspaces whenever your business is ready. No hidden fees."
+        />
+
+        <div className="mt-12 sm:mt-14 grid gap-6 md:grid-cols-2 max-w-[860px] mx-auto items-stretch">
+          {PLANS.map((plan, i) => (
+            <Reveal key={plan.name} delay={i * 0.1}>
+              <motion.div
+                whileHover={plan.comingSoon ? undefined : { y: -4 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`relative h-full flex flex-col rounded-3xl p-7 sm:p-8 overflow-hidden ${
+                  plan.featured
+                    ? "bg-brand-dark text-white shadow-dashboard"
+                    : "bg-white text-brand-dark border border-gray-100 shadow-card"
+                }`}
+              >
+                {/* Coming-soon overlay marker */}
+                {plan.comingSoon && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center">
+                    <span className="rounded-full bg-white/95 px-5 py-2 text-sm font-semibold uppercase tracking-wide text-brand-dark shadow-lg ring-1 ring-black/5">
+                      Coming Soon
+                    </span>
+                  </div>
+                )}
+
+                {plan.featured && !plan.comingSoon && (
+                  <span className="absolute top-6 right-6 rounded-full bg-brand-green px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+                    Most Popular
+                  </span>
+                )}
+
+                <div
+                  className={
+                    plan.comingSoon
+                      ? "blur-[3px] opacity-80 pointer-events-none select-none"
+                      : "contents"
+                  }
+                >
+                <h3
+                  className={`text-lg font-bold ${plan.featured ? "text-white" : "text-brand-dark"}`}
+                >
+                  {plan.name}
+                </h3>
+                <p
+                  className={`mt-2 text-[15px] leading-relaxed ${plan.featured ? "text-white/70" : "text-brand-text"}`}
+                >
+                  {plan.tagline}
+                </p>
+
+                <div className="mt-6 flex items-end gap-1">
+                  <span
+                    className={`text-[15px] font-medium ${plan.featured ? "text-white/70" : "text-brand-text"}`}
+                  >
+                    Rs
+                  </span>
+                  <span className="text-[2.75rem] font-bold leading-none tracking-tight">
+                    {plan.price}
+                  </span>
+                  <span
+                    className={`mb-1 text-[15px] ${plan.featured ? "text-white/60" : "text-brand-text"}`}
+                  >
+                    {plan.period}
+                  </span>
+                </div>
+
+                <div className="my-7 h-px w-full bg-current opacity-10" />
+
+                <ul className="flex-1 space-y-3.5">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-3">
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                          plan.featured
+                            ? "bg-brand-green text-white"
+                            : "bg-brand-leaf-2 text-brand-dark"
+                        }`}
+                      >
+                        <CheckIcon className="h-3.5 w-3.5" strokeWidth={3} />
+                      </span>
+                      <span
+                        className={`text-[15px] leading-snug ${plan.featured ? "text-white/90" : "text-brand-text"}`}
+                      >
+                        {f}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8">
+                  <PrimaryCta
+                    className={`w-full justify-center h-auto rounded-full px-7 py-3.5 text-base font-semibold transition-all hover:-translate-y-0.5 ${
+                      plan.featured
+                        ? "bg-white text-brand-dark hover:bg-gray-100 hover:text-brand-dark"
+                        : "bg-brand-green text-white shadow-cta hover:bg-brand-green-hover hover:shadow-cta-hover"
+                    }`}
+                  >
+                    {plan.cta}
+                  </PrimaryCta>
+                </div>
+                </div>
+              </motion.div>
+            </Reveal>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+}

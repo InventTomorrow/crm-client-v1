@@ -54,10 +54,11 @@ export default function Values() {
           <div>
             <Reveal
               as="h2"
-              className="text-4xl md:text-5xl lg:text-[56px] font-bold leading-[1.05] tracking-tight text-brand-dark text-center lg:text-left"
+              className="text-[1.875rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3.25rem] font-bold leading-[1.1] tracking-tight text-brand-dark text-center lg:text-left"
             >
               More Than
-              <br /> WhatsApp Business.
+              <br />
+              <span className="whitespace-nowrap">WhatsApp Business.</span>
             </Reveal>
             <Reveal delay={0.1}>
               <p className="mt-5 text-brand-text text-[16px] leading-relaxed max-w-md mx-auto lg:mx-0 text-center lg:text-left">
@@ -70,19 +71,12 @@ export default function Values() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: false, amount: 0.25 }}
-              className="mt-10 pt-8 border-t border-gray-100 grid sm:grid-cols-2 gap-y-8 gap-x-6 max-w-lg mx-auto lg:mx-0"
+              className="mt-10 pt-8 border-t border-gray-100 grid grid-cols-2 gap-y-8 gap-x-5 sm:gap-x-6 max-w-lg mx-auto lg:mx-0"
             >
               {VALUES.map((v, i) => (
-                <motion.div
-                  key={i}
-                  variants={stackItem}
-                  className="text-center sm:text-left"
-                >
-                  <div className="w-14 h-14 sm:w-10 sm:h-10 rounded-full bg-brand-leaf flex items-center justify-center mb-3 text-brand-dark mx-auto sm:mx-0">
-                    <v.icon
-                      className="w-7 h-7 sm:w-5 sm:h-5"
-                      strokeWidth={2.3}
-                    />
+                <motion.div key={i} variants={stackItem} className="text-left">
+                  <div className="w-10 h-10 rounded-full bg-brand-leaf flex items-center justify-center mb-3 text-brand-dark">
+                    <v.icon className="w-5 h-5" strokeWidth={2.3} />
                   </div>
                   <h3 className="text-base font-bold text-brand-dark mb-1.5">
                     {v.title}

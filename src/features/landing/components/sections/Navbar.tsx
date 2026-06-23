@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PrimaryCta } from "../LandingCta";
 import Logo from "../Logo";
 
@@ -11,17 +11,39 @@ const NAV_LINKS = [
   { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "How it works" },
   { href: "#who-its-for", label: "Who it's for" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "#faq", label: "FAQ" },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Close the mobile menu on outside click / Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   // Lock body scroll while the mobile menu is open.
   useEffect(() => {
@@ -33,7 +55,7 @@ export default function Navbar() {
 
   return (
     <div className="sticky top-3 sm:top-4 z-50 px-3 sm:px-4">
-      <div className="relative mx-auto max-w-[1392px]">
+      <div ref={navRef} className="relative mx-auto max-w-[1392px]">
         <motion.nav
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -44,7 +66,7 @@ export default function Navbar() {
         >
           <Logo />
 
-          <div className="hidden md:flex items-center gap-9 text-[15px]">
+          <div className="hidden lg:flex items-center gap-9 text-[15px]">
             {NAV_LINKS.map((link, i) => (
               <Link
                 key={link.href}
@@ -61,7 +83,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <PrimaryCta className="hidden md:inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+            <PrimaryCta className="hidden lg:inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
               Get Started
             </PrimaryCta>
             <button
@@ -69,7 +91,7 @@ export default function Navbar() {
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
-              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-full text-brand-dark transition-colors hover:bg-brand-mint-soft active:scale-95"
+              className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-full text-brand-dark transition-colors hover:bg-brand-mint-soft active:scale-95"
             >
               <AnimatePresence mode="wait" initial={false}>
                 {menuOpen ? (
@@ -106,7 +128,7 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.97 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="md:hidden absolute left-0 right-0 top-full mt-2 z-20 origin-top rounded-3xl border border-gray-100 bg-white/95 backdrop-blur-md shadow-nav overflow-hidden"
+              className="lg:hidden absolute left-0 right-0 top-full mt-2 z-20 origin-top rounded-3xl border border-gray-100 bg-white/95 backdrop-blur-md shadow-nav overflow-hidden"
             >
               <div className="flex flex-col p-2">
                 {NAV_LINKS.map((link, i) => (

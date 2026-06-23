@@ -33,7 +33,7 @@ const ITEMS = [
 export default function FAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section className="py-16 sm:py-24 md:py-28 bg-white">
+    <section id="faq" className="scroll-mt-28 py-16 sm:py-24 md:py-28 bg-white">
       <Container>
         <SectionHeading
           title={

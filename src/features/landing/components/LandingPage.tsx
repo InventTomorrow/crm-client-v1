@@ -6,6 +6,7 @@ import FeaturesGrid from "./sections/FeaturesGrid";
 import ManageInbox from "./sections/ManageInbox";
 import FeatureDetail from "./sections/FeatureDetail";
 import BusinessTypes from "./sections/BusinessTypes";
+import Pricing from "./sections/Pricing";
 import Values from "./sections/Values";
 import FAQ from "./sections/FAQ";
 import FinalCTA from "./sections/FinalCTA";
@@ -22,6 +23,7 @@ export function LandingPage() {
       <ManageInbox />
       <FeatureDetail />
       <BusinessTypes />
+      <Pricing />
       <Values />
       <FAQ />
       <FinalCTA />

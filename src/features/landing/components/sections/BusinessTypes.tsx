@@ -30,7 +30,7 @@ export default function BusinessTypes() {
           title={
             <>
               Built For Businesses That Sell
-              <br className="hidden md:block" /> Through WhatsApp
+              <br /> Through WhatsApp
             </>
           }
           subtitle="AsaanRabta is made for businesses where customers message before they buy."

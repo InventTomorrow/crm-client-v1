@@ -13,7 +13,7 @@ const HEADLINE = ["Turn", "WhatsApp", "Into", "Your", "24/7", "Sales", "Team"];
 
 export default function Hero() {
   return (
-    <section className="relative hero-bg pt-24 pb-16 overflow-hidden">
+    <section className="relative hero-bg pt-12 sm:pt-16 md:pt-20 lg:pt-24 pb-16 overflow-hidden">
       <Container className="relative">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -25,7 +25,7 @@ export default function Hero() {
             Built for WhatsApp-first businesses
           </Badge>
         </motion.div>
-        <h1 className="text-center text-[40px] sm:text-6xl md:text-7xl lg:text-[88px] font-bold leading-[1.08] sm:leading-[1.05] tracking-tight text-brand-dark mx-auto text-balance">
+        <h1 className="text-center text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-bold leading-[1.08] sm:leading-[1.05] tracking-tight text-brand-dark mx-auto text-balance">
           {HEADLINE?.map((w, i) => (
             <Fragment key={i}>
               <motion.span
