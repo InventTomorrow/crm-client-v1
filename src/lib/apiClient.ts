@@ -12,11 +12,14 @@ export const setLoggingOut = (value: boolean) => {
 };
 
 let isRefreshing = false;
+
+// Queue to store requests that failed due to token expiration
 let failedQueue: Array<{
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
 }> = [];
 
+// Process the queue of failed requests
 const processQueue = (error: any) => {
   failedQueue.forEach((prom) => {
     if (error) {
