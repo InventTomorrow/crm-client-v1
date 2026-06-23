@@ -61,7 +61,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import { NewChatDialog } from "./NewChatDialog";
@@ -231,6 +231,39 @@ function shortTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** Local YYYY-MM-DD key for grouping messages by calendar day. */
+function dayKey(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/** WhatsApp-style day label: Today, Yesterday, or a full date. */
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (dayKey(iso) === dayKey(today.toISOString())) return "Today";
+  if (dayKey(iso) === dayKey(yesterday.toISOString())) return "Yesterday";
+
+  return d.toLocaleDateString([], {
+    day: "numeric",
+    month: "long",
+    ...(d.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}),
+  });
+}
+
+function DateSeparator({ iso }: { iso: string }) {
+  return (
+    <div className="sticky top-1.5 z-10 flex justify-center py-1 pointer-events-none">
+      <span className="rounded-full bg-[var(--surface-2)] border border-[var(--line)] px-3 py-1 text-[11px] font-medium text-[var(--ink-mute)] shadow-sm">
+        {dayLabel(iso)}
+      </span>
+    </div>
+  );
 }
 
 function EscalationBadge({ status }: { status: string }) {
@@ -1502,7 +1535,11 @@ export function InboxView() {
                 )}
               </AnimatePresence>
 
-              {messages.map((msg) => {
+              {messages.map((msg, i) => {
+                const prevMsg = messages[i - 1];
+                const showDateSeparator =
+                  !prevMsg ||
+                  dayKey(prevMsg.createdAt) !== dayKey(msg.createdAt);
                 const isOutbound = msg.senderType !== "CUSTOMER";
                 const isAI = msg.senderType === "AI";
                 const isAgent = msg.senderType === "AGENT";
@@ -1516,8 +1553,9 @@ export function InboxView() {
                   60 * 60 * 1000;
 
                 return (
+                  <Fragment key={msg.id}>
+                  {showDateSeparator && <DateSeparator iso={msg.createdAt} />}
                   <motion.div
-                    key={msg.id}
                     layout
                     initial={{ opacity: 0, y: 8, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1739,6 +1777,7 @@ export function InboxView() {
                       </div>
                     </div>
                   </motion.div>
+                  </Fragment>
                 );
               })}
 
