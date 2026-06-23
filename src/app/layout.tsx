@@ -58,7 +58,10 @@ export default function RootLayout({
           </Script>
         )}
       </head>
-      <body className="min-h-full font-sans antialiased bg-[var(--bg)] text-[var(--ink)]">
+      <body
+        className="min-h-full font-sans antialiased bg-[var(--bg)] text-[var(--ink)]"
+        suppressHydrationWarning
+      >
         {/* GTM <noscript> fallback for JS-disabled clients; must be the first body node. */}
         {GTM_ID && (
           <noscript>

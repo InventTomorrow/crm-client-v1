@@ -43,9 +43,9 @@ const ITEMS = [
 
 export default function FeatureDetail() {
   return (
-    <section className="py-24 md:py-28 bg-white">
+    <section className="py-16 sm:py-24 md:py-28 bg-white">
       <Container>
-        <div className="grid md:grid-cols-2 gap-x-10 gap-y-16">
+        <div className="grid md:grid-cols-2 gap-x-10 gap-y-12 sm:gap-y-16">
           {ITEMS.map(({ Mock, title, body, body2, link }, i) => (
             <Reveal key={i} delay={(i % 2) * 0.1}>
               <div className="group flex flex-col">
