@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useMe } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/shared/ui/Button";
+import { cn } from "@/lib/utils";
 
 /**
  * Single source of truth for where every landing CTA points: logged-in users
@@ -24,7 +25,11 @@ export function PrimaryCta({
 }) {
   const href = useCtaHref();
   return (
-    <Button asChild className={className}>
+    <Button
+      asChild
+      variant="ghost"
+      className={cn("hover:text-white", className)}
+    >
       <Link href={href}>{children}</Link>
     </Button>
   );
