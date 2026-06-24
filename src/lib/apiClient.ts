@@ -13,6 +13,12 @@ export const setLoggingOut = (value: boolean) => {
 
 let isRefreshing = false;
 
+// Routes that must never trigger an auth redirect (the public landing page).
+const PUBLIC_ROUTES = ["/"];
+const onPublicRoute = () =>
+  typeof window !== "undefined" &&
+  PUBLIC_ROUTES.includes(window.location.pathname);
+
 // Queue to store requests that failed due to token expiration
 let failedQueue: Array<{
   resolve: (value?: any) => void;
@@ -70,7 +76,7 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         processQueue(refreshError);
 
-        if (typeof window !== "undefined" && !isLoggingOut) {
+        if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
           window.location.href = "/auth/login";
         }
         return Promise.reject(refreshError);
@@ -83,12 +89,7 @@ apiClient.interceptors.response.use(
       const isAuthRoute =
         url.endsWith("/auth/login") || url.endsWith("/auth/refresh");
 
-      const publicRoutes = ["/"];
-      const isPublicRoute =
-        typeof window !== "undefined" &&
-        publicRoutes.includes(window.location.pathname);
-
-      if (!isAuthRoute && !isPublicRoute) {
+      if (!isAuthRoute && !onPublicRoute()) {
         if (typeof window !== "undefined" && !isLoggingOut) {
           window.location.href = "/auth/login";
         }

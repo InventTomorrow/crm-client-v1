@@ -8,8 +8,8 @@ import { PrimaryCta } from "../LandingCta";
 import Logo from "../Logo";
 
 const NAV_LINKS = [
-  { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "How it works" },
+  { href: "#features", label: "Features" },
   { href: "#who-its-for", label: "Who it's for" },
   { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
@@ -18,12 +18,33 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeId, setActiveId] = useState(NAV_LINKS[0].href.slice(1));
   const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Scrollspy — highlight the nav link whose section is in view.
+  useEffect(() => {
+    const sections = NAV_LINKS.map((l) =>
+      document.getElementById(l.href.slice(1)),
+    ).filter((el): el is HTMLElement => el !== null);
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        }
+      },
+      // Thin band near the top-center so the section crossing it becomes active.
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 },
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
   }, []);
 
   // Close the mobile menu on outside click / Escape.
@@ -67,19 +88,30 @@ export default function Navbar() {
           <Logo />
 
           <div className="hidden lg:flex items-center gap-9 text-[15px]">
-            {NAV_LINKS.map((link, i) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative transition-colors after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-green after:transition-all hover:after:w-full ${
-                  i === 0
-                    ? "text-brand-green font-semibold"
-                    : "text-brand-dark/80 hover:text-brand-dark"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const active = link.href === `#${activeId}`;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "true" : undefined}
+                  className={`relative py-1 transition-colors duration-300 ease-out ${
+                    active
+                      ? "text-brand-green font-semibold"
+                      : "text-brand-dark/80 hover:text-brand-dark"
+                  }`}
+                >
+                  {link.label}
+                  {active && (
+                    <motion.span
+                      layoutId="nav-underline"
+                      className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-brand-green"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-2">
@@ -141,13 +173,27 @@ export default function Navbar() {
                     <Link
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`block px-4 py-3 rounded-2xl text-[15px] font-medium transition-colors hover:bg-brand-mint-soft active:scale-[0.98] ${
-                        i === 0
+                      aria-current={
+                        link.href === `#${activeId}` ? "true" : undefined
+                      }
+                      className={`relative block px-4 py-3 rounded-2xl text-[15px] font-medium transition-colors duration-300 active:scale-[0.98] ${
+                        link.href === `#${activeId}`
                           ? "text-brand-green"
-                          : "text-brand-dark/90 hover:text-brand-dark"
+                          : "text-brand-dark/90 hover:text-brand-dark hover:bg-brand-mint-soft"
                       }`}
                     >
-                      {link.label}
+                      {link.href === `#${activeId}` && (
+                        <motion.span
+                          layoutId="mobile-nav-active"
+                          className="absolute inset-0 rounded-2xl bg-brand-mint-soft"
+                          transition={{
+                            type: "spring",
+                            stiffness: 380,
+                            damping: 32,
+                          }}
+                        />
+                      )}
+                      <span className="relative">{link.label}</span>
                     </Link>
                   </motion.div>
                 ))}
