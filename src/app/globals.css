@@ -62,6 +62,9 @@
   --color-brand-leaf-2: #C4E2B0;
   --color-brand-text: #6B7670;
   --color-brand-text-soft: #8B9590;
+  /* Energy / offer accent */
+  --color-brand-amber: #F97316;
+  --color-brand-amber-dark: #EA580C;
 
   /* Landing page shadows */
   --shadow-card: 0 1px 2px rgba(20, 64, 58, 0.04), 0 4px 16px rgba(20, 64, 58, 0.04);

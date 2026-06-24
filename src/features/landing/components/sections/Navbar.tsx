@@ -40,6 +40,7 @@ export default function Navbar() {
           if (entry.isIntersecting) setActiveId(entry.target.id);
         }
       },
+
       // Thin band near the top-center so the section crossing it becomes active.
       { rootMargin: "-45% 0px -50% 0px", threshold: 0 },
     );
@@ -106,7 +107,11 @@ export default function Navbar() {
                     <motion.span
                       layoutId="nav-underline"
                       className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-brand-green"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 32,
+                      }}
                     />
                   )}
                 </Link>
