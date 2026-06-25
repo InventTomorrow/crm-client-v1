@@ -13,45 +13,48 @@ import Container from "../Container";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
 import {
-  BarChartIcon,
+  ChatIcon,
   DatabaseIcon,
+  FileSpreadsheetIcon,
   GridIcon,
+  MegaphoneIcon,
   MinusIcon,
   PlusIcon,
+  UsersIcon,
 } from "../icons";
 
 const MotionCard = motion.create(Card);
 
 const FEATURES = [
   {
-    icon: BarChartIcon,
-    title: "AI Replies",
-    body: "Let your AI assistant answer common customer questions instantly.",
+    icon: ChatIcon,
+    title: "AI Assistant (Urdu/English)",
+    body: 'Our AI understands local queries like "Price?", "Delivery kab hogi?", and "Discount milega?". It works 24/7 so you never miss a sale.',
   },
   {
     icon: GridIcon,
-    title: "Chat Management",
-    body: "Manage all customer conversations from one clean inbox.",
+    title: "Shared Team Inbox",
+    body: "Manage all customer conversations from one clean inbox. Stop switching between multiple phones and staff members.",
   },
   {
     icon: DatabaseIcon,
-    title: "Lead CRM",
-    body: "Track every inquiry, follow-up, and customer status.",
+    title: "Sales CRM",
+    body: 'Track every inquiry from "New Lead" to "Paid Order." No more lost chats or messy Google Sheets.',
   },
   {
-    icon: BarChartIcon,
-    title: "Broadcast Messages",
-    body: "Send offers, updates, reminders, and promotions to your leads.",
+    icon: MegaphoneIcon,
+    title: "High-ROI Broadcasts",
+    body: "Send Eid offers, flash sales, and product updates directly to your leads to drive instant revenue.",
   },
   {
-    icon: GridIcon,
+    icon: FileSpreadsheetIcon,
     title: "Excel Lead Import",
-    body: "Upload your existing customer list and manage leads inside AsaanRabta.",
+    body: "Upload your existing customer lists and start your first high-conversion marketing campaign in seconds.",
   },
   {
-    icon: DatabaseIcon,
-    title: "Multiple Workspaces",
-    body: "Create a separate workspace for each branch, each with its own WhatsApp number.",
+    icon: UsersIcon,
+    title: "Multiple WhatsApp Accounts",
+    body: "Create separate workspaces for different branches or departments, each with its own dedicated WhatsApp number.",
   },
 ];
 
@@ -69,8 +72,8 @@ export default function FeaturesGrid() {
         <SectionHeading
           title={
             <>
-              Everything You Need To Sell
-              <br className="hidden md:block" /> Better On WhatsApp
+              Everything You Need To Maximize
+              <br className="hidden md:block" /> Your WhatsApp Conversions
             </>
           }
         />

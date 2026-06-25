@@ -18,17 +18,17 @@ const STEPS = [
   {
     icon: ZapIcon,
     title: "Scan the QR Code",
-    body: "Connect your WhatsApp account by scanning a QR code.",
+    body: "Scan the QR code with your phone to link your WhatsApp instantly, just like WhatsApp Web.",
   },
   {
     icon: ClockIcon,
-    title: "Connect Up to 3 Accounts",
-    body: "Manage multiple business numbers, branches, or teams from one platform.",
+    title: "Add Your Business Numbers",
+    body: "Connect up to 3 WhatsApp accounts to manage all your branches and teams in one place.",
   },
   {
     icon: CloudIcon,
-    title: "Manage From One Dashboard",
-    body: "Chats, AI replies, leads, broadcasts, and follow-ups, all in one place.",
+    title: "Start Closing Sales",
+    body: "Your AI agent starts replying 24/7, turning your WhatsApp inquiries into confirmed orders.",
   },
 ];
 
@@ -42,11 +42,11 @@ export default function GettingStarted() {
         <SectionHeading
           title={
             <>
-              Start Managing WhatsApp
-              <br className="hidden md:block" /> Leads In Minutes
+              Get Your AI Sales Agent
+              <br className="hidden md:block" /> Running In 60 Seconds
             </>
           }
-          subtitle="Getting started is simple."
+          subtitle="Getting started is simple. No code, no developers, no waiting."
         />
         <div className="mt-10 sm:mt-16 grid lg:grid-cols-2 gap-8 lg:gap-10 items-stretch">
           <Reveal>
@@ -85,8 +85,8 @@ export default function GettingStarted() {
           <div className="mt-12 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-x-2 gap-y-3 text-center text-[15px] text-brand-dark">
             <span className="inline-flex items-center gap-2 text-brand-text">
               <ChatIcon className="w-5 h-5 shrink-0 text-brand-dark" />
-              Connect Your WhatsApp. No code. No integrations. Just scan and
-              start replying smarter.
+              100% Safe &amp; Secure. Designed to keep your WhatsApp account
+              protected while you scale.
             </span>
             <CtaTextLink className="font-semibold underline underline-offset-4 inline-flex items-center gap-1 text-brand-dark hover:text-brand-green transition-colors">
               Connect WhatsApp <ArrowRightIcon className="w-4 h-4" />

@@ -9,11 +9,20 @@ import Container from "../Container";
 import { PrimaryCta } from "../LandingCta";
 import { HeroDashboardMockup } from "../mockups";
 
-const HEADLINE = ["Turn", "WhatsApp", "Into", "Your", "24/7", "Sales", "Team"];
+const HEADLINE = [
+  "Stop",
+  "Losing",
+  "Leads",
+  "And",
+  "Start",
+  "Closing",
+  "WhatsApp",
+  "Sales",
+];
 
 export default function Hero() {
   return (
-    <section className="relative hero-bg pt-12 sm:pt-16 md:pt-20 lg:pt-24 pb-16 overflow-hidden">
+    <section className="relative hero-bg pt-6 sm:pt-10 md:pt-12 lg:pt-16 pb-16 overflow-hidden">
       <Container className="relative">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -22,10 +31,10 @@ export default function Hero() {
           className="flex justify-center text-center mb-6"
         >
           <Badge className="h-auto rounded-full border-brand-mint-2 bg-white/70 px-4 py-1.5 text-[13px] font-medium text-brand-dark/90 shadow-sm backdrop-blur-sm">
-            Built for WhatsApp-first businesses
+            Built for Pakistan&apos;s WhatsApp-First Businesses
           </Badge>
         </motion.div>
-        <h1 className="text-center text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-bold leading-[1.08] sm:leading-[1.05] tracking-tight text-brand-dark mx-auto text-balance">
+        <h1 className="text-center text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-bold leading-[1.08] sm:leading-[1.15] tracking-tight text-brand-dark mx-auto text-balance">
           {HEADLINE?.map((w, i) => (
             <Fragment key={i}>
               <motion.span
@@ -36,7 +45,7 @@ export default function Hero() {
                   delay: 0.1 + i * 0.05,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className={`inline-block ${w === "24/7" ? "text-brand-green" : ""}`}
+                className={`inline-block ${w === "Sales" ? "text-brand-green" : ""}`}
               >
                 {w}
               </motion.span>
@@ -50,8 +59,9 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-5 sm:mt-6 text-center text-base sm:text-lg md:text-xl text-brand-text max-w-xl sm:max-w-2xl mx-auto text-pretty"
         >
-          Reply faster. Manage every lead. Send broadcasts. Convert more
-          customers, all from one simple platform.
+          Stop wasting time on fizool chats. AsaanRabta acts as your 24/7 sales
+          partner, replying instantly to every message so you can turn more
+          chats into confirmed sales.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

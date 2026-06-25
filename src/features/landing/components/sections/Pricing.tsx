@@ -5,7 +5,7 @@ import Container from "../Container";
 import { PrimaryCta } from "../LandingCta";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
-import { CheckIcon } from "../icons";
+import { CheckIcon, ZapIcon } from "../icons";
 
 type Plan = {
   name: string;
@@ -45,7 +45,9 @@ const PLANS: Plan[] = [
   {
     name: "Business",
     tagline: "For growing teams running multiple branches.",
-    price: "5,900",
+    price: "5,999",
+    originalPrice: "12,000",
+    discountPercentage: 50,
     period: "/month",
     cta: "Choose Business",
     featured: true,
@@ -129,7 +131,7 @@ export default function Pricing() {
                     <div className="mt-6 flex items-center gap-2">
                       {plan.originalPrice && (
                         <span
-                          className={`text-[15px] line-through ${plan.featured ? "text-white/50" : "text-brand-text-soft"}`}
+                          className={`text-xl line-through font-bold ${plan.featured ? "text-white/50" : "text-brand-text-soft"}`}
                         >
                           Rs {plan.originalPrice}
                         </span>
@@ -157,6 +159,12 @@ export default function Pricing() {
                       {plan.period}
                     </span>
                   </div>
+
+                  {plan.discountPercentage && (
+                    <p className="mt-2.5 text-[13px] font-medium text-brand-green">
+                      One saved sale pays for the whole month.
+                    </p>
+                  )}
 
                   <div className="my-7 h-px w-full bg-current opacity-10" />
 
@@ -191,6 +199,17 @@ export default function Pricing() {
                     >
                       {plan.cta}
                     </PrimaryCta>
+                    {!plan.featured && (
+                      <>
+                        <p className="mt-3 text-center text-[13px] text-brand-text-soft">
+                          No credit card required.
+                        </p>
+                        <p className="mt-4 flex items-center justify-center gap-1.5 text-[12.5px] font-medium text-brand-text">
+                          <ZapIcon className="h-3.5 w-3.5 text-brand-green" />
+                          100% Secure WhatsApp Connection
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </motion.div>

@@ -27,6 +27,7 @@ export function LandingPage() {
       <BusinessTypes />
       <Pricing />
       <Values />
+      {/* <WhyAsaanRabta /> */}
       <FAQ />
       <FinalCTA />
       <Footer />

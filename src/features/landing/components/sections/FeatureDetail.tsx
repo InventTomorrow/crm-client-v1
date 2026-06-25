@@ -15,7 +15,7 @@ import {
 const ITEMS = [
   {
     Mock: BroadcastMockup,
-    title: "Send Broadcast Campaigns On WhatsApp",
+    title: "Send High-Conversion Broadcasts On WhatsApp",
     body: "Promote offers, announce new arrivals, send reminders, and follow up with existing customers directly through WhatsApp.",
     body2:
       "Perfect for sales, Eid offers, Ramadan campaigns, product launches, appointment reminders, and customer updates.",

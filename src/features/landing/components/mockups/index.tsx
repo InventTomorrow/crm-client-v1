@@ -77,7 +77,7 @@ export function AIRepliesMockup() {
         fill
         sizes="(max-width: 768px) 100vw, 600px"
         quality={90}
-        className="object-cover"
+        className="object-contains"
       />
     </div>
   );
