@@ -122,7 +122,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               : "items-center justify-between px-[14px] pt-[14px] pb-1.5",
           )}
         >
-          <div className="flex items-center gap-2 min-w-0">
+          <Link href="/" className="flex items-center gap-2 min-w-0">
             <Image
               src="/asaanrabta-icon.png"
               alt="AsaanRabta"
@@ -136,7 +136,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
                 Asaan<span className="text-[var(--accent)]">Rabta</span>
               </span>
             )}
-          </div>
+          </Link>
           <button
             className="btn btn-ghost hide-mobile p-1 transition-colors"
             onClick={toggleSidebar}

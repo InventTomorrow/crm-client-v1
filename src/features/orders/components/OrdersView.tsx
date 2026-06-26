@@ -1,15 +1,20 @@
 "use client";
+import { extractErrorMessage } from "@/lib/utils";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   useCreateOrder,
+  useDeleteOrder,
   useOrders,
   useOrdersSummary,
   useUpdateOrder,
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
+import { getOrder } from "../services/ordersService";
 import {
   ORDER_STATUS_OPTIONS,
   type Order,
@@ -19,6 +24,7 @@ import {
 } from "../types";
 import { OrderDetailSheet } from "./OrderDetailSheet";
 import { OrderForm } from "./OrderForm";
+import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
 export function OrdersView() {
@@ -33,11 +39,15 @@ export function OrdersView() {
     [search, status],
   );
 
+  const [orderPendingDeletion, setOrderPendingDeletion] =
+    useState<OrderListItem | null>(null);
+
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
   const { data: summary } = useOrdersSummary();
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
+  const deleteOrder = useDeleteOrder();
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
@@ -45,11 +55,24 @@ export function OrdersView() {
     setEditing(null);
     setFormOpen(true);
   };
-  const openEdit = (order: Order) => {
+  const openEdit = useCallback((order: Order) => {
     setSelectedId(null);
     setEditing(order);
     setFormOpen(true);
-  };
+  }, []);
+
+  // A table row carries only a lightweight OrderListItem; the edit form needs the
+  // full order, so the "Edit" action fetches it before opening the form.
+  const loadAndEditOrder = useCallback(
+    async (listItem: OrderListItem) => {
+      try {
+        openEdit(await getOrder(listItem.id));
+      } catch (error) {
+        toast.error(extractErrorMessage(error, "Failed to load order"));
+      }
+    },
+    [openEdit],
+  );
 
   const columns: ColumnDef<OrderListItem, unknown>[] = useMemo(
     () => [
@@ -130,8 +153,21 @@ export function OrdersView() {
           </span>
         ),
       },
+      {
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        size: 50,
+        cell: ({ row }) => (
+          <OrderRowActions
+            order={row.original}
+            onEdit={loadAndEditOrder}
+            onDelete={setOrderPendingDeletion}
+          />
+        ),
+      },
     ],
-    [],
+    [loadAndEditOrder],
   );
 
   const handleExport = (rows: OrderListItem[]) => {
@@ -273,6 +309,21 @@ export function OrdersView() {
             createOrder.mutate(values, { onSuccess: () => setFormOpen(false) });
           }
         }}
+      />
+
+      <ConfirmDialog
+        open={!!orderPendingDeletion}
+        onClose={() => setOrderPendingDeletion(null)}
+        onConfirm={() => {
+          if (!orderPendingDeletion) return;
+          deleteOrder.mutate(orderPendingDeletion.id, {
+            onSuccess: () => setOrderPendingDeletion(null),
+          });
+        }}
+        title={`Delete order #${orderPendingDeletion?.orderNumber ?? ""}?`}
+        description="This permanently removes the order. This action cannot be undone."
+        confirmLabel="Delete"
+        loading={deleteOrder.isPending}
       />
     </div>
   );
