@@ -28,9 +28,9 @@ import {
   Store,
   Upload,
   User,
-  Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { BillingView } from "@/features/billing/components/BillingView";
 import type { SettingsSection } from "../types";
 import { SECTION_NAV, SYSTEM_STATS } from "../types";
 import { BusinessSection } from "./BusinessSection";
@@ -44,7 +44,7 @@ const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
   chatbot: Bot,
   business: Store,
   channels: Link,
-  tier: Crown,
+  billing: Crown,
   access: Shield,
   workspaces: Building2,
   system: Activity,
@@ -64,26 +64,6 @@ function Field({
         {label}
       </label>
       {children}
-    </div>
-  );
-}
-
-// ──────────────────── Metric ────────────────────
-function Metric({ label, v, pct }: { label: string; v: string; pct: number }) {
-  return (
-    <div className="card p-3 bg-[var(--surface)]">
-      <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-        {label}
-      </div>
-      <div className="font-semibold mt-1 text-[18px] text-[var(--ink)] font-[var(--font-head)]">
-        {v}
-      </div>
-      <div className="h-1 rounded-full overflow-hidden mt-2 bg-[var(--line)]">
-        <div
-          className="h-full bg-[var(--accent)]"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
     </div>
   );
 }
@@ -476,41 +456,12 @@ function ChannelsSection() {
   );
 }
 
-// ──────────────────── Tier Section ────────────────────
-function TierSection() {
+// ──────────────────── Billing Section ────────────────────
+function BillingSection() {
   return (
-    <>
-      <h2 className="text-[20px] font-semibold">Integration Tier</h2>
-      <div className="card p-[22px] border-[var(--accent)] bg-[var(--accent-soft)]">
-        <div className="flex items-center gap-4">
-          <span className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[var(--accent)] text-white">
-            <Crown size={20} />
-          </span>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-[17px] font-semibold">
-                Tier 3 · Storefront API
-              </h3>
-              <span className="badge font-medium text-white bg-[var(--accent)]">
-                Current
-              </span>
-            </div>
-            <div className="text-[13px] mt-1 text-[var(--ink-soft)]">
-              Live two-way sync with Shopify + Daraz. AI suggestions enabled.
-              12,000 messages / month.
-            </div>
-          </div>
-          <button className="btn btn-grad flex-shrink-0">
-            <Zap size={14} /> Upgrade to ERP
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-3 mt-5">
-          <Metric label="Messages used" v="8,420 / 12K" pct={70} />
-          <Metric label="AI credits" v="4.2K / 10K" pct={42} />
-          <Metric label="Storage" v="2.1 / 50 GB" pct={4} />
-        </div>
-      </div>
-    </>
+    <Suspense fallback={null}>
+      <BillingView />
+    </Suspense>
   );
 }
 
@@ -570,6 +521,7 @@ const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
   chatbot: "chatbot:view",
   business: "settings:view",
   channels: "channels:view",
+  billing: "billing:view",
   access: "members:view",
   workspaces: "settings:edit",
 };
@@ -603,9 +555,7 @@ export function SettingsView() {
         {visibleNav.map((s) => {
           const Icon = SECTION_ICONS[s.id];
           const active = section === s.id;
-          const disabled = (["tier", "system"] as SettingsSection[]).includes(
-            s.id,
-          );
+          const disabled = (["system"] as SettingsSection[]).includes(s.id);
           return (
             <button
               key={s.id}
@@ -644,7 +594,7 @@ export function SettingsView() {
         {section === "chatbot" && <ChatbotSection />}
         {section === "business" && <BusinessSection />}
         {section === "channels" && <ChannelsSection />}
-        {section === "tier" && <TierSection />}
+        {section === "billing" && <BillingSection />}
         {section === "access" && <TeamSection />}
         {section === "workspaces" && <WorkspacesManagementView />}
         {section === "system" && <SystemSection />}
