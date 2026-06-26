@@ -18,8 +18,9 @@ import {
   WifiOff,
   X,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./Dialog";
 import { Skeleton } from "./Motion";
 
@@ -106,6 +107,57 @@ function QRSkeleton({
   );
 }
 
+/**
+ * Shown in the window between the QR being scanned and the socket reaching
+ * CONNECTED. Replaces the old behaviour where the QR vanished back to a
+ * "Generating QR…" placeholder before snapping to connected. Pulsing rings +
+ * a sweeping progress shimmer read as "we're linking your device, almost there".
+ */
+function ConnectingView({ phoneNumber }: { phoneNumber?: string }) {
+  return (
+    <div className="flex flex-col items-center gap-5 py-6 w-full">
+      <div className="relative flex items-center justify-center w-20 h-20">
+        {/* concentric pulse rings */}
+        <span
+          className="absolute inset-0 rounded-full bg-[#25D366] opacity-10 animate-ping"
+          style={{ animationDuration: "1.6s" }}
+        />
+        <span className="absolute inset-[5px] rounded-full bg-[#25D366] opacity-[0.08] animate-pulse" />
+        <div className="relative w-16 h-16 rounded-full bg-[rgba(37,211,102,0.13)] flex items-center justify-center">
+          <Smartphone size={30} className="text-[#25D366]" />
+          {/* spinning badge to signal active work */}
+          <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[var(--surface)] border border-[var(--line)] flex items-center justify-center shadow-sm">
+            <Loader2 size={13} className="animate-spin text-[#25D366]" />
+          </span>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <p className="text-[14px] font-semibold text-[var(--ink)]">
+          QR scanned — connecting
+        </p>
+        <p className="text-[12px] text-[var(--ink-mute)] mt-1 max-w-[270px]">
+          Linking your WhatsApp{phoneNumber ? ` (+${phoneNumber})` : ""}. This
+          only takes a moment — keep this window open.
+        </p>
+      </div>
+
+      {/* sweeping progress shimmer */}
+      <div className="relative w-full max-w-[240px] h-1.5 rounded-full overflow-hidden bg-[var(--surface-2)]">
+        <motion.div
+          className="absolute top-0 bottom-0 w-1/3 rounded-full"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, #25D366, transparent)",
+          }}
+          animate={{ x: ["-110%", "320%"] }}
+          transition={{ duration: 1.25, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   const { data: statusData } = useWAStatus();
   const connectMut = useWAConnect();
@@ -116,6 +168,10 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   // the cache. All live status/QR/conflict now flows through the wa-status
   // query (useWAStatusStream), so the cache is the single source of truth.
   const [starting, setStarting] = useState(false);
+  // True from the moment the QR is scanned (it disappears while still PENDING)
+  // until the socket reaches CONNECTED — drives the "connecting" animation.
+  const [scanned, setScanned] = useState(false);
+  const qrShownRef = useRef(false);
 
   const status = statusData?.status ?? "DISCONNECTED";
   const phoneNumber = statusData?.phoneNumber;
@@ -145,6 +201,35 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
       setStarting(false);
     }
   }, [qrCode, conflict, connectionError, status]);
+
+  // Detect the scan: once a QR has been presented and it then clears while the
+  // session is still PENDING (no error, no conflict), the user has scanned and
+  // the device is linking. Show the connecting animation instead of bouncing
+  // back to the QR placeholder.
+  useEffect(() => {
+    if (qrCode) {
+      qrShownRef.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setScanned(false);
+    } else if (
+      qrShownRef.current &&
+      status === "PENDING" &&
+      !connectionError &&
+      !conflict
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setScanned(true);
+    }
+  }, [qrCode, status, connectionError, conflict]);
+
+  // Reset the scan tracker whenever we leave the linking flow.
+  useEffect(() => {
+    if (!open || status === "CONNECTED" || status === "DISCONNECTED" || conflict) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setScanned(false);
+      qrShownRef.current = false;
+    }
+  }, [open, status, conflict]);
 
   // Auto-start on open if disconnected.
   useEffect(() => {
@@ -179,12 +264,14 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
             <p className="text-[11.5px] text-[var(--ink-mute)] mt-px">
               {status === "CONNECTED"
                 ? `Connected · +${phoneNumber ?? ""}`
-                : status === "PENDING" || showLoading
-                  ? "Waiting for scan…"
-                  : "Not connected"}
+                : scanned
+                  ? "Connecting…"
+                  : status === "PENDING" || showLoading
+                    ? "Waiting for scan…"
+                    : "Not connected"}
             </p>
           </div>
-          <StatusDot status={status} loading={showLoading} />
+          <StatusDot status={status} loading={showLoading} connecting={scanned} />
         </DialogHeader>
 
         {/* Body */}
@@ -291,6 +378,8 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                     <RefreshCw size={12} /> Refresh QR
                   </button>
                 </>
+              ) : scanned ? (
+                <ConnectingView phoneNumber={phoneNumber} />
               ) : (
                 <QRSkeleton label="Generating QR code…" />
               )}
@@ -334,15 +423,28 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   );
 }
 
-function StatusDot({ status, loading }: { status: string; loading?: boolean }) {
+function StatusDot({
+  status,
+  loading,
+  connecting,
+}: {
+  status: string;
+  loading?: boolean;
+  connecting?: boolean;
+}) {
   return (
     <span
       className={cn(
         "w-2.5 h-2.5 rounded-full flex-shrink-0",
         status === "CONNECTED" && "bg-[#25D366]",
-        (status === "PENDING" || loading) && "bg-[#CA8A04] animate-pulse",
+        // Post-scan linking — green pulse signals "almost connected".
+        connecting && status !== "CONNECTED" && "bg-[#25D366] animate-pulse",
+        !connecting &&
+          (status === "PENDING" || loading) &&
+          "bg-[#CA8A04] animate-pulse",
         status === "DISCONNECTED" &&
           !loading &&
+          !connecting &&
           "bg-[var(--ink-mute)] opacity-40",
       )}
     />

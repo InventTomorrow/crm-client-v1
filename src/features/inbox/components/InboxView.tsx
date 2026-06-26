@@ -888,6 +888,10 @@ export function InboxView() {
   const confirmDeleteChat = () => {
     const id = deleteChatId;
     if (!id) return;
+    // "Delete" only hides the chat locally — the server conversation lives on.
+    // Zero its unread first so a hidden chat can't leave a stranded unread badge
+    // with no visible row. A future inbound resurrects it (see effect below).
+    markReadMut.mutate(id);
     setHiddenChats((prev) => {
       const next = new Set(prev).add(id);
       localStorage.setItem(
@@ -936,6 +940,26 @@ export function InboxView() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, activeConv?.unreadCount]);
+
+  // A locally "deleted" chat is only hidden — the server conversation lives on
+  // and keeps receiving messages. When a new inbound lands (unreadCount climbs
+  // back above zero) bring it back, so unread is never stranded behind an
+  // invisible row. Mirrors WhatsApp, where deleting a chat doesn't block future
+  // messages from re-surfacing it.
+  useEffect(() => {
+    if (hiddenChats.size === 0) return;
+    const toRestore = conversations.filter(
+      (c) => hiddenChats.has(c.id) && c.unreadCount > 0,
+    );
+    if (toRestore.length === 0) return;
+    setHiddenChats((prev) => {
+      const next = new Set(prev);
+      for (const c of toRestore) next.delete(c.id);
+      localStorage.setItem("asaanrabta_hidden_chats", JSON.stringify([...next]));
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversations, hiddenChats]);
 
   // Deep-link from the Leads page: /inbox?lead=<leadId> selects that lead's chat.
   useEffect(() => {
