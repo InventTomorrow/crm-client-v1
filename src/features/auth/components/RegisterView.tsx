@@ -96,7 +96,6 @@ export function RegisterView() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        className="input"
                         placeholder="Ali"
                         autoFocus
                         {...field}
@@ -116,7 +115,6 @@ export function RegisterView() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        className="input"
                         placeholder="Hassan"
                         {...field}
                       />
@@ -142,7 +140,7 @@ export function RegisterView() {
                         className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
                       />
                       <Input
-                        className="input pl-8"
+                        className="pl-8"
                         type="email"
                         placeholder="you@company.pk"
                         autoComplete="email"
@@ -171,7 +169,7 @@ export function RegisterView() {
                         className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
                       />
                       <Input
-                        className="input pl-8 pr-9"
+                        className="pl-8 pr-9"
                         type={showPw ? "text" : "password"}
                         placeholder="Min 8 chars, 1 uppercase, 1 number"
                         autoComplete="new-password"
@@ -246,7 +244,8 @@ export function RegisterView() {
             <Button
               type="submit"
               variant="default"
-              className="btn btn-grad w-full justify-center mt-1"
+              size="lg"
+              className="w-full mt-1"
               disabled={isPending}
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}

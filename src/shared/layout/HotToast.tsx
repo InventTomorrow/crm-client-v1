@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Flame, X, Link } from 'lucide-react';
 import { pkr } from '@/lib/utils';
 import type { Lead } from '@/lib/mockData';
+import { Button } from '@/shared/ui/Button';
 
 interface HotToastProps {
   lead: Lead;
@@ -34,13 +35,13 @@ export function HotToast({ lead, onClose }: HotToastProps) {
               Trigger: checkout intent + phone shared · est. {pkr(lead.value || 17998)}
             </div>
           </div>
-          <button className="btn btn-ghost p-1" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={14} />
-          </button>
+          </Button>
         </div>
-        <button className="btn btn-grad w-full justify-center mt-3">
+        <Button className="w-full justify-center mt-3">
           <Link size={13} /> Send Checkout Link
-        </button>
+        </Button>
       </div>
     </div>
   );

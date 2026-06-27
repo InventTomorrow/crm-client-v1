@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/shared/ui/Button";
 import {
   CartesianGrid,
   Line,
@@ -280,14 +281,15 @@ export function AnalyticsView() {
             ))}
           </div>
           {/* Custom date range selector paused for now */}
-          <button
-            className="btn btn-outline"
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => refetch()}
             disabled={isFetching}
             aria-label="Refresh"
           >
             <RefreshCw size={13} className={isFetching ? "animate-spin" : ""} />
-          </button>
+          </Button>
         </div>
       </div>
 

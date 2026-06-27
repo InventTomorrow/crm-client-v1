@@ -24,6 +24,8 @@ import {
   useWATakeoverDeny,
 } from "../hooks/useWhatsApp";
 import type { WASessionStatus } from "../types";
+import { Button } from "@/shared/ui/Button";
+import { Switch } from "@/shared/ui/Switch";
 
 // ── Status pill ────────────────────────────────────────────────────────────────
 function StatusPill({ status }: { status: WASessionStatus }) {
@@ -51,38 +53,6 @@ function StatusPill({ status }: { status: WASessionStatus }) {
           ? "Connecting…"
           : "Disconnected"}
     </span>
-  );
-}
-
-// ── Toggle switch ──────────────────────────────────────────────────────────────
-function Toggle({
-  enabled,
-  onChange,
-  disabled,
-}: {
-  enabled: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      role="switch"
-      aria-checked={enabled}
-      disabled={disabled}
-      onClick={() => onChange(!enabled)}
-      className={cn(
-        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
-        enabled ? "bg-[var(--accent)]" : "bg-[var(--line)]",
-        disabled && "opacity-50 cursor-not-allowed",
-      )}
-    >
-      <span
-        className={cn(
-          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200",
-          enabled ? "translate-x-5" : "translate-x-0",
-        )}
-      />
-    </button>
   );
 }
 
@@ -279,12 +249,12 @@ export function ChannelsView() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 w-full max-w-xs">
-                <button
+                <Button
                   onClick={() => takeoverConfirmMut.mutate()}
                   disabled={
                     takeoverConfirmMut.isPending || takeoverDenyMut.isPending
                   }
-                  className="btn btn-grad w-full justify-center"
+                  className="w-full justify-center"
                 >
                   {takeoverConfirmMut.isPending ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -292,8 +262,8 @@ export function ChannelsView() {
                     <CheckCircle2 size={13} />
                   )}
                   Yes, switch here
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() =>
                     takeoverDenyMut.mutate(undefined, {
                       onSuccess: () => {
@@ -305,7 +275,8 @@ export function ChannelsView() {
                   disabled={
                     takeoverDenyMut.isPending || takeoverConfirmMut.isPending
                   }
-                  className="btn btn-outline w-full justify-center text-[12.5px]"
+                  variant="outline"
+                  className="w-full justify-center text-[12.5px]"
                 >
                   {takeoverDenyMut.isPending ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -313,7 +284,7 @@ export function ChannelsView() {
                     <QrCode size={13} />
                   )}
                   No, use a different number
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -336,10 +307,11 @@ export function ChannelsView() {
                   </p>
                 </div>
               </div>
-              <button
+              <Button
+                variant="outline"
                 onClick={handleDisconnect}
                 disabled={disconnectMut.isPending}
-                className="btn btn-outline self-start text-[12.5px] text-[#EF4444] border-[#FECACA] hover:bg-[#FEF2F2]"
+                className="self-start text-[12.5px] text-[#EF4444] border-[#FECACA] hover:bg-[#FEF2F2] hover:text-[#EF4444]"
               >
                 {disconnectMut.isPending ? (
                   <Loader2 size={13} className="animate-spin" />
@@ -347,7 +319,7 @@ export function ChannelsView() {
                   <Power size={13} />
                 )}
                 Disconnect
-              </button>
+              </Button>
             </div>
           )}
 
@@ -371,15 +343,16 @@ export function ChannelsView() {
                   <p className="text-[11.5px] text-[var(--ink-mute)]">
                     QR expires in ~60 seconds
                   </p>
-                  <button
+                  <Button
                     onClick={() => {
                       setStarting(true);
                       connectMut.mutate();
                     }}
-                    className="btn btn-outline text-[12px]"
+                    variant="outline"
+                    className="text-[12px]"
                   >
                     <RefreshCw size={12} /> Refresh QR
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <QRSkeleton label="Generating QR code…" />
@@ -411,10 +384,10 @@ export function ChannelsView() {
                 Link your WhatsApp number so the AI can receive and reply to
                 customer messages automatically.
               </p>
-              <button
+              <Button
                 onClick={handleConnect}
                 disabled={connectMut.isPending}
-                className="btn btn-grad px-6 py-2.5"
+                className="px-6 py-2.5"
               >
                 {connectMut.isPending ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -422,7 +395,7 @@ export function ChannelsView() {
                   <QrCode size={14} />
                 )}
                 {connectionError ? "Retry Connection" : "Generate QR Code"}
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -448,9 +421,9 @@ export function ChannelsView() {
                   </p>
                 </div>
               </div>
-              <Toggle
-                enabled={config?.autoReply ?? false}
-                onChange={(v) => updateConfigMut.mutate({ autoReply: v })}
+              <Switch
+                checked={config?.autoReply ?? false}
+                onCheckedChange={(v) => updateConfigMut.mutate({ autoReply: v })}
                 disabled={updateConfigMut.isPending}
               />
             </div>
@@ -484,9 +457,9 @@ export function ChannelsView() {
                   </p>
                 </div>
               </div>
-              <Toggle
-                enabled={config?.allowOrderCancellation ?? true}
-                onChange={(v) =>
+              <Switch
+                checked={config?.allowOrderCancellation ?? true}
+                onCheckedChange={(v) =>
                   updateConfigMut.mutate({ allowOrderCancellation: v })
                 }
                 disabled={updateConfigMut.isPending}

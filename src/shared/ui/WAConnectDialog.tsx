@@ -23,6 +23,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./Dialog";
 import { Skeleton } from "./Motion";
+import { Button } from "./Button";
 
 interface WAConnectDialogProps {
   open: boolean;
@@ -297,17 +298,19 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
               </div>
 
               <div className="flex flex-col gap-2 w-full">
-                <button
+                <Button
+                  className="w-full justify-center"
                   onClick={() => takeoverConfirmMut.mutate()}
                   disabled={takeoverConfirmMut.isPending || takeoverDenyMut.isPending}
-                  className="btn btn-grad w-full justify-center"
                 >
                   {takeoverConfirmMut.isPending
                     ? <Loader2 size={13} className="animate-spin" />
                     : <CheckCircle2 size={13} />}
                   Yes, switch here
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-center"
                   onClick={() => {
                     takeoverDenyMut.mutate(undefined, {
                       onSuccess: () => {
@@ -317,13 +320,12 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                     });
                   }}
                   disabled={takeoverDenyMut.isPending || takeoverConfirmMut.isPending}
-                  className="btn btn-outline w-full justify-center text-[12.5px]"
                 >
                   {takeoverDenyMut.isPending
                     ? <Loader2 size={13} className="animate-spin" />
                     : <QrCode size={13} />}
                   No, use a different number
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -344,17 +346,19 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   {phoneNumber && <p className="text-[13px] text-[var(--ink-mute)] mt-1">+{phoneNumber}</p>}
                 </div>
               </div>
-              <button onClick={() => onOpenChange(false)} className="btn btn-grad w-full justify-center gap-2">
+              <Button className="w-full justify-center gap-2" onClick={() => onOpenChange(false)}>
                 <X size={13} /> Close
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleDisconnect}
                 disabled={disconnectMut.isPending}
-                className="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)] hover:text-[#EF4444] transition-colors duration-150 py-1"
+                className="flex items-center gap-1.5 text-[var(--ink-mute)] hover:text-[#EF4444]"
               >
                 {disconnectMut.isPending ? <Loader2 size={11} className="animate-spin" /> : <Power size={11} />}
                 Disconnect WhatsApp
-              </button>
+              </Button>
             </>
           )}
 
@@ -374,9 +378,9 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                     </p>
                     <p className="text-[11px] text-[var(--ink-mute)]">QR expires in ~60 seconds</p>
                   </div>
-                  <button onClick={handleRefreshQR} className="btn btn-outline text-[12px] w-full justify-center">
+                  <Button variant="outline" className="text-[12px] w-full justify-center" onClick={handleRefreshQR}>
                     <RefreshCw size={12} /> Refresh QR
-                  </button>
+                  </Button>
                 </>
               ) : scanned ? (
                 <ConnectingView phoneNumber={phoneNumber} />
@@ -401,10 +405,10 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                 animate={connectMut.isPending}
                 label={connectMut.isPending ? "Generating QR code…" : undefined}
               />
-              <button onClick={handleConnect} disabled={connectMut.isPending} className="btn btn-grad w-full justify-center">
+              <Button className="w-full justify-center" onClick={handleConnect} disabled={connectMut.isPending}>
                 {connectMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />}
                 {connectionError ? "Retry Connection" : "Generate QR Code"}
-              </button>
+              </Button>
             </>
           )}
         </div>

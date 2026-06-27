@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { Button } from "@/shared/ui/Button";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { OrderListItem } from "../types";
 
@@ -20,14 +21,15 @@ export function OrderRowActions({ order, onEdit, onDelete }: OrderRowActionsProp
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label={`Actions for order #${order.orderNumber}`}
-          className="btn btn-ghost p-1.5 text-[var(--ink-mute)]"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal size={16} />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
         <PermissionGuard permission="orders:edit">

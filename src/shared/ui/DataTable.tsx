@@ -24,6 +24,7 @@ import {
   Download,
 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "./Button";
 
 export type { ColumnDef };
 
@@ -139,8 +140,10 @@ export function DataTable<TData>({
             <div className="flex items-center gap-1.5 text-[12.5px] text-[var(--ink-soft)]">
               <span className="font-medium text-[var(--ink)]">{selectedRows.length}</span> selected
               {onDeleteSelected && (
-                <button
-                  className="btn btn-ghost text-[#DC2626] p-1.5 ml-1"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-[#DC2626] ml-1"
                   onClick={() => {
                     onDeleteSelected(selectedRows);
                     setRowSelection({});
@@ -148,28 +151,30 @@ export function DataTable<TData>({
                   title="Delete selected"
                 >
                   <Trash2 size={14} />
-                </button>
+                </Button>
               )}
               {onExport && (
-                <button
-                  className="btn btn-ghost p-1.5"
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onExport(selectedRows)}
                   title="Export selected"
                 >
                   <Download size={14} />
-                </button>
+                </Button>
               )}
             </div>
           )}
           {onExport && selectedRows.length === 0 && (
-            <button
-              className="btn btn-outline text-[12.5px] py-1.5 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => onExport(data)}
               disabled={data.length === 0}
               title={data.length === 0 ? "Nothing to export" : "Export all"}
             >
               <Download size={13} /> Export
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -279,59 +284,60 @@ export function DataTable<TData>({
 
         {/* Nav buttons */}
         <div className="flex items-center gap-1">
-          <button
-            className="btn btn-ghost p-1.5 disabled:opacity-30"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
             title="First page"
           >
             <ChevronsLeft size={14} />
-          </button>
-          <button
-            className="btn btn-ghost p-1.5 disabled:opacity-30"
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             title="Previous page"
           >
             <ChevronLeft size={14} />
-          </button>
+          </Button>
 
           {/* Page number pills */}
           {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
             const startPage = Math.max(0, Math.min(pageIndex - 2, totalPages - 5));
             const page = startPage + i;
             return (
-              <button
+              <Button
                 key={page}
+                variant={page === pageIndex ? "default" : "ghost"}
+                size="icon"
+                className="w-7 h-7 text-[12px]"
                 onClick={() => table.setPageIndex(page)}
-                className={cn(
-                  "w-7 h-7 rounded-md text-[12px] font-medium transition-colors",
-                  page === pageIndex
-                    ? "bg-[var(--accent)] text-white"
-                    : "btn btn-ghost",
-                )}
               >
                 {page + 1}
-              </button>
+              </Button>
             );
           })}
 
-          <button
-            className="btn btn-ghost p-1.5 disabled:opacity-30"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             title="Next page"
           >
             <ChevronRight size={14} />
-          </button>
-          <button
-            className="btn btn-ghost p-1.5 disabled:opacity-30"
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => table.setPageIndex(totalPages - 1)}
             disabled={!table.getCanNextPage()}
             title="Last page"
           >
             <ChevronsRight size={14} />
-          </button>
+          </Button>
         </div>
       </div>
     </div>

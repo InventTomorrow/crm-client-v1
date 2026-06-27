@@ -59,7 +59,7 @@ export function WorkspaceView() {
                         className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
                       />
                       <Input
-                        className="input pl-8 h-10"
+                        className="pl-8 h-10"
                         placeholder="e.g. Karachi Karahi Co."
                         autoFocus
                         {...field}
@@ -73,8 +73,8 @@ export function WorkspaceView() {
 
             <Button
               type="submit"
-              variant="default"
-              className="btn btn-grad w-full justify-center mt-1"
+              size="lg"
+              className="w-full justify-center mt-1"
               disabled={isPending}
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}

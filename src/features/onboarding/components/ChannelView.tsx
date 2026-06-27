@@ -17,6 +17,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useSkipOnboarding } from "../hooks/useOnboarding";
 import { OnboardingShell } from "./OnboardingShell";
+import { Button } from "@/shared/ui/Button";
 
 // ── QR panel (inline for onboarding, not a modal) ───────────────────────────
 
@@ -108,9 +109,9 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
           <WifiOff size={22} className="text-[#DC2626]" />
         </div>
         <p className="text-[13px] text-[var(--ink)] text-center">{liveError}</p>
-        <button className="btn btn-outline text-[13px]" onClick={handleRetry}>
+        <Button variant="outline" size="sm" onClick={handleRetry}>
           <RefreshCw size={13} /> Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -217,15 +218,17 @@ export function ChannelView() {
           </div>
         )}
 
-        <button
+        <Button
           type="button"
-          className="btn btn-outline w-full justify-center text-[13px] mt-1"
+          variant="outline"
+          size="lg"
+          className="w-full justify-center mt-1"
           onClick={() => skip()}
           disabled={isSkipping}
         >
           {isSkipping ? <Loader2 size={13} className="animate-spin" /> : null}
           Skip for now — set up later in Settings
-        </button>
+        </Button>
       </div>
     </OnboardingShell>
   );

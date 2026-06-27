@@ -15,6 +15,7 @@ import {
   useDeclineMyInvitation,
 } from '@/features/auth/hooks/useAuth';
 import type { MyInvitationItem } from '@/features/auth/services/authService';
+import { Button } from '@/shared/ui/Button';
 
 interface NotificationsPanelProps {
   onClose: () => void;
@@ -33,7 +34,7 @@ function PendingInvites() {
       <div className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
         Workspace invites
       </div>
-      {invites.map((inv) => (
+      {invites.map((inv: MyInvitationItem) => (
         <div key={inv.id} className="px-4 py-3 flex flex-col gap-2 border-b border-[var(--line-soft)] last:border-b-0">
           <div className="text-[13px] text-[var(--ink)] leading-snug">
             <span className="inline-flex items-center gap-1.5">
@@ -53,30 +54,18 @@ function PendingInvites() {
               <span className="text-[11.5px] text-[var(--ink-mute)]">
                 This invite expired. Ask your admin to resend it.
               </span>
-              <button
-                className="btn btn-ghost py-1 px-3 text-[12px] ml-auto"
-                disabled={busy}
-                onClick={() => decline.mutate(inv.id)}
-              >
+              <Button size="sm" variant="ghost" className="ml-auto" disabled={busy} onClick={() => decline.mutate(inv.id)}>
                 Dismiss
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                className="btn btn-grad py-1 px-3 text-[12px]"
-                disabled={busy}
-                onClick={() => accept.mutate(inv.id)}
-              >
+              <Button size="sm" disabled={busy} onClick={() => accept.mutate({ id: inv.id, tenantId: inv.tenantId, tenantName: inv.tenantName })}>
                 Accept
-              </button>
-              <button
-                className="btn btn-ghost py-1 px-3 text-[12px]"
-                disabled={busy}
-                onClick={() => decline.mutate(inv.id)}
-              >
+              </Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => decline.mutate(inv.id)}>
                 Decline
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -105,13 +94,14 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
             <span className="badge bg-[var(--accent)] text-white font-medium">{unread} new</span>
           )}
         </div>
-        <button
-          className="btn btn-ghost py-1 px-2 text-[12px]"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => markAll.mutate()}
           disabled={unread === 0 || markAll.isPending}
         >
           Mark all read
-        </button>
+        </Button>
       </div>
 
       <div className="p-2 border-b border-[var(--line)]">
@@ -173,15 +163,16 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
       </div>
 
       <div className="px-4 py-[10px] border-t border-[var(--line)] text-center">
-        <button
-          className="btn btn-ghost text-[12.5px] py-1 px-[10px]"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => {
             router.push('/notifications');
             onClose();
           }}
         >
           View all notifications
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { pkr } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
+import { Button } from "@/shared/ui/Button";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
 import LeadStatusSelect from "../LeadStatusSelect";
@@ -116,19 +117,21 @@ export default function TableView({
           const l = row.original;
           return (
             <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-              <button className="btn btn-ghost p-1.5" title="Open chat" onClick={() => onOpenChat(l)}>
+              <Button variant="ghost" size="icon" title="Open chat" onClick={() => onOpenChat(l)}>
                 <Inbox size={13} />
-              </button>
-              <button className="btn btn-ghost p-1.5" title="Edit" onClick={() => onEdit(l)}>
+              </Button>
+              <Button variant="ghost" size="icon" title="Edit" onClick={() => onEdit(l)}>
                 <Pencil size={13} />
-              </button>
-              <button
-                className="btn btn-ghost p-1.5 text-[#DC2626]"
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 title="Delete"
+                className="text-[#DC2626]"
                 onClick={() => onDelete(l)}
               >
                 <Trash2 size={13} />
-              </button>
+              </Button>
             </div>
           );
         },

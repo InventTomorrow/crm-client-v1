@@ -27,6 +27,8 @@ import { parseCsv } from "@/lib/csv";
 import { presignedUpload } from "../services/productsService";
 import type { ProductFormData } from "../types";
 import { CATEGORIES, productSchema } from "../types";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 
 export interface BulkItem extends ProductFormData {
   imageUrl?: string;
@@ -38,6 +40,7 @@ const EMPTY_ITEM = (): BulkItem => ({
   price: 0,
   stock: 0,
   cat: "Apparel",
+  sizes: [],
   desc: "",
   imageUrl: "",
 });
@@ -54,6 +57,7 @@ function parseCSV(text: string): BulkItem[] {
       price: Number(o.price) || 0,
       stock: Number(o.stock) || 0,
       cat: o.category ?? o.cat ?? "Apparel",
+      sizes: [],
       desc: o.description ?? o.desc ?? "",
       imageUrl: parseImageCol(o),
     }))
@@ -70,6 +74,7 @@ function parseJSON(text: string): BulkItem[] {
       price: Number(p.price) || 0,
       stock: Number(p.stock) || 0,
       cat: p.category ?? p.cat ?? "Apparel",
+      sizes: Array.isArray(p.sizes) ? p.sizes.map(String) : [],
       desc: p.description ?? p.desc ?? "",
       imageUrl: p.imageUrl ?? p.image_url ?? p.image ?? "",
     }))
@@ -137,19 +142,13 @@ function EditPanel({
           Edit product
         </div>
 
-        {uploading ? (
-          <div className="flex h-[80px] items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)]">
-            <Loader2 size={15} className="animate-spin text-[var(--accent)]" />
-            <span className="text-[12px] text-[var(--accent)]">Uploading…</span>
-          </div>
-        ) : (
-          <ImageUploader
-            value={imageUrl || null}
-            onChange={(v) => setImageUrl(v ?? "")}
-            onUpload={handleUpload}
-            compact
-          />
-        )}
+        <ImageUploader
+          value={imageUrl || null}
+          onChange={(v) => setImageUrl(v ?? "")}
+          onUpload={handleUpload}
+          isUploading={uploading}
+          compact
+        />
 
         <FormField
           control={form.control}
@@ -158,8 +157,7 @@ function EditPanel({
             <FormItem>
               <FormLabel className="text-[11.5px]">Name *</FormLabel>
               <FormControl>
-                <input
-                  className="input text-[12.5px] py-1.5"
+                <Input
                   placeholder="Product name"
                   {...field}
                 />
@@ -177,8 +175,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">SKU</FormLabel>
                 <FormControl>
-                  <input
-                    className="input text-[12.5px] py-1.5"
+                  <Input
                     placeholder="SKU"
                     {...field}
                   />
@@ -212,8 +209,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">Price (PKR) *</FormLabel>
                 <FormControl>
-                  <input
-                    className="input text-[12.5px] py-1.5"
+                  <Input
                     type="number"
                     {...field}
                   />
@@ -229,8 +225,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">Stock *</FormLabel>
                 <FormControl>
-                  <input
-                    className="input text-[12.5px] py-1.5"
+                  <Input
                     type="number"
                     {...field}
                   />
@@ -255,19 +250,22 @@ function EditPanel({
         />
 
         <div className="flex gap-2 mt-auto pt-2 border-t border-[var(--line)]">
-          <button
+          <Button
             type="button"
-            className="btn btn-ghost text-[#DC2626] text-[12px]"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive"
             onClick={onDelete}
           >
             <X size={12} /> Remove
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="btn btn-grad text-[12px] flex-1 justify-center"
+            size="sm"
+            className="flex-1 justify-center"
           >
             <Check size={12} /> Apply
-          </button>
+          </Button>
         </div>
       </form>
     </Form>
@@ -326,16 +324,18 @@ function BulkCard({
           !
         </div>
       )}
-      <button
+      <Button
         type="button"
-        className="btn btn-ghost absolute top-1 right-1 p-0.5"
+        variant="ghost"
+        size="icon"
+        className="absolute top-1 right-1 h-5 w-5"
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
       >
         <X size={11} />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -452,9 +452,9 @@ export function BulkAddDialog({
               and upload images.
             </DialogDescription>
           </div>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
         </DialogHeader>
 
         {/* Drop zone */}
@@ -488,15 +488,16 @@ export function BulkAddDialog({
                 </code>
               </span>
             </div>
-            <button
-              className="btn btn-outline text-[12px]"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 fileRef.current?.click();
               }}
             >
               Browse
-            </button>
+            </Button>
             <input
               ref={fileRef}
               type="file"
@@ -521,8 +522,9 @@ export function BulkAddDialog({
                   ? "No products yet"
                   : `${items.length} product${items.length > 1 ? "s" : ""}`}
               </span>
-              <button
-                className="btn btn-outline text-[11.5px] py-0.5 px-2"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   const idx = items.length;
                   setItems((prev) => [...prev, EMPTY_ITEM()]);
@@ -530,7 +532,7 @@ export function BulkAddDialog({
                 }}
               >
                 <Plus size={11} /> Add
-              </button>
+              </Button>
             </div>
             <div className="scroll flex-1 overflow-y-auto p-3">
               <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
@@ -608,21 +610,20 @@ export function BulkAddDialog({
             )}
           </span>
           <div className="flex gap-2">
-            <button
-              className="btn btn-outline"
+            <Button
+              variant="outline"
               onClick={onClose}
               disabled={isSaving}
             >
               Cancel
-            </button>
-            <button
-              className="btn btn-grad"
+            </Button>
+            <Button
               disabled={!valid || isSaving}
               onClick={() => onSaveAll(items)}
             >
               {isSaving ? (
                 <>
-                  <span className="animate-spin inline-block h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />{" "}
+                  <Loader2 size={13} className="animate-spin" />{" "}
                   Saving…
                 </>
               ) : (
@@ -631,7 +632,7 @@ export function BulkAddDialog({
                   {items.length === 1 ? "" : "s"}
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

@@ -6,6 +6,7 @@ import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter } from "../../types";
 import { STATUS_META } from "../../types";
 import LeadCard from "../LeadCard";
+import { Button } from "@/shared/ui/Button";
 
 // ──────────────────── Kanban View ────────────────────
 export default function KanbanView({
@@ -79,13 +80,14 @@ export default function KanbanView({
                 {grouped[key]?.length ?? 0}
               </span>
             </div>
-            <button
-              className="btn btn-ghost p-1"
+            <Button
+              variant="ghost"
+              size="icon"
               title={`Add ${c.label} lead`}
               onClick={() => onAddLead(key as LeadStatus)}
             >
               <Plus size={13} />
-            </button>
+            </Button>
           </div>
           <div className="scroll overflow-y-auto flex-1 flex flex-col gap-2 pr-0.5 min-h-[80px]">
             {grouped[key]?.map((l) => (

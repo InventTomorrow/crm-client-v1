@@ -9,10 +9,10 @@ import { cn } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
   ChevronDown,
-  ChevronLeft,
   Inbox,
   Moon,
   Package,
+  PlayCircle,
   Settings,
   ShoppingCart,
   Sun,
@@ -23,9 +23,10 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProfileMenu } from "./ProfileMenu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { Button } from "@/shared/ui/Button";
 
 const NAV_ITEMS: {
   href: string;
@@ -57,6 +58,7 @@ const NAV_ITEMS: {
     label: "Settings",
     Icon: Settings,
   },
+  { href: "/demo", label: "Demo", Icon: PlayCircle },
 ];
 
 interface AppSidebarProps {
@@ -83,6 +85,22 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   };
   const [profileOpen, setProfileOpen] = useState(false);
   const collapsed = sidebarCollapsed;
+
+  // Inbox wants maximum chat space — collapse the sidebar once on entry, while
+  // still letting the user expand it manually afterwards. Defer the collapse
+  // until the inbox has painted so its mount doesn't fight the width animation
+  // (otherwise the sidebar jerks while the page is still loading).
+  const isInbox = pathname.startsWith("/inbox");
+  const wasInboxRef = useRef(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (isInbox && !wasInboxRef.current && !sidebarCollapsed) {
+      timer = setTimeout(() => toggleSidebar(), 400);
+    }
+    wasInboxRef.current = isInbox;
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInbox]);
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -113,13 +131,13 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
             "width 240ms cubic-bezier(.22,.9,.4,1), transform 260ms cubic-bezier(.22,.9,.4,1)",
         }}
       >
-        {/* Logo + collapse — toggle always lives at the top in both states */}
+        {/* Logo — the collapse toggle lives in the top bar (hamburger) */}
         <div
           className={cn(
             "flex gap-2.5",
             collapsed
               ? "flex-col items-center px-0 pt-[14px] pb-1.5"
-              : "items-center justify-between px-[14px] pt-[14px] pb-1.5",
+              : "items-center px-[14px] pt-[14px] pb-1.5",
           )}
         >
           <Link href="/" className="flex items-center gap-2 min-w-0">
@@ -137,20 +155,6 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               </span>
             )}
           </Link>
-          <button
-            className="btn btn-ghost hide-mobile p-1 transition-colors"
-            onClick={toggleSidebar}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <ChevronLeft
-              size={14}
-              className={cn(
-                "transition-transform duration-300 ease-out",
-                collapsed && "rotate-180",
-              )}
-            />
-          </button>
         </div>
 
         <WorkspaceSwitcher collapsed={collapsed} />
@@ -226,12 +230,14 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               </button>
             </div>
           ) : (
-            <button
-              className="btn btn-ghost justify-center p-2"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="w-full justify-center"
               onClick={toggleTheme}
             >
               {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
+            </Button>
           )}
 
           {/* Profile */}

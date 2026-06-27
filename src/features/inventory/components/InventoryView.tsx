@@ -10,8 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
 import { Input } from "@/shared/ui/Input";
+import { Button } from "@/shared/ui/Button";
+import { Textarea } from "@/shared/ui/Textarea";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/NativeSelect";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Skeleton } from "@/shared/ui/Motion";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
@@ -68,6 +73,7 @@ import {
   CATEGORIES,
   ERP_SYSTEMS,
   GENDERS,
+  SIZE_GROUPS,
   STOREFRONTS,
   TIERS,
   productSchema,
@@ -151,7 +157,7 @@ function ProductDialog({
         price: 0,
         stock: 0,
         cat: "Apparel",
-        size: "",
+        sizes: [],
         gender: "",
         color: "",
         desc: "",
@@ -170,7 +176,7 @@ function ProductDialog({
               price: initial.price ?? 0,
               stock: initial.stock ?? 0,
               cat: initial.cat ?? "Apparel",
-              size: initial.size ?? "",
+              sizes: initial.sizes ?? [],
               gender: initial.gender ?? "",
               color: initial.color ?? "",
               desc: initial.desc ?? "",
@@ -181,7 +187,7 @@ function ProductDialog({
               price: 0,
               stock: 0,
               cat: "Apparel",
-              size: "",
+              sizes: [],
               gender: "",
               color: "",
               desc: "",
@@ -216,13 +222,15 @@ function ProductDialog({
               Tier 1 · Manual Catalog
             </DialogDescription>
           </div>
-          <button
-            className="btn btn-ghost p-1.5"
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             disabled={busy}
           >
             <X size={18} />
-          </button>
+          </Button>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -243,7 +251,6 @@ function ProductDialog({
                   <FormLabel>Product Name *</FormLabel>
                   <FormControl>
                     <Input
-                      className="input"
                       placeholder="Lawn Suit 3-Piece Unstitched"
                       autoFocus
                       {...field}
@@ -263,7 +270,6 @@ function ProductDialog({
                     <FormLabel>SKU</FormLabel>
                     <FormControl>
                       <Input
-                        className="input"
                         placeholder="LWN-3P-001"
                         {...field}
                         disabled={busy}
@@ -290,24 +296,7 @@ function ProductDialog({
                 )}
               />
             </div>
-            <div className="grid grid-cols-3 gap-2.5">
-              <FormField
-                control={form.control}
-                name="size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Size</FormLabel>
-                    <FormControl>
-                      <Input
-                        className="input"
-                        placeholder="M / 42 / 9"
-                        {...field}
-                        disabled={busy}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+            <div className="grid grid-cols-2 gap-2.5">
               <FormField
                 control={form.control}
                 name="gender"
@@ -315,18 +304,18 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>Gender</FormLabel>
                     <FormControl>
-                      <select
-                        className="input"
+                      <NativeSelect
+                        className="w-full"
                         {...field}
                         disabled={busy}
                       >
-                        <option value="">—</option>
+                        <NativeSelectOption value="">—</NativeSelectOption>
                         {GENDERS.map((g) => (
-                          <option key={g} value={g}>
+                          <NativeSelectOption key={g} value={g}>
                             {g}
-                          </option>
+                          </NativeSelectOption>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </FormControl>
                   </FormItem>
                 )}
@@ -339,7 +328,6 @@ function ProductDialog({
                     <FormLabel>Color</FormLabel>
                     <FormControl>
                       <Input
-                        className="input"
                         placeholder="Maroon"
                         {...field}
                         disabled={busy}
@@ -358,7 +346,6 @@ function ProductDialog({
                     <FormLabel>Price *</FormLabel>
                     <FormControl>
                       <Input
-                        className="input"
                         type="number"
                         placeholder="8999"
                         {...field}
@@ -377,7 +364,6 @@ function ProductDialog({
                     <FormLabel>Stock *</FormLabel>
                     <FormControl>
                       <Input
-                        className="input"
                         type="number"
                         placeholder="47"
                         {...field}
@@ -396,8 +382,7 @@ function ProductDialog({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <textarea
-                      className="input"
+                    <Textarea
                       rows={3}
                       placeholder="Premium unstitched lawn fabric, 3-piece set..."
                       {...field}
@@ -407,17 +392,57 @@ function ProductDialog({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="sizes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Available Sizes</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-col gap-2.5">
+                      {SIZE_GROUPS.map((group) => (
+                        <div key={group.label} className="flex flex-col gap-1.5">
+                          <span className="text-[11px] font-medium text-[var(--ink-mute)]">
+                            {group.label}
+                          </span>
+                          <ToggleGroup
+                            type="multiple"
+                            variant="outline"
+                            size="sm"
+                            value={field.value ?? []}
+                            onValueChange={field.onChange}
+                            disabled={busy}
+                            className="flex-wrap justify-start"
+                          >
+                            {group.options.map((option) => (
+                              <ToggleGroupItem
+                                key={option}
+                                value={option}
+                                aria-label={option}
+                              >
+                                {option}
+                              </ToggleGroupItem>
+                            ))}
+                          </ToggleGroup>
+                        </div>
+                      ))}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="flex justify-between gap-2 pt-1 border-t border-[var(--line)] mt-1">
               {onDelete ? (
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost text-[#DC2626]"
+                  variant="destructive"
                   onClick={onDelete}
                   disabled={busy}
                 >
                   {isDeleting ? (
                     <>
-                      <span className="animate-spin inline-block mr-1.5 h-3.5 w-3.5 border-2 border-red-600 border-t-transparent rounded-full" />
+                      <span className="animate-spin inline-block mr-1.5 h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />
                       Removing...
                     </>
                   ) : (
@@ -425,20 +450,20 @@ function ProductDialog({
                       <Trash2 size={13} /> Remove
                     </>
                   )}
-                </button>
+                </Button>
               ) : (
                 <span />
               )}
               <div className="flex gap-2">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-outline"
+                  variant="outline"
                   onClick={onClose}
                   disabled={busy}
                 >
                   Cancel
-                </button>
-                <button type="submit" className="btn btn-grad" disabled={busy}>
+                </Button>
+                <Button type="submit" disabled={busy}>
                   {isSaving ? (
                     <>
                       <span className="animate-spin inline-block mr-1.5 h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />
@@ -449,7 +474,7 @@ function ProductDialog({
                       <Check size={13} /> Save
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           </form>
@@ -581,26 +606,29 @@ function ProductGridCard({
             hovered ? "opacity-100" : "opacity-0",
           )}
         >
-          <button
-            className="btn flex-1 justify-center py-1.5 text-[12px] bg-[rgba(255,255,255,0.95)] text-[var(--ink)]"
+          <Button
+            size="sm"
+            className="flex-1 bg-white/95 text-[var(--ink)] hover:bg-white"
             onClick={onEdit}
           >
             <Pencil size={12} /> Edit
-          </button>
-          <button
-            className="btn p-1.5 bg-[rgba(255,255,255,0.95)] text-[var(--ink)]"
+          </Button>
+          <Button
+            size="icon-sm"
+            className="bg-white/95 text-[var(--ink)] hover:bg-white"
             onClick={onDuplicate}
             title="Duplicate"
           >
             <Copy size={13} />
-          </button>
-          <button
-            className="btn p-1.5 bg-[rgba(239,68,68,0.95)] text-white"
+          </Button>
+          <Button
+            size="icon-sm"
+            className="bg-[rgba(239,68,68,0.95)] text-white hover:bg-[rgba(239,68,68,1)]"
             onClick={onDelete}
             title="Delete"
           >
             <Trash2 size={13} />
-          </button>
+          </Button>
         </div>
       </div>
       <div className="p-[10px]">
@@ -661,10 +689,13 @@ export function InventoryView() {
   const bulkAddProducts = useBulkAddProducts();
   const { inventoryView, setInventoryView } = useAppStore();
 
-  const [tier, setTier] = useState(1);
-  const [search, setSearch] = useState("");
-  const [filterCat, setFilterCat] = useState<string>("");
-  const [filterStock, setFilterStock] = useState<"" | "in" | "low" | "out">("");
+  const [tierParam, setTierParam] = useUrlState("tier", "1");
+  const tier = Number(tierParam) || 1;
+  const setTier = (t: number) => setTierParam(String(t));
+  const [search, setSearch] = useUrlState("q");
+  const [filterCat, setFilterCat] = useUrlState("cat");
+  const [filterStockParam, setFilterStock] = useUrlState("stock");
+  const filterStock = filterStockParam as "" | "in" | "low" | "out";
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [singleOpen, setSingleOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -726,7 +757,7 @@ export function InventoryView() {
       stock: data.stock,
       description: data.desc || undefined,
       category: data.cat || undefined,
-      size: data.size || undefined,
+      sizes: data.sizes ?? [],
       gender: data.gender || undefined,
       color: data.color || undefined,
       imageUrls: data.imageUrls,
@@ -768,6 +799,7 @@ export function InventoryView() {
             price: Number(o["price"]) || 0,
             stock: Number(o["stock"]) || 0,
             cat: o["category"] ?? o["cat"] ?? "Apparel",
+            sizes: [],
             desc: o["description"] ?? o["desc"] ?? "",
             imageUrl:
               o["image_url"] ??
@@ -846,40 +878,39 @@ export function InventoryView() {
                   className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
                 />
                 <Input
-                  className="input pl-8"
+                  className="pl-8"
                   placeholder="Search products..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <div className="flex-1" />
-              <button
-                className="btn btn-outline"
+              <Button
+                variant="outline"
                 onClick={() => exportProductsCsv(filtered)}
                 disabled={filtered.length === 0}
                 title="Export current products to CSV"
               >
                 <Download size={13} /> Export
-              </button>
-              <div className="seg">
+              </Button>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={inventoryView}
+                onValueChange={(v) => v && setInventoryView(v as InvViewType)}
+              >
                 {VIEW_BTNS.map(({ id, label, Icon }) => (
-                  <button
-                    key={id}
-                    className={inventoryView === id ? "on" : ""}
-                    onClick={() => setInventoryView(id)}
-                  >
+                  <ToggleGroupItem key={id} value={id} aria-label={label}>
                     <Icon size={12} /> {label}
-                  </button>
+                  </ToggleGroupItem>
                 ))}
-              </div>
+              </ToggleGroup>
               <PermissionGuard permission="inventory:edit">
               <div ref={addMenuRef} className="relative">
-                <button
-                  className="btn btn-grad"
-                  onClick={() => setAddMenuOpen((v) => !v)}
-                >
+                <Button onClick={() => setAddMenuOpen((v) => !v)}>
                   <Plus size={13} /> Add product <ChevronDown size={11} />
-                </button>
+                </Button>
                 {addMenuOpen && (
                   <div className="card-2 fade-up absolute right-0 top-[calc(100%+6px)] z-40 p-1.5 min-w-[220px] bg-[var(--surface)]">
                     <AddMenuItem
@@ -942,18 +973,15 @@ export function InventoryView() {
               </span>
               {/* Category chips */}
               {(["", ...categoryOptions] as string[]).map((cat) => (
-                <button
+                <Button
                   key={cat || "all-cat"}
+                  size="xs"
+                  variant={filterCat === cat ? "default" : "outline"}
                   onClick={() => setFilterCat(cat)}
-                  className={cn(
-                    "text-[11.5px] px-2.5 py-1 rounded-full border transition-colors",
-                    filterCat === cat
-                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-                      : "bg-[var(--surface-2)] text-[var(--ink-mute)] border-[var(--line)] hover:border-[var(--accent)]",
-                  )}
+                  className="rounded-full"
                 >
                   {cat || "All"}
-                </button>
+                </Button>
               ))}
               <div className="w-px h-4 bg-[var(--line)] mx-1" />
               {/* Stock status chips */}
@@ -965,29 +993,28 @@ export function InventoryView() {
                   { id: "out", label: "Out" },
                 ] as const
               ).map(({ id, label }) => (
-                <button
+                <Button
                   key={id || "any"}
+                  size="xs"
+                  variant={filterStock === id ? "default" : "outline"}
                   onClick={() => setFilterStock(id)}
-                  className={cn(
-                    "text-[11.5px] px-2.5 py-1 rounded-full border transition-colors",
-                    filterStock === id
-                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-                      : "bg-[var(--surface-2)] text-[var(--ink-mute)] border-[var(--line)] hover:border-[var(--accent)]",
-                  )}
+                  className="rounded-full"
                 >
                   {label}
-                </button>
+                </Button>
               ))}
               {(filterCat || filterStock) && (
-                <button
+                <Button
+                  size="xs"
+                  variant="ghost"
                   onClick={() => {
                     setFilterCat("");
                     setFilterStock("");
                   }}
-                  className="text-[11px] text-[var(--ink-mute)] hover:text-[var(--destructive)] flex items-center gap-1 ml-1"
+                  className="text-[var(--ink-mute)] hover:text-[var(--destructive)]"
                 >
                   <X size={11} /> Clear
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -1149,27 +1176,31 @@ export function InventoryView() {
                       const p = row.original;
                       return (
                         <div className="flex items-center gap-0.5">
-                          <button
-                            className="btn btn-ghost p-1.5"
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => {
                               setEditing(p);
                               setSingleOpen(true);
                             }}
                           >
                             <Pencil size={13} />
-                          </button>
-                          <button
-                            className="btn btn-ghost p-1.5"
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => duplicateProduct.mutate(p)}
                           >
                             <Copy size={13} />
-                          </button>
-                          <button
-                            className="btn btn-ghost p-1.5 text-[#DC2626]"
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-[var(--destructive)]"
                             onClick={() => deleteProduct.mutate(p.id)}
                           >
                             <Trash2 size={13} />
-                          </button>
+                          </Button>
                         </div>
                       );
                     },
@@ -1197,12 +1228,12 @@ export function InventoryView() {
           </p>
           <div className="flex gap-2 mb-4">
             <Input
-              className="input flex-1"
+              className="flex-1"
               placeholder="https://daraz.pk/products/lawn-suit-3-piece-..."
             />
-            <button className="btn btn-grad">
+            <Button>
               <Zap size={13} /> Extract
-            </button>
+            </Button>
           </div>
           <div className="card flex gap-3 items-center p-3">
             <div className="placeholder-img w-16 h-16 aspect-auto">IMG</div>
@@ -1220,7 +1251,7 @@ export function InventoryView() {
                 </span>
               </div>
             </div>
-            <button className="btn btn-grad">Save</button>
+            <Button>Save</Button>
           </div>
         </div>
       )}
@@ -1252,13 +1283,13 @@ export function InventoryView() {
                   </div>
                 </div>
                 {s.status === "connected" ? (
-                  <button className="btn btn-outline w-full justify-center">
+                  <Button variant="outline" className="w-full">
                     <Check size={12} /> Connected
-                  </button>
+                  </Button>
                 ) : (
-                  <button className="btn btn-grad w-full justify-center">
+                  <Button className="w-full">
                     <Link size={12} /> Connect
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -1280,7 +1311,7 @@ export function InventoryView() {
                 secure middleware.
               </div>
             </div>
-            <button className="btn btn-grad">Request access</button>
+            <Button>Request access</Button>
           </div>
           <div className="grid grid-cols-3 gap-[10px]">
             {ERP_SYSTEMS.map((n) => (
@@ -1329,6 +1360,7 @@ export function InventoryView() {
             price: p.price,
             stock: p.stock,
             description: p.desc || undefined,
+            sizes: p.sizes ?? [],
             imageUrls: p.imageUrl ? [p.imageUrl] : [],
           }));
           bulkAddProducts.mutate(payloads, {

@@ -43,6 +43,7 @@ export interface Product {
   status: 'in' | 'low' | 'out';
   cat: string;
   size?: string;
+  sizes?: string[];
   gender?: string;
   color?: string;
   desc?: string;

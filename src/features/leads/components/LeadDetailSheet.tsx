@@ -3,6 +3,7 @@ import { pkr } from "@/lib/utils";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
+import { Button } from "@/shared/ui/Button";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import {
   Inbox,
@@ -59,9 +60,9 @@ export default function LeadDetailSheet({
       <div className="card-2 fade-up fixed flex flex-col overflow-hidden bg-[var(--surface)] right-[14px] top-[14px] bottom-[14px] w-[420px] z-[70]">
         {/* Header */}
         <div className="relative p-[18px] border-b border-[var(--line)]">
-          <button className="btn btn-ghost absolute top-2.5 right-2.5 p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" className="absolute top-2.5 right-2.5" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
           <div className="flex items-center gap-3">
             <CRMAvatar name={lead.name} size={52} ring />
             <div>
@@ -183,28 +184,30 @@ export default function LeadDetailSheet({
         {/* Footer actions */}
         <div className="flex flex-col gap-2 p-3.5 border-t border-[var(--line)]">
           <div className="flex gap-2">
-            <button className="btn btn-outline flex-1 justify-center" onClick={() => onOpenChat(lead)}>
+            <Button variant="outline" className="flex-1 justify-center" onClick={() => onOpenChat(lead)}>
               <Inbox size={14} /> Open Chat
-            </button>
+            </Button>
             <PermissionGuard permission="leads:edit">
-              <button className="btn btn-outline flex-1 justify-center" onClick={() => onEdit(lead)}>
+              <Button variant="outline" className="flex-1 justify-center" onClick={() => onEdit(lead)}>
                 <Pencil size={14} /> Edit
-              </button>
+              </Button>
             </PermissionGuard>
             <PermissionGuard permission="leads:delete">
-              <button
-                className="btn btn-outline justify-center text-[#DC2626] border-[#FECACA] hover:bg-[#FEF2F2]"
+              <Button
+                variant="outline"
+                size="icon"
+                className="text-destructive border-destructive/30 hover:bg-destructive/5"
                 onClick={() => onDelete(lead)}
                 disabled={isDeleting}
                 title="Delete lead"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-              </button>
+              </Button>
             </PermissionGuard>
           </div>
-          <button className="btn btn-grad w-full justify-center">
+          <Button className="w-full justify-center">
             <Link size={14} /> Generate Checkout
-          </button>
+          </Button>
         </div>
       </div>
     </>

@@ -1,15 +1,9 @@
 "use client";
-import { cn, getImageUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { CRMSwitch } from "@/shared/ui/CRMSwitch";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/Dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,19 +14,16 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
-import { Skeleton, Spinner } from "@/shared/ui/Motion";
+import { Input } from "@/shared/ui/Input";
+import { Spinner } from "@/shared/ui/Motion";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
-import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
-  Archive,
-  ArchiveRestore,
   Bot,
   Check,
   CheckCheck,
   ChevronLeft,
-  Download,
   Edit2,
   FileAudio,
   FileText,
@@ -46,29 +37,32 @@ import {
   Package,
   Palette,
   Paperclip,
-  Pause,
   Phone,
-  Play,
   Plus,
   Send,
   ShoppingCart,
   Smile,
   Star,
   Trash2,
-  User,
   Video,
   X,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
 import { STATUS_META } from "../../leads/types";
 import { OrderForm } from "../../orders/components/OrderForm";
 import { useCreateOrder, useLeadOrders } from "../../orders/hooks/useOrders";
+import {
+  BUILT_IN_TABS,
+  CHAT_BG_PRESETS,
+  EMOJI_LIST,
+  type CustomTab,
+} from "../constants";
 import {
   filterConversations,
   useAgentTyping,
@@ -88,626 +82,19 @@ import {
   useToggleAiMode,
   useUploadAttachment,
 } from "../hooks/useConversations";
+import { groupByDay } from "../lib/time";
 import type {
   ConversationFilter,
   ConversationListItem,
+  ConversationMessage,
   MobilePane,
 } from "../types";
+import { ConversationRow } from "./ConversationRow";
+import { DateSeparator } from "./DateSeparator";
+import { EscalationBadge } from "./EscalationBadge";
+import { MessageBubble } from "./MessageBubble";
 import { NewChatDialog } from "./NewChatDialog";
-
-const CHAT_BG_PRESETS = [
-  { id: "default", label: "Default", value: "" },
-  { id: "wa-classic", label: "Classic", value: "#ECE5DD" },
-  { id: "wa-dark", label: "Night", value: "#0B141A" },
-  {
-    id: "teal",
-    label: "Teal",
-    value: "linear-gradient(160deg,#075E54,#128C7E)",
-  },
-  {
-    id: "mint",
-    label: "Mint",
-    value: "linear-gradient(160deg,#d4f1c5,#a8e6b0)",
-  },
-  { id: "slate", label: "Slate", value: "#1e293b" },
-  {
-    id: "blush",
-    label: "Blush",
-    value: "linear-gradient(160deg,#fce4ec,#f8bbd0)",
-  },
-  {
-    id: "ocean",
-    label: "Ocean",
-    value: "linear-gradient(160deg,#e3f2fd,#bbdefb)",
-  },
-];
-
-const BUILT_IN_TABS = [
-  { id: "all", label: "All" },
-  { id: "unread", label: "Unread" },
-  { id: "favorites", label: "Favorites" },
-  { id: "escalated", label: "Needs Attention" },
-  { id: "archived", label: "Archived" },
-];
-
-const EMOJI_LIST = [
-  "😊",
-  "😂",
-  "❤️",
-  "👍",
-  "🙏",
-  "😍",
-  "😭",
-  "🤗",
-  "👋",
-  "🎉",
-  "🔥",
-  "💯",
-  "✅",
-  "🙌",
-  "😎",
-  "🤝",
-  "💪",
-  "🚀",
-  "👀",
-  "📦",
-  "💬",
-  "📞",
-  "🌟",
-  "⭐",
-  "🎁",
-  "💰",
-  "😁",
-  "🥰",
-  "😅",
-  "🤔",
-];
-
-interface CustomTab {
-  id: string;
-  label: string;
-}
-
-// ─── Skeleton loaders ─────────────────────────────────────────────────────────
-
-function ChatListSkeleton() {
-  return (
-    <div className="flex flex-col">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-[11px] px-[14px] py-[11px] border-b border-[var(--line-soft)]"
-        >
-          <Skeleton circle className="w-[38px] h-[38px] flex-shrink-0" />
-          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-            <div className="flex justify-between">
-              <Skeleton className="h-[12px] w-28" />
-              <Skeleton className="h-[10px] w-8" />
-            </div>
-            <Skeleton className="h-[10px] w-40" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MessageSkeleton() {
-  const rows = [
-    { out: false, w: "w-48" },
-    { out: true, w: "w-36" },
-    { out: false, w: "w-56" },
-    { out: true, w: "w-44" },
-    { out: false, w: "w-32" },
-  ];
-  return (
-    <div className="flex flex-col gap-4 px-4 py-6">
-      {rows.map(({ out, w }, i) => (
-        <div
-          key={i}
-          className={`flex ${out ? "justify-end" : "justify-start"}`}
-        >
-          <div className="flex flex-col gap-1">
-            <Skeleton className={`h-9 ${w} rounded-[14px]`} />
-            <Skeleton className="h-[9px] w-10 ml-1" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60_000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
-
-function shortTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-/** Local YYYY-MM-DD key for grouping messages by calendar day. */
-function dayKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-/** WhatsApp-style day label: Today, Yesterday, or a full date. */
-function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-
-  if (dayKey(iso) === dayKey(today.toISOString())) return "Today";
-  if (dayKey(iso) === dayKey(yesterday.toISOString())) return "Yesterday";
-
-  return d.toLocaleDateString([], {
-    day: "numeric",
-    month: "long",
-    ...(d.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}),
-  });
-}
-
-function DateSeparator({ iso }: { iso: string }) {
-  return (
-    <div className="sticky top-1.5 z-10 flex justify-center py-1 pointer-events-none">
-      <span className="rounded-full bg-[var(--surface-2)] border border-[var(--line)] px-3 py-1 text-[11px] font-medium text-[var(--ink-mute)] shadow-sm">
-        {dayLabel(iso)}
-      </span>
-    </div>
-  );
-}
-
-function EscalationBadge({ status }: { status: string }) {
-  if (status === "ESCALATED") {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#EF4444] bg-[#FEF2F2] px-1.5 py-0.5 rounded-full">
-        <Flame size={9} /> Needs Attention
-      </span>
-    );
-  }
-  if (status === "RESOLVED") {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#15803D] bg-[#DCFCE7] px-1.5 py-0.5 rounded-full">
-        <Check size={9} /> Done
-      </span>
-    );
-  }
-  return null;
-}
-
-// Static pseudo-waveform — deterministic bar heights for the WhatsApp look.
-const WAVEFORM_BARS = [
-  0.35, 0.55, 0.8, 0.45, 0.95, 0.6, 0.4, 0.7, 1, 0.5, 0.3, 0.65, 0.85, 0.45,
-  0.55, 0.9, 0.4, 0.75, 0.6, 0.35, 0.8, 0.5, 0.7, 0.45, 0.6, 0.9, 0.4, 0.55,
-];
-
-/** WhatsApp-style voice note player: play/pause, seekable waveform, timer, mic. */
-function AudioBubble({ url, outbound }: { url: string; outbound: boolean }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const probingRef = useRef(false); // true while forcing duration calc
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  const knownDuration = Number.isFinite(duration) && duration > 0;
-  const pct = knownDuration ? Math.min((progress / duration) * 100, 100) : 0;
-
-  // .ogg/opus and .webm recordings often lack a duration header, so the browser
-  // reports Infinity. Seeking to a huge time forces it to scan and compute the
-  // real duration, which then arrives via `durationchange`; we reset to 0 after.
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-
-    const resolveDuration = () => {
-      if (Number.isFinite(a.duration) && a.duration > 0) {
-        setDuration(a.duration);
-        if (probingRef.current) {
-          probingRef.current = false;
-          a.currentTime = 0;
-        }
-      } else if (!probingRef.current) {
-        probingRef.current = true;
-        try {
-          a.currentTime = 1e101;
-        } catch {
-          /* seeking unsupported */
-        }
-      }
-    };
-
-    a.addEventListener("loadedmetadata", resolveDuration);
-    a.addEventListener("durationchange", resolveDuration);
-    if (a.readyState >= 1) resolveDuration(); // metadata already available
-
-    return () => {
-      a.removeEventListener("loadedmetadata", resolveDuration);
-      a.removeEventListener("durationchange", resolveDuration);
-    };
-  }, [url]);
-
-  const toggle = async () => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (a.paused) {
-      try {
-        await a.play();
-      } catch {
-        /* autoplay/decoding guard */
-      }
-    } else {
-      a.pause();
-    }
-  };
-
-  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const a = audioRef.current;
-    if (!a || !knownDuration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.min(
-      Math.max((e.clientX - rect.left) / rect.width, 0),
-      1,
-    );
-    a.currentTime = ratio * duration;
-    setProgress(a.currentTime);
-  };
-
-  const fmt = (s: number) => {
-    if (!Number.isFinite(s) || s < 0) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
-  const filledColor = outbound ? "bg-white" : "bg-[var(--accent)]";
-  const trackColor = outbound ? "bg-white/35" : "bg-[var(--ink-mute)]/30";
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-[16px] px-3 py-2.5 min-w-[230px] max-w-[280px]",
-        outbound
-          ? "bg-[var(--accent)] text-white"
-          : "bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]",
-      )}
-    >
-      {/* Play / pause */}
-      <button
-        onClick={toggle}
-        aria-label={playing ? "Pause" : "Play"}
-        className={cn(
-          "flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 transition-transform active:scale-95",
-          outbound
-            ? "bg-white text-[var(--accent)]"
-            : "bg-[var(--accent)] text-white",
-        )}
-      >
-        {playing ? (
-          <Pause size={16} fill="currentColor" />
-        ) : (
-          <Play size={16} fill="currentColor" className="ml-0.5" />
-        )}
-      </button>
-
-      {/* Waveform + timer */}
-      <div className="flex-1 min-w-0">
-        <div
-          onClick={seek}
-          className={cn(
-            "flex items-center gap-[2px] h-7",
-            knownDuration && "cursor-pointer",
-          )}
-        >
-          {WAVEFORM_BARS.map((h, i) => {
-            const barPct = ((i + 1) / WAVEFORM_BARS.length) * 100;
-            const filled = barPct <= pct;
-            return (
-              <span
-                key={i}
-                className={cn(
-                  "flex-1 rounded-full transition-colors",
-                  filled ? filledColor : trackColor,
-                )}
-                style={{ height: `${Math.max(h * 100, 18)}%` }}
-              />
-            );
-          })}
-        </div>
-        <div
-          className={cn(
-            "flex items-center gap-1 mt-1 text-[10.5px]",
-            outbound ? "text-white/85" : "text-[var(--ink-mute)]",
-          )}
-        >
-          <Mic
-            size={11}
-            className={outbound ? "text-white/85" : "text-[var(--accent)]"}
-          />
-          <span>{fmt(playing || progress > 0 ? progress : duration)}</span>
-        </div>
-      </div>
-
-      <audio
-        ref={audioRef}
-        src={url}
-        preload="metadata"
-        onTimeUpdate={(e) => {
-          if (!probingRef.current) setProgress(e.currentTarget.currentTime);
-        }}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => {
-          setPlaying(false);
-          setProgress(0);
-        }}
-      />
-    </div>
-  );
-}
-
-/** Renders inbound/outbound media (image, video, audio, document) WhatsApp-style. */
-function MediaBubble({
-  mediaUrl,
-  mediaType,
-  caption,
-  outbound,
-}: {
-  mediaUrl: string;
-  mediaType: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
-  caption?: string | null;
-  outbound: boolean;
-}) {
-  // Hide caption when it's just the raw URL or a placeholder label
-  // (e.g. "[audio]" or "🎤 Voice message") that adds no information.
-  const PLACEHOLDER_RE =
-    /^(\[(image|video|audio|document)\]|🎤\s*voice message)$/i;
-  const showCaption =
-    !!caption && caption !== mediaUrl && !PLACEHOLDER_RE.test(caption.trim());
-
-  if (mediaType === "IMAGE") {
-    return (
-      <div className="rounded-[14px] overflow-hidden max-w-[220px]">
-        <ShimmerImage
-          src={getImageUrl(mediaUrl)}
-          alt="attachment"
-          wrapperClassName="w-full"
-          loadingClassName="h-[180px] w-[200px]"
-          className="w-full object-cover"
-          style={{ maxHeight: 260 }}
-        />
-        {showCaption && (
-          <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>
-        )}
-      </div>
-    );
-  }
-
-  if (mediaType === "VIDEO") {
-    return (
-      <div className="rounded-[14px] overflow-hidden max-w-[240px]">
-        <video
-          src={mediaUrl}
-          controls
-          className="w-full"
-          style={{ maxHeight: 280 }}
-        />
-        {showCaption && (
-          <p className="text-[13px] px-1 py-1 text-[var(--ink)]">{caption}</p>
-        )}
-      </div>
-    );
-  }
-
-  if (mediaType === "AUDIO") {
-    return (
-      <div className="flex flex-col gap-1">
-        <AudioBubble url={mediaUrl} outbound={outbound} />
-        {showCaption && (
-          <p
-            className={cn(
-              "text-[12.5px] italic px-1",
-              outbound
-                ? "text-right text-[var(--ink-soft)]"
-                : "text-[var(--ink-soft)]",
-            )}
-          >
-            “{caption}”
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  // DOCUMENT
-  return (
-    <a
-      href={mediaUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={cn(
-        "flex items-center gap-2.5 rounded-[14px] px-3 py-2.5 min-w-[180px] max-w-[240px] no-underline",
-        outbound
-          ? "bg-[var(--accent)] text-white"
-          : "bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]",
-      )}
-    >
-      <div
-        className={cn(
-          "flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0",
-          outbound ? "bg-white/20" : "bg-[var(--accent-soft)]",
-        )}
-      >
-        <FileText
-          size={16}
-          className={outbound ? "text-white" : "text-[var(--accent)]"}
-        />
-      </div>
-      <span className="flex-1 min-w-0 truncate text-[12.5px] font-medium">
-        {showCaption ? caption : "Document"}
-      </span>
-      <Download
-        size={14}
-        className={cn(
-          "flex-shrink-0",
-          outbound ? "text-white/80" : "text-[var(--ink-mute)]",
-        )}
-      />
-    </a>
-  );
-}
-
-function ConversationRow({
-  conv,
-  active,
-  onClick,
-  isFavorite,
-  isArchived,
-  onToggleFavorite,
-  onToggleArchive,
-  onDelete,
-}: {
-  conv: ConversationListItem;
-  active: boolean;
-  onClick: () => void;
-  isFavorite: boolean;
-  isArchived: boolean;
-  onToggleFavorite: () => void;
-  onToggleArchive: () => void;
-  onDelete: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const lastMsg = conv.messages[0];
-  const displayName = conv.lead.name ?? conv.lead.phone ?? "Unknown";
-  const unread = conv.unreadCount > 0;
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-      onClick={onClick}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setMenuOpen(true);
-      }}
-      className={cn(
-        "group/row relative flex items-center gap-[11px] cursor-pointer px-[14px] py-[11px]",
-        "border-b border-[var(--line-soft)] border-l-2 transition-[background] duration-[120ms]",
-        active
-          ? "bg-[var(--accent-soft)] border-l-[var(--accent)]"
-          : "border-l-transparent hover:bg-[var(--surface-2)]",
-      )}
-    >
-      <div className="relative flex-shrink-0">
-        <CRMAvatar name={displayName} size={38} />
-        <span className="absolute -bottom-px -right-px w-3.5 h-3.5 rounded-full border-2 border-[var(--surface)] bg-[#25D366] flex items-center justify-center">
-          <span className="text-[7px] text-white font-bold">W</span>
-        </span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-center gap-1.5 mb-0.5">
-          <span className="font-medium text-[13.5px] text-[var(--ink)] truncate flex items-center gap-1">
-            {isFavorite && (
-              <Star
-                size={11}
-                className="text-[#CA8A04] flex-shrink-0"
-                fill="currentColor"
-              />
-            )}
-            <span className="truncate">{displayName}</span>
-          </span>
-          {lastMsg && (
-            <span className="flex-shrink-0 text-[11px] text-[var(--ink-mute)] group-hover/row:hidden">
-              {relativeTime(lastMsg.createdAt)}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className={cn(
-              "text-[12.5px] truncate flex-1",
-              unread
-                ? "text-[var(--ink)] font-medium"
-                : "text-[var(--ink-soft)]",
-            )}
-          >
-            {lastMsg?.senderType === "AI" && (
-              <span className="text-[var(--accent)]">AI: </span>
-            )}
-            {lastMsg?.senderType === "AGENT" && (
-              <span className="text-[var(--ink-mute)]">You: </span>
-            )}
-            {lastMsg?.content ?? "—"}
-          </span>
-          {unread ? (
-            <span className="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10.5px] font-semibold inline-flex items-center justify-center">
-              {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
-            </span>
-          ) : (
-            <EscalationBadge status={conv.escalationStatus} />
-          )}
-        </div>
-      </div>
-
-      {/* Hover / right-click management menu */}
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <button
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Chat options"
-            className={cn(
-              "absolute right-2 top-2 flex-shrink-0 p-1 rounded-full text-[var(--ink-mute)] bg-[var(--surface)] shadow-sm transition-opacity",
-              menuOpen
-                ? "opacity-100"
-                : "opacity-0 group-hover/row:opacity-100",
-            )}
-          >
-            <MoreVertical size={14} />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-48"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <DropdownMenuItem onClick={onToggleFavorite}>
-            <Star
-              size={13}
-              className={cn("mr-2", isFavorite ? "text-[#CA8A04]" : "")}
-            />
-            {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleArchive}>
-            {isArchived ? (
-              <ArchiveRestore size={13} className="mr-2" />
-            ) : (
-              <Archive size={13} className="mr-2" />
-            )}
-            {isArchived ? "Unarchive chat" : "Archive chat"}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={onDelete}
-            className="text-red-600 focus:text-red-600"
-          >
-            <Trash2 size={13} className="mr-2" />
-            Delete chat
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </motion.div>
-  );
-}
+import { ChatListSkeleton, MessageSkeleton } from "./Skeletons";
 
 export function InboxView() {
   const searchParams = useSearchParams();
@@ -716,7 +103,8 @@ export function InboxView() {
   const [draft, setDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [mobPane, setMobPane] = useState<MobilePane>("list");
-  const [showProfile, setShowProfile] = useState(false);
+  // Profile detail sheet is open by default; the user can collapse it.
+  const [showProfile, setShowProfile] = useState(true);
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
@@ -825,6 +213,16 @@ export function InboxView() {
   const aiModeMut = useToggleAiMode(selectedId ?? "");
   const editMut = useEditMessage(selectedId ?? "");
   const deleteMut = useDeleteMessage(selectedId ?? "");
+
+  // Stable handlers so memoized MessageBubble rows skip re-render on keystrokes.
+  const handleEditMessage = useCallback((m: ConversationMessage) => {
+    setEditingMessageId(m.id);
+    setDraft(m.content ?? "");
+  }, []);
+  const handleApproveDraft = useCallback(
+    (id: string) => approveDraftMut.mutate(id),
+    [approveDraftMut],
+  );
 
   useConversationStream();
   const typingConversationId = useLeadTyping();
@@ -955,7 +353,10 @@ export function InboxView() {
     setHiddenChats((prev) => {
       const next = new Set(prev);
       for (const c of toRestore) next.delete(c.id);
-      localStorage.setItem("asaanrabta_hidden_chats", JSON.stringify([...next]));
+      localStorage.setItem(
+        "asaanrabta_hidden_chats",
+        JSON.stringify([...next]),
+      );
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1165,11 +566,11 @@ export function InboxView() {
     <div className="inbox-layout flex h-full gap-3 p-3">
       {/* ── Conversation List ── */}
       <div
-        className={`card inbox-list w-[320px] flex-shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
+        className={`card inbox-list w-[320px] shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
       >
         <div className="px-3.5 pt-3 pb-2 space-y-2.5">
           <PermissionGuard permission="conversations:reply">
-            <button
+            <Button
               onClick={() => setShowNewChat(true)}
               disabled={!waConnected}
               title={
@@ -1177,13 +578,14 @@ export function InboxView() {
                   ? "Connect WhatsApp in Channels to start a chat"
                   : undefined
               }
-              className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full justify-center gap-2 text-[12.5px] font-semibold"
             >
               <Plus size={14} /> New Chat
-            </button>
+            </Button>
           </PermissionGuard>
           <PermissionGuard permission="broadcasts:create">
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowBroadcast(true)}
               disabled={!waConnected}
               title={
@@ -1191,22 +593,21 @@ export function InboxView() {
                   ? "Connect WhatsApp in Channels to send a broadcast"
                   : undefined
               }
-              className="btn btn-outline w-full justify-center gap-2 text-[12.5px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full justify-center gap-2 text-[12.5px] font-semibold"
             >
               <Megaphone size={14} />+ New Broadcast
-            </button>
+            </Button>
           </PermissionGuard>
           {/* Filter tabs row */}
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden">
               {BUILT_IN_TABS.map((tab) => (
-                <button
+                <Button
                   key={tab.id}
+                  variant={filter === tab.id ? "default" : "ghost"}
+                  size="sm"
                   onClick={() => setFilter(tab.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap flex-shrink-0 transition-colors",
-                    filter === tab.id ? "btn-grad" : "btn-ghost",
-                  )}
+                  className="rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap flex-shrink-0"
                 >
                   {tab.label}
                   {tab.id === "unread" && unreadCount > 0 && (
@@ -1221,22 +622,21 @@ export function InboxView() {
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
-                </button>
+                </Button>
               ))}
               {customTabs.map((tab) => (
                 <div
                   key={tab.id}
                   className="flex items-center gap-0.5 group flex-shrink-0"
                 >
-                  <button
+                  <Button
+                    variant={filter === tab.id ? "default" : "ghost"}
+                    size="sm"
                     onClick={() => setFilter(tab.id)}
-                    className={cn(
-                      "rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap transition-colors",
-                      filter === tab.id ? "btn-grad" : "btn-ghost",
-                    )}
+                    className="rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap"
                   >
                     {tab.label}
-                  </button>
+                  </Button>
                   <button
                     onClick={() => removeCustomTab(tab.id)}
                     className="hidden group-hover:flex w-[16px] h-[16px] items-center justify-center rounded-full text-[var(--ink-mute)] hover:text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
@@ -1248,7 +648,7 @@ export function InboxView() {
               ))}
               {addingTab ? (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <input
+                  <Input
                     autoFocus
                     value={newTabLabel}
                     onChange={(e) => setNewTabLabel(e.target.value)}
@@ -1259,32 +659,37 @@ export function InboxView() {
                         setNewTabLabel("");
                       }
                     }}
-                    className="input text-[11.5px] h-[26px] py-0 px-2 w-24"
+                    className="text-[11.5px] h-[26px] py-0 px-2 w-24"
                     placeholder="Tab name…"
                   />
-                  <button
+                  <Button
+                    size="icon"
                     onClick={createCustomTab}
-                    className="btn btn-grad p-[3px] h-auto"
+                    className="w-[22px] h-[22px]"
                   >
                     <Check size={11} />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       setAddingTab(false);
                       setNewTabLabel("");
                     }}
-                    className="btn btn-ghost p-[3px] h-auto"
+                    className="w-[22px] h-[22px]"
                   >
                     <X size={11} />
-                  </button>
+                  </Button>
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setAddingTab(true)}
-                  className="btn btn-ghost text-[11px] gap-0.5 text-[var(--ink-mute)] whitespace-nowrap flex-shrink-0 py-[4px] px-[8px]"
+                  className="text-[11px] gap-0.5 text-[var(--ink-mute)] whitespace-nowrap flex-shrink-0 py-[4px] px-[8px]"
                 >
                   <Plus size={11} /> Tab
-                </button>
+                </Button>
               )}
             </div>
             {/* <WAStatusBadge
@@ -1370,7 +775,7 @@ export function InboxView() {
 
       {/* ── Chat Thread ── */}
       <div
-        className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 relative ${mobPane === "chat" ? "mob-on" : ""}`}
+        className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 relative border border-[var(--ink-mute)]/20 ${mobPane === "chat" ? "mob-on" : ""}`}
       >
         {!selectedId ? (
           <div className="flex-1 flex flex-col items-center justify-center text-[var(--ink-mute)]">
@@ -1381,12 +786,14 @@ export function InboxView() {
           <>
             {/* Chat header */}
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--line)] bg-[var(--surface)] flex-shrink-0">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setMobPane("list")}
-                className="btn btn-ghost inbox-back-mobile p-1.5"
+                className="inbox-back-mobile"
               >
                 <ChevronLeft size={18} />
-              </button>
+              </Button>
 
               {/* Lead info — click to toggle profile panel */}
               <button
@@ -1550,7 +957,10 @@ export function InboxView() {
             {/* Messages */}
             <div
               ref={scrollRef}
-              className="scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px] relative"
+              className={cn(
+                "scroll flex-1 overflow-y-auto flex flex-col gap-2 px-4 py-[18px] relative border-y border-[var(--ink-mute)]/20",
+                !chatBg && "bg-[var(--bg)]",
+              )}
               style={{
                 overscrollBehavior: "contain",
                 ...(chatBg ? { background: chatBg } : {}),
@@ -1580,251 +990,25 @@ export function InboxView() {
                 )}
               </AnimatePresence>
 
-              {messages.map((msg, i) => {
-                const prevMsg = messages[i - 1];
-                const showDateSeparator =
-                  !prevMsg ||
-                  dayKey(prevMsg.createdAt) !== dayKey(msg.createdAt);
-                const isOutbound = msg.senderType !== "CUSTOMER";
-                const isAI = msg.senderType === "AI";
-                const isAgent = msg.senderType === "AGENT";
-                const isDeleted = msg.isDeleted;
-
-                const isWithin15Mins =
-                  Date.now() - new Date(msg.createdAt).getTime() <
-                  15 * 60 * 1000;
-                const isWithin60Mins =
-                  Date.now() - new Date(msg.createdAt).getTime() <
-                  60 * 60 * 1000;
-
-                return (
-                  <Fragment key={msg.id}>
-                    {showDateSeparator && <DateSeparator iso={msg.createdAt} />}
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      className={`flex group relative ${isOutbound ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`flex flex-col max-w-[76%] ${isOutbound ? "items-end" : "items-start"}`}
-                      >
-                        {/* Sender label */}
-                        <div className="flex items-center gap-1 px-1 mb-1">
-                          {isAI && (
-                            <span className="flex items-center gap-1 text-[10.5px] text-[var(--accent)] font-medium">
-                              <Zap size={10} /> AsaanRabta AI
-                            </span>
-                          )}
-                          {isAgent && (
-                            <span className="flex items-center gap-1 text-[10.5px] text-[var(--ink-mute)]">
-                              <User size={10} /> You
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Bubble + Options wrapper */}
-                        <div className="flex items-center gap-2 w-full">
-                          {/* Options trigger (shown on hover, unless message is deleted or draft) */}
-                          {!isDeleted && !msg.isDraft && (
-                            <div
-                              className={cn(
-                                "opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center flex-shrink-0",
-                                isOutbound ? "order-first" : "order-last",
-                              )}
-                            >
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="btn btn-ghost p-1 rounded-full text-[var(--ink-mute)] hover:bg-[var(--surface-3)]">
-                                    <MoreVertical size={14} />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align={isOutbound ? "end" : "start"}
-                                >
-                                  {isOutbound && isWithin15Mins && (
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setEditingMessageId(msg.id);
-                                        setDraft(msg.content ?? "");
-                                      }}
-                                    >
-                                      <Edit2 size={13} className="mr-1.5" />
-                                      Edit Message
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setDeleteMsgTarget({
-                                        messageId: msg.id,
-                                        canDeleteEveryone:
-                                          isOutbound && isWithin60Mins,
-                                      })
-                                    }
-                                    className="text-red-600 focus:text-red-600"
-                                  >
-                                    <Trash2 size={13} className="mr-1.5" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          )}
-
-                          {/* Bubble */}
-                          {isDeleted ? (
-                            <div
-                              className={cn(
-                                "bubble italic text-[var(--ink-mute)] opacity-70 border border-[var(--line)] bg-transparent",
-                                !isOutbound && "received",
-                                isOutbound && "sent",
-                              )}
-                              style={{ fontStyle: "italic" }}
-                            >
-                              {isOutbound
-                                ? "You deleted this message"
-                                : "This message was deleted"}
-                            </div>
-                          ) : msg.mediaType === "IMAGE" && msg.mediaUrl ? (
-                            <div
-                              className={cn(
-                                "rounded-[14px] overflow-hidden max-w-[240px]",
-                                isOutbound
-                                  ? "bg-[var(--accent)]"
-                                  : "bg-[var(--surface-2)] border border-[var(--line)]",
-                                msg.isDraft &&
-                                  "ring-1 ring-dashed ring-[var(--accent)]",
-                              )}
-                            >
-                              <ShimmerImage
-                                src={getImageUrl(msg.mediaUrl)}
-                                alt="Product image"
-                                wrapperClassName="w-full"
-                                loadingClassName="h-[180px] w-[220px]"
-                                className="w-full object-cover"
-                                style={{ maxHeight: 240 }}
-                              />
-                              {/* Caption = product details (shown only when content isn't just the URL) */}
-                              {msg.content && msg.content !== msg.mediaUrl && (
-                                <div
-                                  className={cn(
-                                    "px-2.5 py-1.5 text-[12.5px] leading-snug",
-                                    isOutbound
-                                      ? "text-white"
-                                      : "text-[var(--ink)]",
-                                  )}
-                                >
-                                  {msg.content}
-                                  {msg.isDraft && (
-                                    <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                                      · Draft
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ) : msg.mediaType === "AUDIO" && msg.mediaUrl ? (
-                            <div
-                              className={cn(
-                                "rounded-[18px] overflow-hidden",
-                                isOutbound
-                                  ? "bg-[var(--accent)]"
-                                  : "bg-[var(--surface-2)] border border-[var(--line)]",
-                              )}
-                            >
-                              <AudioBubble
-                                url={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
-                                outbound={isOutbound}
-                              />
-                            </div>
-                          ) : msg.mediaType === "VIDEO" && msg.mediaUrl ? (
-                            <div className="rounded-[14px] overflow-hidden max-w-[260px] bg-black">
-                              <video
-                                src={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
-                                controls
-                                className="w-full"
-                                style={{ maxHeight: 200 }}
-                              />
-                              {msg.content && (
-                                <p className="px-2.5 py-1.5 text-[12.5px] text-white leading-snug">
-                                  {msg.content}
-                                </p>
-                              )}
-                            </div>
-                          ) : msg.mediaType === "DOCUMENT" && msg.mediaUrl ? (
-                            <a
-                              href={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={cn(
-                                "bubble flex items-center gap-2.5",
-                                !isOutbound && "received",
-                                isOutbound && "sent",
-                              )}
-                            >
-                              <FileText size={18} className="flex-shrink-0" />
-                              <span className="text-[13px] underline underline-offset-2 truncate max-w-[160px]">
-                                {msg.content || "Document"}
-                              </span>
-                              <Download
-                                size={14}
-                                className="flex-shrink-0 opacity-70"
-                              />
-                            </a>
-                          ) : (
-                            <div
-                              className={cn(
-                                "bubble",
-                                !isOutbound && "received",
-                                isOutbound && !msg.isDraft && "sent",
-                                msg.isDraft &&
-                                  "border border-dashed border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[14px] px-[14px] py-[8px] text-[13.5px]",
-                              )}
-                            >
-                              {msg.content ?? ""}
-                              {msg.isDraft && (
-                                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                                  · Draft
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Draft approve button */}
-                        {msg.isDraft && (
-                          <button
-                            onClick={() => approveDraftMut.mutate(msg.id)}
-                            disabled={approveDraftMut.isPending || !waConnected}
-                            title={
-                              !waConnected
-                                ? "Connect WhatsApp to send"
-                                : undefined
-                            }
-                            className="btn btn-grad mt-1.5 py-1 px-3 text-[11.5px] self-end disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {approveDraftMut.isPending ? (
-                              <Loader2 size={11} className="animate-spin" />
-                            ) : (
-                              <Send size={11} />
-                            )}
-                            Approve & Send
-                          </button>
-                        )}
-
-                        <div className="flex items-center gap-1 px-1 mt-[3px] text-[10px] text-[var(--ink-mute)]">
-                          {shortTime(msg.createdAt)}
-                          {!isDeleted && msg.editedAt && <span>· Edited</span>}
-                          {isOutbound && !msg.isDraft && !isDeleted && (
-                            <Check size={10} />
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Fragment>
-                );
-              })}
+              {groupByDay(messages).map((group) => (
+                <div key={group.key} className="flex flex-col gap-2">
+                  {/* Sticky header is scoped to its day section, so only the
+                      in-view day sticks at the top and older days scroll away. */}
+                  <DateSeparator iso={group.iso} />
+                  {group.items.map((msg) => (
+                    <MessageBubble
+                      key={msg.id}
+                      msg={msg}
+                      waConnected={waConnected}
+                      approving={approveDraftMut.isPending}
+                      peerName={displayName}
+                      onEdit={handleEditMessage}
+                      onDelete={setDeleteMsgTarget}
+                      onApproveDraft={handleApproveDraft}
+                    />
+                  ))}
+                </div>
+              ))}
 
               <AnimatePresence initial={false}>
                 {leadIsTyping && (
@@ -1879,11 +1063,12 @@ export function InboxView() {
                       }}
                       className={cn(
                         "h-12 w-full rounded-lg border-2 relative transition-all",
+                        !p.value && "bg-[var(--bg)]",
                         chatBg === p.value
                           ? "border-[var(--accent)] shadow-[0_0_0_2px_var(--accent-soft)]"
                           : "border-[var(--line)] hover:border-[var(--ink-mute)]",
                       )}
-                      style={{ background: p.value || "var(--surface)" }}
+                      style={p.value ? { background: p.value } : undefined}
                     >
                       {chatBg === p.value && (
                         <span className="absolute inset-0 flex items-center justify-center">
@@ -2013,7 +1198,7 @@ export function InboxView() {
                     href="/channels"
                     className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E] hover:opacity-90"
                   >
-                    <AlertTriangle size={12} className="flex-shrink-0" />
+                    <AlertTriangle size={12} className="shrink-0" />
                     WhatsApp isn’t connected — reconnect in Channels to send
                     messages.
                   </Link>
@@ -2138,7 +1323,7 @@ export function InboxView() {
                         ? editMut.isPending
                         : sendReplyMut.isPending)
                     }
-                    className="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-transform active:scale-95"
+                    className="shrink-0 w-9 h-9 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-transform active:scale-95"
                   >
                     {(
                       editingMessageId
@@ -2189,7 +1374,7 @@ export function InboxView() {
       {/* ── Profile Panel ── */}
       {showProfile && selectedId && activeConv && (
         <div
-          className={`card inbox-profile w-[260px] flex-shrink-0 flex flex-col overflow-y-auto gap-3 p-4 ${mobPane === "profile" ? "mob-on" : ""}`}
+          className={`card inbox-profile w-[260px] flex-shrink-0 flex flex-col overflow-y-auto gap-3 p-4 border border-[var(--ink-mute)]/20 ${mobPane === "profile" ? "mob-on" : ""}`}
         >
           <button
             onClick={() => setMobPane("chat")}
@@ -2263,7 +1448,7 @@ export function InboxView() {
               <Bot size={11} className="text-[var(--ink-mute)] flex-shrink-0" />
               <span className="text-[var(--ink-mute)]">Channel</span>
               <span className="font-medium text-[var(--ink)] ml-auto">
-                WhatsApp
+                WhatsAppre
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -2315,11 +1500,13 @@ export function InboxView() {
                   CANCELLED: "#EF4444",
                   REFUNDED: "#94A3B8",
                 };
+
                 const color = ORDER_COLOR[order.status] ?? "#94A3B8";
                 return (
-                  <div
+                  <Link
                     key={order.id}
-                    className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1"
+                    href={`/orders?order=${order.id}`}
+                    className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] font-semibold text-[var(--ink)]">
@@ -2356,7 +1543,7 @@ export function InboxView() {
                         year: "numeric",
                       })}
                     </span>
-                  </div>
+                  </Link>
                 );
               })}
           </div>
@@ -2410,58 +1597,41 @@ export function InboxView() {
         confirmLabel="Delete chat"
       />
 
-      {/* Delete-message dialog — pick the scope, mirroring WhatsApp */}
-      <Dialog
+      {/* Delete-message confirmation — scope mirrors WhatsApp (for me / everyone) */}
+      <ConfirmDialog
         open={!!deleteMsgTarget}
-        onOpenChange={(o) => !o && setDeleteMsgTarget(null)}
-      >
-        <DialogContent className="sm:max-w-[380px]">
-          <DialogHeader>
-            <DialogTitle className="text-[16px]">Delete message?</DialogTitle>
-            <DialogDescription className="text-[12.5px]">
-              {deleteMsgTarget?.canDeleteEveryone
-                ? "Delete this message for yourself, or for everyone in the chat."
-                : "This message will be deleted for you."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2 mt-1">
-            {deleteMsgTarget?.canDeleteEveryone && (
-              <button
-                className="btn btn-grad w-full justify-center text-red-600 bg-[#FEF2F2] border-[#FECACA] hover:bg-[#FEE2E2]"
-                onClick={() => {
-                  if (!deleteMsgTarget) return;
-                  deleteMut.mutate({
-                    messageId: deleteMsgTarget.messageId,
-                    everyone: true,
-                  });
-                  setDeleteMsgTarget(null);
-                }}
-              >
-                <Trash2 size={14} /> Delete for everyone
-              </button>
-            )}
-            <button
-              className="btn btn-outline w-full justify-center"
-              onClick={() => {
+        onClose={() => setDeleteMsgTarget(null)}
+        title="Delete message?"
+        description={
+          deleteMsgTarget?.canDeleteEveryone
+            ? "Delete this message for yourself, or for everyone in the chat."
+            : "This message will be deleted for you."
+        }
+        confirmLabel="Delete for me"
+        onConfirm={() => {
+          if (!deleteMsgTarget) return;
+          deleteMut.mutate({
+            messageId: deleteMsgTarget.messageId,
+            everyone: false,
+          });
+          setDeleteMsgTarget(null);
+        }}
+        secondaryLabel={
+          deleteMsgTarget?.canDeleteEveryone ? "Delete for everyone" : undefined
+        }
+        onSecondary={
+          deleteMsgTarget?.canDeleteEveryone
+            ? () => {
                 if (!deleteMsgTarget) return;
                 deleteMut.mutate({
                   messageId: deleteMsgTarget.messageId,
-                  everyone: false,
+                  everyone: true,
                 });
                 setDeleteMsgTarget(null);
-              }}
-            >
-              <Trash2 size={14} /> Delete for me
-            </button>
-            <button
-              className="btn btn-ghost w-full justify-center"
-              onClick={() => setDeleteMsgTarget(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              }
+            : undefined
+        }
+      />
 
       {activeConv && (
         <OrderForm

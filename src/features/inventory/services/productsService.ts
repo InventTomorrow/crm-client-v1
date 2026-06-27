@@ -13,6 +13,7 @@ interface ApiProduct {
   description: string | null;
   category: string | null;
   size: string | null;
+  sizes: string[] | null;
   gender: string | null;
   color: string | null;
   imageUrls: string[];
@@ -31,6 +32,7 @@ export interface CreateProductPayload {
   description?: string;
   category?: string;
   size?: string;
+  sizes?: string[];
   gender?: string;
   color?: string;
   imageUrls?: string[];
@@ -44,6 +46,7 @@ export interface UpdateProductPayload {
   description?: string;
   category?: string;
   size?: string;
+  sizes?: string[];
   gender?: string;
   color?: string;
   imageUrls?: string[];
@@ -68,6 +71,7 @@ function mapProduct(p: ApiProduct): Product {
     status,
     cat: p.category ?? 'Uncategorized',
     size: p.size ?? '',
+    sizes: p.sizes ?? [],
     gender: p.gender ?? '',
     color: p.color ?? '',
     desc: p.description ?? '',
@@ -109,6 +113,7 @@ export const duplicateProduct = async (product: Product): Promise<Product> => {
     description: product.desc,
     category: product.cat || undefined,
     size: product.size || undefined,
+    sizes: product.sizes ?? [],
     gender: product.gender || undefined,
     color: product.color || undefined,
     imageUrls: product.imageUrls ?? [],

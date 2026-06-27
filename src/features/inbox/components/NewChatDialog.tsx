@@ -13,6 +13,10 @@ import {
 import { Check, Loader2, Phone, Search, Send, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useStartConversation } from "../hooks/useConversations";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import { Textarea } from "@/shared/ui/Textarea";
+import { Label } from "@/shared/ui/Label";
 
 /**
  * Lets an agent start a brand-new WhatsApp chat from the CRM — by picking an
@@ -130,9 +134,9 @@ export function NewChatDialog({
                   size={13}
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
                 />
-                <input
+                <Input
                   autoFocus
-                  className="input pl-8"
+                  className="pl-8"
                   placeholder="Search leads by name or number…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -176,23 +180,21 @@ export function NewChatDialog({
           ) : (
             <div className="grid grid-cols-2 gap-2.5">
               <div className="col-span-2">
-                <label className="block text-[12px] font-semibold mb-1 text-[var(--ink-soft)]">
+                <Label className="text-[12px] font-semibold mb-1 text-[var(--ink-soft)]">
                   Phone number *
-                </label>
-                <input
+                </Label>
+                <Input
                   autoFocus
-                  className="input"
                   placeholder="+92 321 1234567"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-[12px] font-semibold mb-1 text-[var(--ink-soft)]">
+                <Label className="text-[12px] font-semibold mb-1 text-[var(--ink-soft)]">
                   Name (optional)
-                </label>
-                <input
-                  className="input"
+                </Label>
+                <Input
                   placeholder="Contact name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -202,11 +204,10 @@ export function NewChatDialog({
           )}
 
           <div>
-            <label className="block text-[12px] font-semibold mb-1 text-[var(--ink-soft)]">
+            <Label className="text-[12px] font-semibold mb-1 text-[var(--ink-soft)]">
               First message *
-            </label>
-            <textarea
-              className="input"
+            </Label>
+            <Textarea
               rows={3}
               placeholder="Type the first message…"
               value={message}
@@ -222,28 +223,23 @@ export function NewChatDialog({
         </div>
 
         <div className="px-5 py-3.5 border-t border-[var(--line)] flex justify-end gap-2">
-          <button
-            className="btn btn-outline"
+          <Button
+            variant="outline"
             onClick={close}
             disabled={startChat.isPending}
           >
             Cancel
-          </button>
-          <button
-            className="btn btn-grad"
+          </Button>
+          <Button
             onClick={submit}
             disabled={!canSubmit || startChat.isPending}
           >
             {startChat.isPending ? (
-              <>
-                <Loader2 size={13} className="animate-spin" /> Starting…
-              </>
+              <><Loader2 size={13} className="animate-spin" /> Starting…</>
             ) : (
-              <>
-                <Send size={13} /> Start chat
-              </>
+              <><Send size={13} /> Start chat</>
             )}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -3,7 +3,17 @@ import { extractErrorMessage } from "@/lib/utils";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
-import { Plus, Search } from "lucide-react";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
+import { useUrlState } from "@/shared/hooks/useUrlState";
+import { Loader2, Plus, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -28,9 +38,10 @@ import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
 export function OrdersView() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<OrderStatus | "">("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useUrlState("q");
+  const [statusParam, setStatus] = useUrlState("status");
+  const status = statusParam as OrderStatus | "";
+  const [selectedId, setSelectedId] = useUrlState("order");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Order | null>(null);
 
@@ -55,14 +66,15 @@ export function OrdersView() {
     setEditing(null);
     setFormOpen(true);
   };
-  const openEdit = useCallback((order: Order) => {
-    setSelectedId(null);
-    setEditing(order);
-    setFormOpen(true);
-  }, []);
+  const openEdit = useCallback(
+    (order: Order) => {
+      setSelectedId("");
+      setEditing(order);
+      setFormOpen(true);
+    },
+    [setSelectedId],
+  );
 
-  // A table row carries only a lightweight OrderListItem; the edit form needs the
-  // full order, so the "Edit" action fetches it before opening the form.
   const loadAndEditOrder = useCallback(
     async (listItem: OrderListItem) => {
       try {
@@ -207,9 +219,9 @@ export function OrdersView() {
           </p>
         </div>
         <PermissionGuard permission="orders:create">
-          <button className="btn btn-grad" onClick={openCreate}>
+          <Button onClick={openCreate}>
             <Plus size={15} /> New order
-          </button>
+          </Button>
         </PermissionGuard>
       </div>
 
@@ -248,27 +260,33 @@ export function OrdersView() {
             <div className="relative flex-1 max-w-[340px]">
               <Search
                 size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
               />
-              <input
-                className="input pl-8 text-[13px]"
+              <Input
+                className="pl-8 text-[13px]"
                 placeholder="Search by order #, customer…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <select
-              className="input w-[160px] text-[13px]"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as OrderStatus | "")}
+            <Select
+              value={status || "__all__"}
+              onValueChange={(v) =>
+                setStatus(v === "__all__" ? "" : (v as OrderStatus))
+              }
             >
-              <option value="">All statuses</option>
-              {ORDER_STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {ORDER_STATUS_META[s].label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-[160px] text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All statuses</SelectItem>
+                {ORDER_STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {ORDER_STATUS_META[s].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         }
       />
@@ -276,20 +294,24 @@ export function OrdersView() {
       {/* Load more for infinite scroll */}
       {hasNextPage && (
         <div className="flex justify-center mt-3">
-          <button
-            className="btn btn-outline text-[12.5px]"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
           >
+            {isFetchingNextPage && (
+              <Loader2 size={13} className="animate-spin" />
+            )}
             Load more
-          </button>
+          </Button>
         </div>
       )}
 
       {selectedId && (
         <OrderDetailSheet
           orderId={selectedId}
-          onClose={() => setSelectedId(null)}
+          onClose={() => setSelectedId("")}
           onEdit={openEdit}
         />
       )}

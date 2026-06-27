@@ -2,6 +2,7 @@
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { Button } from "@/shared/ui/Button";
 import { Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
@@ -54,9 +55,9 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
             </h3>
             {order && <OrderStatusBadge status={order.status} />}
           </div>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto scroll p-[18px] flex flex-col gap-4">
@@ -125,15 +126,16 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                       </Label>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <button
-                        className="btn btn-outline text-[12.5px]"
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={resetStatusChange}
                         disabled={changeStatus.isPending}
                       >
                         Cancel
-                      </button>
-                      <button
-                        className="btn btn-grad text-[12.5px]"
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={saveStatusChange}
                         disabled={changeStatus.isPending}
                       >
@@ -141,7 +143,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                           <Loader2 size={13} className="animate-spin" />
                         )}
                         Save
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -291,14 +293,16 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 <span className="text-[12.5px] text-[var(--ink-soft)] flex-1">
                   Delete this order?
                 </span>
-                <button
-                  className="btn btn-outline text-[12.5px]"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setConfirmDelete(false)}
                 >
                   Cancel
-                </button>
-                <button
-                  className="btn text-[12.5px] bg-[#DC2626] text-white"
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
                   disabled={del.isPending}
                   onClick={() => del.mutate(order.id, { onSuccess: onClose })}
                 >
@@ -306,25 +310,28 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                     <Loader2 size={13} className="animate-spin" />
                   )}
                   Delete
-                </button>
+                </Button>
               </div>
             ) : (
               <>
                 <PermissionGuard permission="orders:cancel">
-                  <button
-                    className="btn btn-ghost text-[12.5px] text-[#DC2626]"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
                     onClick={() => setConfirmDelete(true)}
                   >
                     <Trash2 size={14} /> Delete
-                  </button>
+                  </Button>
                 </PermissionGuard>
                 <PermissionGuard permission="orders:edit">
-                  <button
-                    className="btn btn-outline text-[12.5px]"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onEdit(order)}
                   >
                     <Pencil size={14} /> Edit
-                  </button>
+                  </Button>
                 </PermissionGuard>
               </>
             )}

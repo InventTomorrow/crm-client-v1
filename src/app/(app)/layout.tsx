@@ -7,21 +7,24 @@ import { RouteGuard } from '@/shared/layout/RouteGuard';
 import { EscalateDialog } from '@/shared/layout/EscalateDialog';
 import { HotToast } from '@/shared/layout/HotToast';
 import { WorkspaceSwitchingOverlay } from '@/shared/layout/WorkspaceSwitchingOverlay';
+import { WelcomeDemoDialog } from '@/features/demo/components/WelcomeDemoDialog';
 import { Toaster } from '@/shared/ui/Sonner';
+import { Button } from '@/shared/ui/Button';
 import { Minimize2 } from 'lucide-react';
 
 function FullScreenBar() {
   const { toggleFullScreen } = useAppStore();
   return (
     <div className="h-8 flex-shrink-0 flex items-center justify-end px-3 bg-[var(--surface)] border-b border-[var(--line)]">
-      <button
+      <Button
+        variant="ghost"
         onClick={toggleFullScreen}
-        className="btn btn-ghost p-1 text-[var(--ink-mute)] text-[11px] flex items-center gap-1.5"
+        className="h-7 px-2 text-[var(--ink-mute)] text-[11px] flex items-center gap-1.5"
         title="Exit full screen"
       >
         <Minimize2 size={13} />
         <span>Exit full screen</span>
-      </button>
+      </Button>
     </div>
   );
 }
@@ -56,6 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {hotLead && <HotToast lead={hotLead} onClose={() => setHotLead(null)} />}
       <Toaster richColors position="top-right" />
       <WorkspaceSwitchingOverlay />
+      <WelcomeDemoDialog />
     </div>
   );
 }

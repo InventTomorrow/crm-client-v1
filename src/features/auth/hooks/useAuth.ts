@@ -25,6 +25,7 @@ import {
   removeMember,
   resendVerification,
   resetPassword,
+  switchWorkspace,
   updateMe,
   updateRolePermissions,
   validateInvite,
@@ -168,16 +169,30 @@ export function useMyInvitations() {
   return useQuery({ queryKey: ['my-invitations'], queryFn: getMyInvitations });
 }
 
+/** Accept a pending invitation, then switch into that workspace like a full switch. */
 export function useAcceptMyInvitation() {
   const qc = useQueryClient();
+  const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
   return useMutation({
-    mutationFn: acceptMyInvitation,
-    onSuccess: (res) => {
-      toast.success(res?.message ?? 'Joined the workspace.');
-      qc.invalidateQueries({ queryKey: ['my-invitations'] });
-      qc.invalidateQueries({ queryKey: ['me'] });
+    mutationFn: async (invite: { id: string; tenantId: string; tenantName: string | null }) => {
+      setWorkspaceSwitching(true, invite.tenantName ?? 'workspace');
+      await acceptMyInvitation(invite.id);
+      await switchWorkspace(invite.tenantId);
+      return invite;
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to accept invitation')),
+    onSuccess: async ({ tenantId, tenantName }) => {
+      // Wipe stale cache while the overlay covers the UI, then load fresh identity.
+      qc.clear();
+      await qc.fetchQuery({ queryKey: ['me'], queryFn: getMe });
+      setCurrentWorkspace(tenantId);
+      await new Promise((r) => setTimeout(r, 80));
+      setWorkspaceSwitching(false);
+      toast.success(`Joined ${tenantName ?? 'the workspace'}.`);
+    },
+    onError: (error) => {
+      setWorkspaceSwitching(false);
+      toast.error(extractErrorMessage(error, 'Failed to accept invitation'));
+    },
   });
 }
 

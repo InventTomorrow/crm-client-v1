@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Input } from "@/shared/ui/Input";
 import {
@@ -66,7 +67,7 @@ export function LoginView() {
                         className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
                       />
                       <Input
-                        className="input pl-8 h-10"
+                        className="pl-8 h-10"
                         type="email"
                         placeholder="you@company.pk"
                         autoComplete="email"
@@ -95,7 +96,7 @@ export function LoginView() {
                         className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
                       />
                       <Input
-                        className="input pl-8 h-10"
+                        className="pl-8 h-10"
                         type={showPw ? "text" : "password"}
                         placeholder="••••••••"
                         autoComplete="current-password"
@@ -128,14 +129,15 @@ export function LoginView() {
               </Link>
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn btn-grad w-full justify-center mt-1"
+              size="lg"
+              className="w-full mt-1"
               disabled={isPending}
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {isPending ? "Signing in…" : "Sign in"}
-            </button>
+            </Button>
           </form>
         </Form>
 

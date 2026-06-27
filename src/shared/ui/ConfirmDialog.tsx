@@ -1,6 +1,7 @@
 'use client';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/ui/Dialog';
+import { Button } from '@/shared/ui/Button';
 import { cn } from '@/lib/utils';
 
 export interface ConfirmDialogProps {
@@ -15,6 +16,9 @@ export interface ConfirmDialogProps {
   destructive?: boolean;
   /** Shows a spinner and disables actions while the confirm action runs. */
   loading?: boolean;
+  /** Optional second action (e.g. "Delete for everyone") shown beside confirm. */
+  secondaryLabel?: string;
+  onSecondary?: () => void;
 }
 
 /**
@@ -31,6 +35,8 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   destructive = true,
   loading = false,
+  secondaryLabel,
+  onSecondary,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && !loading) onClose(); }}>
@@ -55,21 +61,31 @@ export function ConfirmDialog({
         </DialogHeader>
 
         <div className="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--line)]">
-          <button type="button" className="btn btn-outline" onClick={onClose} disabled={loading}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          {secondaryLabel && onSecondary && (
+            <Button
+              type="button"
+              onClick={onSecondary}
+              disabled={loading}
+              variant={destructive ? 'outline' : 'outline'}
+              className={cn(
+                destructive && 'text-[#DC2626] bg-[#FEF2F2] border border-[#FECACA] hover:bg-[#FEE2E2]',
+              )}
+            >
+              {secondaryLabel}
+            </Button>
+          )}
+          <Button
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={cn(
-              'btn justify-center',
-              destructive ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C]' : 'btn-grad',
-            )}
+            variant={destructive ? 'destructive' : 'default'}
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : null}
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
