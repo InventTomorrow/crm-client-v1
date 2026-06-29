@@ -8,7 +8,7 @@ export type SettingsSection =
   | 'chatbot'
   | 'business'
   | 'channels'
-  | 'tier'
+  | 'billing'
   | 'access'
   | 'system'
   | 'workspaces';
@@ -19,7 +19,7 @@ export const SECTION_NAV: Array<{ id: SettingsSection; label: string }> = [
   { id: 'chatbot',    label: 'Chatbot' },
   { id: 'business',   label: 'Business' },
   { id: 'channels',   label: 'Channels' },
-  { id: 'tier',       label: 'Integration Tier' },
+  { id: 'billing',    label: 'Billing' },
   { id: 'access',     label: 'Access Control' },
   { id: 'workspaces', label: 'Workspaces' },
   { id: 'system',     label: 'System Status' },
