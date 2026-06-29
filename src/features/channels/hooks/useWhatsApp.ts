@@ -207,6 +207,19 @@ export function useWAEmbeddedSignup() {
 
   /** Opens the Embedded Signup popup. Call this from the "Connect WhatsApp" button. */
   const openSignup = useCallback(async () => {
+    // Facebook Login blocks FB.login() on non-HTTPS pages, so the popup never
+    // opens and the flow dies silently. Catch it early with a clear message
+    // instead of letting the SDK throw scary console errors.
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol !== "https:"
+    ) {
+      toast.error(
+        "Connecting WhatsApp requires HTTPS. Open the app over an https URL (e.g. your ngrok/production link) and try again.",
+      );
+      return;
+    }
+
     try {
       const cfg = await getWASignupConfig();
       if (!cfg.appId || !cfg.configId) {
@@ -217,9 +230,14 @@ export function useWAEmbeddedSignup() {
       sessionRef.current = {};
       console.info("[WA Signup] config:", { appId: cfg.appId, configId: cfg.configId, graphVersion: cfg.graphVersion });
       await loadFacebookSdk(cfg.appId, cfg.graphVersion);
+
+      if (!window.FB) {
+        toast.error("WhatsApp login couldn't load. Check your connection and try again.");
+        return;
+      }
       console.info("[WA Signup] FB SDK loaded, opening FB.login…");
 
-      window.FB!.login(
+      window.FB.login(
         (response) => {
           const code = response?.authResponse?.code;
           const { wabaId, phoneNumberId } = sessionRef.current;
@@ -240,7 +258,7 @@ export function useWAEmbeddedSignup() {
               "[WA Signup] code received but no waba_id/phone_number_id — the message event never fired. Likely a non-WhatsApp-Embedded-Signup config_id.",
             );
             toast.error(
-              "Couldn't read your WhatsApp account. Please try again.",
+              "Couldn't read your WhatsApp account. Make sure you complete the Meta popup, or use manual connect.",
             );
             return;
           }
@@ -255,6 +273,9 @@ export function useWAEmbeddedSignup() {
         },
       );
     } catch (error) {
+      // Covers a synchronous FB.login throw (e.g. HTTP enforcement) plus any
+      // config/SDK-load failure — surface it instead of crashing the page.
+      console.error("[WA Signup] openSignup failed:", error);
       toast.error(
         extractErrorMessage(error, "Could not start WhatsApp signup"),
       );
