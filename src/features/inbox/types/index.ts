@@ -1,5 +1,5 @@
 export type MessageSenderType = 'CUSTOMER' | 'AI' | 'AGENT' | 'SYSTEM';
-export type EscalationStatus = 'PENDING' | 'ESCALATED' | 'RESOLVED';
+export type EscalationStatus = 'NONE' | 'ESCALATED' | 'RESOLVED';
 
 export type MediaType = 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT';
 

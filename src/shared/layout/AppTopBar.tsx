@@ -165,9 +165,9 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
             setNotifOpen((v) => !v);
           }}
         >
-          <Bell size={17} />
+          <Bell size={18} />
           {unread > 0 && (
-            <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
+            <span className="absolute -top-1 right-0 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
               {unread > 9 ? "9+" : unread}
             </span>
           )}

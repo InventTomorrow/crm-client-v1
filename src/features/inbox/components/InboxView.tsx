@@ -35,7 +35,6 @@ import {
   Mic,
   MoreVertical,
   Package,
-  Palette,
   Paperclip,
   Phone,
   Plus,
@@ -69,6 +68,7 @@ import {
   useApproveDraft,
   useConversationDetail,
   useConversationStream,
+  useDeleteChat,
   useDeleteMessage,
   useEditMessage,
   useEscalate,
@@ -76,6 +76,7 @@ import {
   useLeadTyping,
   useMarkConversationRead,
   useMessagesPaginated,
+  useOpenConversation,
   useResolve,
   useSendHumanReply,
   useSendMedia,
@@ -100,6 +101,13 @@ export function InboxView() {
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<ConversationFilter>("all");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // A chat just opened from the Leads page has no messages yet, so the server
+  // list query omits it. Pin it locally so it shows until the first message.
+  const [pinnedConv, setPinnedConv] = useState<ConversationListItem | null>(
+    null,
+  );
   const [draft, setDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [mobPane, setMobPane] = useState<MobilePane>("list");
@@ -109,11 +117,13 @@ export function InboxView() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+
   const [chatBg, setChatBg] = useState<string>(() => {
     if (typeof window !== "undefined")
       return localStorage.getItem("asaanrabta_chat_bg") ?? "";
     return "";
   });
+
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     if (typeof window !== "undefined") {
       const s = localStorage.getItem("asaanrabta_favorites");
@@ -121,6 +131,7 @@ export function InboxView() {
     }
     return new Set();
   });
+
   const [archived, setArchived] = useState<Set<string>>(() => {
     if (typeof window !== "undefined") {
       const s = localStorage.getItem("asaanrabta_archived");
@@ -128,6 +139,7 @@ export function InboxView() {
     }
     return new Set();
   });
+
   const [hiddenChats, setHiddenChats] = useState<Set<string>>(() => {
     if (typeof window !== "undefined") {
       const s = localStorage.getItem("asaanrabta_hidden_chats");
@@ -135,6 +147,7 @@ export function InboxView() {
     }
     return new Set();
   });
+
   // Chat pending deletion confirmation (id) and message pending deletion.
   const [deleteChatId, setDeleteChatId] = useState<string | null>(null);
   const [deleteMsgTarget, setDeleteMsgTarget] = useState<{
@@ -181,8 +194,13 @@ export function InboxView() {
     fetchNextPage: fetchNextConvs,
     hasNextPage: hasMoreConvs,
     isFetchingNextPage: fetchingNextConvs,
-  } = useInfiniteConversations();
-  const conversations = conversationsData?.pages.flat() || [];
+  } = useInfiniteConversations(debouncedSearch);
+
+  const serverConversations = conversationsData?.pages.flat() || [];
+  const conversations =
+    pinnedConv && !serverConversations.some((c) => c.id === pinnedConv.id)
+      ? [pinnedConv, ...serverConversations]
+      : serverConversations;
   const selectedLeadId =
     conversations.find((c) => c.id === selectedId)?.lead.id ?? null;
   const { data: leadOrders, isLoading: leadOrdersLoading } = useLeadOrders(
@@ -210,6 +228,8 @@ export function InboxView() {
   const uploadMut = useUploadAttachment();
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
+  const deleteChatMut = useDeleteChat();
+  const openConvMut = useOpenConversation();
   const aiModeMut = useToggleAiMode(selectedId ?? "");
   const editMut = useEditMessage(selectedId ?? "");
   const deleteMut = useDeleteMessage(selectedId ?? "");
@@ -286,21 +306,14 @@ export function InboxView() {
   const confirmDeleteChat = () => {
     const id = deleteChatId;
     if (!id) return;
-    // "Delete" only hides the chat locally — the server conversation lives on.
-    // Zero its unread first so a hidden chat can't leave a stranded unread badge
-    // with no visible row. A future inbound resurrects it (see effect below).
-    markReadMut.mutate(id);
-    setHiddenChats((prev) => {
-      const next = new Set(prev).add(id);
-      localStorage.setItem(
-        "asaanrabta_hidden_chats",
-        JSON.stringify([...next]),
-      );
-      return next;
-    });
+    // Soft-delete + wipe server-side; the lead survives so it can be re-opened
+    // later from the Leads page. Close the open chat right away — the optimistic
+    // list removal lets the auto-select effect advance to the next chat (or the
+    // empty state). The dialog stays (with its spinner) until the request settles.
     if (id === selectedId) setSelectedId(null);
-    setDeleteChatId(null);
-    toast.success("Chat deleted");
+    deleteChatMut.mutate(id, {
+      onSettled: () => setDeleteChatId(null),
+    });
   };
 
   const createCustomTab = () => {
@@ -362,16 +375,52 @@ export function InboxView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations, hiddenChats]);
 
-  // Deep-link from the Leads page: /inbox?lead=<leadId> selects that lead's chat.
+  // Debounce the chat search so the server is queried only after typing settles.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat,
+  // creating the conversation on the fly if the lead has never been messaged.
+  const openedLeadRef = useRef<string | null>(null);
   useEffect(() => {
     const leadId = searchParams.get("lead");
-    if (!leadId || conversations.length === 0) return;
+    if (!leadId) return;
     const conv = conversations.find((c) => c.lead.id === leadId);
     if (conv) {
       setSelectedId(conv.id);
       setMobPane("chat");
+      return;
     }
-  }, [searchParams, conversations]);
+    // Wait for the list before deciding the lead has no chat, then open one
+    // (idempotent server-side) exactly once and pin it so it lists immediately.
+    if (
+      listLoading ||
+      openedLeadRef.current === leadId ||
+      openConvMut.isPending
+    )
+      return;
+    openedLeadRef.current = leadId;
+    openConvMut.mutate(leadId, {
+      onSuccess: (detail) => {
+        setPinnedConv({
+          id: detail.id,
+          channel: detail.channel,
+          escalationStatus: detail.escalationStatus,
+          aiEnabled: detail.aiEnabled,
+          lastMessageAt: detail.lastMessageAt,
+          unreadCount: detail.unreadCount,
+          createdAt: detail.createdAt,
+          lead: detail.lead,
+          messages: [],
+        });
+        setSelectedId(detail.id);
+        setMobPane("chat");
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, conversations, listLoading]);
 
   // Auto-select first conversation (only when not deep-linking)
   useEffect(() => {
@@ -566,9 +615,9 @@ export function InboxView() {
     <div className="inbox-layout flex h-full gap-3 p-3">
       {/* ── Conversation List ── */}
       <div
-        className={`card inbox-list w-[320px] shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
+        className={`card inbox-list w-[320px] shrink-0 flex flex-col overflow-hidden border border-[var(--ink-mute)]/20 ${mobPane === "list" ? "mob-on" : ""}`}
       >
-        <div className="px-3.5 pt-3 pb-2 space-y-2.5">
+        <div className="px-3.5 pt-3 pb-2 space-y-2.5 ring ring-[var(--ink-mute)]/20">
           <PermissionGuard permission="conversations:reply">
             <Button
               onClick={() => setShowNewChat(true)}
@@ -598,6 +647,28 @@ export function InboxView() {
               <Megaphone size={14} />+ New Broadcast
             </Button>
           </PermissionGuard>
+          {/* Search by name or phone */}
+          {/* <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
+            />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or phone…"
+              className="pl-9 pr-8 h-9 text-[12.5px]"
+            />
+            {search && (
+              <Button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] hover:text-[var(--ink)] hover:bg-transparent cursor-pointer"
+                title="Clear search"
+              >
+                <X size={14} />
+              </Button>
+            )}
+          </div> */}
           {/* Filter tabs row */}
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden">
@@ -607,7 +678,7 @@ export function InboxView() {
                   variant={filter === tab.id ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setFilter(tab.id)}
-                  className="rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap flex-shrink-0"
+                  className="rounded-full text-[11.5px] h-auto py-[4px] px-[10px] whitespace-nowrap shrink-0"
                 >
                   {tab.label}
                   {tab.id === "unread" && unreadCount > 0 && (
@@ -616,7 +687,7 @@ export function InboxView() {
                         "text-[10px] font-bold min-w-[14px] h-[14px] rounded-full px-0.5 inline-flex items-center justify-center",
                         filter === tab.id
                           ? "bg-white/30 text-white"
-                          : "bg-[var(--accent)] text-white",
+                          : "bg-accent text-white",
                       )}
                     >
                       {unreadCount > 99 ? "99+" : unreadCount}
@@ -699,7 +770,7 @@ export function InboxView() {
           </div>
         </div>
         <div className="h-px bg-[var(--line)]" />
-        <div className="scroll overflow-y-auto flex-1">
+        <div className="scroll overflow-y-auto flex-1 ring ring-[var(--ink-mute)]/20">
           {listLoading && <ChatListSkeleton />}
           <AnimatePresence>
             {!listLoading && filtered.length === 0 && (
@@ -775,17 +846,26 @@ export function InboxView() {
 
       {/* ── Chat Thread ── */}
       <div
-        className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 relative border border-[var(--ink-mute)]/20 ${mobPane === "chat" ? "mob-on" : ""}`}
+        className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 relative ring ring-[var(--ink-mute)]/20 ${mobPane === "chat" ? "mob-on" : ""}`}
       >
         {!selectedId ? (
           <div className="flex-1 flex flex-col items-center justify-center text-[var(--ink-mute)]">
-            <Bot size={36} className="mb-3 opacity-30" />
-            <p className="text-[13px]">Select a conversation</p>
+            {openConvMut.isPending ? (
+              <>
+                <Loader2 size={30} className="mb-3 animate-spin" />
+                <p className="text-[13px]">Opening chat…</p>
+              </>
+            ) : (
+              <>
+                <Bot size={36} className="mb-3 opacity-30" />
+                <p className="text-[13px]">Select a conversation</p>
+              </>
+            )}
           </div>
         ) : (
           <>
             {/* Chat header */}
-            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--line)] bg-[var(--surface)] flex-shrink-0">
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--line)] bg-[var(--surface)] flex-shrink-0 ring ring-[var(--ink-mute)]/20">
               <Button
                 variant="ghost"
                 size="icon"
@@ -946,10 +1026,10 @@ export function InboxView() {
                       ? "Already flagged"
                       : "Flag for attention"}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  {/* <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setBgPickerOpen((v) => !v)}>
                     <Palette size={13} className="mr-2" /> Chat wallpaper
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -1550,24 +1630,36 @@ export function InboxView() {
 
           {/* Escalation actions */}
           <div className="flex flex-col gap-2 mt-auto">
-            {activeConv.escalationStatus !== "RESOLVED" && (
-              <button
-                onClick={() => resolveMut.mutate(selectedId)}
-                disabled={resolveMut.isPending}
-                className="btn btn-outline justify-center py-2 text-[12px] text-[#15803D] border-[#BBF7D0]"
-              >
-                <CheckCheck size={13} /> Mark Done
-              </button>
-            )}
-            {activeConv.escalationStatus !== "ESCALATED" && (
-              <button
-                onClick={() => escalateMut.mutate(selectedId)}
-                disabled={escalateMut.isPending}
-                className="btn btn-outline justify-center py-2 text-[12px]"
-              >
-                <Flame size={13} className="text-[#EF4444]" /> Flag
-              </button>
-            )}
+            <button
+              onClick={() => resolveMut.mutate(selectedId)}
+              disabled={resolveMut.isPending}
+              className={cn(
+                "btn justify-center py-2 text-[12px] text-[#15803D] border-[#BBF7D0]",
+                activeConv.escalationStatus === "RESOLVED"
+                  ? "bg-[#DCFCE7]"
+                  : "btn-outline",
+              )}
+            >
+              <CheckCheck size={13} />{" "}
+              {activeConv.escalationStatus === "RESOLVED"
+                ? "Done — Reopen"
+                : "Mark Done"}
+            </button>
+            <button
+              onClick={() => escalateMut.mutate(selectedId)}
+              disabled={escalateMut.isPending}
+              className={cn(
+                "btn justify-center py-2 text-[12px]",
+                activeConv.escalationStatus === "ESCALATED"
+                  ? "bg-[#FEF2F2] border-[#FECACA] text-[#EF4444]"
+                  : "btn-outline",
+              )}
+            >
+              <Flame size={13} className="text-[#EF4444]" />{" "}
+              {activeConv.escalationStatus === "ESCALATED"
+                ? "Flagged — Remove"
+                : "Flag"}
+            </button>
           </div>
         </div>
       )}
@@ -1595,6 +1687,7 @@ export function InboxView() {
         title="Delete chat?"
         description="This removes the conversation from your inbox. It won't delete messages on WhatsApp."
         confirmLabel="Delete chat"
+        loading={deleteChatMut.isPending}
       />
 
       {/* Delete-message confirmation — scope mirrors WhatsApp (for me / everyone) */}

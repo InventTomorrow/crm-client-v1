@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { pkr } from "@/lib/utils";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -50,9 +51,12 @@ export default function LeadDetailSheet({
   onOpenChat: (lead: Lead) => void;
   isDeleting?: boolean;
 }) {
+  // All hooks must run before the early return below — call them unconditionally.
+  // Spinner stays until navigation unmounts the sheet — the chat opens in the inbox.
+  const [opening, setOpening] = useState(false);
+  const { data: orders, isLoading: ordersLoading } = useLeadOrders(lead?.id);
   if (!lead) return null;
   const statusMeta = STATUS_META[lead.status] ?? STATUS_META.prospect;
-  const { data: orders, isLoading: ordersLoading } = useLeadOrders(lead.id);
 
   return (
     <>
@@ -184,8 +188,21 @@ export default function LeadDetailSheet({
         {/* Footer actions */}
         <div className="flex flex-col gap-2 p-3.5 border-t border-[var(--line)]">
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 justify-center" onClick={() => onOpenChat(lead)}>
-              <Inbox size={14} /> Open Chat
+            <Button
+              variant="outline"
+              className="flex-1 justify-center"
+              disabled={opening}
+              onClick={() => {
+                setOpening(true);
+                onOpenChat(lead);
+              }}
+            >
+              {opening ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Inbox size={14} />
+              )}{" "}
+              {opening ? "Opening…" : "Open Chat"}
             </Button>
             <PermissionGuard permission="leads:edit">
               <Button variant="outline" className="flex-1 justify-center" onClick={() => onEdit(lead)}>

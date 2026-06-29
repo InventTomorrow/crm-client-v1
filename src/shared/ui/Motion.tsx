@@ -146,12 +146,12 @@ interface SkeletonProps {
 export function Skeleton({ className = '', circle = false, style }: SkeletonProps) {
   return (
     <div
-      className={`relative overflow-hidden bg-[var(--surface-2)] ${circle ? 'rounded-full' : 'rounded-lg'} ${className}`}
+      className={`relative overflow-hidden bg-[var(--line)] ${circle ? 'rounded-full' : 'rounded-lg'} ${className}`}
       style={style}
     >
       <motion.div
-        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[var(--surface-3,rgba(255,255,255,0.06))] to-transparent"
-        animate={{ x: ['−100%', '200%'] }}
+        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent"
+        animate={{ x: ['-100%', '200%'] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: 'linear', repeatDelay: 0.3 }}
         style={{ translateX: '-100%' }}
       />

@@ -6,6 +6,7 @@ import { useLeadsCount } from "@/features/leads/hooks/useLeads";
 import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
   ChevronDown,
@@ -23,10 +24,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ProfileMenu } from "./ProfileMenu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
-import { Button } from "@/shared/ui/Button";
 
 const NAV_ITEMS: {
   href: string;
@@ -87,20 +87,18 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const collapsed = sidebarCollapsed;
 
   // Inbox wants maximum chat space — collapse the sidebar once on entry, while
-  // still letting the user expand it manually afterwards. Defer the collapse
-  // until the inbox has painted so its mount doesn't fight the width animation
-  // (otherwise the sidebar jerks while the page is still loading).
-  const isInbox = pathname.startsWith("/inbox");
-  const wasInboxRef = useRef(false);
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    if (isInbox && !wasInboxRef.current && !sidebarCollapsed) {
-      timer = setTimeout(() => toggleSidebar(), 400);
-    }
-    wasInboxRef.current = isInbox;
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInbox]);
+
+  // const isInbox = pathname.startsWith("/inbox");
+  // const wasInboxRef = useRef(false);
+  // useEffect(() => {
+  //   let timer: ReturnType<typeof setTimeout> | undefined;
+  //   if (isInbox && !wasInboxRef.current && !sidebarCollapsed) {
+  //     timer = setTimeout(() => toggleSidebar(), 400);
+  //   }
+  //   wasInboxRef.current = isInbox;
+  //   return () => clearTimeout(timer);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isInbox]);
 
   useEffect(() => {
     if (!profileOpen) return;
