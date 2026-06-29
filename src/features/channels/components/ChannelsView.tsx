@@ -1,5 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircle2,
@@ -69,11 +71,11 @@ function ManualConnect() {
       ).map(({ name, label }) => (
         <div key={name}>
           <label className="text-[11.5px] text-[var(--ink-mute)]">{label}</label>
-          <input
+          <Input
             {...register(name)}
             type={name === "accessToken" ? "password" : "text"}
             autoComplete="off"
-            className="w-full mt-0.5 px-2.5 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--bg)] text-[12.5px] outline-none focus:border-[var(--accent)]"
+            className="mt-0.5 text-[12.5px]"
           />
           {errors[name] && (
             <p className="text-[11px] text-[#EF4444] mt-0.5">
@@ -83,23 +85,15 @@ function ManualConnect() {
         </div>
       ))}
       <div className="flex items-center gap-2 pt-1">
-        <button
-          type="submit"
-          disabled={manualConnect.isPending}
-          className="btn btn-grad text-[12.5px] px-4 py-2"
-        >
+        <Button type="submit" disabled={manualConnect.isPending}>
           {manualConnect.isPending ? (
             <Loader2 size={13} className="animate-spin" />
           ) : null}
           Connect
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-[12px] text-[var(--ink-mute)]"
-        >
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -249,10 +243,11 @@ export function ChannelsView() {
                 </div>
               </div>
 
-              <button
+              <Button
+                variant="outline"
                 onClick={() => disconnectMut.mutate()}
                 disabled={disconnectMut.isPending}
-                className="btn btn-outline self-start text-[12.5px] text-[#EF4444] border-[#FECACA] hover:bg-[#FEF2F2]"
+                className="self-start text-[12.5px] text-[#EF4444] border-[#FECACA] hover:bg-[#FEF2F2] hover:text-[#EF4444]"
               >
                 {disconnectMut.isPending ? (
                   <Loader2 size={13} className="animate-spin" />
@@ -260,7 +255,7 @@ export function ChannelsView() {
                   <Power size={13} />
                 )}
                 Disconnect
-              </button>
+              </Button>
             </div>
           )}
 
@@ -278,10 +273,11 @@ export function ChannelsView() {
                   </p>
                 </div>
               </div>
-              <button
+              <Button
+                size="lg"
                 onClick={openSignup}
                 disabled={isConnecting}
-                className="btn btn-grad self-start px-6 py-2.5"
+                className="self-start px-6"
               >
                 {isConnecting ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -289,7 +285,7 @@ export function ChannelsView() {
                   <ExternalLink size={14} />
                 )}
                 Reconnect via Meta
-              </button>
+              </Button>
             </div>
           )}
 
@@ -338,11 +334,12 @@ export function ChannelsView() {
                 risk, fully TOS-compliant.
               </p>
 
-              <button
+              <Button
                 id="wa-connect-btn"
+                size="lg"
                 onClick={openSignup}
                 disabled={isConnecting}
-                className="btn btn-grad px-6 py-2.5"
+                className="px-6"
               >
                 {isConnecting ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -350,7 +347,7 @@ export function ChannelsView() {
                   <ExternalLink size={14} />
                 )}
                 {isConnecting ? "Connecting…" : "Connect via Meta"}
-              </button>
+              </Button>
 
               <ManualConnect />
             </div>

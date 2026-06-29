@@ -1,5 +1,6 @@
 "use client";
 import { useWAEmbeddedSignup, useWAState } from "@/features/channels/hooks/useWhatsApp";
+import { Button } from "@/shared/ui/Button";
 import { CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useSkipOnboarding } from "../hooks/useOnboarding";
@@ -83,15 +84,16 @@ export function ChannelView() {
               </div>
             </button>
 
-            <button
+            <Button
               type="button"
-              className="btn btn-outline w-full justify-center text-[13px] mt-1"
+              variant="outline"
+              className="w-full justify-center text-[13px] mt-1"
               onClick={() => skip()}
               disabled={isSkipping}
             >
               {isSkipping ? <Loader2 size={13} className="animate-spin" /> : null}
               Skip for now — set up later in Channels
-            </button>
+            </Button>
           </>
         )}
       </div>

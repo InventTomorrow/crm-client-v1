@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "./Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./Dialog";
 
 interface WAConnectDialogProps {
@@ -95,16 +96,18 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   )}
                 </div>
               </div>
-              <button
+              <Button
                 onClick={() => onOpenChange(false)}
-                className="btn btn-grad w-full justify-center gap-2"
+                className="w-full gap-2"
               >
                 <X size={13} /> Close
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => disconnectMut.mutate()}
                 disabled={disconnectMut.isPending}
-                className="flex items-center gap-1.5 text-[11.5px] text-[var(--ink-mute)] hover:text-[#EF4444] transition-colors duration-150 py-1"
+                className="text-[11.5px] text-[var(--ink-mute)] hover:text-[#EF4444]"
               >
                 {disconnectMut.isPending ? (
                   <Loader2 size={11} className="animate-spin" />
@@ -112,7 +115,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   <Power size={11} />
                 )}
                 Disconnect WhatsApp
-              </button>
+              </Button>
             </>
           )}
 
@@ -128,10 +131,10 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   </p>
                 </div>
               </div>
-              <button
+              <Button
                 onClick={openSignup}
                 disabled={isConnecting}
-                className="btn btn-grad w-full justify-center"
+                className="w-full"
               >
                 {isConnecting ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -139,7 +142,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   <ExternalLink size={14} />
                 )}
                 Reconnect via Meta
-              </button>
+              </Button>
             </>
           )}
 
@@ -168,11 +171,11 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   Log in with your Meta Business account to link your WhatsApp Business number securely.
                 </p>
               </div>
-              <button
+              <Button
                 id="wa-dialog-connect-btn"
                 onClick={openSignup}
                 disabled={isConnecting}
-                className="btn btn-grad w-full justify-center"
+                className="w-full"
               >
                 {isConnecting ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -180,7 +183,7 @@ export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
                   <ExternalLink size={14} />
                 )}
                 {isConnecting ? "Opening Meta login…" : "Connect via Meta"}
-              </button>
+              </Button>
               <p className="text-[11px] text-[var(--ink-mute)] text-center">
                 Official Meta API — TOS-compliant, no ban risk
               </p>
