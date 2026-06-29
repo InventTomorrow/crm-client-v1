@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useOnboardingStatus } from '../hooks/useOnboarding';
+import { SHOW_DEMO_FLAG } from '@/features/demo/constants';
 
 const REDIRECT_DELAY_MS = 4000;
 
@@ -14,7 +15,9 @@ export function DoneView() {
   const workspaceName = status?.workspaceName?.trim();
 
   // Let the success state breathe, then take the user to the dashboard.
+  // Flag the welcome demo so it pops once on the first dashboard load.
   useEffect(() => {
+    localStorage.setItem(SHOW_DEMO_FLAG, '1');
     const timer = setTimeout(() => router.push('/inbox'), REDIRECT_DELAY_MS);
     return () => clearTimeout(timer);
   }, [router]);

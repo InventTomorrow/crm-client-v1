@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
+import { Input } from '@/shared/ui/Input';
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from '@/shared/ui/form';
@@ -32,9 +34,11 @@ export function ForgotPasswordView() {
             <p className="text-[13px] text-[var(--ink-mute)]">
               We sent a password reset link to your email. It expires in 1 hour.
             </p>
-            <Link href="/auth/login" className="btn btn-outline mt-2">
-              Back to sign in
-            </Link>
+            <Button variant="outline" asChild className="mt-2">
+              <Link href="/auth/login">
+                Back to sign in
+              </Link>
+            </Button>
           </div>
         ) : (
           <>
@@ -53,17 +57,17 @@ export function ForgotPasswordView() {
                     <FormControl>
                       <div className="relative">
                         <Mail size={13} className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none" />
-                        <input className="input pl-8" type="email" placeholder="you@company.pk" autoFocus {...field} />
+                        <Input className="pl-8" type="email" placeholder="you@company.pk" autoFocus {...field} />
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
 
-                <button type="submit" className="btn btn-grad w-full justify-center mt-1" disabled={isPending}>
+                <Button type="submit" size="lg" className="w-full mt-1" disabled={isPending}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? 'Sending…' : 'Send reset link'}
-                </button>
+                </Button>
               </form>
             </Form>
           </>

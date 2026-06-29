@@ -1,4 +1,6 @@
 'use client';
+import { setLoggingOut } from '@/lib/apiClient';
+import { useAppStore } from '@/lib/appStore';
 import { extractErrorMessage } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -23,6 +25,7 @@ import {
   removeMember,
   resendVerification,
   resetPassword,
+  switchWorkspace,
   updateMe,
   updateRolePermissions,
   validateInvite,
@@ -33,9 +36,12 @@ import type { AcceptInviteData, CreateWorkspaceData, ForgotPasswordData, LoginDa
 export function useLogin() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const setAuthTransition = useAppStore((s) => s.setAuthTransition);
   return useMutation({
     mutationFn: (data: LoginData) => login(data),
     onSuccess: (user) => {
+      // Credentials verified — show the splash only now, while we redirect.
+      setAuthTransition(true);
       // Drop any cache left by a previously signed-in user in this browser so
       // the new session never renders the prior identity, role, or permissions.
       queryClient.clear();
@@ -82,16 +88,25 @@ export function useCreateWorkspace() {
 }
 
 export function useLogout() {
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const setAuthTransition = useAppStore((s) => s.setAuthTransition);
   return useMutation({
     mutationFn: logout,
+    // Suppress the axios 401 interceptor so background requests firing after the
+    // session is torn down don't bounce the user to /auth/login.
+    onMutate: () => setLoggingOut(true),
     onSuccess: () => {
-      // Wipe the cache so the next user on this browser starts from a clean slate.
+      // Logout succeeded — show the splash only now, while we redirect.
+      setAuthTransition(true);
+      // Wipe the cache so the next user on this browser starts from a clean slate,
+      // then hard-redirect to the root landing page (not the login screen).
       queryClient.clear();
-      router.push('/');
+      window.location.replace('/');
     },
-    onError: (error) => toast.error(extractErrorMessage(error)),
+    onError: (error) => {
+      setLoggingOut(false);
+      toast.error(extractErrorMessage(error));
+    },
   });
 }
 
@@ -154,16 +169,30 @@ export function useMyInvitations() {
   return useQuery({ queryKey: ['my-invitations'], queryFn: getMyInvitations });
 }
 
+/** Accept a pending invitation, then switch into that workspace like a full switch. */
 export function useAcceptMyInvitation() {
   const qc = useQueryClient();
+  const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
   return useMutation({
-    mutationFn: acceptMyInvitation,
-    onSuccess: (res) => {
-      toast.success(res?.message ?? 'Joined the workspace.');
-      qc.invalidateQueries({ queryKey: ['my-invitations'] });
-      qc.invalidateQueries({ queryKey: ['me'] });
+    mutationFn: async (invite: { id: string; tenantId: string; tenantName: string | null }) => {
+      setWorkspaceSwitching(true, invite.tenantName ?? 'workspace');
+      await acceptMyInvitation(invite.id);
+      await switchWorkspace(invite.tenantId);
+      return invite;
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to accept invitation')),
+    onSuccess: async ({ tenantId, tenantName }) => {
+      // Wipe stale cache while the overlay covers the UI, then load fresh identity.
+      qc.clear();
+      await qc.fetchQuery({ queryKey: ['me'], queryFn: getMe });
+      setCurrentWorkspace(tenantId);
+      await new Promise((r) => setTimeout(r, 80));
+      setWorkspaceSwitching(false);
+      toast.success(`Joined ${tenantName ?? 'the workspace'}.`);
+    },
+    onError: (error) => {
+      setWorkspaceSwitching(false);
+      toast.error(extractErrorMessage(error, 'Failed to accept invitation'));
+    },
   });
 }
 

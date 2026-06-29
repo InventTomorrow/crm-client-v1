@@ -2,6 +2,8 @@
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 
 /**
  * Category picker with inline creation: search the list, and when no match is
@@ -81,9 +83,9 @@ export function CreatableCategorySelect({
   if (creating) {
     return (
       <div className="flex items-center gap-1.5">
-        <input
+        <Input
           autoFocus
-          className="input flex-1"
+          className="flex-1"
           placeholder="New category name"
           value={newName}
           disabled={disabled}
@@ -96,24 +98,27 @@ export function CreatableCategorySelect({
             if (e.key === "Escape") cancelCreate();
           }}
         />
-        <button
+        <Button
           type="button"
+          size="icon"
           onClick={confirmCreate}
           disabled={disabled || !newName.trim()}
           title="Create category"
-          className="btn btn-grad p-2 flex-shrink-0"
+          className="flex-shrink-0"
         >
           <Check size={15} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          size="icon"
+          variant="outline"
           onClick={cancelCreate}
           disabled={disabled}
           title="Cancel"
-          className="btn btn-outline p-2 flex-shrink-0"
+          className="flex-shrink-0"
         >
           <X size={15} />
-        </button>
+        </Button>
       </div>
     );
   }
@@ -135,9 +140,9 @@ export function CreatableCategorySelect({
 
       {open && (
         <div className="absolute z-50 mt-1 w-full card p-1 shadow-lg border border-[var(--line)]">
-          <input
+          <Input
             autoFocus
-            className="input text-[13px] mb-1"
+            className="text-[13px] mb-1"
             placeholder="Search or add category…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

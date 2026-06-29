@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Mail, ArrowLeft, Loader2, RotateCcw } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
 import { useResendVerification } from '../hooks/useAuth';
 
 export function VerifyEmailView() {
@@ -37,15 +38,16 @@ export function VerifyEmailView() {
         </p>
 
         {email && (
-          <button
+          <Button
             type="button"
-            className="btn btn-outline w-full justify-center"
+            variant="outline"
+            className="w-full"
             onClick={handleResend}
             disabled={isPending || sent}
           >
             {isPending ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
             {sent ? 'Email sent!' : isPending ? 'Sending…' : 'Resend verification email'}
-          </button>
+          </Button>
         )}
       </div>
 

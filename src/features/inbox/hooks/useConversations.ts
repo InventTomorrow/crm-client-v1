@@ -1,15 +1,17 @@
 'use client';
 import { extractErrorMessage } from '@/lib/utils';
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { keepPreviousData, type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   approveDraft,
+  clearConversation,
   deleteMessage,
   editMessage,
   escalateConversation,
   getConversation,
   getConversations,
+  openConversationForLead,
   getInboxUnreadCount,
   getMessages,
   markConversationRead,
@@ -17,8 +19,10 @@ import {
   sendHumanMessage,
   sendMediaMessage,
   sendTyping,
+  startConversation,
   toggleAiMode,
   uploadAttachment,
+  type StartConversationInput,
 } from '../services/inboxService';
 import type { ConversationDetail, ConversationFilter, ConversationListItem } from '../types';
 
@@ -65,10 +69,10 @@ export function useMarkConversationRead() {
   });
 }
 
-export function useInfiniteConversations() {
+export function useInfiniteConversations(search?: string) {
   return useInfiniteQuery({
-    queryKey: ['conversations', 'infinite'],
-    queryFn: getConversations,
+    queryKey: ['conversations', 'infinite', search ?? ''],
+    queryFn: ({ pageParam }) => getConversations({ pageParam, search }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
     refetchInterval: 5_000,
@@ -144,6 +148,19 @@ export function useSendHumanReply(conversationId: string) {
   });
 }
 
+export function useStartConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StartConversationInput) => startConversation(input),
+    onSuccess: () => {
+      toast.success('Chat started');
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to start chat')),
+  });
+}
+
 export function useSendMedia(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -193,29 +210,128 @@ export function useToggleAiMode(conversationId: string) {
   });
 }
 
+type EscalationStatus = ConversationListItem['escalationStatus'];
+
+/** Optimistically writes the next escalation status into the list + detail caches. */
+function patchEscalationCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  id: string,
+  next: EscalationStatus,
+) {
+  queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
+    { queryKey: ['conversations', 'infinite'] },
+    (old) => {
+      if (!old?.pages) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page) =>
+          page.map((c) => (c.id === id ? { ...c, escalationStatus: next } : c)),
+        ),
+      };
+    },
+  );
+  const detail = queryClient.getQueryData<ConversationDetail>(['conversation', id]);
+  if (detail) {
+    queryClient.setQueryData<ConversationDetail>(['conversation', id], { ...detail, escalationStatus: next });
+  }
+}
+
+/** Toggles the flag: clicking an already-escalated chat clears it back to NONE. */
 export function useEscalate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: escalateConversation,
-    onSuccess: (_, id) => {
-      toast.success('Conversation escalated');
+    onMutate: (id: string) => {
+      const detail = queryClient.getQueryData<ConversationDetail>(['conversation', id]);
+      const prev = detail?.escalationStatus;
+      const next: EscalationStatus = prev === 'ESCALATED' ? 'NONE' : 'ESCALATED';
+      patchEscalationCache(queryClient, id, next);
+      return { prev, next };
+    },
+    onSuccess: (_, __, ctx) => {
+      toast.success(ctx?.next === 'ESCALATED' ? 'Conversation flagged' : 'Flag removed');
+    },
+    onError: (error, id, ctx) => {
+      if (ctx?.prev) patchEscalationCache(queryClient, id, ctx.prev);
+      toast.error(extractErrorMessage(error, 'Failed to update'));
+    },
+    onSettled: (_, __, id) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['conversation', id] });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to escalate')),
   });
 }
 
+/** Toggles done: clicking an already-resolved chat clears it back to NONE. */
 export function useResolve() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: resolveConversation,
-    onSuccess: (_, id) => {
-      toast.success('Conversation resolved');
+    onMutate: (id: string) => {
+      const detail = queryClient.getQueryData<ConversationDetail>(['conversation', id]);
+      const prev = detail?.escalationStatus;
+      const next: EscalationStatus = prev === 'RESOLVED' ? 'NONE' : 'RESOLVED';
+      patchEscalationCache(queryClient, id, next);
+      return { prev, next };
+    },
+    onSuccess: (_, __, ctx) => {
+      toast.success(ctx?.next === 'RESOLVED' ? 'Marked as done' : 'Reopened');
+    },
+    onError: (error, id, ctx) => {
+      if (ctx?.prev) patchEscalationCache(queryClient, id, ctx.prev);
+      toast.error(extractErrorMessage(error, 'Failed to update'));
+    },
+    onSettled: (_, __, id) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['conversation', id] });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to resolve')),
+  });
+}
+
+/** Deletes a chat's history server-side; the lead is kept for later follow-up. */
+export function useDeleteChat() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => clearConversation(id),
+    // Optimistically drop the row from the list so the view advances to the next
+    // chat immediately — otherwise the auto-select effect re-picks the stale
+    // (just-deleted) first row before the refetch lands.
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['conversations', 'infinite'] });
+      const prev = queryClient.getQueriesData<InfiniteData<ConversationListItem[]>>({
+        queryKey: ['conversations', 'infinite'],
+      });
+      queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
+        { queryKey: ['conversations', 'infinite'] },
+        (old) => {
+          if (!old?.pages) return old;
+          return { ...old, pages: old.pages.map((page) => page.filter((c) => c.id !== id)) };
+        },
+      );
+      return { prev };
+    },
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: ['conversation', id] });
+      toast.success('Chat deleted');
+    },
+    onError: (error, _id, ctx) => {
+      ctx?.prev?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      toast.error(extractErrorMessage(error, 'Failed to delete chat'));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}
+
+/** Opens (or creates) a lead's chat so it can be messaged from the CRM. */
+export function useOpenConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (leadId: string) => openConversationForLead(leadId),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(['conversation', detail.id], detail);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to open chat')),
   });
 }
 
@@ -269,13 +385,44 @@ export function useEditMessage(conversationId: string) {
   });
 }
 
+// Safety auto-clear: the server emits a "stopped" event on flush, but if it is
+// missed we still drop the indicator after this long without a fresh keystroke.
+const LEAD_TYPING_TTL_MS = 8_000;
+
 /**
- * Lead "typing…" presence is unavailable on the Meta WhatsApp Cloud API —
- * inbound webhooks carry no typing events (the old Baileys SSE stream that
- * powered this is gone). Kept as a stable no-op so callers don't need to change.
+ * Subscribes to the WhatsApp SSE stream and returns the conversation id whose
+ * lead is currently typing (or null). One stream powers both the thread
+ * indicator and the conversation-list row.
  */
 export function useLeadTyping(): string | null {
-  return null;
+  const [typingConversationId, setTypingConversationId] = useState<string | null>(null);
+  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const es = new EventSource('/api/v1/whatsapp/qr-stream', { withCredentials: true });
+
+    es.onmessage = (e: MessageEvent) => {
+      const event = JSON.parse(e.data as string) as { type: string; conversationId?: string; isTyping?: boolean };
+      if (event.type !== 'typing' || !event.conversationId) return;
+
+      if (event.isTyping) {
+        setTypingConversationId(event.conversationId);
+        if (clearTimer.current) clearTimeout(clearTimer.current);
+        clearTimer.current = setTimeout(() => setTypingConversationId(null), LEAD_TYPING_TTL_MS);
+      } else {
+        setTypingConversationId((prev) => (prev === event.conversationId ? null : prev));
+      }
+    };
+
+    es.onerror = () => es.close();
+
+    return () => {
+      es.close();
+      if (clearTimer.current) clearTimeout(clearTimer.current);
+    };
+  }, []);
+
+  return typingConversationId;
 }
 
 const AGENT_TYPING_IDLE_MS = 2_500;

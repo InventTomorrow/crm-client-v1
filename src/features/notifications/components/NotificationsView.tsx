@@ -11,6 +11,7 @@ import {
 } from '../hooks/useNotifications';
 import { notificationHref, notificationMeta, timeAgo } from '../lib/meta';
 import { NotificationPreferences } from './NotificationPreferences';
+import { Button } from '@/shared/ui/Button';
 
 export function NotificationsView() {
   const router = useRouter();
@@ -33,13 +34,14 @@ export function NotificationsView() {
             {unread > 0 ? `${unread} unread` : 'You’re all caught up.'}
           </p>
         </div>
-        <button
-          className="btn btn-outline text-[12.5px]"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => markAll.mutate()}
           disabled={unread === 0 || markAll.isPending}
         >
           <CheckCheck size={14} /> Mark all read
-        </button>
+        </Button>
       </div>
 
       <div className="seg mb-4 w-[240px]">
@@ -101,14 +103,15 @@ export function NotificationsView() {
 
       {hasNextPage && (
         <div className="flex justify-center mt-4">
-          <button
-            className="btn btn-outline text-[12.5px]"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
           >
             {isFetchingNextPage ? <Loader2 size={14} className="animate-spin" /> : null}
             Load more
-          </button>
+          </Button>
         </div>
       )}
 

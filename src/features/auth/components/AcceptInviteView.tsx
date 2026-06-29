@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { Button } from '@/shared/ui/Button';
+import { Input } from '@/shared/ui/Input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form';
 import { acceptInviteSchema, type AcceptInviteData } from '../types';
 import { useAcceptInvite, useValidateInvite } from '../hooks/useAuth';
@@ -102,10 +104,10 @@ export function AcceptInviteView() {
 
         {accountExists ? (
           <>
-            <button type="button" className="btn btn-grad w-full justify-center" disabled={isPending} onClick={() => mutate(undefined)}>
+            <Button type="button" size="lg" className="w-full" disabled={isPending} onClick={() => mutate(undefined)}>
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {isPending ? 'Joining…' : 'Accept & join workspace'}
-            </button>
+            </Button>
             <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
               You may need to{' '}
               <Link href="/auth/login" className="text-[var(--accent)] hover:underline font-medium">sign in</Link>{' '}
@@ -120,7 +122,7 @@ export function AcceptInviteView() {
                 <FormItem>
                   <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">First name *</FormLabel>
                   <FormControl>
-                    <input className="input" placeholder="Ali" autoFocus {...field} />
+                    <Input placeholder="Ali" autoFocus {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +131,7 @@ export function AcceptInviteView() {
                 <FormItem>
                   <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">Last name</FormLabel>
                   <FormControl>
-                    <input className="input" placeholder="Hassan" {...field} />
+                    <Input placeholder="Hassan" {...field} />
                   </FormControl>
                 </FormItem>
               )} />
@@ -139,7 +141,7 @@ export function AcceptInviteView() {
                 <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">Password *</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <input className="input pr-9" type={showPw ? 'text' : 'password'} placeholder="Min 8 chars, 1 uppercase, 1 number" autoComplete="new-password" {...field} />
+                    <Input className="pr-9" type={showPw ? 'text' : 'password'} placeholder="Min 8 chars, 1 uppercase, 1 number" autoComplete="new-password" {...field} />
                     <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] hover:text-[var(--ink)] transition-colors" onClick={() => setShowPw(v => !v)}>
                       {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -153,7 +155,7 @@ export function AcceptInviteView() {
                 <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">Confirm password *</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <input className="input pr-9" type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" autoComplete="new-password" {...field} />
+                    <Input className="pr-9" type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" autoComplete="new-password" {...field} />
                     <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] hover:text-[var(--ink)] transition-colors" onClick={() => setShowConfirm(v => !v)}>
                       {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -162,10 +164,10 @@ export function AcceptInviteView() {
                 <FormMessage />
               </FormItem>
             )} />
-            <button type="submit" className="btn btn-grad w-full justify-center mt-1" disabled={isPending}>
+            <Button type="submit" size="lg" className="w-full mt-1" disabled={isPending}>
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {isPending ? 'Joining…' : 'Join workspace'}
-            </button>
+            </Button>
           </form>
         </Form>
         )}

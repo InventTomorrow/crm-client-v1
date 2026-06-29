@@ -27,6 +27,8 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useCreateBroadcast } from "../hooks/useBroadcast";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 
 type StatusFilter = "all" | LeadStatus;
 const FILTERS: { id: StatusFilter; label: string }[] = [
@@ -222,9 +224,9 @@ export function BroadcasterDialog({
                   : "Review your broadcast before sending."}
             </DialogDescription>
           </div>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
         </DialogHeader>
 
         <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -301,13 +303,12 @@ export function BroadcasterDialog({
                 <div className="w-2 h-2 rounded-full bg-[var(--line)]" />
                 <div className="w-2 h-2 rounded-full bg-[var(--line)]" />
               </div>
-              <button
-                className="btn btn-grad"
+              <Button
                 onClick={handleNextStep1}
                 disabled={!draft.trim() && !pendingFile}
               >
                 Next Step <ArrowRight size={14} className="ml-1" />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -326,12 +327,12 @@ export function BroadcasterDialog({
             <div className="px-5 pt-3 pb-2 flex flex-col gap-3 flex-shrink-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]" size={16} />
-                <input 
-                  type="text" 
+                <Input
+                  type="text"
                   placeholder="Search leads by name, phone, or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[var(--surface-2)] border border-[var(--line)] rounded-lg pl-9 pr-3 py-2 text-[13px] outline-none focus:border-[var(--accent)] transition-colors"
+                  className="pl-9"
                 />
               </div>
               
@@ -444,19 +445,12 @@ export function BroadcasterDialog({
                 <div className="w-2 h-2 rounded-full bg-[var(--line)]" />
               </div>
               <div className="flex gap-2">
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setStep(1)}
-                >
+                <Button variant="outline" onClick={() => setStep(1)}>
                   Back
-                </button>
-                <button
-                  className="btn btn-grad"
-                  onClick={handleNextStep2}
-                  disabled={selectedCount === 0}
-                >
+                </Button>
+                <Button onClick={handleNextStep2} disabled={selectedCount === 0}>
                   Review <ArrowRight size={14} className="ml-1" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -555,18 +549,12 @@ export function BroadcasterDialog({
                 <div className="w-2 h-2 rounded-full bg-[var(--accent)]" />
               </div>
               <div className="flex gap-2">
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setStep(2)}
-                >
+                <Button variant="outline" onClick={() => setStep(2)}>
                   <ArrowLeft size={14} className="mr-1" /> Back
-                </button>
-                <button
-                  className="btn bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] font-medium px-5"
-                  onClick={handleSend}
-                >
+                </Button>
+                <Button onClick={handleSend}>
                   <Megaphone size={15} className="mr-1.5" /> Start Broadcast
-                </button>
+                </Button>
               </div>
             </div>
           </div>

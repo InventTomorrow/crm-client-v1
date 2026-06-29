@@ -49,7 +49,7 @@
   --shadow-pop: var(--shadow-pop);
 
   /* ── Landing page (asanRabta) brand palette ─────────────────────────────── */
-  --color-brand-dark: #14403A;
+  --color-brand-dark: #1E4841;
   --color-brand-dark-2: #0F302B;
   --color-brand-green: #16A572;
   --color-brand-green-hover: #128A5F;
@@ -62,6 +62,9 @@
   --color-brand-leaf-2: #C4E2B0;
   --color-brand-text: #6B7670;
   --color-brand-text-soft: #8B9590;
+  /* Energy / offer accent */
+  --color-brand-amber: #F97316;
+  --color-brand-amber-dark: #EA580C;
 
   /* Landing page shadows */
   --shadow-card: 0 1px 2px rgba(20, 64, 58, 0.04), 0 4px 16px rgba(20, 64, 58, 0.04);
@@ -138,8 +141,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.628 0.103 188);        /* brand teal #00A884 */
+  --primary-foreground: oklch(1 0 0);       /* white */
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -148,7 +151,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.628 0.103 188);           /* brand teal #00A884 */
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -157,12 +160,12 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.628 0.103 188);        /* brand teal #00A884 */
+  --sidebar-primary-foreground: oklch(1 0 0);       /* white */
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.628 0.103 188);           /* brand teal #00A884 */
 }
 
 /* Dark Mode Overrides — WhatsApp dark palette */
@@ -173,14 +176,14 @@ html.dark {
   --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.628 0.103 188) 100%);
   --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.628 0.103 188) 100%);
 
-  --bg:       oklch(0.152 0.014 243);       /* #0B141A */
-  --surface:  oklch(0.228 0.017 237);       /* #1F2C34 */
-  --surface-2:oklch(0.188 0.015 241);       /* #182129 */
-  --ink:      oklch(0.949 0.009 234);       /* #E9EDEF */
-  --ink-soft: oklch(0.744 0.015 229);       /* #AEBAC1 */
-  --ink-mute: oklch(0.523 0.018 232);       /* #667781 */
-  --line:     oklch(0.272 0.020 238);       /* #2A3942 */
-  --line-soft:oklch(0.210 0.017 240);       /* #1A2733 */
+  --bg:       #111B21;   /* app frame — WhatsApp dark base */
+  --surface:  #202C33;   /* panels, cards, headers */
+  --surface-2:#2A3942;   /* hover, inputs, secondary surfaces */
+  --ink:      #E9EDEF;   /* primary text */
+  --ink-soft: #D1D7DB;   /* secondary text */
+  --ink-mute: #8696A0;   /* muted text / icons */
+  --line:     #2F3B44;   /* borders */
+  --line-soft:#222D34;   /* subtle dividers */
   --shadow-1: 0 1px 2px oklch(0 0 0 / 0.40);
   --shadow-2: 0 4px 14px oklch(0 0 0 / 0.55);
   --shadow-3: 0 16px 40px oklch(0 0 0 / 0.70);
@@ -199,12 +202,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1,h2,h3,h4,h5 {
-  font-family: var(--font-head);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin: 0;
-  color: var(--ink);
+@layer base {
+  h1,h2,h3,h4,h5 {
+    font-family: var(--font-head);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--ink);
+  }
 }
 button { font-family: inherit; font-weight: 500; }
 input, textarea, select { font-family: inherit; color: inherit; font-weight: 400; }
@@ -233,6 +238,19 @@ input, textarea, select { font-family: inherit; color: inherit; font-weight: 400
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-3);
+}
+
+/* WhatsApp-style default chat wallpaper — doodle pattern over a flat base,
+   theme-aware via html.dark. Used as the inbox conversation background. */
+.wa-chat-bg {
+  background-color: #efeae2;
+  background-image: url("/wa-doodle-light.svg");
+  background-repeat: repeat;
+  background-size: 320px 320px;
+}
+html.dark .wa-chat-bg {
+  background-color: #0b141a;
+  background-image: url("/wa-doodle-dark.svg");
 }
 
 .grad-text {
@@ -597,6 +615,9 @@ html.dark .seg button.on { background: #1F2535; color: white; }
   position: relative; z-index: 50;
   overflow: visible;
 }
+
+/* Inbox panels — gray chat list separates it from the message canvas */
+.inbox-list { background: var(--surface-2); }
 .app-main {
   flex: 1; display: flex; flex-direction: column;
   min-width: 0; position: relative; z-index: 1;
@@ -858,38 +879,40 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* shadcn semantic tokens mapped onto the WhatsApp dark palette so primitives
+   (Dialog, Popover, Select, DropdownMenu, inputs) match the teal-tinted surfaces.
+   --accent intentionally left to the html.dark block (brand teal). */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #111B21;
+  --foreground: #E9EDEF;
+  --card: #202C33;
+  --card-foreground: #E9EDEF;
+  --popover: #202C33;
+  --popover-foreground: #E9EDEF;
+  --primary: #00A884;
+  --primary-foreground: #0B141A;
+  --secondary: #2A3942;
+  --secondary-foreground: #E9EDEF;
+  --muted: #2A3942;
+  --muted-foreground: #8696A0;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: #2F3B44;
+  --input: #2A3942;
+  --ring: #00A884;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #111B21;
+  --sidebar-foreground: #E9EDEF;
+  --sidebar-primary: #00A884;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2A3942;
+  --sidebar-accent-foreground: #E9EDEF;
+  --sidebar-border: #2F3B44;
+  --sidebar-ring: #00A884;
 }
 
 @layer base {

@@ -18,6 +18,19 @@ import { cn } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { CRMSwitch } from "@/shared/ui/CRMSwitch";
 import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/shared/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Activity,
   Bell,
@@ -56,23 +69,14 @@ const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
   system: Activity,
 };
 
-// ──────────────────── Field (label wrapper) ────────────────────
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-[12px] font-semibold mb-1.5 text-[var(--ink-soft)]">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
+// ──────────────────── Profile form schema ────────────────────
+const profileSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Metric ────────────────────
 function Metric({ label, v, pct }: { label: string; v: string; pct: number }) {
@@ -103,24 +107,23 @@ function ProfileSection() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState(false);
 
-  const [draft, setDraft] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    avatarUrl: "",
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { firstName: "", lastName: "", phone: "", avatarUrl: "" },
   });
+
+  const avatarUrl = form.watch("avatarUrl") || "";
 
   useEffect(() => {
     if (user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDraft({
+      form.reset({
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
         phone: user.phone ?? "",
         avatarUrl: user.avatarUrl ?? "",
       });
     }
-  }, [user]);
+  }, [user, form]);
 
   const fullName =
     `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "Your Name";
@@ -129,34 +132,25 @@ function ProfileSection() {
   const workspaceName = currentMembership?.tenant?.name ?? "";
   const roleName = currentMembership?.role?.name ?? "";
 
-  const originalDraft = {
-    firstName: user?.firstName ?? "",
-    lastName: user?.lastName ?? "",
-    phone: user?.phone ?? "",
-    avatarUrl: user?.avatarUrl ?? "",
-  };
-  const dirty = JSON.stringify(originalDraft) !== JSON.stringify(draft);
-
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
     try {
       const url = await uploadImage(file);
-      setDraft((d) => ({ ...d, avatarUrl: url }));
-      saveProfile({ avatarUrl: url });
+      form.setValue("avatarUrl", url, { shouldDirty: true });
     } catch {
       // error toast already shown by usePresignedUpload's onError
     }
   };
 
-  const handleSave = () => {
+  const handleSave = (data: ProfileFormValues) => {
     saveProfile(
       {
-        firstName: draft.firstName || undefined,
-        lastName: draft.lastName || undefined,
-        phone: draft.phone || undefined,
-        avatarUrl: draft.avatarUrl || undefined,
+        firstName: data.firstName || undefined,
+        lastName: data.lastName || undefined,
+        phone: data.phone || undefined,
+        avatarUrl: data.avatarUrl || undefined,
       },
       {
         onSuccess: () => {
@@ -182,7 +176,7 @@ function ProfileSection() {
         <div className="flex items-center gap-4 mb-5">
           <CRMAvatar
             name={fullName}
-            src={draft.avatarUrl || null}
+            src={avatarUrl || null}
             size={64}
             ring
           />
@@ -200,8 +194,10 @@ function ProfileSection() {
               className="hidden"
               onChange={handlePhotoChange}
             />
-            <button
-              className="btn btn-outline mt-2 py-1 px-2.5 text-[12px]"
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
               onClick={() => photoInputRef.current?.click()}
               disabled={isUploading}
             >
@@ -214,82 +210,97 @@ function ProfileSection() {
                   <Upload size={12} /> Upload photo
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="First name">
-            <input
-              className="input"
-              value={draft.firstName}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, firstName: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="Last name">
-            <input
-              className="input"
-              value={draft.lastName}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, lastName: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="Email">
-            <input
-              className="input opacity-60 cursor-not-allowed"
-              value={displayEmail}
-              readOnly
-            />
-          </Field>
-          <Field label="Phone">
-            <input
-              className="input"
-              value={draft.phone}
-              placeholder="+92 300 0000000"
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, phone: e.target.value }))
-              }
-            />
-          </Field>
-        </div>
-        <div className="flex justify-between items-center mt-4">
-          <div
-            className={`text-[12.5px] flex items-center gap-1.5 ${saved ? "text-[#15803D]" : "text-[var(--ink-mute)]"}`}
-          >
-            {saved && (
-              <>
-                <Check size={13} /> Saved successfully
-              </>
-            )}
-            {!saved && dirty && "Unsaved changes"}
-          </div>
-          <div className="flex gap-2">
-            <button
-              className="btn btn-outline"
-              onClick={() => setDraft(originalDraft)}
-              disabled={!dirty || isSaving}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-grad"
-              onClick={handleSave}
-              disabled={!dirty || isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 size={13} className="animate-spin" /> Saving…
-                </>
-              ) : (
-                <>
-                  <Check size={14} /> Save changes
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSave)}>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <Input
+                  value={displayEmail}
+                  readOnly
+                  className="opacity-60 cursor-not-allowed"
+                />
+              </FormItem>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+92 300 0000000" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-between items-center mt-4">
+              <div
+                className={`text-[12.5px] flex items-center gap-1.5 ${saved ? "text-[#15803D]" : "text-[var(--ink-mute)]"}`}
+              >
+                {saved && (
+                  <>
+                    <Check size={13} /> Saved successfully
+                  </>
+                )}
+                {!saved && form.formState.isDirty && "Unsaved changes"}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => form.reset()}
+                  disabled={!form.formState.isDirty || isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!form.formState.isDirty || isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} /> Save changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
       </div>
     </>
   );
@@ -462,17 +473,18 @@ function ChannelsSection() {
                 : "Disconnected"}
           </span>
           {canConnect && (
-            <button
-              className="btn btn-outline text-[12.5px]"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setWaOpen(true)}
             >
               {status === "CONNECTED" ? "Manage" : "Connect"}
-            </button>
+            </Button>
           )}
         </div>
         {!canConnect && (
           <p className="text-[11.5px] text-[var(--ink-mute)] mt-3">
-            You don’t have permission to connect or disconnect WhatsApp. Ask a
+            You don&apos;t have permission to connect or disconnect WhatsApp. Ask a
             workspace owner.
           </p>
         )}
@@ -506,9 +518,9 @@ function TierSection() {
               12,000 messages / month.
             </div>
           </div>
-          <button className="btn btn-grad flex-shrink-0">
+          <Button className="flex-shrink-0">
             <Zap size={14} /> Upgrade to ERP
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
           <Metric label="Messages used" v="8,420 / 12K" pct={70} />
@@ -613,17 +625,18 @@ export function SettingsView() {
             s.id,
           );
           return (
-            <button
+            <Button
               key={s.id}
+              variant="ghost"
               onClick={() => !disabled && setSection(s.id)}
               disabled={disabled}
               className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left transition-colors w-full border-none",
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left w-full justify-start h-auto",
                 disabled
                   ? "opacity-35 cursor-not-allowed text-[var(--ink-soft)] font-medium"
                   : active
-                    ? "bg-[var(--accent-soft)] text-[var(--accent)] font-semibold cursor-pointer"
-                    : "bg-transparent text-[var(--ink-soft)] font-medium hover:bg-[var(--surface-2)] hover:text-[var(--ink)] cursor-pointer",
+                    ? "bg-[var(--accent-soft)] text-[var(--accent)] font-semibold hover:bg-[var(--accent-soft)]"
+                    : "bg-transparent text-[var(--ink-soft)] font-medium",
               )}
             >
               <Icon size={15} />
@@ -633,7 +646,7 @@ export function SettingsView() {
                   Soon
                 </span>
               )}
-            </button>
+            </Button>
           );
         })}
       </div>

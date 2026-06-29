@@ -29,6 +29,10 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import { Checkbox } from "@/shared/ui/Checkbox";
+import { Label } from "@/shared/ui/Label";
 
 // ─────────────────────────────────────────────────────────────
 // Colour palette
@@ -85,8 +89,7 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
             <label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
               Workspace name <span className="text-red-500">*</span>
             </label>
-            <input
-              className="input"
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Karachi Branch, Q2 Ops…"
@@ -106,28 +109,16 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div className="px-6 py-4 border-t border-[var(--line)] flex justify-end gap-2">
-          <button
-            className="btn btn-outline"
-            onClick={onClose}
-            disabled={isPending}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
-          </button>
-          <button
-            className="btn btn-grad"
-            onClick={handleCreate}
-            disabled={!name.trim() || isPending}
-          >
+          </Button>
+          <Button onClick={handleCreate} disabled={!name.trim() || isPending}>
             {isPending ? (
-              <>
-                <Loader2 size={13} className="animate-spin" /> Creating…
-              </>
+              <><Loader2 size={13} className="animate-spin" /> Creating…</>
             ) : (
-              <>
-                <Plus size={13} /> Create workspace
-              </>
+              <><Plus size={13} /> Create workspace</>
             )}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -191,45 +182,41 @@ function DeleteConfirmDialog({
               <span className="font-mono text-red-500">{workspaceName}</span> to
               confirm
             </label>
-            <input
-              className="input border-red-200 focus:border-red-400"
+            <Input
+              className="border-red-200 focus:border-red-400"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={workspaceName}
             />
           </div>
-          <label className="flex items-start gap-2.5 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              className="mt-0.5 h-4 w-4 accent-red-500"
+          <div className="flex items-start gap-2.5">
+            <Checkbox
+              id="remove-members"
+              className="mt-0.5"
               checked={removeMembers}
-              onChange={(e) => setRemoveMembers(e.target.checked)}
+              onCheckedChange={(v) => setRemoveMembers(!!v)}
             />
-            <span className="text-[12.5px] text-[var(--ink-soft)] leading-snug">
+            <Label htmlFor="remove-members" className="text-[12.5px] text-[var(--ink-soft)] leading-snug cursor-pointer">
               Also remove all team members now. They lose access immediately;
               the owner keeps it so the workspace can still be restored.
-            </span>
-          </label>
+            </Label>
+          </div>
         </div>
         <div className="px-6 py-4 border-t border-[var(--line)] flex justify-end gap-2">
-          <button className="btn btn-outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            className="btn flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white rounded-[10px] px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          </Button>
+          <Button
+            variant="destructive"
             onClick={() => onConfirm(removeMembers)}
             disabled={typed !== workspaceName || isPending}
           >
             {isPending ? (
-              <>
-                <Loader2 size={13} className="animate-spin" /> Deleting…
-              </>
+              <><Loader2 size={13} className="animate-spin" /> Deleting…</>
             ) : (
-              <>
-                <Trash2 size={13} /> Delete workspace
-              </>
+              <><Trash2 size={13} /> Delete workspace</>
             )}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -364,21 +351,18 @@ function WorkspaceCard({
       <div className="flex gap-2">
         {pendingDelete ? (
           isOwner ? (
-            <button
-              className="btn btn-outline flex-1 justify-center text-[12.5px]"
+            <Button
+              variant="outline"
+              className="flex-1 justify-center text-[12.5px]"
               onClick={onRestore}
               disabled={isRestoring}
             >
               {isRestoring ? (
-                <>
-                  <Loader2 size={13} className="animate-spin" /> Restoring…
-                </>
+                <><Loader2 size={13} className="animate-spin" /> Restoring…</>
               ) : (
-                <>
-                  <ArrowRightLeft size={13} /> Restore workspace
-                </>
+                <><ArrowRightLeft size={13} /> Restore workspace</>
               )}
-            </button>
+            </Button>
           ) : (
             <div className="flex-1 rounded-[10px] bg-red-50 text-red-600 text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
               <AlertTriangle size={13} /> Pending deletion
@@ -387,12 +371,13 @@ function WorkspaceCard({
         ) : (
           <>
             {!isActive && (
-              <button
-                className="btn btn-outline flex-1 justify-center text-[12.5px]"
+              <Button
+                variant="outline"
+                className="flex-1 justify-center text-[12.5px]"
                 onClick={onSwitch}
               >
                 <ArrowRightLeft size={13} /> Switch to this
-              </button>
+              </Button>
             )}
             {isActive && (
               <div className="flex-1 rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)] text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
@@ -400,13 +385,15 @@ function WorkspaceCard({
               </div>
             )}
             {isOwner && (
-              <button
-                className="btn btn-outline px-2.5 text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors"
+              <Button
+                variant="outline"
+                size="icon"
+                className="text-red-500 hover:bg-red-50 hover:border-red-200"
                 onClick={onDelete}
                 title="Delete workspace"
               >
                 <Trash2 size={14} />
-              </button>
+              </Button>
             )}
           </>
         )}
@@ -463,9 +450,9 @@ export function WorkspacesManagementView() {
           </p>
         </div>
         {isOwner && (
-          <button className="btn btn-grad" onClick={() => setShowCreate(true)}>
+          <Button onClick={() => setShowCreate(true)}>
             <Plus size={14} /> New workspace
-          </button>
+          </Button>
         )}
       </div>
 
@@ -514,9 +501,9 @@ export function WorkspacesManagementView() {
               Create your first workspace to get started.
             </div>
           </div>
-          <button className="btn btn-grad" onClick={() => setShowCreate(true)}>
+          <Button onClick={() => setShowCreate(true)}>
             <Plus size={14} /> Create workspace
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">

@@ -2,6 +2,7 @@
 import { Flame, Phone, MapPin, Target, X, Users, Handshake } from 'lucide-react';
 import { pkr } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/ui/Dialog';
+import { Button } from '@/shared/ui/Button';
 import type { Lead } from '@/lib/mockData';
 
 interface EscalateDialogProps {
@@ -15,9 +16,9 @@ export function EscalateDialog({ lead, onClose, onConfirm }: EscalateDialogProps
     <Dialog open onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="flex flex-col gap-0 p-0 sm:max-w-[500px] overflow-hidden" showCloseButton={false}>
         <DialogHeader className="flex-row items-start gap-2 px-[22px] py-[18px] border-b border-[var(--line)] relative">
-          <button className="btn btn-ghost absolute top-3 right-3 p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="absolute top-3 right-3" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
           <div>
             <div className="flex items-center gap-2.5 mb-1.5">
               <span className="w-[26px] h-[26px] rounded-lg bg-[rgba(239,68,68,0.12)] text-[#DC2626] inline-flex items-center justify-center flex-shrink-0">
@@ -45,12 +46,12 @@ export function EscalateDialog({ lead, onClose, onConfirm }: EscalateDialogProps
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="btn btn-outline flex-1 justify-center" onClick={onClose}>
+            <Button variant="outline" className="flex-1 justify-center" onClick={onClose}>
               <Users size={14} /> SR Will Contact
-            </button>
-            <button className="btn btn-grad flex-[1.4] justify-center" onClick={onConfirm}>
+            </Button>
+            <Button className="flex-[1.4] justify-center" onClick={onConfirm}>
               <Handshake size={14} /> Handle Personally
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

@@ -6,6 +6,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
+import { Button } from '@/shared/ui/Button';
+import { Switch } from '@/shared/ui/Switch';
+import { Textarea } from '@/shared/ui/Textarea';
 
 const PERSONALITIES = [
   { key: 'FORMAL' as const, label: 'Formal', desc: 'Professional & precise' },
@@ -77,21 +80,10 @@ export function ChatbotSection() {
             name="aiEnabled"
             control={control}
             render={({ field }) => (
-              <button
-                type="button"
-                role="switch"
-                aria-checked={field.value}
-                onClick={() => field.onChange(!field.value)}
-                className={cn(
-                  'relative w-[42px] h-[24px] rounded-full transition-colors flex-shrink-0',
-                  field.value ? 'bg-[var(--accent)]' : 'bg-[var(--line)]',
-                )}
-              >
-                <span className={cn(
-                  'absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-all',
-                  field.value ? 'left-[21px]' : 'left-[3px]',
-                )} />
-              </button>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
             )}
           />
         </div>
@@ -130,27 +122,27 @@ export function ChatbotSection() {
         <div className="border-t border-[var(--line)] pt-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-[12px] font-medium text-[var(--ink-soft)]">Greeting message</label>
-            <textarea className="input text-[13px] min-h-[68px] resize-y" {...register('greetingMessage')} />
+            <Textarea className="text-[13px] min-h-[68px] resize-y" {...register('greetingMessage')} />
             {errors.greetingMessage && <p className="text-[11px] text-[var(--destructive)]">{errors.greetingMessage.message}</p>}
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[12px] font-medium text-[var(--ink-soft)]">Escalation message</label>
             <p className="text-[11px] text-[var(--ink-mute)]">Sent when handing off to a human agent</p>
-            <textarea className="input text-[13px] min-h-[68px] resize-y" {...register('escalationMessage')} />
+            <Textarea className="text-[13px] min-h-[68px] resize-y" {...register('escalationMessage')} />
             {errors.escalationMessage && <p className="text-[11px] text-[var(--destructive)]">{errors.escalationMessage.message}</p>}
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[12px] font-medium text-[var(--ink-soft)]">Fallback message</label>
             <p className="text-[11px] text-[var(--ink-mute)]">Sent when the bot doesn&apos;t understand</p>
-            <textarea className="input text-[13px] min-h-[68px] resize-y" {...register('fallbackMessage')} />
+            <Textarea className="text-[13px] min-h-[68px] resize-y" {...register('fallbackMessage')} />
             {errors.fallbackMessage && <p className="text-[11px] text-[var(--destructive)]">{errors.fallbackMessage.message}</p>}
           </div>
         </div>
 
         <div className="flex justify-end">
-          <button type="submit" className="btn btn-grad" disabled={isPending || !isDirty}>
+          <Button type="submit" disabled={isPending || !isDirty}>
             {isPending ? <><Loader2 size={13} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save changes</>}
-          </button>
+          </Button>
         </div>
       </form>
     </>

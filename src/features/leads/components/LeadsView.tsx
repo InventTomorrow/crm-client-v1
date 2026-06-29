@@ -3,6 +3,8 @@ import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -131,23 +133,23 @@ export function LeadsView() {
         </div>
         <div className="flex gap-2 items-center">
           <PermissionGuard permission="leads:export">
-            <button
-              className="btn btn-outline"
+            <Button
+              variant="outline"
               onClick={() => setExportOpen(true)}
             >
               <Download size={13} /> Export
-            </button>
+            </Button>
           </PermissionGuard>
           <PermissionGuard permission="leads:create">
-            <button
-              className="btn btn-outline"
+            <Button
+              variant="outline"
               onClick={() => setImportOpen(true)}
             >
               <Layers size={13} /> Import
-            </button>
-            <button className="btn btn-grad" onClick={() => openCreate()}>
+            </Button>
+            <Button onClick={() => openCreate()}>
               <Plus size={13} /> Add lead
-            </button>
+            </Button>
           </PermissionGuard>
         </div>
       </div>
@@ -157,10 +159,10 @@ export function LeadsView() {
         <div className="relative flex-[1_1_220px] min-w-[200px]">
           <Search
             size={13}
-            className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
           />
-          <input
-            className="input pl-8"
+          <Input
+            className="pl-8"
             placeholder="Search leads..."
             value={filter.search}
             onChange={(e) =>

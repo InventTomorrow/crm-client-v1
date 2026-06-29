@@ -1,15 +1,30 @@
 "use client";
+import { extractErrorMessage } from "@/lib/utils";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
-import { Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
+import { useUrlState } from "@/shared/hooks/useUrlState";
+import { Loader2, Plus, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   useCreateOrder,
+  useDeleteOrder,
   useOrders,
   useOrdersSummary,
   useUpdateOrder,
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
+import { getOrder } from "../services/ordersService";
 import {
   ORDER_STATUS_OPTIONS,
   type Order,
@@ -19,12 +34,14 @@ import {
 } from "../types";
 import { OrderDetailSheet } from "./OrderDetailSheet";
 import { OrderForm } from "./OrderForm";
+import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
 export function OrdersView() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<OrderStatus | "">("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useUrlState("q");
+  const [statusParam, setStatus] = useUrlState("status");
+  const status = statusParam as OrderStatus | "";
+  const [selectedId, setSelectedId] = useUrlState("order");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Order | null>(null);
 
@@ -33,11 +50,15 @@ export function OrdersView() {
     [search, status],
   );
 
+  const [orderPendingDeletion, setOrderPendingDeletion] =
+    useState<OrderListItem | null>(null);
+
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
   const { data: summary } = useOrdersSummary();
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
+  const deleteOrder = useDeleteOrder();
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
@@ -45,11 +66,25 @@ export function OrdersView() {
     setEditing(null);
     setFormOpen(true);
   };
-  const openEdit = (order: Order) => {
-    setSelectedId(null);
-    setEditing(order);
-    setFormOpen(true);
-  };
+  const openEdit = useCallback(
+    (order: Order) => {
+      setSelectedId("");
+      setEditing(order);
+      setFormOpen(true);
+    },
+    [setSelectedId],
+  );
+
+  const loadAndEditOrder = useCallback(
+    async (listItem: OrderListItem) => {
+      try {
+        openEdit(await getOrder(listItem.id));
+      } catch (error) {
+        toast.error(extractErrorMessage(error, "Failed to load order"));
+      }
+    },
+    [openEdit],
+  );
 
   const columns: ColumnDef<OrderListItem, unknown>[] = useMemo(
     () => [
@@ -130,8 +165,21 @@ export function OrdersView() {
           </span>
         ),
       },
+      {
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        size: 50,
+        cell: ({ row }) => (
+          <OrderRowActions
+            order={row.original}
+            onEdit={loadAndEditOrder}
+            onDelete={setOrderPendingDeletion}
+          />
+        ),
+      },
     ],
-    [],
+    [loadAndEditOrder],
   );
 
   const handleExport = (rows: OrderListItem[]) => {
@@ -171,9 +219,9 @@ export function OrdersView() {
           </p>
         </div>
         <PermissionGuard permission="orders:create">
-          <button className="btn btn-grad" onClick={openCreate}>
+          <Button onClick={openCreate}>
             <Plus size={15} /> New order
-          </button>
+          </Button>
         </PermissionGuard>
       </div>
 
@@ -212,27 +260,33 @@ export function OrdersView() {
             <div className="relative flex-1 max-w-[340px]">
               <Search
                 size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
               />
-              <input
-                className="input pl-8 text-[13px]"
+              <Input
+                className="pl-8 text-[13px]"
                 placeholder="Search by order #, customer…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <select
-              className="input w-[160px] text-[13px]"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as OrderStatus | "")}
+            <Select
+              value={status || "__all__"}
+              onValueChange={(v) =>
+                setStatus(v === "__all__" ? "" : (v as OrderStatus))
+              }
             >
-              <option value="">All statuses</option>
-              {ORDER_STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {ORDER_STATUS_META[s].label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-[160px] text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All statuses</SelectItem>
+                {ORDER_STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {ORDER_STATUS_META[s].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         }
       />
@@ -240,20 +294,24 @@ export function OrdersView() {
       {/* Load more for infinite scroll */}
       {hasNextPage && (
         <div className="flex justify-center mt-3">
-          <button
-            className="btn btn-outline text-[12.5px]"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
           >
+            {isFetchingNextPage && (
+              <Loader2 size={13} className="animate-spin" />
+            )}
             Load more
-          </button>
+          </Button>
         </div>
       )}
 
       {selectedId && (
         <OrderDetailSheet
           orderId={selectedId}
-          onClose={() => setSelectedId(null)}
+          onClose={() => setSelectedId("")}
           onEdit={openEdit}
         />
       )}
@@ -273,6 +331,21 @@ export function OrdersView() {
             createOrder.mutate(values, { onSuccess: () => setFormOpen(false) });
           }
         }}
+      />
+
+      <ConfirmDialog
+        open={!!orderPendingDeletion}
+        onClose={() => setOrderPendingDeletion(null)}
+        onConfirm={() => {
+          if (!orderPendingDeletion) return;
+          deleteOrder.mutate(orderPendingDeletion.id, {
+            onSuccess: () => setOrderPendingDeletion(null),
+          });
+        }}
+        title={`Delete order #${orderPendingDeletion?.orderNumber ?? ""}?`}
+        description="This permanently removes the order. This action cannot be undone."
+        confirmLabel="Delete"
+        loading={deleteOrder.isPending}
       />
     </div>
   );

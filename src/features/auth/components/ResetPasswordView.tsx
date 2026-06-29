@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/shared/ui/Button';
+import { Input } from '@/shared/ui/Input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form';
 import { resetPasswordSchema, type ResetPasswordData } from '../types';
 import { useResetPassword } from '../hooks/useAuth';
@@ -53,7 +55,7 @@ export function ResetPasswordView() {
                 <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">New password</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <input className="input pr-9" type={showPw ? 'text' : 'password'} placeholder="Min 8 chars, 1 uppercase, 1 number" autoComplete="new-password" autoFocus {...field} />
+                    <Input className="pr-9" type={showPw ? 'text' : 'password'} placeholder="Min 8 chars, 1 uppercase, 1 number" autoComplete="new-password" autoFocus {...field} />
                     <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] hover:text-[var(--ink)] transition-colors" onClick={() => setShowPw(v => !v)}>
                       {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -67,7 +69,7 @@ export function ResetPasswordView() {
                 <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">Confirm new password</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <input className="input pr-9" type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" autoComplete="new-password" {...field} />
+                    <Input className="pr-9" type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" autoComplete="new-password" {...field} />
                     <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] hover:text-[var(--ink)] transition-colors" onClick={() => setShowConfirm(v => !v)}>
                       {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -76,10 +78,10 @@ export function ResetPasswordView() {
                 <FormMessage />
               </FormItem>
             )} />
-            <button type="submit" className="btn btn-grad w-full justify-center mt-1" disabled={isPending}>
+            <Button type="submit" size="lg" className="w-full mt-1" disabled={isPending}>
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {isPending ? 'Resetting…' : 'Reset password'}
-            </button>
+            </Button>
           </form>
         </Form>
       </div>

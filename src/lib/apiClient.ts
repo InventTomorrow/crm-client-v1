@@ -11,6 +11,13 @@ export const apiClient = axios.create({
   },
 });
 
+// Suppresses the 401 -> /auth/login redirect during an intentional logout, so
+// the logout flow can clear state without bouncing through the login page.
+let isLoggingOut = false;
+export const setLoggingOut = (value: boolean) => {
+  isLoggingOut = value;
+};
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
@@ -67,7 +74,7 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         processQueue(refreshError);
 
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !isLoggingOut) {
           window.location.href = '/auth/login';
         }
         return Promise.reject(refreshError);
@@ -80,7 +87,7 @@ apiClient.interceptors.response.use(
       const isAuthRoute = url.endsWith('/auth/login') || url.endsWith('/auth/refresh');
 
       if (!isAuthRoute) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !isLoggingOut) {
           window.location.href = '/auth/login';
         }
       }

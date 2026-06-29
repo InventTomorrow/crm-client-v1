@@ -14,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { Input } from "@/shared/ui/Input";
+import { Button } from "@/shared/ui/Button";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -59,8 +61,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
             <label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
               Workspace name
             </label>
-            <input
-              className="input"
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Karachi Karahi Co."
@@ -78,28 +79,16 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="px-[14px] py-[14px] border-t border-[var(--line)] flex justify-end gap-2">
-          <button
-            className="btn btn-outline"
-            onClick={onClose}
-            disabled={isPending}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
-          </button>
-          <button
-            className="btn btn-grad"
-            onClick={handleCreate}
-            disabled={!name.trim() || isPending}
-          >
+          </Button>
+          <Button onClick={handleCreate} disabled={!name.trim() || isPending}>
             {isPending ? (
-              <>
-                <Loader2 size={13} className="animate-spin" /> Creating…
-              </>
+              <><Loader2 size={13} className="animate-spin" /> Creating…</>
             ) : (
-              <>
-                <Plus size={13} /> Create workspace
-              </>
+              <><Plus size={13} /> Create workspace</>
             )}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

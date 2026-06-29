@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
 import { useVerifyEmail } from '../hooks/useAuth';
 import { extractErrorMessage } from '@/lib/utils';
 
@@ -28,9 +29,11 @@ export function VerifyEmailConfirmView() {
             <h2 className="text-[18px] font-semibold text-[var(--ink)]">Invalid link</h2>
             <p className="text-[13px] mt-1.5 text-[var(--ink-mute)]">This verification link is missing a token.</p>
           </div>
-          <Link href="/auth/login" className="btn btn-outline mt-1">
-            <ArrowLeft size={13} /> Back to sign in
-          </Link>
+          <Button asChild variant="outline" className="mt-1">
+            <Link href="/auth/login">
+              <ArrowLeft size={13} /> Back to sign in
+            </Link>
+          </Button>
         </div>
       </div>
     );
@@ -63,9 +66,11 @@ export function VerifyEmailConfirmView() {
               {extractErrorMessage(error, 'This link may have expired or already been used.')}
             </p>
           </div>
-          <Link href="/auth/login" className="btn btn-outline mt-1">
-            <ArrowLeft size={13} /> Back to sign in
-          </Link>
+          <Button asChild variant="outline" className="mt-1">
+            <Link href="/auth/login">
+              <ArrowLeft size={13} /> Back to sign in
+            </Link>
+          </Button>
         </div>
       </div>
     );

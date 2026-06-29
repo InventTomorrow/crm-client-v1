@@ -22,7 +22,7 @@ export default function SectionHeading({
     >
       <Reveal
         as="h2"
-        className={`text-[40px] md:text-5xl lg:text-[58px] font-bold leading-[1.05] tracking-tight ${dark ? "text-white" : "text-brand-dark"}`}
+        className={`text-balance text-[2rem] sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3.25rem] font-bold leading-[1.12] tracking-tight ${dark ? "text-white" : "text-brand-dark"}`}
       >
         {title}
       </Reveal>

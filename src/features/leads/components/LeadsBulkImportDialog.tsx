@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import { extractErrorMessage } from '@/lib/utils';
 import { useParseCsv, useBulkCreateLeads } from '../hooks/useLeads';
+import { Button } from '@/shared/ui/Button';
 
 // Backend enum values (sent as-is to /leads/import/commit)
 const CHANNELS = ['WHATSAPP', 'INSTAGRAM', 'MESSENGER'] as const;
@@ -107,17 +108,18 @@ function EditPanel({
       )}
 
       <div className="flex gap-2 mt-auto pt-2 border-t border-[var(--line)]">
-        <button type="button" className="btn btn-ghost text-[#DC2626] text-[12px]" onClick={onDelete}>
+        <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
           <X size={12} /> Remove
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn btn-grad text-[12px] flex-1 justify-center"
+          size="sm"
+          className="flex-1 justify-center"
           disabled={!canApply}
           onClick={() => canApply && onSave(draft)}
         >
           <Check size={12} /> Apply
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -147,13 +149,15 @@ function BulkCard({
         {item.status.charAt(0) + item.status.slice(1).toLowerCase()}
       </span>
       {bad && <div className="absolute top-1 left-1 px-1 py-px rounded-full text-[9px] font-bold text-white bg-[#EF4444]">!</div>}
-      <button
+      <Button
         type="button"
-        className="btn btn-ghost p-0.5"
+        variant="ghost"
+        size="icon"
+        className="h-5 w-5"
         onClick={(e) => { e.stopPropagation(); onRemove(); }}
       >
         <X size={11} />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -243,7 +247,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
               Upload a CSV or add manually. Select a card to edit, then save all.
             </DialogDescription>
           </div>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}><X size={18} /></button>
+          <Button variant="ghost" size="icon" onClick={onClose}><X size={18} /></Button>
         </DialogHeader>
 
         {/* Drop zone */}
@@ -263,9 +267,9 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
               <span className="font-medium">Drop a CSV</span>
               <span className="text-[var(--ink-mute)]"> · columns: <code>name, phone, email, city, channel, status</code></span>
             </div>
-            <button className="btn btn-outline text-[12px]" onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}>
+            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}>
               Browse
-            </button>
+            </Button>
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) parseFile(f); e.target.value = ''; }} />
           </div>
         </div>
@@ -278,9 +282,9 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
               <span className="text-[12px] text-[var(--ink-soft)]">
                 {items.length === 0 ? 'No leads yet' : `${items.length} lead${items.length > 1 ? 's' : ''}`}
               </span>
-              <button className="btn btn-outline text-[11.5px] py-0.5 px-2" onClick={addBlank}>
+              <Button variant="outline" size="sm" onClick={addBlank}>
                 <Plus size={11} /> Add
-              </button>
+              </Button>
             </div>
             <div className="scroll flex-1 overflow-y-auto p-3 flex flex-col gap-2">
               {items.map((item, i) => (
@@ -335,12 +339,12 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                 : 'Drop a CSV or click "Add lead" to begin'}
           </span>
           <div className="flex gap-2">
-            <button className="btn btn-outline" onClick={onClose} disabled={bulkCreate.isPending}>Cancel</button>
-            <button className="btn btn-grad" disabled={!valid || bulkCreate.isPending} onClick={handleSaveAll}>
+            <Button variant="outline" onClick={onClose} disabled={bulkCreate.isPending}>Cancel</Button>
+            <Button disabled={!valid || bulkCreate.isPending} onClick={handleSaveAll}>
               {bulkCreate.isPending
-                ? <><span className="animate-spin inline-block h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" /> Saving…</>
+                ? <><Loader2 size={13} className="animate-spin" /> Saving…</>
                 : <><Check size={13} /> Save {items.length || ''} lead{items.length === 1 ? '' : 's'}</>}
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

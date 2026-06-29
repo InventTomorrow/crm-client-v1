@@ -12,13 +12,20 @@ const numericField = z.union([z.string(), z.number()]).transform(v =>
 
 export const GENDERS = ['Unisex', 'Men', 'Women', 'Kids'] as const;
 
+/** Grouped size options for the product form's size selector. Values stay unique across groups. */
+export const SIZE_GROUPS = [
+  { label: 'Clothing', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+  { label: 'Footwear (EU)', options: ['EU 38', 'EU 39', 'EU 40', 'EU 41', 'EU 42', 'EU 43', 'EU 44', 'EU 45'] },
+  { label: 'General', options: ['One Size', 'Free Size'] },
+] as const;
+
 export const productSchema = z.object({
   name:   z.string().min(1, 'Product name is required'),
   sku:    z.string().optional(),
   price:  numericField.pipe(z.number().positive('Price must be positive')),
   stock:  numericField.pipe(z.number().min(0, 'Stock must be ≥ 0')),
   cat:    z.string().default('Apparel'),
-  size:   z.string().optional(),
+  sizes:  z.array(z.string()).default([]),
   gender: z.string().optional(),
   color:  z.string().optional(),
   desc:   z.string().optional(),
