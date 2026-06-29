@@ -15,6 +15,7 @@ export function WorkspaceSwitchingOverlay() {
   // Manage entrance / exit animation
   useEffect(() => {
     if (isSwitchingWorkspace) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
     } else {
       // Fade out then unmount

@@ -3,7 +3,7 @@ import { AnalyticsView } from '@/features/analytics/components/AnalyticsView';
 
 export const metadata: Metadata = {
   title: 'Analytics',
-  description: 'Lead velocity, channel breakdown, funnel analytics and phase rollout tracking',
+  description: 'Leads vs orders trends, KPIs, lead funnel and AI handoff analytics',
 };
 
 export default function AnalyticsPage() {

@@ -1,8 +1,10 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import {
   useCreateTenant,
   useDeleteTenant,
+  useRestoreTenant,
   useSwitchWorkspace,
 } from "@/features/tenant/hooks/useTenant";
 import { useAppStore } from "@/lib/appStore";
@@ -142,11 +144,12 @@ function DeleteConfirmDialog({
   isPending,
 }: {
   workspaceName: string;
-  onConfirm: () => void;
+  onConfirm: (removeMembers: boolean) => void;
   onClose: () => void;
   isPending: boolean;
 }) {
   const [typed, setTyped] = useState("");
+  const [removeMembers, setRemoveMembers] = useState(false);
 
   return (
     <Dialog
@@ -169,17 +172,18 @@ function DeleteConfirmDialog({
                 Delete Workspace
               </DialogTitle>
               <DialogDescription className="text-[12px] text-[var(--ink-mute)] mt-0.5">
-                This action is permanent and irreversible.
+                Scheduled deletion with a 60-day grace period.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
         <div className="p-6 flex flex-col gap-3.5">
           <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed">
-            Deleting{" "}
             <strong className="text-[var(--ink)]">{workspaceName}</strong> will
-            permanently remove all its leads, messages, inventory, and team
-            members. This cannot be undone.
+            be scheduled for deletion. You can restore it within{" "}
+            <strong className="text-[var(--ink)]">60 days</strong>; after that it
+            and all its leads, messages, inventory, and team members are
+            permanently removed.
           </p>
           <div>
             <label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
@@ -194,6 +198,18 @@ function DeleteConfirmDialog({
               placeholder={workspaceName}
             />
           </div>
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 accent-red-500"
+              checked={removeMembers}
+              onChange={(e) => setRemoveMembers(e.target.checked)}
+            />
+            <span className="text-[12.5px] text-[var(--ink-soft)] leading-snug">
+              Also remove all team members now. They lose access immediately;
+              the owner keeps it so the workspace can still be restored.
+            </span>
+          </label>
         </div>
         <div className="px-6 py-4 border-t border-[var(--line)] flex justify-end gap-2">
           <button className="btn btn-outline" onClick={onClose}>
@@ -201,7 +217,7 @@ function DeleteConfirmDialog({
           </button>
           <button
             className="btn flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white rounded-[10px] px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            onClick={onConfirm}
+            onClick={() => onConfirm(removeMembers)}
             disabled={typed !== workspaceName || isPending}
           >
             {isPending ? (
@@ -229,23 +245,46 @@ function WorkspaceCard({
   isActive,
   onSwitch,
   onDelete,
+  onRestore,
+  isRestoring,
 }: {
   membership: {
     id: string;
     role: { id: string; name: string };
-    tenant: { id: string; name: string; type: string };
+    tenant: {
+      id: string;
+      name: string;
+      type: string;
+      deletedAt?: string | null;
+    };
     isActive?: boolean;
   };
   index: number;
   isActive: boolean;
   onSwitch: () => void;
   onDelete: () => void;
+  onRestore: () => void;
+  isRestoring: boolean;
 }) {
   const color = PALETTE[index % PALETTE.length];
   const short = membership.tenant.name.substring(0, 2).toUpperCase();
   const isOwner = membership.role.name.toLowerCase() === "owner";
   const plan =
     membership.tenant.type === "INDIVIDUAL" ? "Individual" : "Organization";
+
+  // Pending deletion: compute days left in the 60-day grace window.
+  const pendingDelete = !!membership.tenant.deletedAt;
+  const daysLeft = membership.tenant.deletedAt
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(membership.tenant.deletedAt).getTime() +
+            60 * 86_400_000 -
+            Date.now()) /
+            86_400_000,
+        ),
+      )
+    : 0;
 
   return (
     <div
@@ -256,13 +295,21 @@ function WorkspaceCard({
           : "hover:shadow-[var(--shadow-2)]",
       )}
     >
-      {/* Active badge */}
-      {isActive && (
+      {/* Status badge */}
+      {pendingDelete ? (
         <div className="absolute top-3.5 right-3.5">
-          <span className="badge text-[11px] font-semibold bg-[var(--accent)] text-white flex items-center gap-1">
-            <Check size={10} /> Active
+          <span className="badge text-[11px] font-semibold bg-red-50 text-red-600 border border-red-100 flex items-center gap-1">
+            <AlertTriangle size={10} /> Deletes in {daysLeft}d
           </span>
         </div>
+      ) : (
+        isActive && (
+          <div className="absolute top-3.5 right-3.5">
+            <span className="badge text-[11px] font-semibold bg-[var(--accent)] text-white flex items-center gap-1">
+              <Check size={10} /> Active
+            </span>
+          </div>
+        )
       )}
 
       {/* Header */}
@@ -315,27 +362,53 @@ function WorkspaceCard({
 
       {/* Actions */}
       <div className="flex gap-2">
-        {!isActive && (
-          <button
-            className="btn btn-outline flex-1 justify-center text-[12.5px]"
-            onClick={onSwitch}
-          >
-            <ArrowRightLeft size={13} /> Switch to this
-          </button>
-        )}
-        {isActive && (
-          <div className="flex-1 rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)] text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
-            <Check size={13} /> Currently active
-          </div>
-        )}
-        {isOwner && (
-          <button
-            className="btn btn-outline px-2.5 text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors"
-            onClick={onDelete}
-            title="Delete workspace"
-          >
-            <Trash2 size={14} />
-          </button>
+        {pendingDelete ? (
+          isOwner ? (
+            <button
+              className="btn btn-outline flex-1 justify-center text-[12.5px]"
+              onClick={onRestore}
+              disabled={isRestoring}
+            >
+              {isRestoring ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" /> Restoring…
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft size={13} /> Restore workspace
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="flex-1 rounded-[10px] bg-red-50 text-red-600 text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
+              <AlertTriangle size={13} /> Pending deletion
+            </div>
+          )
+        ) : (
+          <>
+            {!isActive && (
+              <button
+                className="btn btn-outline flex-1 justify-center text-[12.5px]"
+                onClick={onSwitch}
+              >
+                <ArrowRightLeft size={13} /> Switch to this
+              </button>
+            )}
+            {isActive && (
+              <div className="flex-1 rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)] text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
+                <Check size={13} /> Currently active
+              </div>
+            )}
+            {isOwner && (
+              <button
+                className="btn btn-outline px-2.5 text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors"
+                onClick={onDelete}
+                title="Delete workspace"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -347,10 +420,13 @@ function WorkspaceCard({
 // ─────────────────────────────────────────────────────────────
 export function WorkspacesManagementView() {
   const { user, isLoading } = useMe();
+  const { isOwner } = usePermissions();
   const { currentWorkspaceId } = useAppStore();
   const { mutate: switchWorkspace, isPending: isSwitching } =
     useSwitchWorkspace();
   const { mutate: deleteWorkspace, isPending: isDeleting } = useDeleteTenant();
+  const { mutate: restoreWorkspace, isPending: isRestoring } =
+    useRestoreTenant();
 
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -386,9 +462,11 @@ export function WorkspacesManagementView() {
             · each with isolated data and members
           </p>
         </div>
-        <button className="btn btn-grad" onClick={() => setShowCreate(true)}>
-          <Plus size={14} /> New workspace
-        </button>
+        {isOwner && (
+          <button className="btn btn-grad" onClick={() => setShowCreate(true)}>
+            <Plus size={14} /> New workspace
+          </button>
+        )}
       </div>
 
       {/* Stats banner */}
@@ -459,6 +537,8 @@ export function WorkspacesManagementView() {
               onDelete={() =>
                 setDeleteTarget({ id: m.tenant.id, name: m.tenant.name })
               }
+              onRestore={() => restoreWorkspace(m.tenant.id)}
+              isRestoring={isRestoring}
             />
           ))}
 
@@ -493,10 +573,11 @@ export function WorkspacesManagementView() {
         <DeleteConfirmDialog
           workspaceName={deleteTarget.name}
           isPending={isDeleting}
-          onConfirm={() => {
-            deleteWorkspace(deleteTarget.id, {
-              onSuccess: () => setDeleteTarget(null),
-            });
+          onConfirm={(removeMembers) => {
+            deleteWorkspace(
+              { id: deleteTarget.id, removeMembers },
+              { onSuccess: () => setDeleteTarget(null) },
+            );
           }}
           onClose={() => setDeleteTarget(null)}
         />

@@ -51,6 +51,17 @@ export const businessProfileSchema = z.object({
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
+// Invite a workspace member. Only email + roleId are persisted by the API; the
+// invitee sets their own name when they accept. city/phone are captured for
+// display and future use.
+export const inviteMemberSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Enter a valid email'),
+  roleId: z.string().min(1, 'Select a role'),
+  city: z.string().max(60).optional().or(z.literal('')),
+  phone: z.string().max(30).optional().or(z.literal('')),
+});
+export type InviteMemberForm = z.infer<typeof inviteMemberSchema>;
+
 // Full config returned by GET /chatbot/config
 export interface ChatbotConfigResponse {
   config: {

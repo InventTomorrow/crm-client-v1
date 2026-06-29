@@ -10,13 +10,18 @@ const numericField = z.union([z.string(), z.number()]).transform(v =>
   typeof v === 'string' ? (v === '' ? 0 : parseFloat(v)) : v
 );
 
+export const GENDERS = ['Unisex', 'Men', 'Women', 'Kids'] as const;
+
 export const productSchema = z.object({
-  name:  z.string().min(1, 'Product name is required'),
-  sku:   z.string().optional(),
-  price: numericField.pipe(z.number().positive('Price must be positive')),
-  stock: numericField.pipe(z.number().min(0, 'Stock must be ≥ 0')),
-  cat:   z.string().default('Apparel'),
-  desc:  z.string().optional(),
+  name:   z.string().min(1, 'Product name is required'),
+  sku:    z.string().optional(),
+  price:  numericField.pipe(z.number().positive('Price must be positive')),
+  stock:  numericField.pipe(z.number().min(0, 'Stock must be ≥ 0')),
+  cat:    z.string().default('Apparel'),
+  size:   z.string().optional(),
+  gender: z.string().optional(),
+  color:  z.string().optional(),
+  desc:   z.string().optional(),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;

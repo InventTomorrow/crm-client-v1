@@ -38,6 +38,8 @@ interface DataTableProps<TData> {
   onDeleteSelected?: (rows: TData[]) => void;
   /** Called with all rows for export */
   onExport?: (rows: TData[]) => void;
+  /** Called when a row is clicked (anywhere outside interactive cells) */
+  onRowClick?: (row: TData) => void;
   /** Extra toolbar content (filters, buttons) */
   toolbar?: React.ReactNode;
   /** Empty state */
@@ -55,6 +57,7 @@ export function DataTable<TData>({
   selectable = false,
   onDeleteSelected,
   onExport,
+  onRowClick,
   toolbar,
   emptyMessage = "No data found.",
   isLoading = false,
@@ -160,9 +163,10 @@ export function DataTable<TData>({
           )}
           {onExport && selectedRows.length === 0 && (
             <button
-              className="btn btn-outline text-[12.5px] py-1.5 px-3"
+              className="btn btn-outline text-[12.5px] py-1.5 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => onExport(data)}
-              title="Export all"
+              disabled={data.length === 0}
+              title={data.length === 0 ? "Nothing to export" : "Export all"}
             >
               <Download size={13} /> Export
             </button>
@@ -230,9 +234,11 @@ export function DataTable<TData>({
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
+                    onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                     className={cn(
                       "border-b border-[var(--line-soft)] transition-colors hover:bg-[var(--surface-2)]",
                       row.getIsSelected() && "bg-[var(--accent-soft)]",
+                      onRowClick && "cursor-pointer",
                     )}
                   >
                     {row.getVisibleCells().map((cell) => (

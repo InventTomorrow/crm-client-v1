@@ -224,16 +224,23 @@ export function filterConversations(
   filter: ConversationFilter,
   favorites?: Set<string>,
   tabAssignments?: Record<string, string[]>,
+  archived?: Set<string>,
+  hidden?: Set<string>,
 ): ConversationListItem[] {
-  if (filter === 'escalated') return conversations.filter((c) => c.escalationStatus === 'ESCALATED');
-  if (filter === 'unread') return conversations.filter((c) => c.unreadCount > 0);
-  if (filter === 'favorites') return conversations.filter((c) => favorites?.has(c.id) ?? false);
+  // Locally deleted chats never appear anywhere.
+  const visible = conversations.filter((c) => !hidden?.has(c.id));
+  // The Archived tab shows only archived chats; every other view excludes them.
+  if (filter === 'archived') return visible.filter((c) => archived?.has(c.id) ?? false);
+  const active = visible.filter((c) => !archived?.has(c.id));
+  if (filter === 'escalated') return active.filter((c) => c.escalationStatus === 'ESCALATED');
+  if (filter === 'unread') return active.filter((c) => c.unreadCount > 0);
+  if (filter === 'favorites') return active.filter((c) => favorites?.has(c.id) ?? false);
   // Custom tab: only show assigned conversations
   if (tabAssignments && filter in tabAssignments) {
     const ids = tabAssignments[filter];
-    return conversations.filter((c) => ids.includes(c.id));
+    return active.filter((c) => ids.includes(c.id));
   }
-  return conversations;
+  return active;
 }
 
 export function useDeleteMessage(conversationId: string) {

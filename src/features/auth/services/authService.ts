@@ -41,13 +41,55 @@ export async function resetPassword(token: string, data: ResetPasswordData) {
   return res.data;
 }
 
-export async function acceptInvite(token: string, data: AcceptInviteData) {
+export interface InviteValidation {
+  status: 'VALID' | 'EXPIRED' | 'ACCEPTED' | 'NOT_FOUND';
+  email?: string;
+  tenantName?: string | null;
+  roleName?: string | null;
+  expiresAt?: string;
+  accountExists?: boolean;
+}
+
+export async function validateInvite(token: string): Promise<InviteValidation> {
+  const res = await apiClient.get<{ success: true; data: InviteValidation }>('/auth/invite/validate', {
+    params: { token },
+  });
+  return res.data.data;
+}
+
+export async function acceptInvite(token: string, data?: AcceptInviteData) {
   const res = await apiClient.post('/auth/accept-invite', {
     token,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    password: data.password,
+    ...(data
+      ? { firstName: data.firstName, lastName: data.lastName, password: data.password }
+      : {}),
   });
+  return res.data;
+}
+
+export interface MyInvitationItem {
+  id: string;
+  tenantId: string;
+  tenantName: string | null;
+  roleName: string;
+  invitedByName: string | null;
+  createdAt: string;
+  expiresAt: string;
+  expired: boolean;
+}
+
+export async function getMyInvitations(): Promise<MyInvitationItem[]> {
+  const res = await apiClient.get<{ success: true; data: MyInvitationItem[] }>('/auth/my-invitations');
+  return res.data.data;
+}
+
+export async function acceptMyInvitation(id: string) {
+  const res = await apiClient.post(`/auth/my-invitations/${id}/accept`);
+  return res.data;
+}
+
+export async function declineMyInvitation(id: string) {
+  const res = await apiClient.post(`/auth/my-invitations/${id}/decline`);
   return res.data;
 }
 export async function getMe(): Promise<UserResponse> {
@@ -81,7 +123,7 @@ export async function getMembers(): Promise<MemberItem[]> {
   return res.data.data;
 }
 
-export async function inviteUser(data: { email: string; roleId?: string }) {
+export async function inviteUser(data: { email: string; roleId: string }) {
   const res = await apiClient.post('/auth/invite', data);
   return res.data;
 }
@@ -91,7 +133,45 @@ export async function removeMember(membershipId: string) {
   return res.data;
 }
 
+export interface InvitationItem {
+  id: string;
+  email: string;
+  roleId: string;
+  roleName: string;
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+  invitedByName: string | null;
+  expiresAt: string;
+  createdAt: string;
+  expired: boolean;
+}
+
+export async function getInvitations(): Promise<InvitationItem[]> {
+  const res = await apiClient.get<{ success: true; data: InvitationItem[] }>('/auth/invitations');
+  return res.data.data;
+}
+
+export async function cancelInvitation(id: string) {
+  const res = await apiClient.delete(`/auth/invitations/${id}`);
+  return res.data;
+}
+
 export async function changeMemberRole(membershipId: string, roleId: string) {
   const res = await apiClient.put(`/auth/members/${membershipId}/role`, { roleId });
   return res.data;
+}
+export interface RoleItem {
+  id: string;
+  name: string;
+  permissions: string[];
+  tenantId: string;
+}
+
+export async function getRoles(): Promise<RoleItem[]> {
+  const res = await apiClient.get<{ success: true; data: RoleItem[] }>('/auth/roles');
+  return res.data.data;
+}
+
+export async function updateRolePermissions(roleId: string, permissions: string[]): Promise<RoleItem> {
+  const res = await apiClient.put<{ success: true; data: RoleItem }>(`/auth/roles/${roleId}/permissions`, { permissions });
+  return res.data.data;
 }

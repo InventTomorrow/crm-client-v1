@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/Select';
-import { ORDER_STATUSES, type OrderStatus } from '../types';
+import { ORDER_STATUS_OPTIONS, type OrderStatus } from '../types';
 import { ORDER_STATUS_META } from '../lib/format';
 
 interface Props {
@@ -18,6 +18,12 @@ interface Props {
 }
 
 export function OrderStatusSelect({ value, onChange, disabled, loading, className }: Props) {
+  // Keep the order's current status selectable even if it's a legacy/retired value.
+  const options: OrderStatus[] = ORDER_STATUS_OPTIONS.includes(
+    value as (typeof ORDER_STATUS_OPTIONS)[number],
+  )
+    ? [...ORDER_STATUS_OPTIONS]
+    : [value, ...ORDER_STATUS_OPTIONS];
   return (
     <div className="relative inline-flex items-center">
       <Select
@@ -29,7 +35,7 @@ export function OrderStatusSelect({ value, onChange, disabled, loading, classNam
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {ORDER_STATUSES.map((s) => (
+          {options.map((s) => (
             <SelectItem key={s} value={s} className="text-[12.5px]">
               <span className="inline-flex items-center gap-1.5">
                 <span className={`w-[6px] h-[6px] rounded-full ${ORDER_STATUS_META[s].dot}`} />

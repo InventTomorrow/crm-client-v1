@@ -3,9 +3,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   type Lead, type Notification, type Workspace, type UserProfile,
-  type TeamUser, type NotifSettings,
+  type NotifSettings,
   INITIAL_NOTIFICATIONS, INITIAL_WORKSPACES, INITIAL_PROFILE,
-  INITIAL_TEAM_USERS, INITIAL_NOTIF_SETTINGS,
+  INITIAL_NOTIF_SETTINGS,
 } from '@/lib/mockData';
 
 interface AppState {
@@ -32,7 +32,6 @@ interface AppState {
   workspaces: Workspace[];
   currentWorkspaceId: string;
   profile: UserProfile;
-  teamUsers: TeamUser[];
   notifSettings: NotifSettings;
 
   // Actions
@@ -51,15 +50,12 @@ interface AppState {
   setWorkspaceSwitching: (switching: boolean, name?: string) => void;
   addWorkspace: (ws: Workspace) => void;
   updateProfile: (p: Partial<UserProfile>) => void;
-  saveTeamUser: (u: TeamUser) => void;
-  toggleTeamUserStatus: (id: string) => void;
-  deleteTeamUser: (id: string) => void;
   updateNotifSettings: (s: Partial<NotifSettings>) => void;
 }
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       sidebarCollapsed: false,
       mobileMenuOpen: false,
       isFullScreen: false,
@@ -74,7 +70,6 @@ export const useAppStore = create<AppState>()(
       workspaces: INITIAL_WORKSPACES,
       currentWorkspaceId: 'W1',
       profile: INITIAL_PROFILE,
-      teamUsers: INITIAL_TEAM_USERS,
       notifSettings: INITIAL_NOTIF_SETTINGS,
 
       toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
@@ -101,21 +96,6 @@ export const useAppStore = create<AppState>()(
 
       updateProfile: (p) => set(s => ({ profile: { ...s.profile, ...p } })),
 
-      saveTeamUser: (u) => set(s => {
-        const exists = s.teamUsers.find(x => x.id === u.id);
-        return {
-          teamUsers: exists
-            ? s.teamUsers.map(x => x.id === u.id ? { ...x, ...u } : x)
-            : [u, ...s.teamUsers],
-        };
-      }),
-      toggleTeamUserStatus: (id) => set(s => ({
-        teamUsers: s.teamUsers.map(u =>
-          u.id === id ? { ...u, status: u.status === 'active' ? 'disabled' : 'active' } : u
-        ),
-      })),
-      deleteTeamUser: (id) => set(s => ({ teamUsers: s.teamUsers.filter(u => u.id !== id) })),
-
       updateNotifSettings: (s) => set(st => ({ notifSettings: { ...st.notifSettings, ...s } })),
     }),
     {
@@ -128,7 +108,6 @@ export const useAppStore = create<AppState>()(
         workspaces: state.workspaces,
         currentWorkspaceId: state.currentWorkspaceId,
         profile: state.profile,
-        teamUsers: state.teamUsers,
         notifSettings: state.notifSettings,
         sidebarCollapsed: state.sidebarCollapsed,
       }),

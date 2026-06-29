@@ -1,25 +1,49 @@
-export interface KPI {
-  label: string;
-  value: string;
-  delta: string;
-  up: boolean;
+import { z } from 'zod';
+
+export type RangePreset = '3d' | '7d' | '30d' | '90d';
+
+export interface CustomRange {
+  from?: Date;
+  to?: Date;
 }
 
-export interface ChannelDatum {
-  label: string;
-  v: number;
-  c: string;
-}
+export const kpiCardSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  value: z.number(),
+  delta: z.number().nullable(),
+  up: z.boolean(),
+});
 
-export interface FunnelDatum {
-  label: string;
-  v: number;
-}
+export const dailyPointSchema = z.object({
+  date: z.string(),
+  leads: z.number(),
+  orders: z.number(),
+  completed: z.number(),
+});
 
-export interface PhaseItem {
-  n: number;
-  label: string;
-  state: 'done' | 'live' | 'next';
-}
+export const funnelStageSchema = z.object({
+  label: z.string(),
+  value: z.number(),
+});
 
-export type DateRange = '7d' | '30d' | '90d';
+export const aiHandoffSchema = z.object({
+  handled: z.number(),
+  escalated: z.number(),
+  resolved: z.number(),
+  resolutionRate: z.number(),
+});
+
+export const analyticsOverviewSchema = z.object({
+  window: z.object({ from: z.string(), to: z.string() }),
+  kpis: z.array(kpiCardSchema),
+  series: z.array(dailyPointSchema),
+  funnel: z.array(funnelStageSchema),
+  aiHandoff: aiHandoffSchema,
+});
+
+export type KpiCard = z.infer<typeof kpiCardSchema>;
+export type DailyPoint = z.infer<typeof dailyPointSchema>;
+export type FunnelStage = z.infer<typeof funnelStageSchema>;
+export type AiHandoff = z.infer<typeof aiHandoffSchema>;
+export type AnalyticsOverview = z.infer<typeof analyticsOverviewSchema>;

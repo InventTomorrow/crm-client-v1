@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { AdminView } from '@/features/admin/components/AdminView';
+import { TeamSection } from '@/features/settings/components/TeamSection';
 
 export const metadata: Metadata = {
   title: 'Team & Access',
@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function AdminPage() {
   return (
-    <div className="h-full">
-      <AdminView />
+    <div className="scroll overflow-y-auto h-full p-4 md:p-6">
+      <TeamSection />
     </div>
   );
 }

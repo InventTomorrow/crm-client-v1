@@ -42,6 +42,9 @@ export interface Product {
   stock: number;
   status: 'in' | 'low' | 'out';
   cat: string;
+  size?: string;
+  gender?: string;
+  color?: string;
   desc?: string;
   imageUrls?: string[];
 }
@@ -82,18 +85,6 @@ export interface UserProfile {
   business: string;
   city: string;
   timezone: string;
-}
-
-export interface TeamUser {
-  id: string;
-  name: string;
-  email: string;
-  role: 'Owner' | 'Manager' | 'Agent';
-  status: 'active' | 'invited' | 'disabled';
-  last: string;
-  joined: string;
-  city: string;
-  phone: string;
 }
 
 export interface NotifSettings {
@@ -186,17 +177,6 @@ export const INITIAL_PROFILE: UserProfile = {
   city: 'Lahore',
   timezone: 'PKT (UTC+5)',
 };
-
-export const INITIAL_TEAM_USERS: TeamUser[] = [
-  { id: 'U1', name: 'Ahmed Raza',   email: 'ahmed@saleflow.pk',   role: 'Owner',   status: 'active',   last: 'Now',     joined: '2024-08-01', city: 'Lahore',     phone: '+92 321 4567890' },
-  { id: 'U2', name: 'Sara Khan',    email: 'sara@saleflow.pk',    role: 'Manager', status: 'active',   last: '12m ago', joined: '2024-09-12', city: 'Karachi',    phone: '+92 333 1234567' },
-  { id: 'U3', name: 'Bilal Iqbal',  email: 'bilal@saleflow.pk',   role: 'Agent',   status: 'active',   last: '1h ago',  joined: '2024-11-04', city: 'Islamabad',  phone: '+92 300 9876543' },
-  { id: 'U4', name: 'Hira Anwar',   email: 'hira@saleflow.pk',    role: 'Agent',   status: 'active',   last: '3h ago',  joined: '2025-01-22', city: 'Faisalabad', phone: '+92 311 8765432' },
-  { id: 'U5', name: 'Omar Sheikh',  email: 'omar@saleflow.pk',    role: 'Manager', status: 'invited',  last: '—',       joined: '2025-04-08', city: 'Lahore',     phone: '—' },
-  { id: 'U6', name: 'Fatima Aslam', email: 'fatima@saleflow.pk',  role: 'Agent',   status: 'active',   last: '2d ago',  joined: '2025-02-15', city: 'Multan',     phone: '+92 345 2345678' },
-  { id: 'U7', name: 'Kashif Niazi', email: 'kashif@saleflow.pk',  role: 'Agent',   status: 'disabled', last: '14d ago', joined: '2024-12-01', city: 'Peshawar',   phone: '+92 322 3456789' },
-  { id: 'U8', name: 'Nimra Tariq',  email: 'nimra@saleflow.pk',   role: 'Agent',   status: 'active',   last: '5h ago',  joined: '2025-03-30', city: 'Rawalpindi', phone: '+92 311 4567812' },
-];
 
 export const INITIAL_NOTIF_SETTINGS: NotifSettings = {
   hotLeads: true,

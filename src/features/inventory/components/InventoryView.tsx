@@ -1,6 +1,7 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
 import { cn, getImageUrl, pkr } from "@/lib/utils";
+import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,8 @@ import {
   DialogTitle,
 } from "@/shared/ui/Dialog";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
+import { Input } from "@/shared/ui/Input";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   Form,
@@ -41,8 +44,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { SearchableSelect } from "../../orders/components/SearchableSelect";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -63,12 +65,13 @@ import type {
 import {
   CATEGORIES,
   ERP_SYSTEMS,
+  GENDERS,
   STOREFRONTS,
   TIERS,
   productSchema,
 } from "../types";
-import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { BulkAddDialog } from "./BulkAddDialog";
+import { CreatableCategorySelect } from "./CreatableCategorySelect";
 
 function stockStatus(stock: number): Product["status"] {
   if (stock === 0) return "out";
@@ -88,13 +91,22 @@ function exportProductsCsv(rows: Product[]): void {
   const lines = [headers.join(",")];
   for (const p of rows) {
     lines.push(
-      [p.name, p.sku, p.cat, p.price, p.stock, STOCK_LABEL[stockStatus(p.stock)]]
+      [
+        p.name,
+        p.sku,
+        p.cat,
+        p.price,
+        p.stock,
+        STOCK_LABEL[stockStatus(p.stock)],
+      ]
         .map(esc)
         .join(","),
     );
   }
   const csv = lines.join("\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+  );
   const a = document.createElement("a");
   a.href = url;
   a.download = `inventory_export_${new Date().toISOString().split("T")[0]}.csv`;
@@ -108,6 +120,7 @@ function ProductDialog({
   open,
   initial,
   title,
+  categoryOptions,
   isSaving,
   isDeleting,
   onClose,
@@ -117,6 +130,7 @@ function ProductDialog({
   open: boolean;
   initial?: Product | null;
   title?: string;
+  categoryOptions: string[];
   isSaving: boolean;
   isDeleting: boolean;
   onClose: () => void;
@@ -135,6 +149,9 @@ function ProductDialog({
         price: 0,
         stock: 0,
         cat: "Apparel",
+        size: "",
+        gender: "",
+        color: "",
         desc: "",
       },
     },
@@ -151,9 +168,22 @@ function ProductDialog({
               price: initial.price ?? 0,
               stock: initial.stock ?? 0,
               cat: initial.cat ?? "Apparel",
+              size: initial.size ?? "",
+              gender: initial.gender ?? "",
+              color: initial.color ?? "",
               desc: initial.desc ?? "",
             }
-          : { name: "", sku: "", price: 0, stock: 0, cat: "Apparel", desc: "" },
+          : {
+              name: "",
+              sku: "",
+              price: 0,
+              stock: 0,
+              cat: "Apparel",
+              size: "",
+              gender: "",
+              color: "",
+              desc: "",
+            },
       );
     }
   }, [open, initial, form]);
@@ -210,7 +240,7 @@ function ProductDialog({
                 <FormItem>
                   <FormLabel>Product Name *</FormLabel>
                   <FormControl>
-                    <input
+                    <Input
                       className="input"
                       placeholder="Lawn Suit 3-Piece Unstitched"
                       autoFocus
@@ -230,7 +260,7 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>SKU</FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         className="input"
                         placeholder="LWN-3P-001"
                         {...field}
@@ -247,13 +277,69 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <SearchableSelect<string>
-                        options={CATEGORIES.map((c) => ({ value: c, search: c, data: c }))}
-                        value={field.value}
+                      <CreatableCategorySelect
+                        options={categoryOptions}
+                        value={field.value ?? ""}
                         onChange={(v) => field.onChange(v)}
-                        placeholder="Select category"
-                        renderRow={(c) => <span className="text-[13px]">{c}</span>}
-                        renderSelected={(c) => <span className="text-[13px]">{c}</span>}
+                        disabled={busy}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              <FormField
+                control={form.control}
+                name="size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Size</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="input"
+                        placeholder="M / 42 / 9"
+                        {...field}
+                        disabled={busy}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gender</FormLabel>
+                    <FormControl>
+                      <select
+                        className="input"
+                        {...field}
+                        disabled={busy}
+                      >
+                        <option value="">—</option>
+                        {GENDERS.map((g) => (
+                          <option key={g} value={g}>
+                            {g}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="input"
+                        placeholder="Maroon"
+                        {...field}
                         disabled={busy}
                       />
                     </FormControl>
@@ -269,7 +355,7 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>Price *</FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         className="input"
                         type="number"
                         placeholder="8999"
@@ -288,7 +374,7 @@ function ProductDialog({
                   <FormItem>
                     <FormLabel>Stock *</FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         className="input"
                         type="number"
                         placeholder="47"
@@ -432,7 +518,9 @@ function TierCard({
       </div>
       <div className="flex items-center justify-between mt-auto pt-1">
         <span className="text-[11px] text-[var(--ink-mute)]">{tier.count}</span>
-        {active && !disabled && <Check size={13} className="text-[var(--accent)]" />}
+        {active && !disabled && (
+          <Check size={13} className="text-[var(--accent)]" />
+        )}
       </div>
     </div>
   );
@@ -579,6 +667,20 @@ export function InventoryView() {
   const [singleOpen, setSingleOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+
+  // Categories shown in the picker: the built-in set plus whatever existing
+  // products already use (so previously-created ones keep showing up).
+  const categoryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const c of [...CATEGORIES, ...products.map((p: Product) => p.cat)]) {
+      const key = c?.trim().toLowerCase();
+      if (!c || !key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(c);
+    }
+    return out;
+  }, [products]);
   const importRef = useRef<HTMLInputElement>(null);
   const importType = useRef<"csv" | "json">("csv");
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -597,7 +699,8 @@ export function InventoryView() {
   }, [addMenuOpen]);
 
   const filtered = products.filter((p: Product) => {
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase()))
+      return false;
     if (filterCat && p.cat !== filterCat) return false;
     const stock = stockStatus(p.stock);
     if (filterStock && stock !== filterStock) return false;
@@ -616,6 +719,10 @@ export function InventoryView() {
       price: data.price,
       stock: data.stock,
       description: data.desc || undefined,
+      category: data.cat || undefined,
+      size: data.size || undefined,
+      gender: data.gender || undefined,
+      color: data.color || undefined,
       imageUrls: data.imageUrls,
     };
     if (editing?.id) {
@@ -743,7 +850,7 @@ export function InventoryView() {
                   size={13}
                   className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
                 />
-                <input
+                <Input
                   className="input pl-8"
                   placeholder="Search products..."
                   value={search}
@@ -770,6 +877,7 @@ export function InventoryView() {
                   </button>
                 ))}
               </div>
+              <PermissionGuard permission="inventory:edit">
               <div ref={addMenuRef} className="relative">
                 <button
                   className="btn btn-grad"
@@ -821,7 +929,7 @@ export function InventoryView() {
                     />
                   </div>
                 )}
-                <input
+                <Input
                   ref={importRef}
                   type="file"
                   accept=".csv,.json"
@@ -829,13 +937,16 @@ export function InventoryView() {
                   onChange={handleImport}
                 />
               </div>
+              </PermissionGuard>
             </div>
 
             {/* Row 2: filter chips */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-medium text-[var(--ink-mute)] mr-1">Filter:</span>
+              <span className="text-[11px] font-medium text-[var(--ink-mute)] mr-1">
+                Filter:
+              </span>
               {/* Category chips */}
-              {(["", ...CATEGORIES] as string[]).map((cat) => (
+              {(["", ...categoryOptions] as string[]).map((cat) => (
                 <button
                   key={cat || "all-cat"}
                   onClick={() => setFilterCat(cat)}
@@ -874,7 +985,10 @@ export function InventoryView() {
               ))}
               {(filterCat || filterStock) && (
                 <button
-                  onClick={() => { setFilterCat(""); setFilterStock(""); }}
+                  onClick={() => {
+                    setFilterCat("");
+                    setFilterStock("");
+                  }}
                   className="text-[11px] text-[var(--ink-mute)] hover:text-[var(--destructive)] flex items-center gap-1 ml-1"
                 >
                   <X size={11} /> Clear
@@ -926,113 +1040,139 @@ export function InventoryView() {
           {!isLoading && inventoryView === "list" && (
             <DataTable<Product>
               data={filtered}
-              columns={[
-                {
-                  id: "name",
-                  accessorFn: (p) => p.name,
-                  header: "Product",
-                  enableSorting: true,
-                  cell: ({ row }) => {
-                    const p = row.original;
-                    return (
-                      <div className="flex items-center gap-3">
-                        {p.imageUrls && p.imageUrls.length > 0 ? (
-                          <ShimmerImage
-                            src={getImageUrl(p.imageUrls[0])}
-                            alt={p.name}
-                            wrapperClassName="w-9 h-9 rounded-lg bg-[var(--surface-2)] flex-shrink-0"
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <div className="placeholder-img w-9 h-9 rounded-lg flex items-center justify-center text-[var(--ink-mute)] opacity-40 bg-[var(--surface-2)] flex-shrink-0">
-                            <ImageIcon size={14} />
-                          </div>
-                        )}
-                        <span className="font-medium">{p.name}</span>
-                      </div>
-                    );
+              columns={
+                [
+                  {
+                    id: "name",
+                    accessorFn: (p) => p.name,
+                    header: "Product",
+                    enableSorting: true,
+                    cell: ({ row }) => {
+                      const p = row.original;
+                      return (
+                        <div className="flex items-center gap-3">
+                          {p.imageUrls && p.imageUrls.length > 0 ? (
+                            <ShimmerImage
+                              src={getImageUrl(p.imageUrls[0])}
+                              alt={p.name}
+                              wrapperClassName="w-9 h-9 rounded-lg bg-[var(--surface-2)] flex-shrink-0"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="placeholder-img w-9 h-9 rounded-lg flex items-center justify-center text-[var(--ink-mute)] opacity-40 bg-[var(--surface-2)] flex-shrink-0">
+                              <ImageIcon size={14} />
+                            </div>
+                          )}
+                          <span className="font-medium">{p.name}</span>
+                        </div>
+                      );
+                    },
                   },
-                },
-                {
-                  id: "sku",
-                  accessorFn: (p) => p.sku,
-                  header: "SKU",
-                  enableSorting: true,
-                  cell: ({ row }) => (
-                    <span className="font-[var(--font-mono)] text-[11.5px] text-[var(--ink-mute)]">
-                      {row.original.sku || "—"}
-                    </span>
-                  ),
-                },
-                {
-                  id: "cat",
-                  accessorFn: (p) => p.cat,
-                  header: "Category",
-                  enableSorting: true,
-                  cell: ({ row }) => (
-                    <span className="badge bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
-                      {row.original.cat}
-                    </span>
-                  ),
-                },
-                {
-                  id: "price",
-                  accessorFn: (p) => p.price,
-                  header: "Price",
-                  enableSorting: true,
-                  cell: ({ row }) => (
-                    <span className="font-medium font-[var(--font-mono)]">{pkr(row.original.price)}</span>
-                  ),
-                },
-                {
-                  id: "stock",
-                  accessorFn: (p) => p.stock,
-                  header: "Stock",
-                  enableSorting: true,
-                  cell: ({ row }) => (
-                    <span className="font-[var(--font-mono)]">{row.original.stock}</span>
-                  ),
-                },
-                {
-                  id: "status",
-                  accessorFn: (p) => p.status,
-                  header: "Status",
-                  enableSorting: true,
-                  cell: ({ row }) => {
-                    const s = row.original.status;
-                    return s === "in" ? (
-                      <span className="badge font-medium bg-[rgba(34,197,94,0.12)] text-[#15803D]">In stock</span>
-                    ) : s === "low" ? (
-                      <span className="badge font-medium bg-[rgba(245,158,11,0.14)] text-[#B45309]">Low</span>
-                    ) : (
-                      <span className="badge font-medium bg-[rgba(239,68,68,0.12)] text-[#DC2626]">Out</span>
-                    );
+                  {
+                    id: "sku",
+                    accessorFn: (p) => p.sku,
+                    header: "SKU",
+                    enableSorting: true,
+                    cell: ({ row }) => (
+                      <span className="font-[var(--font-mono)] text-[11.5px] text-[var(--ink-mute)]">
+                        {row.original.sku || "—"}
+                      </span>
+                    ),
                   },
-                },
-                {
-                  id: "actions",
-                  header: "Actions",
-                  enableSorting: false,
-                  cell: ({ row }) => {
-                    const p = row.original;
-                    return (
-                      <div className="flex items-center gap-0.5">
-                        <button className="btn btn-ghost p-1.5" onClick={() => { setEditing(p); setSingleOpen(true); }}>
-                          <Pencil size={13} />
-                        </button>
-                        <button className="btn btn-ghost p-1.5" onClick={() => duplicateProduct.mutate(p)}>
-                          <Copy size={13} />
-                        </button>
-                        <button className="btn btn-ghost p-1.5 text-[#DC2626]" onClick={() => deleteProduct.mutate(p.id)}>
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    );
+                  {
+                    id: "cat",
+                    accessorFn: (p) => p.cat,
+                    header: "Category",
+                    enableSorting: true,
+                    cell: ({ row }) => (
+                      <span className="badge bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
+                        {row.original.cat}
+                      </span>
+                    ),
                   },
-                },
-              ] as ColumnDef<Product, unknown>[]}
+                  {
+                    id: "price",
+                    accessorFn: (p) => p.price,
+                    header: "Price",
+                    enableSorting: true,
+                    cell: ({ row }) => (
+                      <span className="font-medium font-[var(--font-mono)]">
+                        {pkr(row.original.price)}
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "stock",
+                    accessorFn: (p) => p.stock,
+                    header: "Stock",
+                    enableSorting: true,
+                    cell: ({ row }) => (
+                      <span className="font-[var(--font-mono)]">
+                        {row.original.stock}
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "status",
+                    accessorFn: (p) => p.status,
+                    header: "Status",
+                    enableSorting: true,
+                    cell: ({ row }) => {
+                      const s = row.original.status;
+                      return s === "in" ? (
+                        <span className="badge font-medium bg-[rgba(34,197,94,0.12)] text-[#15803D]">
+                          In stock
+                        </span>
+                      ) : s === "low" ? (
+                        <span className="badge font-medium bg-[rgba(245,158,11,0.14)] text-[#B45309]">
+                          Low
+                        </span>
+                      ) : (
+                        <span className="badge font-medium bg-[rgba(239,68,68,0.12)] text-[#DC2626]">
+                          Out
+                        </span>
+                      );
+                    },
+                  },
+                  {
+                    id: "actions",
+                    header: "Actions",
+                    enableSorting: false,
+                    cell: ({ row }) => {
+                      const p = row.original;
+                      return (
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            className="btn btn-ghost p-1.5"
+                            onClick={() => {
+                              setEditing(p);
+                              setSingleOpen(true);
+                            }}
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            className="btn btn-ghost p-1.5"
+                            onClick={() => duplicateProduct.mutate(p)}
+                          >
+                            <Copy size={13} />
+                          </button>
+                          <button
+                            className="btn btn-ghost p-1.5 text-[#DC2626]"
+                            onClick={() => deleteProduct.mutate(p.id)}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      );
+                    },
+                  },
+                ] as ColumnDef<Product, unknown>[]
+              }
               selectable
-              onDeleteSelected={(rows) => rows.forEach((p) => deleteProduct.mutate(p.id))}
+              onDeleteSelected={(rows) =>
+                rows.forEach((p) => deleteProduct.mutate(p.id))
+              }
               emptyMessage="No products match your filters."
               isLoading={isLoading}
             />
@@ -1049,7 +1189,7 @@ export function InventoryView() {
             stock automatically.
           </p>
           <div className="flex gap-2 mb-4">
-            <input
+            <Input
               className="input flex-1"
               placeholder="https://daraz.pk/products/lawn-suit-3-piece-..."
             />
@@ -1153,6 +1293,7 @@ export function InventoryView() {
         open={singleOpen}
         initial={editing}
         title={editing ? "Edit product" : "Add product"}
+        categoryOptions={categoryOptions}
         isSaving={isSaving}
         isDeleting={isDeleting}
         onClose={closeDialog}

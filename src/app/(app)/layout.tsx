@@ -3,6 +3,7 @@ import { useAppStore } from '@/lib/appStore';
 import { AppSidebar } from '@/shared/layout/AppSidebar';
 import { AppTopBar } from '@/shared/layout/AppTopBar';
 import { MobileDock } from '@/shared/layout/MobileDock';
+import { RouteGuard } from '@/shared/layout/RouteGuard';
 import { EscalateDialog } from '@/shared/layout/EscalateDialog';
 import { HotToast } from '@/shared/layout/HotToast';
 import { WorkspaceSwitchingOverlay } from '@/shared/layout/WorkspaceSwitchingOverlay';
@@ -40,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {!isFullScreen && <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />}
         {isFullScreen && <FullScreenBar />}
         <main key={currentWorkspaceId} className="app-content">
-          {children}
+          <RouteGuard>{children}</RouteGuard>
         </main>
       </div>
       <MobileDock />

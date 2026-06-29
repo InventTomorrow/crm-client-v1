@@ -1,20 +1,44 @@
 'use client';
+import { extractErrorMessage } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { extractErrorMessage } from '@/lib/utils';
 import {
-  login, register, createWorkspace, logout, forgotPassword, resetPassword,
-  acceptInvite, verifyEmail, resendVerification, getMe, updateMe,
-  getMembers, inviteUser, removeMember, changeMemberRole,
+  acceptInvite,
+  acceptMyInvitation,
+  cancelInvitation,
+  changeMemberRole,
+  createWorkspace,
+  declineMyInvitation,
+  forgotPassword,
+  getInvitations,
+  getMe,
+  getMembers,
+  getMyInvitations,
+  getRoles,
+  inviteUser,
+  login,
+  logout,
+  register,
+  removeMember,
+  resendVerification,
+  resetPassword,
+  updateMe,
+  updateRolePermissions,
+  validateInvite,
+  verifyEmail,
 } from '../services/authService';
-import type { LoginData, RegisterData, CreateWorkspaceData, ForgotPasswordData, ResetPasswordData, AcceptInviteData } from '../types';
+import type { AcceptInviteData, CreateWorkspaceData, ForgotPasswordData, LoginData, RegisterData, ResetPasswordData } from '../types';
 
 export function useLogin() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: LoginData) => login(data),
     onSuccess: (user) => {
+      // Drop any cache left by a previously signed-in user in this browser so
+      // the new session never renders the prior identity, role, or permissions.
+      queryClient.clear();
       if (user.onboardingStatus === 'EMAIL_UNVERIFIED') {
         router.push('/auth/verify-email');
         return;
@@ -59,9 +83,14 @@ export function useCreateWorkspace() {
 
 export function useLogout() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: logout,
-    onSuccess: () => router.push('/auth/login'),
+    onSuccess: () => {
+      // Wipe the cache so the next user on this browser starts from a clean slate.
+      queryClient.clear();
+      router.push('/');
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }
@@ -102,12 +131,51 @@ export function useResetPassword(token: string) {
   });
 }
 
+export function useValidateInvite(token: string) {
+  return useQuery({
+    queryKey: ['invite-validate', token],
+    queryFn: () => validateInvite(token),
+    enabled: !!token,
+    retry: false,
+    staleTime: 60_000,
+  });
+}
+
 export function useAcceptInvite(token: string) {
   const router = useRouter();
   return useMutation({
-    mutationFn: (data: AcceptInviteData) => acceptInvite(token, data),
+    mutationFn: (data?: AcceptInviteData) => acceptInvite(token, data),
     onSuccess: () => router.push('/inbox'),
     onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useMyInvitations() {
+  return useQuery({ queryKey: ['my-invitations'], queryFn: getMyInvitations });
+}
+
+export function useAcceptMyInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: acceptMyInvitation,
+    onSuccess: (res) => {
+      toast.success(res?.message ?? 'Joined the workspace.');
+      qc.invalidateQueries({ queryKey: ['my-invitations'] });
+      qc.invalidateQueries({ queryKey: ['me'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to accept invitation')),
+  });
+}
+
+export function useDeclineMyInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: declineMyInvitation,
+    onSuccess: () => {
+      toast.success('Invitation declined.');
+      qc.invalidateQueries({ queryKey: ['my-invitations'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to decline invitation')),
   });
 }
 
@@ -142,11 +210,28 @@ export function useInviteUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: inviteUser,
-    onSuccess: () => {
-      toast.success('Invitation sent.');
+    onSuccess: (res) => {
+      toast.success(res?.message ?? 'Invitation sent.');
       qc.invalidateQueries({ queryKey: ['members'] });
+      qc.invalidateQueries({ queryKey: ['invitations'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send invite')),
+  });
+}
+
+export function useInvitations() {
+  return useQuery({ queryKey: ['invitations'], queryFn: getInvitations });
+}
+
+export function useCancelInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: cancelInvitation,
+    onSuccess: () => {
+      toast.success('Invitation cancelled.');
+      qc.invalidateQueries({ queryKey: ['invitations'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to cancel invitation')),
   });
 }
 
@@ -172,5 +257,22 @@ export function useChangeMemberRole() {
       qc.invalidateQueries({ queryKey: ['members'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to change role')),
+  });
+}
+
+export function useRoles() {
+  return useQuery({ queryKey: ['roles'], queryFn: getRoles });
+}
+
+export function useUpdateRolePermissions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ roleId, permissions }: { roleId: string; permissions: string[] }) =>
+      updateRolePermissions(roleId, permissions),
+    onSuccess: () => {
+      toast.success('Permissions saved.');
+      qc.invalidateQueries({ queryKey: ['roles'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to save permissions')),
   });
 }

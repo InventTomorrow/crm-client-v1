@@ -6,6 +6,7 @@ import {
   useRemoveMember,
   useUpdateMe,
 } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useWAState } from "@/features/channels/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import {
@@ -31,10 +32,8 @@ import {
   Shield,
   Star,
   Store,
-  Trash2,
   Upload,
   User,
-  Users,
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -42,6 +41,7 @@ import type { SettingsSection } from "../types";
 import { SECTION_NAV, SYSTEM_STATS } from "../types";
 import { BusinessSection } from "./BusinessSection";
 import { ChatbotSection } from "./ChatbotSection";
+import { TeamSection } from "./TeamSection";
 import { WorkspacesManagementView } from "./WorkspacesManagementView";
 
 const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
@@ -112,6 +112,7 @@ function ProfileSection() {
 
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft({
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
@@ -344,7 +345,7 @@ const NOTIF_META: Record<NotificationType, { title: string; desc: string }> = {
 
 function NotifSection() {
   const { data: prefs = [], isLoading } = useNotificationPreferences();
-  const { mutate: update, isPending } = useUpdateNotificationPreference();
+  const { mutate: update } = useUpdateNotificationPreference();
 
   if (isLoading) {
     return (
@@ -411,8 +412,10 @@ function NotifSection() {
 // ──────────────────── Channels Section ────────────────────
 function ChannelsSection() {
   const { data: statusData } = useWAState();
+  const { can } = usePermissions();
   const [waOpen, setWaOpen] = useState(false);
   const status = statusData?.status ?? "DISCONNECTED";
+  const canConnect = can("channels:connect");
 
   return (
     <>
@@ -458,13 +461,21 @@ function ChannelsSection() {
                 ? "Error"
                 : "Disconnected"}
           </span>
-          <button
-            className="btn btn-outline text-[12.5px]"
-            onClick={() => setWaOpen(true)}
-          >
-            {status === "CONNECTED" ? "Manage" : "Connect"}
-          </button>
+          {canConnect && (
+            <button
+              className="btn btn-outline text-[12.5px]"
+              onClick={() => setWaOpen(true)}
+            >
+              {status === "CONNECTED" ? "Manage" : "Connect"}
+            </button>
+          )}
         </div>
+        {!canConnect && (
+          <p className="text-[11.5px] text-[var(--ink-mute)] mt-3">
+            You don’t have permission to connect or disconnect WhatsApp. Ask a
+            workspace owner.
+          </p>
+        )}
       </div>
       <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
     </>
@@ -504,193 +515,6 @@ function TierSection() {
           <Metric label="AI credits" v="4.2K / 10K" pct={42} />
           <Metric label="Storage" v="2.1 / 50 GB" pct={4} />
         </div>
-      </div>
-    </>
-  );
-}
-
-// ──────────────────── Access Section ────────────────────
-const ROLE_META: Record<string, { desc: string; color: string }> = {
-  OWNER: {
-    desc: "Full access: billing, integrations, all data.",
-    color: "bg-[rgba(124,58,237,0.12)] text-[#7C3AED]",
-  },
-  ADMIN: {
-    desc: "Manage leads, inventory, replies. No billing.",
-    color: "bg-[rgba(59,130,246,0.12)] text-[#2563EB]",
-  },
-  MANAGER: {
-    desc: "Manage leads, inventory, replies. No billing.",
-    color: "bg-[rgba(59,130,246,0.12)] text-[#2563EB]",
-  },
-  AGENT: {
-    desc: "Inbox + assigned leads only.",
-    color: "bg-[rgba(16,185,129,0.12)] text-[#059669]",
-  },
-};
-
-function AccessSection() {
-  const { data: members = [], isLoading } = useMembers();
-  const { mutate: removeM, isPending: isRemoving } = useRemoveMember();
-  const inviteMut = useInviteUser();
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [showInvite, setShowInvite] = useState(false);
-
-  const byRole = members.reduce<Record<string, number>>((acc, m) => {
-    acc[m.roleName] = (acc[m.roleName] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const handleInvite = () => {
-    if (!inviteEmail.trim()) return;
-    inviteMut.mutate(
-      { email: inviteEmail.trim() },
-      {
-        onSuccess: () => {
-          setInviteEmail("");
-          setShowInvite(false);
-        },
-      },
-    );
-  };
-
-  return (
-    <>
-      <h2 className="text-[20px] font-semibold">Access Control</h2>
-
-      {/* Role summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {(["OWNER", "ADMIN", "MANAGER", "AGENT"] as const).map((r) => (
-          <div key={r} className="card p-3.5">
-            <div className="text-[11.5px] font-medium text-[var(--ink-mute)]">
-              {r}
-            </div>
-            <div className="text-[22px] font-semibold mt-0.5">
-              {byRole[r] ?? 0}
-            </div>
-            <div className="text-[11px] text-[var(--ink-mute)] mt-1 leading-snug">
-              {ROLE_META[r]?.desc}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Members table */}
-      <div className="card overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--line)]">
-          <h4 className="text-[13.5px] font-semibold">
-            Team Members
-            {!isLoading && (
-              <span className="font-normal text-[12px] text-[var(--ink-mute)] ml-1.5">
-                · {members.length}
-              </span>
-            )}
-          </h4>
-          <button
-            className="btn btn-outline text-[12.5px] py-1.5 px-3"
-            onClick={() => setShowInvite((v) => !v)}
-          >
-            <Users size={13} /> Invite member
-          </button>
-        </div>
-
-        {/* Invite row */}
-        {showInvite && (
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--line)] bg-[var(--surface-2)]">
-            <input
-              className="input flex-1 text-[13px]"
-              placeholder="colleague@email.com"
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-              autoFocus
-            />
-            <button
-              className="btn btn-grad text-[12.5px]"
-              onClick={handleInvite}
-              disabled={inviteMut.isPending || !inviteEmail.trim()}
-            >
-              {inviteMut.isPending ? (
-                <Loader2 size={13} className="animate-spin" />
-              ) : (
-                <Check size={13} />
-              )}
-              Send invite
-            </button>
-            <button
-              className="btn btn-ghost p-2"
-              onClick={() => setShowInvite(false)}
-            >
-              <Zap size={13} className="rotate-45 opacity-60" />
-            </button>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 size={20} className="animate-spin text-[var(--accent)]" />
-          </div>
-        ) : members.length === 0 ? (
-          <div className="py-10 text-center text-[var(--ink-mute)] text-[13px]">
-            No members yet.
-          </div>
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Joined</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => {
-                const name =
-                  [m.firstName, m.lastName].filter(Boolean).join(" ") ||
-                  m.email;
-                const roleColor =
-                  ROLE_META[m.roleName]?.color ??
-                  "bg-[var(--surface-2)] text-[var(--ink-soft)]";
-                return (
-                  <tr key={m.membershipId}>
-                    <td>
-                      <div className="flex items-center gap-2.5">
-                        <CRMAvatar name={name} size={28} />
-                        <span className="font-medium">{name}</span>
-                      </div>
-                    </td>
-                    <td className="text-[var(--ink-mute)] text-[12.5px]">
-                      {m.email}
-                    </td>
-                    <td>
-                      <span className={cn("badge font-medium", roleColor)}>
-                        {m.roleName}
-                      </span>
-                    </td>
-                    <td className="text-[var(--ink-mute)] text-[12px]">
-                      {new Date(m.joinedAt).toLocaleDateString()}
-                    </td>
-                    <td className="text-right">
-                      {m.roleName !== "OWNER" && (
-                        <button
-                          className="btn btn-ghost p-1.5 text-[#DC2626]"
-                          title="Remove member"
-                          onClick={() => removeM(m.membershipId)}
-                          disabled={isRemoving}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
       </div>
     </>
   );
@@ -746,9 +570,34 @@ function SystemSection() {
   );
 }
 
+// Per-tab permission gate. Tabs without an entry (profile, notifications) are
+// always available — they only expose the signed-in user's own data.
+const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
+  chatbot: "chatbot:view",
+  business: "settings:view",
+  channels: "channels:view",
+  access: "members:view",
+  workspaces: "settings:edit",
+};
+
 // ──────────────────── SettingsView (root) ────────────────────
 export function SettingsView() {
+  const { can, isLoading: permsLoading } = usePermissions();
   const [section, setSection] = useState<SettingsSection>("profile");
+
+  // Hide tabs the active role can't access (placeholder tabs stay visible but
+  // disabled, as before).
+  const visibleNav = SECTION_NAV.filter((s) => {
+    const perm = SECTION_PERMISSION[s.id];
+    return !perm || can(perm);
+  });
+
+  // If the current section became inaccessible, fall back to Profile.
+  useEffect(() => {
+    if (permsLoading) return;
+    if (!visibleNav.some((s) => s.id === section)) setSection("profile");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permsLoading, section]);
 
   return (
     <div className="flex gap-3.5 h-full overflow-hidden p-[18px]">
@@ -757,10 +606,12 @@ export function SettingsView() {
         <div className="text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1.5 text-[var(--ink-mute)]">
           Settings
         </div>
-        {SECTION_NAV.map((s) => {
+        {visibleNav.map((s) => {
           const Icon = SECTION_ICONS[s.id];
           const active = section === s.id;
-          const disabled = (["tier", "access", "system"] as SettingsSection[]).includes(s.id);
+          const disabled = (["tier", "system"] as SettingsSection[]).includes(
+            s.id,
+          );
           return (
             <button
               key={s.id}
@@ -777,7 +628,11 @@ export function SettingsView() {
             >
               <Icon size={15} />
               <span className="flex-1">{s.label}</span>
-              {disabled && <span className="text-[9.5px] font-medium tracking-wide uppercase text-[var(--ink-mute)] opacity-70">Soon</span>}
+              {disabled && (
+                <span className="text-[9.5px] font-medium tracking-wide uppercase text-[var(--ink-mute)] opacity-70">
+                  Soon
+                </span>
+              )}
             </button>
           );
         })}
@@ -796,7 +651,7 @@ export function SettingsView() {
         {section === "business" && <BusinessSection />}
         {section === "channels" && <ChannelsSection />}
         {section === "tier" && <TierSection />}
-        {section === "access" && <AccessSection />}
+        {section === "access" && <TeamSection />}
         {section === "workspaces" && <WorkspacesManagementView />}
         {section === "system" && <SystemSection />}
       </div>

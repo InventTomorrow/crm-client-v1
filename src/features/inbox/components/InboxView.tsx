@@ -11,11 +11,22 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/Dialog";
 import { Skeleton, Spinner } from "@/shared/ui/Motion";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
+  Archive,
+  ArchiveRestore,
   Bot,
   Check,
   CheckCheck,
@@ -114,6 +125,7 @@ const BUILT_IN_TABS = [
   { id: "unread", label: "Unread" },
   { id: "favorites", label: "Favorites" },
   { id: "escalated", label: "Needs Attention" },
+  { id: "archived", label: "Archived" },
 ];
 
 const EMOJI_LIST = [
@@ -523,11 +535,22 @@ function ConversationRow({
   conv,
   active,
   onClick,
+  isFavorite,
+  isArchived,
+  onToggleFavorite,
+  onToggleArchive,
+  onDelete,
 }: {
   conv: ConversationListItem;
   active: boolean;
   onClick: () => void;
+  isFavorite: boolean;
+  isArchived: boolean;
+  onToggleFavorite: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const lastMsg = conv.messages[0];
   const displayName = conv.lead.name ?? conv.lead.phone ?? "Unknown";
   const unread = conv.unreadCount > 0;
@@ -538,8 +561,12 @@ function ConversationRow({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setMenuOpen(true);
+      }}
       className={cn(
-        "flex items-center gap-[11px] cursor-pointer px-[14px] py-[11px]",
+        "group/row relative flex items-center gap-[11px] cursor-pointer px-[14px] py-[11px]",
         "border-b border-[var(--line-soft)] border-l-2 transition-[background] duration-[120ms]",
         active
           ? "bg-[var(--accent-soft)] border-l-[var(--accent)]"
@@ -554,11 +581,14 @@ function ConversationRow({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center gap-1.5 mb-0.5">
-          <span className="font-medium text-[13.5px] text-[var(--ink)] truncate">
-            {displayName}
+          <span className="font-medium text-[13.5px] text-[var(--ink)] truncate flex items-center gap-1">
+            {isFavorite && (
+              <Star size={11} className="text-[#CA8A04] flex-shrink-0" fill="currentColor" />
+            )}
+            <span className="truncate">{displayName}</span>
           </span>
           {lastMsg && (
-            <span className="flex-shrink-0 text-[11px] text-[var(--ink-mute)]">
+            <span className="flex-shrink-0 text-[11px] text-[var(--ink-mute)] group-hover/row:hidden">
               {relativeTime(lastMsg.createdAt)}
             </span>
           )}
@@ -589,6 +619,53 @@ function ConversationRow({
           )}
         </div>
       </div>
+
+      {/* Hover / right-click management menu */}
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Chat options"
+            className={cn(
+              "absolute right-2 top-2 flex-shrink-0 p-1 rounded-full text-[var(--ink-mute)] bg-[var(--surface)] shadow-sm transition-opacity",
+              menuOpen
+                ? "opacity-100"
+                : "opacity-0 group-hover/row:opacity-100",
+            )}
+          >
+            <MoreVertical size={14} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-48"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenuItem onClick={onToggleFavorite}>
+            <Star
+              size={13}
+              className={cn("mr-2", isFavorite ? "text-[#CA8A04]" : "")}
+            />
+            {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleArchive}>
+            {isArchived ? (
+              <ArchiveRestore size={13} className="mr-2" />
+            ) : (
+              <Archive size={13} className="mr-2" />
+            )}
+            {isArchived ? "Unarchive chat" : "Archive chat"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={onDelete}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 size={13} className="mr-2" />
+            Delete chat
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </motion.div>
   );
 }
@@ -616,6 +693,26 @@ export function InboxView() {
     }
     return new Set();
   });
+  const [archived, setArchived] = useState<Set<string>>(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("asaanrabta_archived");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    }
+    return new Set();
+  });
+  const [hiddenChats, setHiddenChats] = useState<Set<string>>(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("asaanrabta_hidden_chats");
+      return s ? new Set(JSON.parse(s)) : new Set();
+    }
+    return new Set();
+  });
+  // Chat pending deletion confirmation (id) and message pending deletion.
+  const [deleteChatId, setDeleteChatId] = useState<string | null>(null);
+  const [deleteMsgTarget, setDeleteMsgTarget] = useState<{
+    messageId: string;
+    canDeleteEveryone: boolean;
+  } | null>(null);
   const [customTabs, setCustomTabs] = useState<CustomTab[]>(() => {
     if (typeof window !== "undefined") {
       const s = localStorage.getItem("asaanrabta_custom_tabs");
@@ -700,6 +797,8 @@ export function InboxView() {
     filter,
     favorites,
     tabAssignments,
+    archived,
+    hiddenChats,
   );
 
   const assignToTab = (convId: string, tabId: string) => {
@@ -731,6 +830,32 @@ export function InboxView() {
       localStorage.setItem("asaanrabta_favorites", JSON.stringify([...next]));
       return next;
     });
+  };
+
+  const toggleArchive = (id: string) => {
+    setArchived((prev) => {
+      const next = new Set(prev);
+      const archiving = !next.has(id);
+      if (archiving) next.add(id);
+      else next.delete(id);
+      localStorage.setItem("asaanrabta_archived", JSON.stringify([...next]));
+      toast.success(archiving ? "Chat archived" : "Chat unarchived");
+      return next;
+    });
+    if (id === selectedId) setSelectedId(null);
+  };
+
+  const confirmDeleteChat = () => {
+    const id = deleteChatId;
+    if (!id) return;
+    setHiddenChats((prev) => {
+      const next = new Set(prev).add(id);
+      localStorage.setItem("asaanrabta_hidden_chats", JSON.stringify([...next]));
+      return next;
+    });
+    if (id === selectedId) setSelectedId(null);
+    setDeleteChatId(null);
+    toast.success("Chat deleted");
   };
 
   const createCustomTab = () => {
@@ -976,12 +1101,20 @@ export function InboxView() {
         className={`card inbox-list w-[320px] flex-shrink-0 flex flex-col overflow-hidden ${mobPane === "list" ? "mob-on" : ""}`}
       >
         <div className="px-3.5 pt-3 pb-2 space-y-2.5">
-          <button
-            onClick={() => setShowBroadcast(true)}
-            className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold"
-          >
-            <Megaphone size={14} />+ New Broadcast
-          </button>
+          <PermissionGuard permission="broadcasts:create">
+            <button
+              onClick={() => setShowBroadcast(true)}
+              disabled={!waConnected}
+              title={
+                !waConnected
+                  ? "Connect WhatsApp in Channels to send a broadcast"
+                  : undefined
+              }
+              className="btn btn-grad w-full justify-center gap-2 text-[12.5px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Megaphone size={14} />+ New Broadcast
+            </button>
+          </PermissionGuard>
           {/* Filter tabs row */}
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden">
@@ -1138,6 +1271,11 @@ export function InboxView() {
                 setSelectedId(conv.id);
                 setMobPane("chat");
               }}
+              isFavorite={favorites.has(conv.id)}
+              isArchived={archived.has(conv.id)}
+              onToggleFavorite={() => toggleFavorite(conv.id)}
+              onToggleArchive={() => toggleArchive(conv.id)}
+              onDelete={() => setDeleteChatId(conv.id)}
             />
           ))}
           {fetchingNextConvs && (
@@ -1419,29 +1557,17 @@ export function InboxView() {
                                 )}
                                 <DropdownMenuItem
                                   onClick={() =>
-                                    deleteMut.mutate({
+                                    setDeleteMsgTarget({
                                       messageId: msg.id,
-                                      everyone: false,
+                                      canDeleteEveryone:
+                                        isOutbound && isWithin60Mins,
                                     })
                                   }
+                                  className="text-red-600 focus:text-red-600"
                                 >
                                   <Trash2 size={13} className="mr-1.5" />
-                                  Delete for me
+                                  Delete
                                 </DropdownMenuItem>
-                                {isOutbound && isWithin60Mins && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      deleteMut.mutate({
-                                        messageId: msg.id,
-                                        everyone: true,
-                                      })
-                                    }
-                                    className="text-red-600 focus:text-red-600"
-                                  >
-                                    <Trash2 size={13} className="mr-1.5" />
-                                    Delete for everyone
-                                  </DropdownMenuItem>
-                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -2163,6 +2289,69 @@ export function InboxView() {
         open={showBroadcast}
         onClose={() => setShowBroadcast(false)}
       />
+
+      {/* Delete-chat confirmation (local to this inbox view) */}
+      <ConfirmDialog
+        open={!!deleteChatId}
+        onClose={() => setDeleteChatId(null)}
+        onConfirm={confirmDeleteChat}
+        title="Delete chat?"
+        description="This removes the conversation from your inbox. It won't delete messages on WhatsApp."
+        confirmLabel="Delete chat"
+      />
+
+      {/* Delete-message dialog — pick the scope, mirroring WhatsApp */}
+      <Dialog
+        open={!!deleteMsgTarget}
+        onOpenChange={(o) => !o && setDeleteMsgTarget(null)}
+      >
+        <DialogContent className="sm:max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle className="text-[16px]">Delete message?</DialogTitle>
+            <DialogDescription className="text-[12.5px]">
+              {deleteMsgTarget?.canDeleteEveryone
+                ? "Delete this message for yourself, or for everyone in the chat."
+                : "This message will be deleted for you."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 mt-1">
+            {deleteMsgTarget?.canDeleteEveryone && (
+              <button
+                className="btn btn-grad w-full justify-center text-red-600 bg-[#FEF2F2] border-[#FECACA] hover:bg-[#FEE2E2]"
+                onClick={() => {
+                  if (!deleteMsgTarget) return;
+                  deleteMut.mutate({
+                    messageId: deleteMsgTarget.messageId,
+                    everyone: true,
+                  });
+                  setDeleteMsgTarget(null);
+                }}
+              >
+                <Trash2 size={14} /> Delete for everyone
+              </button>
+            )}
+            <button
+              className="btn btn-outline w-full justify-center"
+              onClick={() => {
+                if (!deleteMsgTarget) return;
+                deleteMut.mutate({
+                  messageId: deleteMsgTarget.messageId,
+                  everyone: false,
+                });
+                setDeleteMsgTarget(null);
+              }}
+            >
+              <Trash2 size={14} /> Delete for me
+            </button>
+            <button
+              className="btn btn-ghost w-full justify-center"
+              onClick={() => setDeleteMsgTarget(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {activeConv && (
         <OrderForm
