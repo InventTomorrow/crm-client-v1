@@ -49,6 +49,7 @@ function loadFacebookSdk(appId: string, version: string): Promise<void> {
       window.FB!.init({ appId, autoLogAppEvents: true, xfbml: false, version });
       resolve();
     };
+
     if (document.getElementById("facebook-jssdk")) return; // init pending
     const js = document.createElement("script");
     js.id = "facebook-jssdk";
@@ -228,11 +229,17 @@ export function useWAEmbeddedSignup() {
       }
 
       sessionRef.current = {};
-      console.info("[WA Signup] config:", { appId: cfg.appId, configId: cfg.configId, graphVersion: cfg.graphVersion });
+      console.info("[WA Signup] config:", {
+        appId: cfg.appId,
+        configId: cfg.configId,
+        graphVersion: cfg.graphVersion,
+      });
       await loadFacebookSdk(cfg.appId, cfg.graphVersion);
 
       if (!window.FB) {
-        toast.error("WhatsApp login couldn't load. Check your connection and try again.");
+        toast.error(
+          "WhatsApp login couldn't load. Check your connection and try again.",
+        );
         return;
       }
       console.info("[WA Signup] FB SDK loaded, opening FB.login…");
