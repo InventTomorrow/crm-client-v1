@@ -698,7 +698,7 @@ export function InboxView() {
               {customTabs.map((tab) => (
                 <div
                   key={tab.id}
-                  className="flex items-center gap-0.5 group flex-shrink-0"
+                  className="flex items-center gap-0.5 group shrink-0"
                 >
                   <Button
                     variant={filter === tab.id ? "default" : "ghost"}
@@ -718,7 +718,7 @@ export function InboxView() {
                 </div>
               ))}
               {addingTab ? (
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <Input
                     autoFocus
                     value={newTabLabel}
