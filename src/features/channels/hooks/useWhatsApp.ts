@@ -187,6 +187,7 @@ export function useWAEmbeddedSignup() {
           `[WA Signup] WA_EMBEDDED_SIGNUP event="${data.event}" data=`,
           data.data,
         );
+
         if (data.event === "FINISH") {
           sessionRef.current = {
             wabaId: data.data?.waba_id,
