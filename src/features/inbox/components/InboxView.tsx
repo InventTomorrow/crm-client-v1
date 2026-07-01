@@ -757,7 +757,7 @@ export function InboxView() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setAddingTab(true)}
-                  className="text-[11px] gap-0.5 text-[var(--ink-mute)] whitespace-nowrap flex-shrink-0 py-[4px] px-[8px]"
+                  className="text-[11px] gap-0.5 text-[var(--ink-mute)] whitespace-nowrap shrink-0 py-[4px] px-[8px]"
                 >
                   <Plus size={11} /> Tab
                 </Button>
@@ -896,7 +896,7 @@ export function InboxView() {
                       {activeConv?.lead.phone ?? "—"}
                     </span>
                     {activeConv?.escalationStatus === "RESOLVED" && (
-                      <span className="text-[#15803D] font-medium flex-shrink-0">
+                      <span className="text-[#15803D] font-medium shrink-0">
                         · Done
                       </span>
                     )}
