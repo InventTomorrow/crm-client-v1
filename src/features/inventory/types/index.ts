@@ -19,6 +19,14 @@ export const SIZE_GROUPS = [
   { label: 'General', options: ['One Size', 'Free Size'] },
 ] as const;
 
+/** Returns the size groups relevant to a category. Apparel → clothing, Footwear → shoe sizes, everything else → general. */
+export function getSizeGroupsForCategory(category?: string): typeof SIZE_GROUPS[number][] {
+  const c = category?.trim().toLowerCase();
+  if (c === 'apparel') return SIZE_GROUPS.filter((g) => g.label === 'Clothing');
+  if (c === 'footwear') return SIZE_GROUPS.filter((g) => g.label === 'Footwear (EU)');
+  return SIZE_GROUPS.filter((g) => g.label === 'General');
+}
+
 export const productSchema = z.object({
   name:   z.string().min(1, 'Product name is required'),
   sku:    z.string().optional(),

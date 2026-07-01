@@ -15,7 +15,13 @@ import { ImageUploader } from "@/shared/ui/ImageUploader";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
 import { Textarea } from "@/shared/ui/Textarea";
-import { NativeSelect, NativeSelectOption } from "@/shared/ui/NativeSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Skeleton } from "@/shared/ui/Motion";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
@@ -52,7 +58,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -73,13 +79,13 @@ import {
   CATEGORIES,
   ERP_SYSTEMS,
   GENDERS,
-  SIZE_GROUPS,
   STOREFRONTS,
   TIERS,
   productSchema,
 } from "../types";
 import { BulkAddDialog, type BulkItem } from "./BulkAddDialog";
 import { CreatableCategorySelect } from "./CreatableCategorySelect";
+import { SizeSelector } from "./SizeSelector";
 
 function stockStatus(stock: number): Product["status"] {
   if (stock === 0) return "out";
@@ -196,6 +202,8 @@ function ProductDialog({
     }
   }, [open, initial, form]);
 
+  const selectedCategory = useWatch({ control: form.control, name: "cat" });
+
   const handleSubmit = (data: ProductFormData) => {
     onSave({ ...data, imageUrls: imageUrl ? [imageUrl] : [] });
   };
@@ -235,8 +243,9 @@ function ProductDialog({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="scroll overflow-y-auto flex-1 flex flex-col gap-3 p-[18px]"
+            className="flex flex-1 min-h-0 flex-col overflow-hidden"
           >
+            <div className="scroll overflow-y-auto flex-1 min-h-0 flex flex-col gap-3 p-[18px]">
             <ImageUploader
               value={imageUrl}
               onChange={setImageUrl}
@@ -303,20 +312,24 @@ function ProductDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Gender</FormLabel>
-                    <FormControl>
-                      <NativeSelect
-                        className="w-full"
-                        {...field}
-                        disabled={busy}
-                      >
-                        <NativeSelectOption value="">—</NativeSelectOption>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                      disabled={busy}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
                         {GENDERS.map((g) => (
-                          <NativeSelectOption key={g} value={g}>
+                          <SelectItem key={g} value={g}>
                             {g}
-                          </NativeSelectOption>
+                          </SelectItem>
                         ))}
-                      </NativeSelect>
-                    </FormControl>
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
@@ -399,40 +412,19 @@ function ProductDialog({
                 <FormItem>
                   <FormLabel>Available Sizes</FormLabel>
                   <FormControl>
-                    <div className="flex flex-col gap-2.5">
-                      {SIZE_GROUPS.map((group) => (
-                        <div key={group.label} className="flex flex-col gap-1.5">
-                          <span className="text-[11px] font-medium text-[var(--ink-mute)]">
-                            {group.label}
-                          </span>
-                          <ToggleGroup
-                            type="multiple"
-                            variant="outline"
-                            size="sm"
-                            value={field.value ?? []}
-                            onValueChange={field.onChange}
-                            disabled={busy}
-                            className="flex-wrap justify-start"
-                          >
-                            {group.options.map((option) => (
-                              <ToggleGroupItem
-                                key={option}
-                                value={option}
-                                aria-label={option}
-                              >
-                                {option}
-                              </ToggleGroupItem>
-                            ))}
-                          </ToggleGroup>
-                        </div>
-                      ))}
-                    </div>
+                    <SizeSelector
+                      category={selectedCategory}
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      disabled={busy}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="flex justify-between gap-2 pt-1 border-t border-[var(--line)] mt-1">
+            </div>
+            <div className="flex-shrink-0 flex justify-between gap-2 px-[18px] py-3 border-t border-[var(--line)] bg-[var(--surface)]">
               {onDelete ? (
                 <Button
                   type="button"

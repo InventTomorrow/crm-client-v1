@@ -1,5 +1,7 @@
 "use client";
+import { parseCsv } from "@/lib/csv";
 import { extractErrorMessage, getImageUrl, pkr } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +10,16 @@ import {
   DialogTitle,
 } from "@/shared/ui/Dialog";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
+import { Input } from "@/shared/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { Textarea } from "@/shared/ui/Textarea";
 import {
   Form,
   FormControl,
@@ -20,15 +31,13 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ImageIcon, Loader2, Plus, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { parseCsv } from "@/lib/csv";
 import { presignedUpload } from "../services/productsService";
 import type { ProductFormData } from "../types";
 import { CATEGORIES, productSchema } from "../types";
-import { Button } from "@/shared/ui/Button";
-import { Input } from "@/shared/ui/Input";
+import { SizeSelector } from "./SizeSelector";
 
 export interface BulkItem extends ProductFormData {
   imageUrl?: string;
@@ -102,6 +111,7 @@ function EditPanel({
       price: item.price,
       stock: item.stock,
       cat: item.cat,
+      sizes: item.sizes ?? [],
       desc: item.desc ?? "",
     },
   });
@@ -113,6 +123,7 @@ function EditPanel({
       price: item.price,
       stock: item.stock,
       cat: item.cat,
+      sizes: item.sizes ?? [],
       desc: item.desc ?? "",
     });
     setImageUrl(item.imageUrl ?? "");
@@ -127,6 +138,8 @@ function EditPanel({
       setUploading(false);
     }
   }, []);
+
+  const selectedCategory = useWatch({ control: form.control, name: "cat" });
 
   const onSubmit = (data: ProductFormData) => {
     onSave({ ...data, imageUrl });
@@ -157,10 +170,7 @@ function EditPanel({
             <FormItem>
               <FormLabel className="text-[11.5px]">Name *</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Product name"
-                  {...field}
-                />
+                <Input placeholder="Product name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -175,10 +185,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">SKU</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="SKU"
-                    {...field}
-                  />
+                  <Input placeholder="SKU" {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -189,13 +196,23 @@ function EditPanel({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[11.5px]">Category</FormLabel>
-                <FormControl>
-                  <select className="input text-[12.5px] py-1.5" {...field}>
+                <Select
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
                     {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
                     ))}
-                  </select>
-                </FormControl>
+                  </SelectContent>
+                </Select>
               </FormItem>
             )}
           />
@@ -209,10 +226,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">Price (PKR) *</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                  />
+                  <Input type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,10 +239,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">Stock *</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                  />
+                  <Input type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -243,7 +254,24 @@ function EditPanel({
             <FormItem>
               <FormLabel className="text-[11.5px]">Description</FormLabel>
               <FormControl>
-                <textarea className="input text-[12.5px]" rows={2} {...field} />
+                <Textarea rows={2} {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="sizes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[11.5px]">Available Sizes</FormLabel>
+              <FormControl>
+                <SizeSelector
+                  category={selectedCategory}
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                />
               </FormControl>
             </FormItem>
           )}
@@ -259,11 +287,7 @@ function EditPanel({
           >
             <X size={12} /> Remove
           </Button>
-          <Button
-            type="submit"
-            size="sm"
-            className="flex-1 justify-center"
-          >
+          <Button type="submit" size="sm" className="flex-1 justify-center">
             <Check size={12} /> Apply
           </Button>
         </div>
@@ -610,11 +634,7 @@ export function BulkAddDialog({
             )}
           </span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isSaving}
-            >
+            <Button variant="outline" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>
             <Button
@@ -623,8 +643,7 @@ export function BulkAddDialog({
             >
               {isSaving ? (
                 <>
-                  <Loader2 size={13} className="animate-spin" />{" "}
-                  Saving…
+                  <Loader2 size={13} className="animate-spin" /> Saving…
                 </>
               ) : (
                 <>

@@ -1,16 +1,16 @@
-'use client';
-import { useAppStore } from '@/lib/appStore';
-import { AppSidebar } from '@/shared/layout/AppSidebar';
-import { AppTopBar } from '@/shared/layout/AppTopBar';
-import { MobileDock } from '@/shared/layout/MobileDock';
-import { RouteGuard } from '@/shared/layout/RouteGuard';
-import { EscalateDialog } from '@/shared/layout/EscalateDialog';
-import { HotToast } from '@/shared/layout/HotToast';
-import { WorkspaceSwitchingOverlay } from '@/shared/layout/WorkspaceSwitchingOverlay';
-import { WelcomeDemoDialog } from '@/features/demo/components/WelcomeDemoDialog';
-import { Toaster } from '@/shared/ui/Sonner';
-import { Button } from '@/shared/ui/Button';
-import { Minimize2 } from 'lucide-react';
+"use client";
+import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
+import { useAppStore } from "@/lib/appStore";
+import { AppSidebar } from "@/shared/layout/AppSidebar";
+import { AppTopBar } from "@/shared/layout/AppTopBar";
+import { EscalateDialog } from "@/shared/layout/EscalateDialog";
+import { HotToast } from "@/shared/layout/HotToast";
+import { MobileDock } from "@/shared/layout/MobileDock";
+import { RouteGuard } from "@/shared/layout/RouteGuard";
+import { WorkspaceSwitchingOverlay } from "@/shared/layout/WorkspaceSwitchingOverlay";
+import { Button } from "@/shared/ui/Button";
+import { Toaster } from "@/shared/ui/Sonner";
+import { Minimize2 } from "lucide-react";
 
 function FullScreenBar() {
   const { toggleFullScreen } = useAppStore();
@@ -30,7 +30,16 @@ function FullScreenBar() {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { mobileMenuOpen, setMobileMenuOpen, escalatingLead, hotLead, setEscalatingLead, setHotLead, isFullScreen, currentWorkspaceId } = useAppStore();
+  const {
+    mobileMenuOpen,
+    setMobileMenuOpen,
+    escalatingLead,
+    hotLead,
+    setEscalatingLead,
+    setHotLead,
+    isFullScreen,
+    currentWorkspaceId,
+  } = useAppStore();
 
   return (
     <div className="app-shell">
@@ -41,7 +50,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         />
       )}
       <div className="app-main">
-        {!isFullScreen && <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />}
+        {!isFullScreen && (
+          <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
+        )}
         {isFullScreen && <FullScreenBar />}
         <main key={currentWorkspaceId} className="app-content">
           <RouteGuard>{children}</RouteGuard>
@@ -53,7 +64,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <EscalateDialog
           lead={escalatingLead}
           onClose={() => setEscalatingLead(null)}
-          onConfirm={() => { setEscalatingLead(null); setHotLead(escalatingLead); }}
+          onConfirm={() => {
+            setEscalatingLead(null);
+            setHotLead(escalatingLead);
+          }}
         />
       )}
       {hotLead && <HotToast lead={hotLead} onClose={() => setHotLead(null)} />}
