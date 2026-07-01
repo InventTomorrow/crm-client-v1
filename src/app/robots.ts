@@ -16,7 +16,7 @@ export default function robots(): MetadataRoute.Robots {
         "/leads/",
         "/orders/",
         "/channels/",
-        "/analytics/",
+        "/dashboard/",
         "/inventory/",
         "/admin/",
         "/notifications/",

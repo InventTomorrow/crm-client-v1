@@ -261,7 +261,7 @@ export function AnalyticsView() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3.5 gap-3 flex-wrap">
         <div>
-          <h2 className="text-[20px] font-semibold">Analytics</h2>
+          <h2 className="text-[20px] font-semibold">Dashboard</h2>
           <div className="text-[12.5px] mt-0.5 text-[var(--ink-mute)]">
             {dataUpdatedAt
               ? `Updated ${new Date(dataUpdatedAt).toLocaleTimeString()} · auto-refreshes`

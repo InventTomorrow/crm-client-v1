@@ -37,9 +37,9 @@ const NAV_ITEMS = [
     Icon: Box,
   },
   {
-    id: "analytics",
-    label: "Open Analytics",
-    sub: "Dashboards & funnel",
+    id: "dashboard",
+    label: "Open Dashboard",
+    sub: "KPIs, funnel & connectivity",
     Icon: BarChart2,
   },
   {

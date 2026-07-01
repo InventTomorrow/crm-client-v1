@@ -8,7 +8,7 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   { prefix: "/leads", permission: "leads:view" },
   { prefix: "/orders", permission: "orders:view" },
   { prefix: "/inventory", permission: "inventory:view" },
-  { prefix: "/analytics", permission: "reports:view" },
+  { prefix: "/dashboard", permission: "reports:view" },
   { prefix: "/channels", permission: "channels:view" },
   // /settings itself is auth-only — Profile & Notifications are every user's
   // own context. Individual tabs gate themselves; the Workspaces sub-route is

@@ -11,13 +11,13 @@ import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
   ChevronDown,
   Inbox,
+  LayoutDashboard,
   Moon,
   Package,
   PlayCircle,
   Settings,
   ShoppingCart,
   Sun,
-  TrendingUp,
   Users,
   Wifi,
 } from "lucide-react";
@@ -34,6 +34,12 @@ const NAV_ITEMS: {
   Icon: typeof Inbox;
   perm?: string;
 }[] = [
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    Icon: LayoutDashboard,
+    perm: "reports:view",
+  },
   { href: "/inbox", label: "Inbox", Icon: Inbox, perm: "conversations:view" },
   { href: "/leads", label: "Leads", Icon: Users, perm: "leads:view" },
   { href: "/orders", label: "Orders", Icon: ShoppingCart, perm: "orders:view" },
@@ -44,12 +50,6 @@ const NAV_ITEMS: {
     perm: "inventory:view",
   },
   { href: "/channels", label: "Channels", Icon: Wifi, perm: "channels:view" },
-  {
-    href: "/analytics",
-    label: "Analytics",
-    Icon: TrendingUp,
-    perm: "reports:view",
-  },
   // { href: '/admin',     label: 'Team & Access', Icon: Shield,       perm: 'members:view' },
   // Settings is auth-only — every user can reach their Profile & Notifications;
   // the inner tabs gate themselves by permission.
@@ -138,14 +138,14 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               : "items-center px-[14px] pt-[14px] pb-1.5",
           )}
         >
-          <Link href="/" className="flex items-center gap-2 min-w-0">
+          <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
             <Image
               src="/asaanrabta-icon.png"
               alt="AsaanRabta"
               width={32}
               height={32}
               priority
-              className="w-8 h-8 rounded-[9px] flex-shrink-0"
+              className="w-8 h-8 rounded-[9px] shrink-0"
             />
             {!collapsed && (
               <span className="font-[var(--font-head)] font-bold text-[14px] tracking-[-0.02em] text-[var(--ink)]">

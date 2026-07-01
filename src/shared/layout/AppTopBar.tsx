@@ -4,9 +4,12 @@ import {
   useNotificationStream,
   useUnreadCount,
 } from "@/features/notifications/hooks/useNotifications";
+import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useAppStore } from "@/lib/appStore";
+import { cn } from "@/lib/utils";
 import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
-import { Bell, Maximize2, Menu, Minimize2, Search } from "lucide-react";
+import { Bell, Inbox, Maximize2, Menu, Minimize2, Search } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/Button";
@@ -14,11 +17,11 @@ import { NotificationsPanel } from "./NotificationsPanel";
 import { SearchPalette } from "./SearchPalette";
 
 const TITLES: Record<string, string> = {
+  "/dashboard": "Dashboard",
   "/inbox": "Unified Inbox",
   "/leads": "Leads",
   "/orders": "Orders",
   "/inventory": "Inventory",
-  "/analytics": "Analytics",
   "/admin": "Team & Access",
   "/notifications": "Notifications",
   "/settings": "Settings",
@@ -48,6 +51,8 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
   useNotificationStream();
   const { data: unread = 0 } = useUnreadCount();
+  const { data: inboxUnread = 0 } = useInboxUnreadCount();
+  const onInbox = pathname.startsWith("/inbox");
   const ws =
     workspaces.find((w) => w.id === currentWorkspaceId) || workspaces[0];
   const title =
@@ -128,6 +133,25 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
         onClick={() => setSearchOpen(true)}
       >
         <Search size={17} />
+      </Button>
+
+      {/* Inbox quick access */}
+      <Button
+        asChild
+        variant="ghost"
+        size="icon"
+        className={cn("relative", onInbox && "text-[var(--accent)]")}
+        title="Inbox"
+        aria-label="Open inbox"
+      >
+        <Link href="/inbox">
+          <Inbox size={18} />
+          {inboxUnread > 0 && (
+            <span className="absolute -top-1 right-0 min-w-4 h-4 px-1 rounded-full bg-[var(--accent)] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
+              {inboxUnread > 9 ? "9+" : inboxUnread}
+            </span>
+          )}
+        </Link>
       </Button>
 
       {/* WhatsApp status */}
