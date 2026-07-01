@@ -1,10 +1,11 @@
 "use client";
 import { extractErrorMessage } from "@/lib/utils";
+import { useUrlState } from "@/shared/hooks/useUrlState";
+import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
-import { PermissionGuard } from "@/shared/ui/PermissionGuard";
-import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
-import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Loader2, Plus, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -323,9 +323,15 @@ export function OrdersView() {
         isSubmitting={createOrder.isPending || updateOrder.isPending}
         onSubmit={(values) => {
           if (editing) {
+            const editedId = editing.id;
             updateOrder.mutate(
-              { id: editing.id, payload: values },
-              { onSuccess: () => setFormOpen(false) },
+              { id: editedId, payload: values },
+              {
+                onSuccess: () => {
+                  setFormOpen(false);
+                  setSelectedId(editedId);
+                },
+              },
             );
           } else {
             createOrder.mutate(values, { onSuccess: () => setFormOpen(false) });

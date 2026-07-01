@@ -55,9 +55,18 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
             </h3>
             {order && <OrderStatusBadge status={order.status} />}
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
-            <X size={18} />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {order && (
+              <PermissionGuard permission="orders:edit">
+                <Button variant="outline" size="sm" onClick={() => onEdit(order)}>
+                  <Pencil size={14} /> Edit
+                </Button>
+              </PermissionGuard>
+            )}
+            <Button variant="ghost" size="icon-sm" onClick={onClose}>
+              <X size={18} />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto scroll p-[18px] flex flex-col gap-4">
@@ -313,27 +322,16 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 </Button>
               </div>
             ) : (
-              <>
-                <PermissionGuard permission="orders:cancel">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    <Trash2 size={14} /> Delete
-                  </Button>
-                </PermissionGuard>
-                <PermissionGuard permission="orders:edit">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(order)}
-                  >
-                    <Pencil size={14} /> Edit
-                  </Button>
-                </PermissionGuard>
-              </>
+              <PermissionGuard permission="orders:cancel">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 size={14} /> Delete
+                </Button>
+              </PermissionGuard>
             )}
           </div>
         )}
