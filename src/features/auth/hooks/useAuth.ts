@@ -37,9 +37,10 @@ export function useLogin() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const setAuthTransition = useAppStore((s) => s.setAuthTransition);
+  const setCurrentWorkspace = useAppStore((s) => s.setCurrentWorkspace);
   return useMutation({
     mutationFn: (data: LoginData) => login(data),
-    onSuccess: (user) => {
+    onSuccess: async (user) => {
       // Credentials verified — show the splash only now, while we redirect.
       setAuthTransition(true);
       // Drop any cache left by a previously signed-in user in this browser so
@@ -58,7 +59,23 @@ export function useLogin() {
         router.push(`/onboarding/${step}`);
         return;
       }
-      router.push('/inbox');
+      // Resume the workspace the user last worked in (persisted across logout).
+      // Scope the server session here — under the splash, before entering the
+      // app — so the initial load prepares the right tenant with no post-render
+      // "switching" flash. Falls back to the login default if it's no longer
+      // accessible (different user/browser, or membership removed).
+      const lastWorkspaceId = useAppStore.getState().currentWorkspaceId;
+      if (lastWorkspaceId && lastWorkspaceId !== user.tenantId) {
+        try {
+          await switchWorkspace(lastWorkspaceId);
+          setCurrentWorkspace(lastWorkspaceId);
+        } catch {
+          setCurrentWorkspace(user.tenantId);
+        }
+      } else {
+        setCurrentWorkspace(user.tenantId);
+      }
+      router.push('/dashboard');
     },
     // Error surfaced inline via <AuthFormError /> in the view (mutation.error).
   });

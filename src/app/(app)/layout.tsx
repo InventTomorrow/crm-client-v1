@@ -1,5 +1,6 @@
 "use client";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
+import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
 import { useAppStore } from "@/lib/appStore";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { AppTopBar } from "@/shared/layout/AppTopBar";
@@ -40,6 +41,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     isFullScreen,
     currentWorkspaceId,
   } = useAppStore();
+
+  // Keep the displayed workspace in lock-step with the tenant the server serves.
+  useSyncActiveWorkspace();
 
   return (
     <div className="app-shell">
