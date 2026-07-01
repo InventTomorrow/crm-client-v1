@@ -6,7 +6,7 @@ import { getImageUrl } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { formatMoney } from "../lib/format";
 import type { Order } from "../types";
@@ -100,6 +100,7 @@ export function OrderForm({
     register,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<OrderFormValues>({
     // Cast: zod `coerce`/`default` make the resolver's input type diverge from
@@ -109,6 +110,12 @@ export function OrderForm({
     ) as unknown as Resolver<OrderFormValues>,
     defaultValues: defaults,
   });
+
+  // The form stays mounted, so RHF keeps stale values when switching between
+  // create/edit or between orders. Reset to the current defaults on each open.
+  useEffect(() => {
+    if (open) reset(defaults);
+  }, [open, defaults, reset]);
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
 
