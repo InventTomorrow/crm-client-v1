@@ -1,8 +1,8 @@
 "use client";
+import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
-import { Button } from "@/shared/ui/Button";
 import { Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
@@ -58,7 +58,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
           <div className="flex items-center gap-1.5">
             {order && (
               <PermissionGuard permission="orders:edit">
-                <Button variant="outline" size="sm" onClick={() => onEdit(order)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(order)}
+                >
                   <Pencil size={14} /> Edit
                 </Button>
               </PermissionGuard>
