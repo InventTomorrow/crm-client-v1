@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 'use client';
 import { useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
@@ -8,6 +9,46 @@ import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderDetailSheet } from './OrderDetailSheet';
 import { OrderForm } from './OrderForm';
 import { DataTable, type ColumnDef } from '@/shared/ui/DataTable';
+=======
+"use client";
+import { extractErrorMessage } from "@/lib/utils";
+import { useUrlState } from "@/shared/hooks/useUrlState";
+import { Button } from "@/shared/ui/Button";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
+import { Input } from "@/shared/ui/Input";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
+import { Loader2, Plus, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  useCreateOrder,
+  useDeleteOrder,
+  useOrders,
+  useOrdersSummary,
+  useUpdateOrder,
+} from "../hooks/useOrders";
+import { ORDER_STATUS_META, formatMoney } from "../lib/format";
+import { getOrder } from "../services/ordersService";
+import {
+  ORDER_STATUS_OPTIONS,
+  type Order,
+  type OrderFilters,
+  type OrderListItem,
+  type OrderStatus,
+} from "../types";
+import { OrderDetailSheet } from "./OrderDetailSheet";
+import { OrderForm } from "./OrderForm";
+import { OrderRowActions } from "./OrderRowActions";
+import { OrderStatusBadge } from "./OrderStatusBadge";
+>>>>>>> Stashed changes
 
 export function OrdersView() {
   const [search, setSearch] = useState('');
@@ -221,7 +262,20 @@ export function OrdersView() {
         isSubmitting={createOrder.isPending || updateOrder.isPending}
         onSubmit={(values) => {
           if (editing) {
+<<<<<<< Updated upstream
             updateOrder.mutate({ id: editing.id, payload: values }, { onSuccess: () => setFormOpen(false) });
+=======
+            const editedId = editing.id;
+            updateOrder.mutate(
+              { id: editedId, payload: values },
+              {
+                onSuccess: () => {
+                  setFormOpen(false);
+                  setSelectedId(editedId);
+                },
+              },
+            );
+>>>>>>> Stashed changes
           } else {
             createOrder.mutate(values, { onSuccess: () => setFormOpen(false) });
           }

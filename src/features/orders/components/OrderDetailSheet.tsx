@@ -53,9 +53,24 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
             </h3>
             {order && <OrderStatusBadge status={order.status} />}
           </div>
+<<<<<<< Updated upstream
           <button className="btn btn-ghost p-1.5" onClick={onClose}>
             <X size={18} />
           </button>
+=======
+          <div className="flex items-center gap-1.5">
+            {order && (
+              <PermissionGuard permission="orders:edit">
+                <Button variant="outline" size="sm" onClick={() => onEdit(order)}>
+                  <Pencil size={14} /> Edit
+                </Button>
+              </PermissionGuard>
+            )}
+            <Button variant="ghost" size="icon-sm" onClick={onClose}>
+              <X size={18} />
+            </Button>
+          </div>
+>>>>>>> Stashed changes
         </div>
 
         <div className="flex-1 overflow-y-auto scroll p-[18px] flex flex-col gap-4">
@@ -272,6 +287,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 </button>
               </div>
             ) : (
+<<<<<<< Updated upstream
               <>
                 <button
                   className="btn btn-ghost text-[12.5px] text-[#DC2626]"
@@ -286,6 +302,18 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   <Pencil size={14} /> Edit
                 </button>
               </>
+=======
+              <PermissionGuard permission="orders:cancel">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 size={14} /> Delete
+                </Button>
+              </PermissionGuard>
+>>>>>>> Stashed changes
             )}
           </div>
         )}
