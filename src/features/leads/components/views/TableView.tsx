@@ -8,25 +8,31 @@ import { Button } from "@/shared/ui/Button";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
 import LeadStatusSelect from "../LeadStatusSelect";
-import { Inbox, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Inbox, Pencil, Trash2 } from "lucide-react";
 
 export default function TableView({
   leads,
   filter,
+  archived = false,
   onSelect,
   onStatusChange,
   onOpenChat,
   onEdit,
+  onArchive,
+  onRestore,
   onDelete,
   onBulkDelete,
   onExport,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
+  archived?: boolean;
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onOpenChat: (l: Lead) => void;
   onEdit: (l: Lead) => void;
+  onArchive: (l: Lead) => void;
+  onRestore: (l: Lead) => void;
   onDelete: (l: Lead) => void;
   onBulkDelete: (rows: Lead[]) => void;
   onExport: (rows: Lead[]) => void;
@@ -123,10 +129,19 @@ export default function TableView({
               <Button variant="ghost" size="icon" title="Edit" onClick={() => onEdit(l)}>
                 <Pencil size={13} />
               </Button>
+              {archived ? (
+                <Button variant="ghost" size="icon" title="Restore" onClick={() => onRestore(l)}>
+                  <ArchiveRestore size={13} />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" title="Archive" onClick={() => onArchive(l)}>
+                  <Archive size={13} />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
-                title="Delete"
+                title="Delete permanently"
                 className="text-[#DC2626]"
                 onClick={() => onDelete(l)}
               >
@@ -137,7 +152,7 @@ export default function TableView({
         },
       },
     ],
-    [onSelect, onStatusChange, onOpenChat, onEdit, onDelete],
+    [archived, onSelect, onStatusChange, onOpenChat, onEdit, onArchive, onRestore, onDelete],
   );
 
   return (

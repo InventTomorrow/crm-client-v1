@@ -24,8 +24,10 @@ const mapBackendToFrontend = (data: any): Lead => ({
   health: 50,
 });
 
-export const fetchLeads = async (): Promise<Lead[]> => {
-  const response = await apiClient.get('/leads');
+export const fetchLeads = async (archived = false): Promise<Lead[]> => {
+  const response = await apiClient.get('/leads', {
+    params: archived ? { archived: true } : {},
+  });
   return response.data.data.data.map(mapBackendToFrontend);
 };
 
@@ -91,6 +93,19 @@ export const updateLeadStatus = async (
   return { id, status };
 };
 
+// Archive = soft delete (recoverable). Removes the lead from the active list.
+export const archiveLead = async (id: string): Promise<{ id: string }> => {
+  await apiClient.post(`/leads/${id}/archive`);
+  return { id };
+};
+
+// Restore = un-archive. Keeps the lead's actual status.
+export const restoreLead = async (id: string): Promise<{ id: string }> => {
+  await apiClient.post(`/leads/${id}/restore`);
+  return { id };
+};
+
+// Delete = hard delete (permanent). Blocked by the API when the lead has orders.
 export const deleteLead = async (id: string): Promise<{ id: string }> => {
   await apiClient.delete(`/leads/${id}`);
   return { id };

@@ -1,5 +1,5 @@
 "use client";
-import { Inbox, MapPin, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Inbox, MapPin, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { pkr } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -14,18 +14,24 @@ import LeadStatusSelect from "../LeadStatusSelect";
 export default function ListView({
   leads,
   filter,
+  archived = false,
   onSelect,
   onStatusChange,
   onOpenChat,
   onEdit,
+  onArchive,
+  onRestore,
   onDelete,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
+  archived?: boolean;
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onOpenChat: (l: Lead) => void;
   onEdit: (l: Lead) => void;
+  onArchive: (l: Lead) => void;
+  onRestore: (l: Lead) => void;
   onDelete: (l: Lead) => void;
 }) {
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
@@ -84,10 +90,29 @@ export default function ListView({
               >
                 <Pencil size={13} />
               </Button>
+              {archived ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Restore lead"
+                  onClick={() => onRestore(l)}
+                >
+                  <ArchiveRestore size={13} />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Archive lead"
+                  onClick={() => onArchive(l)}
+                >
+                  <Archive size={13} />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
-                title="Delete lead"
+                title="Delete permanently"
                 className="text-[#DC2626]"
                 onClick={() => onDelete(l)}
               >

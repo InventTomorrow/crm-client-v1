@@ -11,6 +11,8 @@ import {
   createLead,
   updateLead,
   updateLeadStatus,
+  archiveLead,
+  restoreLead,
   deleteLead,
   exportLeads,
   parseImportCsv,
@@ -18,8 +20,13 @@ import {
   type UpdateLeadInput,
 } from '../services/leadsService';
 
-export function useLeads() {
-  return useQuery({ queryKey: ['leads'], queryFn: fetchLeads });
+// Active and archived leads are cached separately so switching between them
+// refetches. `LIST_KEY` matches both for cross-list optimistic updates.
+const LIST_KEY = ['leads', 'list'] as const;
+const listKey = (archived: boolean) => [...LIST_KEY, archived] as const;
+
+export function useLeads(archived = false) {
+  return useQuery({ queryKey: listKey(archived), queryFn: () => fetchLeads(archived) });
 }
 
 export function useLeadsCount() {
@@ -59,42 +66,57 @@ export function useUpdateLeadStatus() {
     mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) =>
       updateLeadStatus(id, status),
     onMutate: async ({ id, status }) => {
-      await queryClient.cancelQueries({ queryKey: ['leads'] });
-      const previousLeads = queryClient.getQueryData<Lead[]>(['leads']) ?? [];
-      queryClient.setQueryData(
-        ['leads'],
-        previousLeads.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
+      await queryClient.cancelQueries({ queryKey: LIST_KEY });
+      const previous = queryClient.getQueriesData<Lead[]>({ queryKey: LIST_KEY });
+      queryClient.setQueriesData<Lead[]>({ queryKey: LIST_KEY }, (old: Lead[] | undefined) =>
+        old?.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
       );
-      return { previousLeads };
+      return { previous };
     },
-    onError: (error, _variables, rollbackContext) => {
+    onError: (error, _variables, ctx) => {
       toast.error(extractErrorMessage(error));
-      if (rollbackContext?.previousLeads) {
-        queryClient.setQueryData(['leads'], rollbackContext.previousLeads);
-      }
+      ctx?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
 }
 
-export function useDeleteLead() {
+// Shared behaviour for archive / restore / delete: drop the lead from whichever
+// list is currently rendered, then reconcile with the server on settle.
+function useRemoveFromListMutation(
+  mutationFn: (id: string) => Promise<{ id: string }>,
+  successMessage: string,
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteLead,
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['leads'] });
-      const previousLeads = queryClient.getQueryData<Lead[]>(['leads']) ?? [];
-      queryClient.setQueryData(['leads'], previousLeads.filter((lead) => lead.id !== id));
-      return { previousLeads };
+    mutationFn,
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: LIST_KEY });
+      const previous = queryClient.getQueriesData<Lead[]>({ queryKey: LIST_KEY });
+      queryClient.setQueriesData<Lead[]>({ queryKey: LIST_KEY }, (old: Lead[] | undefined) =>
+        old?.filter((lead) => lead.id !== id),
+      );
+      return { previous };
     },
-    onError: (error, _id, rollbackContext) => {
+    onSuccess: () => toast.success(successMessage),
+    onError: (error, _id, ctx) => {
       toast.error(extractErrorMessage(error));
-      if (rollbackContext?.previousLeads) {
-        queryClient.setQueryData(['leads'], rollbackContext.previousLeads);
-      }
+      ctx?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
+}
+
+export function useArchiveLead() {
+  return useRemoveFromListMutation(archiveLead, 'Lead archived');
+}
+
+export function useRestoreLead() {
+  return useRemoveFromListMutation(restoreLead, 'Lead restored');
+}
+
+export function useDeleteLead() {
+  return useRemoveFromListMutation(deleteLead, 'Lead deleted');
 }
 
 export function useExportLeads() {

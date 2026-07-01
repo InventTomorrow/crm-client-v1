@@ -7,6 +7,8 @@ import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { Button } from "@/shared/ui/Button";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import {
+  Archive,
+  ArchiveRestore,
   Inbox,
   Link,
   Loader2,
@@ -38,15 +40,21 @@ const ORDER_STATUS_COLOR: Record<string, string> = {
 
 export default function LeadDetailSheet({
   lead,
+  archived = false,
   onClose,
   onEdit,
+  onArchive,
+  onRestore,
   onDelete,
   onOpenChat,
   isDeleting,
 }: {
   lead: Lead | null;
+  archived?: boolean;
   onClose: () => void;
   onEdit: (lead: Lead) => void;
+  onArchive: (lead: Lead) => void;
+  onRestore: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
   onOpenChat: (lead: Lead) => void;
   isDeleting?: boolean;
@@ -210,13 +218,32 @@ export default function LeadDetailSheet({
               </Button>
             </PermissionGuard>
             <PermissionGuard permission="leads:delete">
+              {archived ? (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onRestore(lead)}
+                  title="Restore lead"
+                >
+                  <ArchiveRestore size={14} />
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onArchive(lead)}
+                  title="Archive lead"
+                >
+                  <Archive size={14} />
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="icon"
                 className="text-destructive border-destructive/30 hover:bg-destructive/5"
                 onClick={() => onDelete(lead)}
                 disabled={isDeleting}
-                title="Delete lead"
+                title="Delete permanently"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </Button>

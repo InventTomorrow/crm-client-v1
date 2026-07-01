@@ -5,13 +5,16 @@ import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   useAddLead,
+  useArchiveLead,
   useDeleteLead,
   useLeads,
+  useRestoreLead,
   useUpdateLead,
   useUpdateLeadStatus,
 } from "../hooks/useLeads";
@@ -28,10 +31,13 @@ import TableView from "./views/TableView";
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
   const router = useRouter();
-  const { data: leads = [], isLoading } = useLeads();
+  const [archived, setArchived] = useState(false);
+  const { data: leads = [], isLoading } = useLeads(archived);
   const addLead = useAddLead();
   const updateLead = useUpdateLead();
   const updateStatus = useUpdateLeadStatus();
+  const archiveLead = useArchiveLead();
+  const restoreLead = useRestoreLead();
   const deleteLead = useDeleteLead();
   const [exportOpen, setExportOpen] = useState(false);
   const { leadsView, setLeadsView } = useAppStore();
@@ -83,6 +89,14 @@ export function LeadsView() {
     } catch {
       /* toast handled by hook */
     }
+  };
+
+  const handleArchive = (lead: Lead) => {
+    archiveLead.mutate(lead.id, { onSuccess: () => setSelected(null) });
+  };
+
+  const handleRestore = (lead: Lead) => {
+    restoreLead.mutate(lead.id, { onSuccess: () => setSelected(null) });
   };
 
   const handleDelete = (lead: Lead) => setDeleteTarget(lead);
@@ -170,39 +184,58 @@ export function LeadsView() {
             }
           />
         </div>
-        <div className="seg">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={filter.channel}
+          onValueChange={(v) => {
+            if (v) setFilter((f) => ({ ...f, channel: v as LeadsFilter["channel"] }));
+          }}
+        >
           {CHANNEL_TABS.map((c) => (
-            <button
-              key={c.id}
-              className={filter.channel === c.id ? "on" : ""}
-              onClick={() =>
-                setFilter((f) => ({
-                  ...f,
-                  channel: c.id as LeadsFilter["channel"],
-                }))
-              }
-            >
+            <ToggleGroupItem key={c.id} value={c.id}>
               {c.label}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={archived ? "archived" : "active"}
+          onValueChange={(v) => {
+            if (v) setArchived(v === "archived");
+          }}
+        >
+          <ToggleGroupItem value="active">Active</ToggleGroupItem>
+          <ToggleGroupItem value="archived">Archived</ToggleGroupItem>
+        </ToggleGroup>
         <div className="flex-1" />
-        <div className="seg">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={leadsView}
+          onValueChange={(v) => {
+            if (v) setLeadsView(v as LeadsView);
+          }}
+        >
           {VIEW_BTNS.map(({ id, label, Icon }) => (
-            <button
+            <ToggleGroupItem
               key={id}
-              className={cn(
-                leadsView === id ? "on" : "",
-                // Kanban isn't usable on phones — hide the toggle there.
-                id === "kanban" && "hidden md:inline-flex",
-              )}
-              onClick={() => setLeadsView(id)}
+              value={id}
               title={label}
+              // Kanban isn't usable on phones — hide the toggle there.
+              className={cn(id === "kanban" && "hidden md:inline-flex")}
             >
               <Icon size={12} /> {label}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
       </div>
 
       {isLoading && (
@@ -227,10 +260,13 @@ export function LeadsView() {
             <TableView
               leads={leads}
               filter={filter}
+              archived={archived}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
               onOpenChat={handleOpenChat}
               onEdit={openEdit}
+              onArchive={handleArchive}
+              onRestore={handleRestore}
               onDelete={handleDelete}
               onBulkDelete={setBulkDeleteTargets}
               onExport={downloadLeadsCsv}
@@ -242,10 +278,13 @@ export function LeadsView() {
         <ListView
           leads={leads}
           filter={filter}
+          archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
           onOpenChat={handleOpenChat}
           onEdit={openEdit}
+          onArchive={handleArchive}
+          onRestore={handleRestore}
           onDelete={handleDelete}
         />
       )}
@@ -253,10 +292,13 @@ export function LeadsView() {
         <TableView
           leads={leads}
           filter={filter}
+          archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
           onOpenChat={handleOpenChat}
           onEdit={openEdit}
+          onArchive={handleArchive}
+          onRestore={handleRestore}
           onDelete={handleDelete}
           onBulkDelete={setBulkDeleteTargets}
           onExport={downloadLeadsCsv}
@@ -265,8 +307,11 @@ export function LeadsView() {
 
       <LeadDetailSheet
         lead={selected}
+        archived={archived}
         onClose={() => setSelected(null)}
         onEdit={openEdit}
+        onArchive={handleArchive}
+        onRestore={handleRestore}
         onDelete={handleDelete}
         onOpenChat={handleOpenChat}
         isDeleting={deleteLead.isPending}
@@ -293,13 +338,13 @@ export function LeadsView() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title="Delete lead?"
+        title="Delete lead permanently?"
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" will be permanently removed. This can't be undone.`
+            ? `"${deleteTarget.name}" and their chat history will be permanently removed. This can't be undone. Leads with orders can't be deleted — archive them instead.`
             : undefined
         }
-        confirmLabel="Delete lead"
+        confirmLabel="Delete permanently"
         loading={deleteLead.isPending}
       />
       <ConfirmDialog
