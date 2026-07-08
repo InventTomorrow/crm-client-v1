@@ -1,5 +1,5 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Lead } from '@/lib/mockData';
 import type { LeadsFilter } from '../types';
@@ -7,6 +7,7 @@ import { extractErrorMessage } from '@/lib/utils';
 import {
   fetchLeads,
   fetchLead,
+  fetchLeadsPage,
   fetchLeadsCount,
   searchLeads,
   createLead,
@@ -22,12 +23,61 @@ import {
 } from '../services/leadsService';
 
 // Active and archived leads are cached separately so switching between them
-// refetches. `LIST_KEY` matches both for cross-list optimistic updates.
+// refetches. `LIST_KEY` matches both the plain list (pickers) and the
+// paginated list below for cross-list optimistic updates.
 const LIST_KEY = ['leads', 'list'] as const;
 const listKey = (archived: boolean) => [...LIST_KEY, archived] as const;
 
+const LEADS_PAGE_SIZE = 50;
+
+/** Used only by pick-lists (broadcast recipients, order/new-chat lead select) — a
+ *  single bounded page is enough there; the search box covers anything further. */
 export function useLeads(archived = false) {
   return useQuery({ queryKey: listKey(archived), queryFn: () => fetchLeads(archived) });
+}
+
+/** Paginated leads for the main pipeline table/kanban/list views. */
+export function useInfiniteLeads(archived = false) {
+  return useInfiniteQuery({
+    queryKey: [...listKey(archived), 'infinite'] as const,
+    queryFn: ({ pageParam }) => fetchLeadsPage(archived, pageParam, LEADS_PAGE_SIZE),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length === LEADS_PAGE_SIZE ? lastPageParam + 1 : undefined,
+  });
+}
+
+// Both useLeads (plain array) and useInfiniteLeads (InfiniteData<Lead[]>) share
+// the LIST_KEY prefix, so optimistic mutations must update whichever shape a
+// given cached query currently holds.
+type LeadsCacheData = Lead[] | InfiniteData<Lead[]>;
+
+function updateLeadsCaches(
+  queryClient: QueryClient,
+  map: (lead: Lead) => Lead,
+): void {
+  queryClient.setQueriesData<LeadsCacheData>(
+    { queryKey: LIST_KEY },
+    (old: LeadsCacheData | undefined) => {
+      if (!old) return old;
+      if (Array.isArray(old)) return old.map(map);
+      return { ...old, pages: old.pages.map((page: Lead[]) => page.map(map)) };
+    },
+  );
+}
+
+function removeFromLeadsCaches(queryClient: QueryClient, id: string): void {
+  queryClient.setQueriesData<LeadsCacheData>(
+    { queryKey: LIST_KEY },
+    (old: LeadsCacheData | undefined) => {
+      if (!old) return old;
+      if (Array.isArray(old)) return old.filter((lead) => lead.id !== id);
+      return {
+        ...old,
+        pages: old.pages.map((page: Lead[]) => page.filter((lead) => lead.id !== id)),
+      };
+    },
+  );
 }
 
 /** Single lead by id — used where the list isn't loaded (e.g. the inbox profile). */
@@ -78,10 +128,8 @@ export function useUpdateLeadStatus() {
       updateLeadStatus(id, status),
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: LIST_KEY });
-      const previous = queryClient.getQueriesData<Lead[]>({ queryKey: LIST_KEY });
-      queryClient.setQueriesData<Lead[]>({ queryKey: LIST_KEY }, (old: Lead[] | undefined) =>
-        old?.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
-      );
+      const previous = queryClient.getQueriesData<LeadsCacheData>({ queryKey: LIST_KEY });
+      updateLeadsCaches(queryClient, (lead) => (lead.id === id ? { ...lead, status } : lead));
       return { previous };
     },
     onError: (error, _variables, ctx) => {
@@ -103,10 +151,8 @@ function useRemoveFromListMutation(
     mutationFn,
     onMutate: async (id: string) => {
       await queryClient.cancelQueries({ queryKey: LIST_KEY });
-      const previous = queryClient.getQueriesData<Lead[]>({ queryKey: LIST_KEY });
-      queryClient.setQueriesData<Lead[]>({ queryKey: LIST_KEY }, (old: Lead[] | undefined) =>
-        old?.filter((lead) => lead.id !== id),
-      );
+      const previous = queryClient.getQueriesData<LeadsCacheData>({ queryKey: LIST_KEY });
+      removeFromLeadsCaches(queryClient, id);
       return { previous };
     },
     onSuccess: () => toast.success(successMessage),

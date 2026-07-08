@@ -7,7 +7,7 @@ const CHANNEL_TO_FE: Record<string, Channel> = {
 };
 
 // Helper to map backend leads to frontend format
-const mapBackendToFrontend = (data: any): Lead => ({
+const toLead = (data: any): Lead => ({
   id: data.id,
   name: data.name || data.phone || 'Unknown',
   city: data.city || 'Unknown',
@@ -33,18 +33,29 @@ export const fetchLeads = async (archived = false): Promise<Lead[]> => {
   const response = await apiClient.get('/leads', {
     params: archived ? { archived: true } : {},
   });
-  return response.data.data.data.map(mapBackendToFrontend);
+  return response.data.data.data.map(toLead);
+};
+
+export const fetchLeadsPage = async (
+  archived: boolean,
+  page: number,
+  limit: number,
+): Promise<Lead[]> => {
+  const response = await apiClient.get('/leads', {
+    params: { ...(archived ? { archived: true } : {}), page, limit },
+  });
+  return response.data.data.data.map(toLead);
 };
 
 export const fetchLead = async (id: string): Promise<Lead> => {
   const response = await apiClient.get(`/leads/${id}`);
-  return mapBackendToFrontend(response.data.data);
+  return toLead(response.data.data);
 };
 
 export const searchLeads = async (q: string): Promise<Lead[]> => {
   if (!q.trim()) return [];
   const response = await apiClient.get('/leads', { params: { search: q.trim(), limit: 6 } });
-  return response.data.data.data.map(mapBackendToFrontend);
+  return response.data.data.data.map(toLead);
 };
 
 export const fetchLeadsCount = async (): Promise<number> => {
@@ -70,7 +81,7 @@ export const createLead = async (lead: Partial<Lead> & { phone?: string; email?:
     status: (lead.status ?? 'prospect').toUpperCase(),
   };
   const response = await apiClient.post('/leads', payload);
-  return mapBackendToFrontend(response.data.data);
+  return toLead(response.data.data);
 };
 
 export interface UpdateLeadInput {
@@ -92,7 +103,7 @@ export const updateLead = async (id: string, data: UpdateLeadInput): Promise<Lea
     ...(data.status ? { status: data.status.toUpperCase() } : {}),
   };
   const response = await apiClient.put(`/leads/${id}`, payload);
-  return mapBackendToFrontend(response.data.data);
+  return toLead(response.data.data);
 };
 
 export const updateLeadStatus = async (

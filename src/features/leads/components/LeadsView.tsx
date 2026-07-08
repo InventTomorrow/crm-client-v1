@@ -11,6 +11,7 @@ import {
   Flame,
   Grid2x2,
   Layers,
+  Loader2,
   Plus,
   Search,
   TrendingUp,
@@ -18,14 +19,14 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/shared/ui/StatCard";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   useAddLead,
   useArchiveLead,
   useDeleteLead,
+  useInfiniteLeads,
   useLead,
-  useLeads,
   useRestoreLead,
   useUpdateLead,
   useUpdateLeadStatus,
@@ -44,7 +45,14 @@ import TableView from "./views/TableView";
 export function LeadsView() {
   const router = useRouter();
   const [archived, setArchived] = useState(false);
-  const { data: leads = [], isLoading } = useLeads(archived);
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteLeads(archived);
+  const leads = useMemo(() => data?.pages.flat() ?? [], [data]);
   const addLead = useAddLead();
   const updateLead = useUpdateLead();
   const updateStatus = useUpdateLeadStatus();
@@ -346,6 +354,22 @@ export function LeadsView() {
           onBulkDelete={setBulkDeleteTargets}
           onExport={openExport}
         />
+      )}
+
+      {!isLoading && hasNextPage && (
+        <div className="flex justify-center py-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : null}
+            Load more leads
+          </Button>
+        </div>
       )}
 
       <LeadDetailSheet
