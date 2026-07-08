@@ -8,6 +8,7 @@ import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Bell, Inbox, Maximize2, Menu, Minimize2, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -81,7 +82,7 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   }, [notifOpen]);
 
   return (
-    <header className="h-14 shrink-0 px-[18px] flex items-center gap-3.5 border-b border-[var(--line)] bg-[var(--surface)] relative z-30">
+    <header className="h-14 shrink-0 px-2.5 sm:px-[18px] flex items-center gap-1 sm:gap-3.5 border-b border-[var(--line)] bg-[var(--surface)] relative z-30">
       <Button
         variant="outline"
         size="icon"
@@ -102,14 +103,16 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
         <Menu size={18} />
       </Button>
       <div className="min-w-0">
-        <h3 className="text-[15px] font-semibold">{title}</h3>
-        <div className="text-[11px] text-[var(--ink-mute)] flex items-center gap-1.5">
-          <span>{ws?.name ?? "AsaanRabta Boutique"}</span>
+        <h3 className="text-[14px] sm:text-[15px] font-semibold truncate">
+          {title}
+        </h3>
+        <div className="text-[11px] text-[var(--ink-mute)] flex hide-mobile items-center gap-1.5 truncate">
+          <span className="truncate">{ws?.name ?? "AsaanRabta Boutique"}</span>
           <span>·</span>
-          <span>{ws?.plan ?? "Tier 3"}</span>
+          <span className="whitespace-nowrap">{ws?.plan ?? "Tier 3"}</span>
         </div>
       </div>
-      <div className="flex-1" />
+      <div className="flex-1 min-w-2" />
 
       {/* Desktop search */}
       <Button
@@ -154,17 +157,19 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
         </Link>
       </Button>
 
-      {/* WhatsApp status */}
-      <WAStatusButton onClick={() => setWaOpen(true)} />
-      <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
+      {/* WhatsApp status — only for members allowed to manage the connection */}
+      <PermissionGuard permission="channels:connect">
+        <WAStatusButton onClick={() => setWaOpen(true)} />
+        <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
+      </PermissionGuard>
 
-      {/* Full screen toggle */}
+      {/* Full screen toggle — desktop only */}
       <Button
         variant="ghost"
         size="icon"
         onClick={toggleFullScreen}
         title={isFullScreen ? "Exit full screen" : "Full screen view"}
-        className="text-[var(--ink-mute)]"
+        className="text-[var(--ink-mute)] hide-mobile"
       >
         <span
           className="block transition-all duration-200"

@@ -25,6 +25,9 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Skeleton } from "@/shared/ui/Motion";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ExportDialog } from "@/shared/ui/ExportDialog";
+import { StatCard } from "@/shared/ui/StatCard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   Form,
@@ -44,10 +47,13 @@ import {
   Download,
   Grid2x2,
   ImageIcon,
+  AlertTriangle,
   Link,
   List,
   Lock,
   Package,
+  PackageCheck,
+  PackageX,
   Pencil,
   Plus,
   Search,
@@ -83,52 +89,16 @@ import {
   TIERS,
   productSchema,
 } from "../types";
-import { BulkAddDialog, type BulkItem } from "./BulkAddDialog";
+import type { BulkItem } from "../types";
+import { exportProductsCsv } from "../utils/exportProductsCsv";
+import {
+  objectToRow,
+  rowToBulkItem,
+} from "../utils/importProductsCsv";
+import { stockStatus } from "../utils/stock";
+import { BulkAddDialog } from "./BulkAddDialog";
 import { CreatableCategorySelect } from "./CreatableCategorySelect";
 import { SizeSelector } from "./SizeSelector";
-
-function stockStatus(stock: number): Product["status"] {
-  if (stock === 0) return "out";
-  if (stock <= 12) return "low";
-  return "in";
-}
-
-const STOCK_LABEL: Record<Product["status"], string> = {
-  in: "In stock",
-  low: "Low stock",
-  out: "Out of stock",
-};
-
-function exportProductsCsv(rows: Product[]): void {
-  const headers = ["Name", "SKU", "Category", "Price", "Stock", "Status"];
-  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = [headers.join(",")];
-  for (const p of rows) {
-    lines.push(
-      [
-        p.name,
-        p.sku,
-        p.cat,
-        p.price,
-        p.stock,
-        STOCK_LABEL[stockStatus(p.stock)],
-      ]
-        .map(esc)
-        .join(","),
-    );
-  }
-  const csv = lines.join("\n");
-  const url = URL.createObjectURL(
-    new Blob([csv], { type: "text/csv;charset=utf-8;" }),
-  );
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `inventory_export_${new Date().toISOString().split("T")[0]}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
 
 function ProductDialog({
   open,
@@ -161,6 +131,7 @@ function ProductDialog({
         name: "",
         sku: "",
         price: 0,
+        discountPercentage: undefined,
         stock: 0,
         cat: "Apparel",
         sizes: [],
@@ -180,6 +151,7 @@ function ProductDialog({
               name: initial.name ?? "",
               sku: initial.sku ?? "",
               price: initial.price ?? 0,
+              discountPercentage: initial.discountPercentage ?? undefined,
               stock: initial.stock ?? 0,
               cat: initial.cat ?? "Apparel",
               sizes: initial.sizes ?? [],
@@ -350,7 +322,7 @@ function ProductDialog({
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-3 gap-2.5">
               <FormField
                 control={form.control}
                 name="price"
@@ -362,6 +334,25 @@ function ProductDialog({
                         type="number"
                         placeholder="8999"
                         {...field}
+                        disabled={busy}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="discountPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Max Discount %</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        value={field.value ?? ""}
                         disabled={busy}
                       />
                     </FormControl>
@@ -551,13 +542,22 @@ function ProductGridCard({
   onEdit,
   onDelete,
   onDuplicate,
+  highlight = false,
 }: {
   p: Product;
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  highlight?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (highlight && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlight]);
   const statusCls =
     p.status === "in"
       ? "rgba(34,197,94,0.92)"
@@ -569,7 +569,12 @@ function ProductGridCard({
 
   return (
     <div
-      className="card overflow-hidden flex flex-col p-0"
+      ref={ref}
+      className={cn(
+        "card overflow-hidden flex flex-col p-0 transition-shadow",
+        highlight &&
+          "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg)]",
+      )}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -685,6 +690,8 @@ export function InventoryView() {
   const tier = Number(tierParam) || 1;
   const setTier = (t: number) => setTierParam(String(t));
   const [search, setSearch] = useUrlState("q");
+  // Set when arriving from an order item — rings + scrolls to that product, then clears.
+  const [highlightId, setHighlightId] = useUrlState("highlight");
   const [filterCat, setFilterCat] = useUrlState("cat");
   const [filterStockParam, setFilterStock] = useUrlState("stock");
   const filterStock = filterStockParam as "" | "in" | "low" | "out";
@@ -696,6 +703,9 @@ export function InventoryView() {
   );
   const [parsingImport, setParsingImport] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [bulkDeleteTargets, setBulkDeleteTargets] = useState<Product[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
 
   // Categories shown in the picker: the built-in set plus whatever existing
   // products already use (so previously-created ones keep showing up).
@@ -727,6 +737,29 @@ export function InventoryView() {
     return () => document.removeEventListener("mousedown", handler);
   }, [addMenuOpen]);
 
+  // Clear the highlight from the URL after a moment so it doesn't persist on reload.
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = setTimeout(() => setHighlightId(""), 3500);
+    return () => clearTimeout(t);
+  }, [highlightId, setHighlightId]);
+
+  const stockCounts = useMemo(() => {
+    let inStock = 0;
+    let low = 0;
+    let out = 0;
+    for (const p of products as Product[]) {
+      const s = stockStatus(p.stock);
+      if (s === "in") inStock++;
+      else if (s === "low") low++;
+      else out++;
+    }
+    return { inStock, low, out };
+  }, [products]);
+
+  const toggleStock = (id: "in" | "low" | "out") =>
+    setFilterStock(filterStock === id ? "" : id);
+
   const filtered = products.filter((p: Product) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()))
       return false;
@@ -741,11 +774,29 @@ export function InventoryView() {
     setEditing(null);
   };
 
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    const fromEditor = editing?.id === id;
+    deleteProduct.mutate(id, {
+      onSuccess: () => {
+        if (fromEditor) closeDialog();
+      },
+    });
+    setDeleteTarget(null);
+  };
+
+  const confirmBulkDelete = () => {
+    bulkDeleteTargets.forEach((p) => deleteProduct.mutate(p.id));
+    setBulkDeleteTargets([]);
+  };
+
   const handleSave = (data: ProductFormData & { imageUrls: string[] }) => {
     const payload = {
       name: data.name,
       sku: data.sku || undefined,
       price: data.price,
+      discountPercentage: data.discountPercentage,
       stock: data.stock,
       description: data.desc || undefined,
       category: data.cat || undefined,
@@ -779,29 +830,15 @@ export function InventoryView() {
         let rows: Record<string, string>[] = [];
         if (importType.current === "json") {
           const j = JSON.parse(text);
-          rows = Array.isArray(j) ? j : (j.products ?? []);
+          const arr: Record<string, unknown>[] = Array.isArray(j)
+            ? j
+            : (j.products ?? []);
+          rows = arr.map(objectToRow);
         } else {
           rows = parseCsv(text);
         }
 
-        const items: BulkItem[] = rows
-          .map((o) => ({
-            name: o["name"] ?? o["product"] ?? "",
-            sku: o["sku"] ?? "",
-            price: Number(o["price"]) || 0,
-            stock: Number(o["stock"]) || 0,
-            cat: o["category"] ?? o["cat"] ?? "Apparel",
-            sizes: [],
-            desc: o["description"] ?? o["desc"] ?? "",
-            imageUrl:
-              o["image_url"] ??
-              o["imageurl"] ??
-              o["imageurls"] ??
-              o["image"] ??
-              o["img"] ??
-              "",
-          }))
-          .filter((p) => p.name);
+        const items: BulkItem[] = rows.map(rowToBulkItem).filter((p) => p.name);
 
         if (items.length === 0) {
           toast.error("No valid rows found in the file");
@@ -846,6 +883,39 @@ export function InventoryView() {
         </div>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-4">
+        <StatCard
+          label="Total products"
+          value={products.length}
+          Icon={Package}
+        />
+        <StatCard
+          label="In stock"
+          value={stockCounts.inStock}
+          Icon={PackageCheck}
+          accent="#16A34A"
+          active={filterStock === "in"}
+          onClick={() => toggleStock("in")}
+        />
+        <StatCard
+          label="Low stock"
+          value={stockCounts.low}
+          Icon={AlertTriangle}
+          accent="#B45309"
+          active={filterStock === "low"}
+          onClick={() => toggleStock("low")}
+        />
+        <StatCard
+          label="Out of stock"
+          value={stockCounts.out}
+          Icon={PackageX}
+          accent="#DC2626"
+          active={filterStock === "out"}
+          onClick={() => toggleStock("out")}
+        />
+      </div>
+
       {/* Tier selection */}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[10px] mb-4">
         {TIERS.map((t) => (
@@ -879,7 +949,7 @@ export function InventoryView() {
               <div className="flex-1" />
               <Button
                 variant="outline"
-                onClick={() => exportProductsCsv(filtered)}
+                onClick={() => setExportOpen(true)}
                 disabled={filtered.length === 0}
                 title="Export current products to CSV"
               >
@@ -1035,11 +1105,12 @@ export function InventoryView() {
                 <ProductGridCard
                   key={p.id}
                   p={p}
+                  highlight={!!highlightId && p.id === highlightId}
                   onEdit={() => {
                     setEditing(p);
                     setSingleOpen(true);
                   }}
-                  onDelete={() => deleteProduct.mutate(p.id)}
+                  onDelete={() => setDeleteTarget(p)}
                   onDuplicate={() => duplicateProduct.mutate(p)}
                 />
               ))}
@@ -1189,7 +1260,7 @@ export function InventoryView() {
                             variant="ghost"
                             size="icon-sm"
                             className="text-[var(--destructive)]"
-                            onClick={() => deleteProduct.mutate(p.id)}
+                            onClick={() => setDeleteTarget(p)}
                           >
                             <Trash2 size={13} />
                           </Button>
@@ -1200,9 +1271,7 @@ export function InventoryView() {
                 ] as ColumnDef<Product, unknown>[]
               }
               selectable
-              onDeleteSelected={(rows) =>
-                rows.forEach((p) => deleteProduct.mutate(p.id))
-              }
+              onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
               emptyMessage="No products match your filters."
               isLoading={isLoading}
             />
@@ -1328,11 +1397,7 @@ export function InventoryView() {
         isDeleting={isDeleting}
         onClose={closeDialog}
         onSave={handleSave}
-        onDelete={
-          editing
-            ? () => deleteProduct.mutate(editing.id, { onSuccess: closeDialog })
-            : undefined
-        }
+        onDelete={editing ? () => setDeleteTarget(editing) : undefined}
       />
 
       <BulkAddDialog
@@ -1350,15 +1415,52 @@ export function InventoryView() {
             name: p.name,
             sku: p.sku || undefined,
             price: p.price,
+            discountPercentage: p.discountPercentage,
             stock: p.stock,
             description: p.desc || undefined,
+            category: p.cat || undefined,
+            gender: p.gender || undefined,
+            color: p.color || undefined,
             sizes: p.sizes ?? [],
-            imageUrls: p.imageUrl ? [p.imageUrl] : [],
+            imageUrls: p.imageUrls ?? (p.imageUrl ? [p.imageUrl] : []),
           }));
           bulkAddProducts.mutate(payloads, {
             onSuccess: () => setBulkOpen(false),
           });
         }}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete product?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.name}" will be permanently removed from your catalog. This can't be undone.`
+            : undefined
+        }
+        confirmLabel="Delete product"
+        loading={deleteProduct.isPending}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteTargets.length > 0}
+        onClose={() => setBulkDeleteTargets([])}
+        onConfirm={confirmBulkDelete}
+        title={`Delete ${bulkDeleteTargets.length} product${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
+        description="The selected products will be permanently removed. This can't be undone."
+        confirmLabel="Delete products"
+        loading={deleteProduct.isPending}
+      />
+
+      <ExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        onConfirm={(name) => exportProductsCsv(filtered, name)}
+        defaultName={`inventory_export_${new Date().toISOString().split("T")[0]}`}
+        count={filtered.length}
+        title="Export inventory"
       />
     </div>
   );

@@ -1,10 +1,24 @@
 "use client";
 import { useState } from "react";
+import NextLink from "next/link";
+import { toast } from "sonner";
 import { pkr } from "@/lib/utils";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
+import {
+  useGenerateCheckout,
+  useSendReceipt,
+} from "@/features/checkout/hooks";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { Button } from "@/shared/ui/Button";
+import { Checkbox } from "@/shared/ui/Checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/Dialog";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import {
   Archive,
@@ -17,6 +31,8 @@ import {
   Package,
   Pencil,
   Phone,
+  Receipt,
+  Send,
   Trash2,
   X,
 } from "lucide-react";
@@ -63,6 +79,57 @@ export default function LeadDetailSheet({
   // Spinner stays until navigation unmounts the sheet — the chat opens in the inbox.
   const [opening, setOpening] = useState(false);
   const { data: orders, isLoading: ordersLoading } = useLeadOrders(lead?.id);
+  const generateCheckout = useGenerateCheckout();
+  const sendReceipt = useSendReceipt();
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [channels, setChannels] = useState({ whatsapp: true, email: true });
+  // Actions target the lead's most recent order (list is newest-first).
+  const latestOrder = orders?.[0] ?? null;
+
+  const handleGenerateCheckout = () => {
+    if (!latestOrder) return;
+    generateCheckout.mutate(latestOrder.id, {
+      onSuccess: async ({ checkoutUrl }) => {
+        try {
+          await navigator.clipboard?.writeText(checkoutUrl);
+          toast.success("Checkout link copied to clipboard");
+        } catch {
+          toast.success("Checkout link ready", { description: checkoutUrl });
+        }
+      },
+    });
+  };
+
+  const handleSendReceipt = () => {
+    if (!latestOrder) return;
+    if (!channels.whatsapp && !channels.email) {
+      toast.error("Pick at least one channel");
+      return;
+    }
+    sendReceipt.mutate(
+      { orderId: latestOrder.id, channels },
+      {
+        onSuccess: (res) => {
+          const parts: string[] = [];
+          if (channels.whatsapp)
+            parts.push(
+              res.whatsapp === "sent"
+                ? "WhatsApp ✓"
+                : `WhatsApp: ${res.whatsapp.replace(/_/g, " ")}`,
+            );
+          if (channels.email)
+            parts.push(
+              res.email === "sent"
+                ? "Email ✓"
+                : `Email: ${res.email.replace(/_/g, " ")}`,
+            );
+          toast.success(`Receipt sent — ${parts.join(", ")}`);
+          setReceiptOpen(false);
+        },
+      },
+    );
+  };
+
   if (!lead) return null;
   const statusMeta = STATUS_META[lead.status] ?? STATUS_META.prospect;
 
@@ -166,7 +233,11 @@ export default function LeadDetailSheet({
                 {orders.map((order) => {
                   const color = ORDER_STATUS_COLOR[order.status] ?? '#94A3B8';
                   return (
-                    <div key={order.id} className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1.5">
+                    <NextLink
+                      key={order.id}
+                      href={`/orders?order=${order.id}`}
+                      className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1.5 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[12.5px] font-semibold text-[var(--ink)]">
                           Order #{order.orderNumber}
@@ -185,7 +256,7 @@ export default function LeadDetailSheet({
                       <div className="text-[11px] text-[var(--ink-mute)]">
                         {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
-                    </div>
+                    </NextLink>
                   );
                 })}
               </div>
@@ -249,11 +320,92 @@ export default function LeadDetailSheet({
               </Button>
             </PermissionGuard>
           </div>
-          <Button className="w-full justify-center">
-            <Link size={14} /> Generate Checkout
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1 justify-center"
+              disabled={!latestOrder || generateCheckout.isPending}
+              title={
+                latestOrder ? undefined : "No order to check out yet"
+              }
+              onClick={handleGenerateCheckout}
+            >
+              {generateCheckout.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Link size={14} />
+              )}{" "}
+              Generate Checkout
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 justify-center"
+              disabled={!latestOrder}
+              title={latestOrder ? undefined : "No order to receipt yet"}
+              onClick={() => setReceiptOpen(true)}
+            >
+              <Receipt size={14} /> Receipt
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Receipt send dialog */}
+      <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-[16px] font-semibold">
+              Send receipt
+            </DialogTitle>
+            <DialogDescription className="text-[12.5px] text-[var(--ink-mute)]">
+              {latestOrder
+                ? `Order #${latestOrder.orderNumber} · ${latestOrder.currency} ${latestOrder.total}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-2.5 py-1">
+            <label className="flex items-center gap-2.5 cursor-pointer text-[13px]">
+              <Checkbox
+                checked={channels.whatsapp}
+                onCheckedChange={(v) =>
+                  setChannels((c) => ({ ...c, whatsapp: v === true }))
+                }
+              />
+              WhatsApp
+            </label>
+            <label className="flex items-center gap-2.5 cursor-pointer text-[13px]">
+              <Checkbox
+                checked={channels.email}
+                onCheckedChange={(v) =>
+                  setChannels((c) => ({ ...c, email: v === true }))
+                }
+              />
+              Email
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="outline"
+              onClick={() => setReceiptOpen(false)}
+              disabled={sendReceipt.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendReceipt}
+              disabled={sendReceipt.isPending || (!channels.whatsapp && !channels.email)}
+            >
+              {sendReceipt.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Send size={14} />
+              )}{" "}
+              Send receipt
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

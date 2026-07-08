@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
@@ -168,26 +169,35 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   Items
                 </div>
                 <div className="rounded-xl border border-[var(--line)] overflow-hidden">
-                  {order.items.map((orderItem) => (
-                    <div
-                      key={orderItem.id}
-                      className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--line-soft)] last:border-0"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-[13px] text-[var(--ink)] truncate">
-                          {orderItem?.name}
+                  {order.items.map((orderItem) => {
+                    // Click-through to the catalog: filter by name and ring the
+                    // exact product when we know its id.
+                    const params = new URLSearchParams({ q: orderItem.name });
+                    if (orderItem.productId)
+                      params.set("highlight", orderItem.productId);
+                    return (
+                      <Link
+                        key={orderItem.id}
+                        href={`/inventory?${params.toString()}`}
+                        className="group flex items-center justify-between px-3 py-2.5 border-b border-[var(--line-soft)] last:border-0 no-underline transition-colors hover:bg-[var(--surface-2)]"
+                        title="View in inventory"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-[13px] text-[var(--ink)] truncate group-hover:text-[var(--accent)]">
+                            {orderItem?.name}
+                          </div>
+                          <div className="text-[11.5px] text-[var(--ink-mute)]">
+                            {orderItem?.quantity} ×{" "}
+                            {formatMoney(orderItem?.unitPrice, order?.currency)}
+                            {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
+                          </div>
                         </div>
-                        <div className="text-[11.5px] text-[var(--ink-mute)]">
-                          {orderItem?.quantity} ×{" "}
-                          {formatMoney(orderItem?.unitPrice, order?.currency)}
-                          {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
+                        <div className="text-[13px] font-medium text-[var(--ink)]">
+                          {formatMoney(orderItem?.subtotal, order?.currency)}
                         </div>
-                      </div>
-                      <div className="text-[13px] font-medium text-[var(--ink)]">
-                        {formatMoney(orderItem?.subtotal, order?.currency)}
-                      </div>
-                    </div>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
 

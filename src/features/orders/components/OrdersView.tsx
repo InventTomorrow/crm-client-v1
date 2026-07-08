@@ -4,6 +4,7 @@ import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
+import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import {
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
+import { StatCard } from "@/shared/ui/StatCard";
 import { Loader2, Plus, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +34,7 @@ import {
   type OrderListItem,
   type OrderStatus,
 } from "../types";
+import { downloadOrdersCsv } from "../utils/exportOrdersCsv";
 import { OrderDetailSheet } from "./OrderDetailSheet";
 import { OrderForm } from "./OrderForm";
 import { OrderRowActions } from "./OrderRowActions";
@@ -52,6 +55,11 @@ export function OrdersView() {
 
   const [orderPendingDeletion, setOrderPendingDeletion] =
     useState<OrderListItem | null>(null);
+  const [bulkDeleteTargets, setBulkDeleteTargets] = useState<OrderListItem[]>(
+    [],
+  );
+  const [exportRows, setExportRows] = useState<OrderListItem[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
@@ -182,27 +190,9 @@ export function OrdersView() {
     [loadAndEditOrder],
   );
 
-  const handleExport = (rows: OrderListItem[]) => {
-    const csv = [
-      ["Order", "Customer", "Items", "Total", "Status", "Date"].join(","),
-      ...rows.map((o) =>
-        [
-          `#${o.orderNumber}`,
-          `"${o.customerName || o.lead?.name || "Unknown"}"`,
-          o.items.length,
-          o.total,
-          o.status,
-          new Date(o.createdAt).toLocaleDateString(),
-        ].join(","),
-      ),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `orders-${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const openExport = (rows: OrderListItem[]) => {
+    setExportRows(rows);
+    setExportOpen(true);
   };
 
   return (
@@ -229,18 +219,13 @@ export function OrdersView() {
       {summary && summary.byStatus.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           {summary.byStatus.slice(0, 4).map((s) => (
-            <div
+            <StatCard
               key={s.status}
-              className={`card p-3.5 cursor-pointer transition-colors ${status === s.status ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "hover:bg-[var(--surface-2)]"}`}
+              label={ORDER_STATUS_META[s.status].label}
+              value={s.count}
+              active={status === s.status}
               onClick={() => setStatus(status === s.status ? "" : s.status)}
-            >
-              <div className="text-[12px] text-[var(--ink-mute)]">
-                {ORDER_STATUS_META[s.status].label}
-              </div>
-              <div className="text-[20px] font-semibold text-[var(--ink)] mt-0.5">
-                {s.count}
-              </div>
-            </div>
+            />
           ))}
         </div>
       )}
@@ -252,7 +237,8 @@ export function OrdersView() {
         isLoading={isLoading}
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
-        onExport={handleExport}
+        onExport={openExport}
+        onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
         defaultPageSize={20}
         toolbar={
@@ -352,6 +338,28 @@ export function OrdersView() {
         description="This permanently removes the order. This action cannot be undone."
         confirmLabel="Delete"
         loading={deleteOrder.isPending}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteTargets.length > 0}
+        onClose={() => setBulkDeleteTargets([])}
+        onConfirm={() => {
+          bulkDeleteTargets.forEach((o) => deleteOrder.mutate(o.id));
+          setBulkDeleteTargets([]);
+        }}
+        title={`Delete ${bulkDeleteTargets.length} order${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
+        description="The selected orders will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete orders"
+        loading={deleteOrder.isPending}
+      />
+
+      <ExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        onConfirm={(name) => downloadOrdersCsv(exportRows, name)}
+        defaultName={`orders_export_${new Date().toISOString().split("T")[0]}`}
+        count={exportRows.length}
+        title="Export orders"
       />
     </div>
   );

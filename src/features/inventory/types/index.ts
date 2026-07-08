@@ -31,6 +31,7 @@ export const productSchema = z.object({
   name:   z.string().min(1, 'Product name is required'),
   sku:    z.string().optional(),
   price:  numericField.pipe(z.number().positive('Price must be positive')),
+  discountPercentage: numericField.pipe(z.number().min(0, 'Discount must be ≥ 0').max(100, 'Discount must be ≤ 100')).optional(),
   stock:  numericField.pipe(z.number().min(0, 'Stock must be ≥ 0')),
   cat:    z.string().default('Apparel'),
   sizes:  z.array(z.string()).default([]),
@@ -40,6 +41,14 @@ export const productSchema = z.object({
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
+
+/** A product row inside the bulk-add dialog (form data + image references). */
+export interface BulkItem extends ProductFormData {
+  /** Primary image shown in the card / editor. */
+  imageUrl?: string;
+  /** Full set of images (kept from imports that carry several URLs). */
+  imageUrls?: string[];
+}
 
 export const TIERS = [
   { id: 1, name: 'Manual Catalog',  desc: 'Add products one-by-one. Best for small sellers starting out.', cta: 'Add Product', count: '6 active' },

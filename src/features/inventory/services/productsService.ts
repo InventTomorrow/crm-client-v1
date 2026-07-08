@@ -9,6 +9,7 @@ interface ApiProduct {
   name: string;
   sku: string | null;
   price: number;
+  discountPercentage: number | null;
   stock: number;
   description: string | null;
   category: string | null;
@@ -28,6 +29,7 @@ export interface CreateProductPayload {
   name: string;
   sku?: string;
   price: number;
+  discountPercentage?: number;
   stock: number;
   description?: string;
   category?: string;
@@ -42,6 +44,7 @@ export interface UpdateProductPayload {
   name?: string;
   sku?: string;
   price?: number;
+  discountPercentage?: number;
   stock?: number;
   description?: string;
   category?: string;
@@ -67,6 +70,7 @@ function mapProduct(p: ApiProduct): Product {
     name: p.name,
     sku: p.sku ?? '',
     price: p.price,
+    discountPercentage: p.discountPercentage ?? undefined,
     stock,
     status,
     cat: p.category ?? 'Uncategorized',
@@ -109,6 +113,7 @@ export const duplicateProduct = async (product: Product): Promise<Product> => {
     name: `${product.name} (copy)`,
     sku: product.sku ? `${product.sku}-copy` : undefined,
     price: product.price,
+    discountPercentage: product.discountPercentage,
     stock: product.stock,
     description: product.desc,
     category: product.cat || undefined,

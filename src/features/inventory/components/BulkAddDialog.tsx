@@ -1,5 +1,4 @@
 "use client";
-import { parseCsv } from "@/lib/csv";
 import { extractErrorMessage, getImageUrl, pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
@@ -35,60 +34,30 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { presignedUpload } from "../services/productsService";
-import type { ProductFormData } from "../types";
+import type { BulkItem, ProductFormData } from "../types";
 import { CATEGORIES, productSchema } from "../types";
+import {
+  parseProductsCsv,
+  parseProductsJson,
+} from "../utils/importProductsCsv";
 import { SizeSelector } from "./SizeSelector";
 
-export interface BulkItem extends ProductFormData {
-  imageUrl?: string;
-}
+export type { BulkItem };
 
 const EMPTY_ITEM = (): BulkItem => ({
   name: "",
   sku: "",
   price: 0,
+  discountPercentage: undefined,
   stock: 0,
   cat: "Apparel",
   sizes: [],
+  gender: "",
+  color: "",
   desc: "",
   imageUrl: "",
+  imageUrls: [],
 });
-
-function parseImageCol(o: Record<string, string>): string {
-  return o.image_url ?? o.imageurl ?? o.imageurls ?? o.image ?? o.img ?? "";
-}
-
-function parseCSV(text: string): BulkItem[] {
-  return parseCsv(text)
-    .map((o) => ({
-      name: o.name ?? o.product ?? "",
-      sku: o.sku ?? "",
-      price: Number(o.price) || 0,
-      stock: Number(o.stock) || 0,
-      cat: o.category ?? o.cat ?? "Apparel",
-      sizes: [],
-      desc: o.description ?? o.desc ?? "",
-      imageUrl: parseImageCol(o),
-    }))
-    .filter((p) => p.name);
-}
-
-function parseJSON(text: string): BulkItem[] {
-  const j = JSON.parse(text);
-  const arr: any[] = Array.isArray(j) ? j : (j.products ?? []);
-  return arr
-    .map((p) => ({
-      name: p.name ?? "",
-      sku: p.sku ?? "",
-      price: Number(p.price) || 0,
-      stock: Number(p.stock) || 0,
-      cat: p.category ?? p.cat ?? "Apparel",
-      sizes: Array.isArray(p.sizes) ? p.sizes.map(String) : [],
-      desc: p.description ?? p.desc ?? "",
-      imageUrl: p.imageUrl ?? p.image_url ?? p.image ?? "",
-    }))
-    .filter((p) => p.name);
-}
 
 // ── Inline Edit Panel ─────────────────────────────────────
 function EditPanel({
@@ -109,9 +78,12 @@ function EditPanel({
       name: item.name,
       sku: item.sku ?? "",
       price: item.price,
+      discountPercentage: item.discountPercentage ?? undefined,
       stock: item.stock,
       cat: item.cat,
       sizes: item.sizes ?? [],
+      gender: item.gender ?? "",
+      color: item.color ?? "",
       desc: item.desc ?? "",
     },
   });
@@ -121,9 +93,12 @@ function EditPanel({
       name: item.name,
       sku: item.sku ?? "",
       price: item.price,
+      discountPercentage: item.discountPercentage ?? undefined,
       stock: item.stock,
       cat: item.cat,
       sizes: item.sizes ?? [],
+      gender: item.gender ?? "",
+      color: item.color ?? "",
       desc: item.desc ?? "",
     });
     setImageUrl(item.imageUrl ?? "");
@@ -142,7 +117,7 @@ function EditPanel({
   const selectedCategory = useWatch({ control: form.control, name: "cat" });
 
   const onSubmit = (data: ProductFormData) => {
-    onSave({ ...data, imageUrl });
+    onSave({ ...data, imageUrl, imageUrls: imageUrl ? [imageUrl] : [] });
   };
 
   return (
@@ -218,7 +193,7 @@ function EditPanel({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <FormField
             control={form.control}
             name="price"
@@ -227,6 +202,24 @@ function EditPanel({
                 <FormLabel className="text-[11.5px]">Price (PKR) *</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="discountPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[11.5px]">Max Disc %</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -410,8 +403,8 @@ export function BulkAddDialog({
       const text = e.target?.result as string;
       try {
         const parsed = file.name.endsWith(".json")
-          ? parseJSON(text)
-          : parseCSV(text);
+          ? parseProductsJson(text)
+          : parseProductsCsv(text);
         addItems(parsed);
         toast.success(
           `${parsed.length} product${parsed.length !== 1 ? "s" : ""} imported`,
@@ -508,7 +501,8 @@ export function BulkAddDialog({
                 {" "}
                 · columns:{" "}
                 <code>
-                  name, sku, price, stock, category, description, image_url
+                  name, sku, price, discountPercentage, stock, category, gender,
+                  color, sizes, description, image_urls
                 </code>
               </span>
             </div>

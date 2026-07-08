@@ -24,6 +24,7 @@ import {
   Check,
   CheckCheck,
   ChevronLeft,
+  ChevronRight,
   Edit2,
   FileAudio,
   FileText,
@@ -54,6 +55,8 @@ import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
 import { STATUS_META } from "../../leads/types";
+import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
+import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
 import { OrderForm } from "../../orders/components/OrderForm";
 import { useCreateOrder, useLeadOrders } from "../../orders/hooks/useOrders";
 import {
@@ -206,6 +209,10 @@ export function InboxView() {
   const { data: leadOrders, isLoading: leadOrdersLoading } = useLeadOrders(
     showProfile ? selectedLeadId : null,
   );
+  // Conversation payloads don't carry the lead's status — fetch the real lead so
+  // the profile panel shows (and can edit) the true status instead of defaulting.
+  const { data: leadDetail } = useLead(showProfile ? selectedLeadId : null);
+  const updateLeadStatus = useUpdateLeadStatus();
 
   const { data: detail } = useConversationDetail(selectedId);
   const {
@@ -1472,36 +1479,70 @@ export function InboxView() {
             <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <EscalationBadge status={activeConv.escalationStatus} />
               {(() => {
-                const meta =
-                  STATUS_META[
-                    (activeConv as any).lead?.status?.toLowerCase?.() ??
-                      "prospect"
-                  ] ?? STATUS_META.prospect;
-                return (
-                  <span
-                    className="badge flex items-center gap-1 text-[10.5px] font-medium px-[7px] py-[2px]"
-                    style={{
-                      color: meta.color,
-                      background: meta.tint,
-                      border: `1px solid ${meta.tint}`,
-                    }}
-                  >
+                const status = leadDetail?.status ?? "prospect";
+                const meta = STATUS_META[status] ?? STATUS_META.prospect;
+                if (!leadDetail) {
+                  return (
                     <span
-                      className="dot w-[6px] h-[6px]"
-                      style={{ background: meta.color }}
+                      className="badge flex items-center gap-1 text-[10.5px] font-medium px-[7px] py-[2px]"
+                      style={{
+                        color: meta.color,
+                        background: meta.tint,
+                        border: `1px solid ${meta.tint}`,
+                      }}
+                    >
+                      <span
+                        className="dot w-[6px] h-[6px]"
+                        style={{ background: meta.color }}
+                      />
+                      {meta.label}
+                    </span>
+                  );
+                }
+                return (
+                  <PermissionGuard
+                    permission="leads:edit"
+                    fallback={
+                      <span
+                        className="badge flex items-center gap-1 text-[10.5px] font-medium px-[7px] py-[2px]"
+                        style={{
+                          color: meta.color,
+                          background: meta.tint,
+                          border: `1px solid ${meta.tint}`,
+                        }}
+                      >
+                        <span
+                          className="dot w-[6px] h-[6px]"
+                          style={{ background: meta.color }}
+                        />
+                        {meta.label}
+                      </span>
+                    }
+                  >
+                    <LeadStatusSelect
+                      value={status}
+                      onChange={(s) =>
+                        selectedLeadId &&
+                        updateLeadStatus.mutate({ id: selectedLeadId, status: s })
+                      }
                     />
-                    {meta.label}
-                  </span>
+                  </PermissionGuard>
                 );
               })()}
             </div>
           </div>
 
-          {/* Lead info */}
-          <div className="card p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px]">
-            <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)] mb-0.5">
-              Lead Information
-            </p>
+          {/* Lead info — click to open the lead's page + detail sheet */}
+          <Link
+            href={selectedLeadId ? `/leads?lead=${selectedLeadId}` : "/leads"}
+            className="card p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px] no-underline transition-colors hover:border-[var(--accent)]"
+          >
+            <div className="flex items-center justify-between mb-0.5">
+              <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
+                Lead Information
+              </p>
+              <ChevronRight size={13} className="text-[var(--ink-mute)]" />
+            </div>
             <div className="flex items-center gap-2">
               <Phone
                 size={11}
@@ -1541,7 +1582,7 @@ export function InboxView() {
                 {detail?.messages.filter((m: any) => !m.isDraft).length ?? 0}
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Order history */}
           <div className="flex flex-col gap-2">

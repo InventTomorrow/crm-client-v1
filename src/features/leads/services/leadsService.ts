@@ -19,7 +19,12 @@ const mapBackendToFrontend = (data: any): Lead => ({
   lastMsg: data.conversations?.[0]?.messages?.[0]?.content || '',
   time: data.lastContactedAt ? new Date(data.lastContactedAt).toLocaleDateString() : 'New',
   unread: 0,
-  value: 0,
+  // Pipeline value = sum of the lead's realised (non-cancelled) order totals.
+  value: Array.isArray(data.orders)
+    ? data.orders
+        .filter((o: any) => !['CANCELLED', 'REFUNDED', 'DRAFT'].includes(o.status))
+        .reduce((sum: number, o: any) => sum + Number(o.total ?? 0), 0)
+    : 0,
   intent: 'browse',
   health: 50,
 });
@@ -29,6 +34,11 @@ export const fetchLeads = async (archived = false): Promise<Lead[]> => {
     params: archived ? { archived: true } : {},
   });
   return response.data.data.data.map(mapBackendToFrontend);
+};
+
+export const fetchLead = async (id: string): Promise<Lead> => {
+  const response = await apiClient.get(`/leads/${id}`);
+  return mapBackendToFrontend(response.data.data);
 };
 
 export const searchLeads = async (q: string): Promise<Lead[]> => {

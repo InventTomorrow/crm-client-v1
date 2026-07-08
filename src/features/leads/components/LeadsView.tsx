@@ -6,13 +6,25 @@ import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
-import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
+import {
+  Download,
+  Flame,
+  Grid2x2,
+  Layers,
+  Plus,
+  Search,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { StatCard } from "@/shared/ui/StatCard";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   useAddLead,
   useArchiveLead,
   useDeleteLead,
+  useLead,
   useLeads,
   useRestoreLead,
   useUpdateLead,
@@ -20,7 +32,7 @@ import {
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
 import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
-import { ExportLeadsDialog } from "./ExportLeadsDialog";
+import { ExportDialog } from "@/shared/ui/ExportDialog";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
@@ -40,6 +52,11 @@ export function LeadsView() {
   const restoreLead = useRestoreLead();
   const deleteLead = useDeleteLead();
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportRows, setExportRows] = useState<Lead[]>([]);
+  const openExport = (rows: Lead[]) => {
+    setExportRows(rows);
+    setExportOpen(true);
+  };
   const { leadsView, setLeadsView } = useAppStore();
 
   const [filter, setFilter] = useState<LeadsFilter>({
@@ -47,6 +64,19 @@ export function LeadsView() {
     search: "",
   });
   const [selected, setSelected] = useState<Lead | null>(null);
+  // Deep-link support: `/leads?lead=<id>` opens the detail sheet (e.g. from the inbox).
+  const [leadParam, setLeadParam] = useUrlState("lead");
+  const { data: paramLead } = useLead(leadParam || null);
+  useEffect(() => {
+    if (!leadParam) return;
+    const resolved = leads.find((l) => l.id === leadParam) ?? paramLead ?? null;
+    if (resolved && selected?.id !== resolved.id) setSelected(resolved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadParam, leads, paramLead]);
+  const closeSheet = () => {
+    setSelected(null);
+    setLeadParam("");
+  };
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Lead | null>(null);
@@ -142,15 +172,12 @@ export function LeadsView() {
         <div>
           <h2 className="text-[20px] font-semibold">Leads pipeline</h2>
           <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
-            {leads.length} leads · {hot} hot · {pkr(totalValue)} projected
+            Track and convert your pipeline
           </div>
         </div>
         <div className="flex gap-2 items-center">
           <PermissionGuard permission="leads:export">
-            <Button
-              variant="outline"
-              onClick={() => setExportOpen(true)}
-            >
+            <Button variant="outline" onClick={() => openExport(leads)}>
               <Download size={13} /> Export
             </Button>
           </PermissionGuard>
@@ -166,6 +193,22 @@ export function LeadsView() {
             </Button>
           </PermissionGuard>
         </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatCard label="Total leads" value={leads.length} Icon={Users} />
+        <StatCard
+          label="Hot leads"
+          value={hot}
+          Icon={Flame}
+          accent="#EF4444"
+        />
+        <StatCard
+          label="Projected value"
+          value={pkr(totalValue)}
+          Icon={TrendingUp}
+        />
       </div>
 
       {/* Toolbar */}
@@ -269,7 +312,7 @@ export function LeadsView() {
               onRestore={handleRestore}
               onDelete={handleDelete}
               onBulkDelete={setBulkDeleteTargets}
-              onExport={downloadLeadsCsv}
+              onExport={openExport}
             />
           </div>
         </>
@@ -301,14 +344,14 @@ export function LeadsView() {
           onRestore={handleRestore}
           onDelete={handleDelete}
           onBulkDelete={setBulkDeleteTargets}
-          onExport={downloadLeadsCsv}
+          onExport={openExport}
         />
       )}
 
       <LeadDetailSheet
         lead={selected}
         archived={archived}
-        onClose={() => setSelected(null)}
+        onClose={closeSheet}
         onEdit={openEdit}
         onArchive={handleArchive}
         onRestore={handleRestore}
@@ -329,10 +372,13 @@ export function LeadsView() {
         open={importOpen}
         onClose={() => setImportOpen(false)}
       />
-      <ExportLeadsDialog
+      <ExportDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
-        leads={leads}
+        onConfirm={(name) => downloadLeadsCsv(exportRows, name)}
+        defaultName={`leads_export_${new Date().toISOString().split("T")[0]}`}
+        count={exportRows.length}
+        title="Export leads"
       />
       <ConfirmDialog
         open={!!deleteTarget}

@@ -9,11 +9,11 @@ import {
 } from "@/features/notifications/hooks/useNotifications";
 import type { NotificationType } from "@/features/notifications/types";
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { CRMSwitch } from "@/shared/ui/CRMSwitch";
-import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
-import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
+import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
 import {
   Form,
   FormControl,
@@ -23,8 +23,6 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import {
   Activity,
   Bell,
@@ -44,6 +42,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import type { SettingsSection } from "../types";
 import { SECTION_NAV, SYSTEM_STATS } from "../types";
 import { BusinessSection } from "./BusinessSection";
@@ -168,12 +168,7 @@ function ProfileSection() {
       <h2 className="text-[20px] font-semibold">Profile</h2>
       <div className="card p-[22px]">
         <div className="flex items-center gap-4 mb-5">
-          <CRMAvatar
-            name={fullName}
-            src={avatarUrl || null}
-            size={64}
-            ring
-          />
+          <CRMAvatar name={fullName} src={avatarUrl || null} size={64} ring />
           <div>
             <h4 className="text-[15px] font-semibold">{fullName}</h4>
             <div className="text-[12.5px] text-[var(--ink-mute)]">
@@ -467,19 +462,15 @@ function ChannelsSection() {
                 : "Disconnected"}
           </span>
           {canConnect && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setWaOpen(true)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setWaOpen(true)}>
               {status === "CONNECTED" ? "Manage" : "Connect"}
             </Button>
           )}
         </div>
         {!canConnect && (
           <p className="text-[11.5px] text-[var(--ink-mute)] mt-3">
-            You don&apos;t have permission to connect or disconnect WhatsApp. Ask a
-            workspace owner.
+            You don&apos;t have permission to connect or disconnect WhatsApp.
+            Ask a workspace owner.
           </p>
         )}
       </div>
@@ -608,7 +599,7 @@ export function SettingsView() {
   return (
     <div className="flex gap-3.5 h-full overflow-hidden p-[18px]">
       {/* Sidebar nav */}
-      <div className="card flex-shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]">
+      <div className="card shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]">
         <div className="text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1.5 text-[var(--ink-mute)]">
           Settings
         </div>

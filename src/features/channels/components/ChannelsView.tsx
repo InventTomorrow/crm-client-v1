@@ -15,8 +15,8 @@ export function ChannelsView() {
         </p>
       </div>
 
-      {/* Channel connectivity + AI assistant — independent concerns, side by side */}
-      <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
+      {/* Channel connectivity, then the AI assistant below it — single column */}
+      <div className="flex max-w-md flex-col gap-4">
         <WhatsAppWidget />
         <AISettingsWidget />
       </div>

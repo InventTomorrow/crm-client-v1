@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 
 export type { ColumnDef };
 
@@ -77,23 +78,28 @@ export function DataTable<TData>({
           id: "__select",
           size: 40,
           header: ({ table }) => (
-            <input
-              type="checkbox"
-              className="rounded border-[var(--line)] accent-[var(--accent)] w-3.5 h-3.5 cursor-pointer"
-              checked={table.getIsAllPageRowsSelected()}
-              ref={(el) => {
-                if (el) el.indeterminate = table.getIsSomePageRowsSelected();
-              }}
-              onChange={table.getToggleAllPageRowsSelectedHandler()}
+            <Checkbox
+              aria-label="Select all rows"
+              checked={
+                table.getIsAllPageRowsSelected()
+                  ? true
+                  : table.getIsSomePageRowsSelected()
+                    ? "indeterminate"
+                    : false
+              }
+              onCheckedChange={(v) =>
+                table.toggleAllPageRowsSelected(v === true)
+              }
+              onClick={(e) => e.stopPropagation()}
             />
           ),
+          // The checkbox is display-only; the whole cell (td) is the click
+          // target — see the tbody cell render below.
           cell: ({ row }) => (
-            <input
-              type="checkbox"
-              className="rounded border-[var(--line)] accent-[var(--accent)] w-3.5 h-3.5 cursor-pointer"
+            <Checkbox
+              aria-label="Select row"
               checked={row.getIsSelected()}
-              onChange={row.getToggleSelectedHandler()}
-              onClick={(e) => e.stopPropagation()}
+              className="pointer-events-none"
             />
           ),
           enableSorting: false,
@@ -246,11 +252,31 @@ export function DataTable<TData>({
                       onRowClick && "cursor-pointer",
                     )}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-3 py-2.5 align-middle">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      const isSelect = cell.column.id === "__select";
+                      return (
+                        <td
+                          key={cell.id}
+                          className={cn(
+                            "px-3 py-2.5 align-middle",
+                            isSelect && "cursor-pointer",
+                          )}
+                          onClick={
+                            isSelect
+                              ? (e) => {
+                                  e.stopPropagation();
+                                  row.toggleSelected(!row.getIsSelected());
+                                }
+                              : undefined
+                          }
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))
               )}

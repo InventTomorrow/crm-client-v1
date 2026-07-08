@@ -6,6 +6,7 @@ import type { LeadsFilter } from '../types';
 import { extractErrorMessage } from '@/lib/utils';
 import {
   fetchLeads,
+  fetchLead,
   fetchLeadsCount,
   searchLeads,
   createLead,
@@ -27,6 +28,15 @@ const listKey = (archived: boolean) => [...LIST_KEY, archived] as const;
 
 export function useLeads(archived = false) {
   return useQuery({ queryKey: listKey(archived), queryFn: () => fetchLeads(archived) });
+}
+
+/** Single lead by id — used where the list isn't loaded (e.g. the inbox profile). */
+export function useLead(id: string | null | undefined) {
+  return useQuery({
+    queryKey: ['leads', 'detail', id],
+    queryFn: () => fetchLead(id!),
+    enabled: !!id,
+  });
 }
 
 export function useLeadsCount() {

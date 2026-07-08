@@ -39,6 +39,7 @@ export interface Product {
   name: string;
   sku: string;
   price: number;
+  discountPercentage?: number;
   stock: number;
   status: 'in' | 'low' | 'out';
   cat: string;

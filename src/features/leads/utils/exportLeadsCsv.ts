@@ -30,14 +30,14 @@ function toCsv(rows: Lead[]): string {
 }
 
 /** Builds a CSV from the given leads and triggers a browser download. */
-export function downloadLeadsCsv(rows: Lead[]) {
+export function downloadLeadsCsv(rows: Lead[], filename?: string) {
   const csv = toCsv(rows);
   const url = URL.createObjectURL(
     new Blob([csv], { type: "text/csv;charset=utf-8;" }),
   );
   const a = document.createElement("a");
   a.href = url;
-  a.download = `leads-${Date.now()}.csv`;
+  a.download = `${filename?.trim() || `leads_export_${new Date().toISOString().split("T")[0]}`}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
