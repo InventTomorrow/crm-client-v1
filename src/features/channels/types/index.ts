@@ -1,4 +1,4 @@
-export type WASessionStatus = 'PENDING' | 'CONNECTED' | 'DISCONNECTED';
+export type WASessionStatus = 'PENDING' | 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED';
 
 export interface WAState {
   status: WASessionStatus;

@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
@@ -7,6 +6,7 @@ import {
   WAConnectPanel,
   type WAConnectPanelState,
 } from "@/shared/ui/WAConnectPanel";
+import { useState } from "react";
 
 const WA_GREEN = "#25D366";
 const WA_AMBER = "#CA8A04";
@@ -45,24 +45,24 @@ export function WhatsAppWidget({
   const { data: statusData } = useWAStatus();
   const [panel, setPanel] = useState<WAConnectPanelState>({
     status: "DISCONNECTED",
-    scanned: false,
     showLoading: false,
   });
 
   const status = statusData?.status ?? "DISCONNECTED";
   const phone = statusData?.phoneNumber;
   const isConnected = status === "CONNECTED";
-  const scanned = panel.scanned && !isConnected;
+  const isConnecting = status === "CONNECTING";
   const isPending = status === "PENDING" || panel.showLoading;
 
   const accent = isConnected
     ? WA_GREEN
-    : isPending || scanned
+    : isPending || isConnecting
       ? WA_AMBER
       : undefined;
+
   const statusLabel = isConnected
     ? "Connected"
-    : scanned
+    : isConnecting
       ? "Connecting"
       : isPending
         ? "Waiting for scan"
@@ -107,10 +107,11 @@ export function WhatsAppWidget({
           className={cn(
             "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px] font-medium",
             isConnected && "bg-[rgba(37,211,102,0.12)] text-[#15803D]",
-            (isPending || scanned) && "bg-[rgba(202,138,4,0.12)] text-[#B45309]",
+            (isPending || isConnecting) &&
+              "bg-[rgba(202,138,4,0.12)] text-[#B45309]",
             !isConnected &&
               !isPending &&
-              !scanned &&
+              !isConnecting &&
               "bg-[var(--surface-2)] text-[var(--ink-mute)]",
           )}
         >
@@ -118,10 +119,10 @@ export function WhatsAppWidget({
             className={cn(
               "h-1.5 w-1.5 rounded-full",
               isConnected && "bg-[#25D366]",
-              (isPending || scanned) && "bg-[#CA8A04] animate-pulse",
+              (isPending || isConnecting) && "bg-[#CA8A04] animate-pulse",
               !isConnected &&
                 !isPending &&
-                !scanned &&
+                !isConnecting &&
                 "bg-[var(--ink-mute)] opacity-60",
             )}
           />
@@ -129,11 +130,10 @@ export function WhatsAppWidget({
         </span>
       </div>
 
-      {/* Inline QR-scan flow — identical to the header dialog. autoStart is off,
-          so the QR is only fetched when the user clicks Generate / Refresh. */}
+      {/* Inline QR-scan flow — identical to the header dialog. manualStart means
+          the QR is only fetched when the user clicks Generate / Refresh. */}
       <div className="flex flex-1 items-center justify-center">
         <WAConnectPanel
-          active
           manualStart
           canManage={canManage}
           showClose={!!onClose}

@@ -18,12 +18,9 @@ export function useWAStatus() {
   return useQuery({
     queryKey: ["wa-status"],
     queryFn: getWAStatus,
-    // Poll fast while connecting/disconnected so the UI catches a backend status
-    // flip (e.g. `ready` firing late on a slow host) within seconds instead of
-    // 10s — and so it never depends solely on the flaky long-lived SSE. Back off
-    // once CONNECTED, where live changes arrive over the stream anyway.
-    refetchInterval: (query) =>
-      query.state.data?.status === "CONNECTED" ? 15_000 : 3_000,
+    // No polling: the SSE stream is the live source of truth and the server
+    // re-sends current status on every (re)open. The default window-focus
+    // refetch reconciles any event missed while the tab was hidden.
   });
 }
 

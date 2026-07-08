@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./Button";
 import { Skeleton } from "./Motion";
 
@@ -140,59 +140,26 @@ function ConnectingView({ phoneNumber }: { phoneNumber?: string }) {
   );
 }
 
-export function StatusDot({
-  status,
-  loading,
-  connecting,
-}: {
-  status: string;
-  loading?: boolean;
-  connecting?: boolean;
-}) {
-  return (
-    <span
-      className={cn(
-        "w-2.5 h-2.5 rounded-full flex-shrink-0",
-        status === "CONNECTED" && "bg-[#25D366]",
-        connecting && status !== "CONNECTED" && "bg-[#25D366] animate-pulse",
-        !connecting &&
-          (status === "PENDING" || loading) &&
-          "bg-[#CA8A04] animate-pulse",
-        status === "DISCONNECTED" &&
-          !loading &&
-          !connecting &&
-          "bg-[var(--ink-mute)] opacity-40",
-      )}
-    />
-  );
-}
-
 export interface WAConnectPanelState {
   status: string;
   phoneNumber?: string | null;
-  scanned: boolean;
   showLoading: boolean;
 }
 
 /**
  * The WhatsApp connect flow (QR scan → connecting → connected). Shared between
  * the header dialog and the Channels page so the QR experience is identical in
- * both. `onStateChange` lets a host (e.g. the dialog header) mirror live status.
+ * both. Every state is driven by real server events streamed over SSE:
+ * DISCONNECTED → PENDING (+qr, waiting for scan) → CONNECTING → CONNECTED.
+ * `onStateChange` lets a host (e.g. the dialog header) mirror live status.
  */
 export function WAConnectPanel({
-  active = true,
-  autoStart = false,
   manualStart = false,
   canManage = true,
   showClose = false,
   onClose,
   onStateChange,
 }: {
-  /** Whether the panel is currently visible/active (drives scan-state resets). */
-  active?: boolean;
-  /** When it flips true while disconnected, requests a QR. Off by default so the
-   *  QR is never fetched until the user explicitly clicks Generate/Refresh. */
-  autoStart?: boolean;
   /** Show a "Generate QR Code" gate first and never render a QR (even one the
    *  server already holds) until the user clicks it — avoids server overhead. */
   manualStart?: boolean;
@@ -210,16 +177,16 @@ export function WAConnectPanel({
   const takeoverDenyMut = useWATakeoverDeny();
 
   const [starting, setStarting] = useState(false);
-  const [scanned, setScanned] = useState(false);
   // For manualStart: gate the QR behind an explicit "Generate" click.
   const [armed, setArmed] = useState(false);
-  const qrShownRef = useRef(false);
 
   const status = statusData?.status ?? "DISCONNECTED";
   const phoneNumber = statusData?.phoneNumber;
   const qrCode = statusData?.qr;
   const connectionError = statusData?.error;
   const conflict = statusData?.conflict;
+  // The server ends an unscanned pairing with this error — informational, not a failure.
+  const qrExpired = !!connectionError?.startsWith("QR expired");
 
   const handleConnect = () => {
     setStarting(true);
@@ -234,70 +201,29 @@ export function WAConnectPanel({
 
   // Drop the "starting" shimmer as soon as the stream produces something real.
   useEffect(() => {
-    if (qrCode || conflict || connectionError || status === "CONNECTED") {
+    if (
+      qrCode ||
+      conflict ||
+      connectionError ||
+      status === "CONNECTING" ||
+      status === "CONNECTED"
+    ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStarting(false);
     }
   }, [qrCode, conflict, connectionError, status]);
 
-  // Detect the scan: QR presented then cleared while still PENDING → linking.
-  useEffect(() => {
-    if (qrCode) {
-      qrShownRef.current = true;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setScanned(false);
-    } else if (
-      qrShownRef.current &&
-      status === "PENDING" &&
-      !connectionError &&
-      !conflict
-    ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setScanned(true);
-    }
-  }, [qrCode, status, connectionError, conflict]);
-
-  // Reset the scan tracker whenever we leave the linking flow.
-  useEffect(() => {
-    if (
-      !active ||
-      status === "CONNECTED" ||
-      status === "DISCONNECTED" ||
-      conflict
-    ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setScanned(false);
-      qrShownRef.current = false;
-    }
-  }, [active, status, conflict]);
-
-  // Request a QR only when explicitly asked (autoStart flips true) and we're
-  // disconnected. The Channels page leaves this off so nothing is fetched until
-  // the user clicks Generate/Refresh.
-  useEffect(() => {
-    if (
-      autoStart &&
-      canManage &&
-      status === "DISCONNECTED" &&
-      !connectMut.isPending
-    ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      handleConnect();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart]);
-
-  const showLoading = starting && !qrCode && status !== "CONNECTED";
+  const showLoading =
+    starting && !qrCode && status !== "CONNECTED" && status !== "CONNECTING";
 
   useEffect(() => {
     onStateChange?.({
       status,
       phoneNumber,
-      scanned,
       showLoading,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, phoneNumber, scanned, showLoading]);
+  }, [status, phoneNumber, showLoading]);
 
   // Read-only view for members without channels:connect.
   if (!canManage) {
@@ -323,7 +249,13 @@ export function WAConnectPanel({
 
   // Manual-start gate: show a Generate button first and never render a QR
   // (even one the server already holds) until the user opts in.
-  if (manualStart && !armed && status !== "CONNECTED" && !conflict) {
+  if (
+    manualStart &&
+    !armed &&
+    status !== "CONNECTED" &&
+    status !== "CONNECTING" &&
+    !conflict
+  ) {
     return (
       <div className="p-5 flex flex-col items-center gap-4 w-full">
         <QRSkeleton animate={false} />
@@ -343,7 +275,7 @@ export function WAConnectPanel({
           Generate QR Code
         </Button>
         <div className="flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
-          <Smartphone size={13} className="flex-shrink-0 mt-px" />
+          <Smartphone size={13} className="shrink-0 mt-px" />
           <span>
             WhatsApp Web approach — the QR is generated only when you click, to
             keep the connection light.
@@ -472,6 +404,12 @@ export function WAConnectPanel({
 
       {!conflict && showLoading && <QRSkeleton label="Starting connection…" />}
 
+      {/* QR SCANNED — the server detected the pairing and is finishing login */}
+      {!conflict && !showLoading && status === "CONNECTING" && (
+        <ConnectingView phoneNumber={phoneNumber ?? undefined} />
+      )}
+
+      {/* WAITING FOR SCAN */}
       {!conflict && !showLoading && status === "PENDING" && (
         <>
           {qrCode ? (
@@ -498,8 +436,6 @@ export function WAConnectPanel({
                 <RefreshCw size={12} /> Refresh QR
               </Button>
             </>
-          ) : scanned ? (
-            <ConnectingView phoneNumber={phoneNumber ?? undefined} />
           ) : (
             <QRSkeleton label="Generating QR code…" />
           )}
@@ -508,7 +444,23 @@ export function WAConnectPanel({
 
       {!conflict && !showLoading && status === "DISCONNECTED" && (
         <>
-          {connectionError && (
+          {connectionError && qrExpired && (
+            <div className="w-full flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[var(--surface-2)] border border-[var(--line)]">
+              <QrCode
+                size={15}
+                className="shrink-0 mt-px text-[var(--ink-mute)]"
+              />
+              <div>
+                <p className="text-[12.5px] font-semibold text-[var(--ink)]">
+                  QR code expired
+                </p>
+                <p className="text-[11.5px] mt-0.5 text-[var(--ink-mute)]">
+                  Generate a new code to continue linking.
+                </p>
+              </div>
+            </div>
+          )}
+          {connectionError && !qrExpired && (
             <div className="w-full flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
               <WifiOff size={15} className="shrink-0 mt-px" />
               <div>
@@ -533,7 +485,9 @@ export function WAConnectPanel({
             ) : (
               <QrCode size={14} />
             )}
-            {connectionError ? "Retry Connection" : "Generate QR Code"}
+            {connectionError && !qrExpired
+              ? "Retry Connection"
+              : "Generate QR Code"}
           </Button>
         </>
       )}

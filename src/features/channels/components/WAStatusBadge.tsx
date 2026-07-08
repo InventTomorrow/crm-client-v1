@@ -9,7 +9,8 @@ import type { WASessionStatus } from '../types';
 // same everywhere it appears (Channels page, Leads, Inbox).
 const MAP: Record<WASessionStatus, { label: string; pill: string; dot: string }> = {
   CONNECTED:    { label: 'Connected',    pill: 'bg-[#DCFCE7] text-[#15803D]',                  dot: 'bg-[#15803D]' },
-  PENDING:      { label: 'Connecting…',  pill: 'bg-[#FEF9C3] text-[#854D0E]',                  dot: 'bg-[#CA8A04]' },
+  CONNECTING:   { label: 'Connecting…',  pill: 'bg-[#FEF9C3] text-[#854D0E]',                  dot: 'bg-[#CA8A04]' },
+  PENDING:      { label: 'Waiting for scan', pill: 'bg-[#FEF9C3] text-[#854D0E]',              dot: 'bg-[#CA8A04]' },
   DISCONNECTED: { label: 'Disconnected', pill: 'bg-[var(--surface-2)] text-[var(--ink-mute)]', dot: 'bg-[var(--ink-mute)]' },
 };
 
@@ -45,7 +46,7 @@ export function WAStatusBadge({
         className={cn(
           'w-[6px] h-[6px] rounded-full',
           dot,
-          status === 'PENDING' && 'animate-pulse',
+          (status === 'PENDING' || status === 'CONNECTING') && 'animate-pulse',
         )}
       />
       <MessageCircle size={13} />

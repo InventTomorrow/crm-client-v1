@@ -116,6 +116,20 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
     );
   }
 
+  if (liveStatus === "CONNECTING") {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6">
+        <Loader2 size={24} className="animate-spin text-[#25D366]" />
+        <p className="text-[13px] font-semibold text-[var(--ink)]">
+          QR scanned — connecting…
+        </p>
+        <p className="text-[12px] text-[var(--ink-mute)]">
+          Keep this page open.
+        </p>
+      </div>
+    );
+  }
+
   if (qr) {
     return (
       <div className="flex flex-col items-center gap-4">

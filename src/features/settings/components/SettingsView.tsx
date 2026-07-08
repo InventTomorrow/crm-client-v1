@@ -457,7 +457,7 @@ function ChannelsSection() {
             />
             {status === "CONNECTED"
               ? "Connected"
-              : status === "PENDING"
+              : status === "PENDING" || status === "CONNECTING"
                 ? "Connecting…"
                 : "Disconnected"}
           </span>

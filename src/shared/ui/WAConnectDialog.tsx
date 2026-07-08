@@ -36,7 +36,7 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
 
   const isConnected = status === "CONNECTED";
-  const isPending = status === "PENDING";
+  const isPending = status === "PENDING" || status === "CONNECTING";
 
   return (
     <button
