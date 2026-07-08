@@ -1,7 +1,7 @@
 import { LandingPage } from "@/features/landing/components/LandingPage";
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
 import { Inter } from "next/font/google";
+import type { CSSProperties } from "react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,7 +12,21 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant",
   description:
-    "Reply faster, manage every lead, send broadcasts, and convert more customers — all from one simple WhatsApp sales platform built for WhatsApp-first businesses.",
+    "Reply faster, manage every lead, send broadcasts, and convert more customers, all from one simple WhatsApp sales platform built for WhatsApp-first businesses.",
+  openGraph: {
+    title: "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant",
+    url: "https://asaarabta.com",
+    description:
+      "Reply faster, manage every lead, send broadcasts, and convert more customers, all from one simple WhatsApp sales platform built for WhatsApp-first businesses.",
+    images: [
+      {
+        url: "/assets/images/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant",
+      },
+    ],
+  },
 };
 
 export default function RootPage() {

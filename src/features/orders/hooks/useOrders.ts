@@ -42,14 +42,15 @@ export function useOrdersSummary() {
   return useQuery({ queryKey: keys.summary, queryFn: getOrdersSummary });
 }
 
+// Shares the summary cache with useOrdersSummary (same key + select) so the
+// sidebar badge never triggers its own /orders/summary request.
 export function usePendingOrdersCount() {
   return useQuery({
-    queryKey: [...keys.summary, 'pending-count'],
-    queryFn: async () => {
-      const summary = await getOrdersSummary();
-      return summary.byStatus.find((s) => s.status === 'PENDING')?.count ?? 0;
-    },
-    refetchInterval: 30_000,
+    queryKey: keys.summary,
+    queryFn: getOrdersSummary,
+    select: (summary) =>
+      summary.byStatus.find((s) => s.status === 'PENDING')?.count ?? 0,
+    refetchInterval: 300_000,
   });
 }
 

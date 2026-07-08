@@ -1,11 +1,11 @@
 'use client';
 import {
+  type QueryClient,
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   getNotificationPreferences,
@@ -80,42 +80,25 @@ export function useUpdateNotificationPreference() {
 }
 
 /**
- * Opens the notifications SSE stream and keeps the unread count + list fresh.
- * Mount once (in the top bar). Hardened like the WhatsApp status stream: a
- * transient drop must NOT reset state — EventSource auto-reconnects and the
- * server re-sends the unread count on each (re)open; the polled query is the
- * fallback source of truth.
+ * Folds a notification SSE event into the unread-count + list caches and
+ * raises the live toast. Called by useAppEvents for every notification event.
  */
-export function useNotificationStream() {
-  const qc = useQueryClient();
-
-  useEffect(() => {
-    const es = new EventSource('/api/v1/notifications/stream', { withCredentials: true });
-
-    es.onmessage = (e: MessageEvent) => {
-      const event = JSON.parse(e.data as string) as NotificationStreamEvent;
-      if (event.type === 'unread-count') {
-        qc.setQueryData(keys.unread, event.count);
-      } else if (event.type === 'notification') {
-        qc.setQueryData<number>(keys.unread, (c) => (c ?? 0) + 1);
-        // Live toast for the real event (replaces the old static demo popup).
-        const n = event.notification;
-        toast(n.title, n.body ? { description: n.body } : undefined);
-        // Prepend to the "all" list if it's already cached.
-        qc.setQueryData(keys.list(false), (old: { pages: Notification[][]; pageParams: unknown[] } | undefined) => {
-          if (!old) return old;
-          const [first, ...rest] = old.pages;
-          return { ...old, pages: [[event.notification, ...(first ?? [])], ...rest] };
-        });
-        qc.invalidateQueries({ queryKey: keys.list(true) });
-      }
-    };
-
-    es.onerror = () => {
-      // Transient drop — let EventSource auto-reconnect; do not tear down or
-      // reset. The unread-count poll covers any missed events.
-    };
-
-    return () => es.close();
-  }, [qc]);
+export function applyNotificationEvent(
+  qc: QueryClient,
+  event: NotificationStreamEvent,
+): void {
+  if (event.type === 'unread-count') {
+    qc.setQueryData(keys.unread, event.count);
+  } else if (event.type === 'notification') {
+    qc.setQueryData<number>(keys.unread, (c) => (c ?? 0) + 1);
+    const n = event.notification;
+    toast(n.title, n.body ? { description: n.body } : undefined);
+    // Prepend to the "all" list if it's already cached.
+    qc.setQueryData(keys.list(false), (old: { pages: Notification[][]; pageParams: unknown[] } | undefined) => {
+      if (!old) return old;
+      const [first, ...rest] = old.pages;
+      return { ...old, pages: [[event.notification, ...(first ?? [])], ...rest] };
+    });
+    qc.invalidateQueries({ queryKey: keys.list(true) });
+  }
 }

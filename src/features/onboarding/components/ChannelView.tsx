@@ -3,8 +3,8 @@ import {
   useWAConnect,
   useWADisconnect,
   useWAStatus,
-  useWAStatusStream,
 } from "@/features/channels/hooks/useWhatsApp";
+import { useAppEvents } from "@/shared/hooks/useAppEvents";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2,
@@ -61,7 +61,7 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
   const { mutate: disconnectWA } = useWADisconnect();
   // Onboarding has no AppTopBar, so open the SSE here to feed the wa-status
   // cache, then read live QR/status/error from it (single source of truth).
-  useWAStatusStream();
+  useAppEvents();
   const { data: statusData } = useWAStatus();
   const [started, setStarted] = useState(false);
 

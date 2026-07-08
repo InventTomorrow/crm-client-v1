@@ -1,8 +1,9 @@
 'use client';
 import { extractErrorMessage } from '@/lib/utils';
-import { keepPreviousData, type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { keepPreviousData, type InfiniteData, type QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { useTypingStore } from '../stores/typingStore';
 import {
   approveDraft,
   clearConversation,
@@ -26,11 +27,13 @@ import {
 } from '../services/inboxService';
 import type { ConversationDetail, ConversationFilter, ConversationListItem } from '../types';
 
+// Polls are slow fallbacks only — the /events SSE stream invalidates these
+// caches the moment something changes (see applyConversationEvent).
 export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: () => getConversations({}),
-    refetchInterval: 5_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -38,7 +41,7 @@ export function useInboxUnreadCount() {
   return useQuery({
     queryKey: ['conversations', 'unread-count'],
     queryFn: getInboxUnreadCount,
-    refetchInterval: 10_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -48,16 +51,14 @@ export function useMarkConversationRead() {
     mutationFn: (id: string) => markConversationRead(id),
     onMutate: (id: string) => {
       // Optimistically zero-out unreadCount so the unread tab updates instantly.
-      queryClient.setQueriesData(
+      queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
         { queryKey: ['conversations', 'infinite'] },
-        (old: any) => {
+        (old) => {
           if (!old?.pages) return old;
           return {
             ...old,
-            pages: old.pages.map((page: ConversationListItem[]) =>
-              page.map((c: ConversationListItem) =>
-                c.id === id ? { ...c, unreadCount: 0 } : c,
-              ),
+            pages: old.pages.map((page) =>
+              page.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
             ),
           };
         },
@@ -75,7 +76,7 @@ export function useInfiniteConversations(search?: string) {
     queryFn: ({ pageParam }) => getConversations({ pageParam, search }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
-    refetchInterval: 5_000,
+    refetchInterval: 60_000,
     // Keep stale data visible during background refetches so the list never
     // flashes empty while a fetch is in-flight (e.g. transient disconnect).
     placeholderData: keepPreviousData,
@@ -87,7 +88,7 @@ export function useConversationDetail(id: string | null) {
     queryKey: ['conversation', id],
     queryFn: () => getConversation(id!),
     enabled: !!id,
-    refetchInterval: 3_000,
+    refetchInterval: 30_000,
   });
 }
 
@@ -98,7 +99,7 @@ export function useMessagesPaginated(id: string | null) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.length === 30 ? lastPage[lastPage.length - 1].id : undefined,
     enabled: !!id,
-    refetchInterval: 3_000,
+    refetchInterval: 30_000,
   });
 }
 
@@ -385,90 +386,44 @@ export function useEditMessage(conversationId: string) {
   });
 }
 
-// Safety auto-clear: the server emits a "stopped" event on flush, but if it is
-// missed we still drop the indicator after this long without a fresh keystroke.
-const LEAD_TYPING_TTL_MS = 8_000;
-
 /**
- * Subscribes to the WhatsApp SSE stream and returns the conversation id whose
- * lead is currently typing (or null). One stream powers both the thread
- * indicator and the conversation-list row.
+ * Conversation id whose lead is currently typing (or null). Fed by the
+ * app-wide /events stream via applyTypingEvent — no extra connection.
  */
 export function useLeadTyping(): string | null {
-  const [typingConversationId, setTypingConversationId] = useState<string | null>(null);
-  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const es = new EventSource('/api/v1/whatsapp/qr-stream', { withCredentials: true });
-
-    es.onmessage = (e: MessageEvent) => {
-      const event = JSON.parse(e.data as string) as { type: string; conversationId?: string; isTyping?: boolean };
-      if (event.type !== 'typing' || !event.conversationId) return;
-
-      if (event.isTyping) {
-        setTypingConversationId(event.conversationId);
-        if (clearTimer.current) clearTimeout(clearTimer.current);
-        clearTimer.current = setTimeout(() => setTypingConversationId(null), LEAD_TYPING_TTL_MS);
-      } else {
-        setTypingConversationId((prev) => (prev === event.conversationId ? null : prev));
-      }
-    };
-
-    es.onerror = () => es.close();
-
-    return () => {
-      es.close();
-      if (clearTimer.current) clearTimeout(clearTimer.current);
-    };
-  }, []);
-
-  return typingConversationId;
+  return useTypingStore((s) => s.typingConversationId);
 }
 
 const AGENT_TYPING_IDLE_MS = 2_500;
+
+/**
+ * Folds a conversation SSE event into the inbox caches by invalidation —
+ * list, thread, and unread badge refresh the moment something changes.
+ * Called by useAppEvents for every conversation event.
+ */
+export function applyConversationEvent(
+  queryClient: QueryClient,
+  event: { type: string; conversationId?: string },
+): void {
+  if (event.type === 'new-message') {
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+    queryClient.invalidateQueries({ queryKey: ['conversation', event.conversationId] });
+    queryClient.invalidateQueries({ queryKey: ['conversation', event.conversationId, 'messages'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
+  }
+  if (event.type === 'new-conversation') {
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
+  }
+}
 
 /**
  * Mirrors the agent's composing state onto WhatsApp. Call `onType()` on each
  * keystroke and `stop()` when sending or leaving — sends start once, then a
  * single stop after the agent pauses, so we never spam the endpoint.
  */
-export function useConversationStream() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const es = new EventSource('/api/v1/conversations/stream', {
-      withCredentials: true,
-    });
-
-    es.onmessage = (e: MessageEvent) => {
-      try {
-        const data = JSON.parse(e.data as string) as {
-          type: string;
-          conversationId?: string;
-        };
-        if (data.type === 'new-message') {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
-          queryClient.invalidateQueries({ queryKey: ['conversation', data.conversationId] });
-          queryClient.invalidateQueries({ queryKey: ['conversation', data.conversationId, 'messages'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
-        }
-        if (data.type === 'new-conversation') {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
-        }
-      } catch {
-        /* malformed payload — ignore */
-      }
-    };
-
-    es.onerror = () => es.close();
-
-    return () => es.close();
-  }, [queryClient]);
-}
-
 export function useAgentTyping(conversationId: string | null) {
   const isTypingRef = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

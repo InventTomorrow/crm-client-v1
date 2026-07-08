@@ -39,8 +39,9 @@ export function useLead(id: string | null | undefined) {
   });
 }
 
+// Slow fallback only — the badge is cheap but doesn't need to be second-fresh.
 export function useLeadsCount() {
-  return useQuery({ queryKey: ['leads', 'count'], queryFn: fetchLeadsCount, refetchInterval: 30_000 });
+  return useQuery({ queryKey: ['leads', 'count'], queryFn: fetchLeadsCount, refetchInterval: 300_000 });
 }
 
 export function useAddLead() {

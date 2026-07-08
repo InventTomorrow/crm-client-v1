@@ -39,7 +39,7 @@ export const notificationPreferenceSchema = z.object({
 });
 export type NotificationPreference = z.infer<typeof notificationPreferenceSchema>;
 
-/** SSE payloads from /notifications/stream. */
+/** Notification payloads on the app-wide /events SSE stream. */
 export type NotificationStreamEvent =
   | { type: 'unread-count'; count: number }
   | { type: 'notification'; notification: Notification };

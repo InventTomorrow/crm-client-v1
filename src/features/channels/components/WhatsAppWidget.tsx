@@ -50,9 +50,14 @@ export function WhatsAppWidget({
 
   const status = statusData?.status ?? "DISCONNECTED";
   const phone = statusData?.phoneNumber;
+  const hasQr = !!statusData?.qr;
   const isConnected = status === "CONNECTED";
   const isConnecting = status === "CONNECTING";
-  const isPending = status === "PENDING" || panel.showLoading;
+  // "Waiting for scan" only once a QR actually exists — before that (or while
+  // the connect request is still starting) it reads "Starting connection…".
+  const isWaitingForScan = status === "PENDING" && hasQr;
+  const isStarting = (status === "PENDING" && !hasQr) || panel.showLoading;
+  const isPending = isWaitingForScan || isStarting;
 
   const accent = isConnected
     ? WA_GREEN
@@ -64,9 +69,11 @@ export function WhatsAppWidget({
     ? "Connected"
     : isConnecting
       ? "Connecting"
-      : isPending
+      : isWaitingForScan
         ? "Waiting for scan"
-        : "Disconnected";
+        : isStarting
+          ? "Starting connection…"
+          : "Disconnected";
 
   return (
     <div

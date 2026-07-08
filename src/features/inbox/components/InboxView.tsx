@@ -70,7 +70,6 @@ import {
   useAgentTyping,
   useApproveDraft,
   useConversationDetail,
-  useConversationStream,
   useDeleteChat,
   useDeleteMessage,
   useEditMessage,
@@ -251,7 +250,7 @@ export function InboxView() {
     [approveDraftMut],
   );
 
-  useConversationStream();
+  // Live updates arrive via the app-wide /events stream (mounted in AppTopBar).
   const typingConversationId = useLeadTyping();
   const leadIsTyping = !!selectedId && typingConversationId === selectedId;
   const { onType: notifyAgentTyping, stop: stopAgentTyping } =

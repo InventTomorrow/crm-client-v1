@@ -1,14 +1,11 @@
 "use client";
-import { useWAStatusStream } from "@/features/channels/hooks/useWhatsApp";
-import {
-  useNotificationStream,
-  useUnreadCount,
-} from "@/features/notifications/hooks/useNotifications";
 import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
+import { useUnreadCount } from "@/features/notifications/hooks/useNotifications";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
-import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
+import { useAppEvents } from "@/shared/hooks/useAppEvents";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
 import { Bell, Inbox, Maximize2, Menu, Minimize2, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -47,10 +44,10 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
 
-  // Always-on WA status stream so the header icon updates instantly on connect/disconnect.
-  useWAStatusStream();
-  // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
-  useNotificationStream();
+  // The app's single SSE subscription — WA status, notifications,
+  // conversations and typing all arrive over this one connection.
+  useAppEvents();
+
   const { data: unread = 0 } = useUnreadCount();
   const { data: inboxUnread = 0 } = useInboxUnreadCount();
   const onInbox = pathname.startsWith("/inbox");

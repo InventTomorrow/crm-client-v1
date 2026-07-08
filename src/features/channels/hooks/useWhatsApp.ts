@@ -1,7 +1,11 @@
 "use client";
 import { extractErrorMessage } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   confirmWATakeover,
@@ -96,68 +100,50 @@ export function useUpdateWAConfig() {
 }
 
 /**
- * Always-on SSE subscriber and the single source of truth for live WhatsApp
- * state. Folds every event type (qr / status / phone-conflict) into the
+ * Folds a WhatsApp SSE event (qr / status / phone-conflict) into the
  * `wa-status` query cache so the whole app — status button and connect dialog —
- * reads one consistent value. Mount once near the app root.
+ * reads one consistent value. Called by useAppEvents for every WA event.
  */
-export function useWAStatusStream() {
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    const es = new EventSource("/api/v1/whatsapp/qr-stream", {
-      withCredentials: true,
-    });
-    es.onmessage = (e: MessageEvent) => {
-      try {
-        const event = JSON.parse(e.data as string) as WASSEEvent;
-        queryClient.setQueryData<WAState>(
-          ["wa-status"],
-          (old: WAState | undefined): WAState => {
-            switch (event.type) {
-              case "qr":
-                return {
-                  status: "PENDING",
-                  phoneNumber: old?.phoneNumber,
-                  qr: event.qr,
-                  error: undefined,
-                  conflict: undefined,
-                };
-              case "status":
-                return {
-                  status: event.status,
-                  phoneNumber: event.phoneNumber ?? old?.phoneNumber,
-                  error: event.error,
-                  // Keep the QR/conflict only while still pending; clear once a
-                  // definitive status (CONNECTED / DISCONNECTED) arrives.
-                  qr: event.status === "PENDING" ? old?.qr : undefined,
-                  conflict:
-                    event.status === "PENDING" ? old?.conflict : undefined,
-                };
-              case "phone-conflict":
-                return {
-                  status: "PENDING",
-                  phoneNumber: old?.phoneNumber,
-                  qr: undefined,
-                  error: undefined,
-                  conflict: {
-                    phoneNumber: event.phoneNumber,
-                    conflictWorkspaces: event.conflictWorkspaces,
-                  },
-                };
-              default:
-                return old ?? { status: "DISCONNECTED" };
-            }
-          },
-        );
-      } catch {
-        /* ignore malformed */
+export function applyWAEventToCache(
+  queryClient: QueryClient,
+  event: WASSEEvent,
+): void {
+  queryClient.setQueryData<WAState>(
+    ["wa-status"],
+    (old: WAState | undefined): WAState => {
+      switch (event.type) {
+        case "qr":
+          return {
+            status: "PENDING",
+            phoneNumber: old?.phoneNumber,
+            qr: event.qr,
+            error: undefined,
+            conflict: undefined,
+          };
+        case "status":
+          return {
+            status: event.status,
+            phoneNumber: event.phoneNumber ?? old?.phoneNumber,
+            error: event.error,
+            // Keep the QR/conflict only while still pending; clear once a
+            // definitive status (CONNECTING / CONNECTED / DISCONNECTED) arrives.
+            qr: event.status === "PENDING" ? old?.qr : undefined,
+            conflict: event.status === "PENDING" ? old?.conflict : undefined,
+          };
+        case "phone-conflict":
+          return {
+            status: "PENDING",
+            phoneNumber: old?.phoneNumber,
+            qr: undefined,
+            error: undefined,
+            conflict: {
+              phoneNumber: event.phoneNumber,
+              conflictWorkspaces: event.conflictWorkspaces,
+            },
+          };
+        default:
+          return old ?? { status: "DISCONNECTED" };
       }
-    };
-    // A transient SSE drop (idle-proxy timeout, brief network blip) is NOT a
-    // session disconnect. Don't close or override status here: EventSource
-    // auto-reconnects and the server re-sends current status on each (re)open.
-    // The polled useWAStatus query stays the backup source of truth meanwhile.
-    es.onerror = () => {};
-    return () => es.close();
-  }, [queryClient]);
+    },
+  );
 }
