@@ -18,19 +18,41 @@ import {
 } from "../services/channelsService";
 import type { WAConfig, WASSEEvent, WAState } from "../types";
 
+// Timestamp of the last SSE WA event applied to the cache (set by
+// applyWAEventToCache below). A REST poll/refetch started before that point
+// but resolving after it carries a snapshot older than what's already on
+// screen — e.g. a PENDING+qr poll in flight when `isNewLogin` pushes
+// CONNECTING resolving a moment later and regressing the UI back to the QR
+// screen. The queryFn checks this to discard such stale responses.
+let lastWaSseEventAt = 0;
+
 export function useWAStatus() {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ["wa-status"],
-    queryFn: getWAStatus,
-    // SSE is the live source of truth — this is just a safety net. If we're
-    // stuck PENDING with no QR/conflict yet (e.g. the stream missed the
-    // event), poll every 2s until one shows up, then stop. No polling once
-    // connected/disconnected — the default window-focus refetch covers that.
+    queryFn: async () => {
+      const startedAt = Date.now();
+      const fresh = await getWAStatus();
+      if (lastWaSseEventAt > startedAt) {
+        return (
+          queryClient.getQueryData<WAState>(["wa-status"]) ?? fresh
+        );
+      }
+      return fresh;
+    },
+    // SSE is the live source of truth — this is just a safety net. Poll every
+    // 2s while we're in a transitional state waiting for the stream to catch
+    // us up: PENDING with no QR/conflict yet, or CONNECTING (the window right
+    // after a scan, before the server's async open-handshake — phone-conflict
+    // check, DB upsert — has finished and emitted the terminal status). No
+    // polling once connected/disconnected — the default window-focus refetch
+    // covers that.
     refetchInterval: (query) => {
       const data = query.state.data;
-      return data?.status === "PENDING" && !data.qr && !data.conflict
-        ? 2_000
-        : false;
+      const waitingOnPendingQr =
+        data?.status === "PENDING" && !data.qr && !data.conflict;
+      const waitingOnConnectingResult = data?.status === "CONNECTING";
+      return waitingOnPendingQr || waitingOnConnectingResult ? 2_000 : false;
     },
   });
 }
@@ -117,7 +139,11 @@ export function applyWAEventToCache(
 ): void {
   // SSE is authoritative — discard any in-flight `wa-status` REST fetch (the
   // safety-net poll, or a window-focus refetch) so a response computed before
-  // this event can't land later and overwrite it with stale data.
+  // this event can't land later and overwrite it with stale data. Also stamp
+  // the time so a fetch already past cancellation (in-flight request whose
+  // response lands after this write) gets caught by the queryFn's staleness
+  // check in useWAStatus instead of regressing the cache.
+  lastWaSseEventAt = Date.now();
   void queryClient.cancelQueries({ queryKey: ["wa-status"], exact: true });
   queryClient.setQueryData<WAState>(
     ["wa-status"],
