@@ -1,12 +1,11 @@
 "use client";
-import {
-  applyWAEventToCache,
-} from "@/features/channels/hooks/useWhatsApp";
+import { applyWAEventToCache } from "@/features/channels/hooks/useWhatsApp";
 import type { WASSEEvent } from "@/features/channels/types";
 import { applyConversationEvent } from "@/features/inbox/hooks/useConversations";
 import { applyTypingEvent } from "@/features/inbox/stores/typingStore";
 import { applyNotificationEvent } from "@/features/notifications/hooks/useNotifications";
 import type { NotificationStreamEvent } from "@/features/notifications/types";
+import { useAppStore } from "@/lib/appStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -25,9 +24,22 @@ type AppEvent =
  */
 export function useAppEvents() {
   const queryClient = useQueryClient();
+  // Re-open the stream on workspace switch — the auth cookie's tenantId only
+  // changes after /auth/switch-workspace, and switching is client-side only
+  // (no page reload), so without this the connection stays subscribed to
+  // whichever tenant was active when it first opened.
+  const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
 
   useEffect(() => {
-    const es = new EventSource("/api/v1/events", { withCredentials: true });
+    // Connect straight to the API origin instead of the relative path Next's
+    // rewrite() proxies — that extra hop doesn't stream chunks as they're
+    // written (they arrive batched/delayed), which is fatal for a live QR
+    // code that's only valid for a short window. CORS already allows this
+    // (server's CLIENT_URL matches, credentials: true).
+    const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "";
+    const es = new EventSource(`${apiOrigin}/api/v1/events`, {
+      withCredentials: true,
+    });
 
     es.onmessage = (e: MessageEvent) => {
       try {
@@ -51,15 +63,11 @@ export function useAppEvents() {
             break;
         }
       } catch {
-        /* malformed payload — ignore */
+        console.log("event parsing error");
       }
     };
-
-    // A transient drop is NOT teardown: EventSource auto-reconnects and the
-    // server replays snapshots (WA status, unread count) on each (re)open.
-    // The slow polled queries remain the backup source of truth meanwhile.
     es.onerror = () => {};
 
     return () => es.close();
-  }, [queryClient]);
+  }, [queryClient, currentWorkspaceId]);
 }

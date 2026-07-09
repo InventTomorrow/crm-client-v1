@@ -22,9 +22,16 @@ export function useWAStatus() {
   return useQuery({
     queryKey: ["wa-status"],
     queryFn: getWAStatus,
-    // No polling: the SSE stream is the live source of truth and the server
-    // re-sends current status on every (re)open. The default window-focus
-    // refetch reconciles any event missed while the tab was hidden.
+    // SSE is the live source of truth — this is just a safety net. If we're
+    // stuck PENDING with no QR/conflict yet (e.g. the stream missed the
+    // event), poll every 2s until one shows up, then stop. No polling once
+    // connected/disconnected — the default window-focus refetch covers that.
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return data?.status === "PENDING" && !data.qr && !data.conflict
+        ? 2_000
+        : false;
+    },
   });
 }
 
@@ -108,6 +115,10 @@ export function applyWAEventToCache(
   queryClient: QueryClient,
   event: WASSEEvent,
 ): void {
+  // SSE is authoritative — discard any in-flight `wa-status` REST fetch (the
+  // safety-net poll, or a window-focus refetch) so a response computed before
+  // this event can't land later and overwrite it with stale data.
+  void queryClient.cancelQueries({ queryKey: ["wa-status"], exact: true });
   queryClient.setQueryData<WAState>(
     ["wa-status"],
     (old: WAState | undefined): WAState => {
