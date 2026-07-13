@@ -341,6 +341,10 @@ const NOTIF_META: Record<NotificationType, { title: string; desc: string }> = {
     title: "Billing",
     desc: "Payment confirmations and plan changes.",
   },
+  SUPPORT_CONTACT_CHANGED: {
+    title: "Support number changed",
+    desc: "When the workspace's support contact number is updated.",
+  },
 };
 
 function NotifSection() {

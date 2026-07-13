@@ -6,6 +6,7 @@ import {
   Megaphone,
   Package,
   CreditCard,
+  Phone,
   UserPlus,
   Users,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ export function notificationMeta(type: NotificationType): Meta {
     BROADCAST_COMPLETED: { Icon: Megaphone, bg: 'var(--accent-soft)', color: 'var(--accent)' },
     NEW_LOGIN: { Icon: LogIn, bg: 'var(--surface-2)', color: 'var(--ink-soft)' },
     BILLING: { Icon: CreditCard, bg: 'var(--surface-2)', color: 'var(--ink-soft)' },
+    SUPPORT_CONTACT_CHANGED: { Icon: Phone, bg: 'var(--surface-2)', color: 'var(--ink-soft)' },
   };
   return map[type] ?? { Icon: Bell, bg: 'var(--surface-2)', color: 'var(--ink-soft)' };
 }
@@ -41,7 +43,7 @@ export function notificationHref(n: Notification): string {
   switch (n.type) {
     case 'NEW_MESSAGE':
     case 'CHAT_ESCALATED':
-      return '/inbox';
+      return typeof data.leadId === 'string' ? `/inbox?lead=${data.leadId}` : '/inbox';
     case 'NEW_LEAD':
     case 'LEAD_ASSIGNED':
       return '/leads';
@@ -53,6 +55,7 @@ export function notificationHref(n: Notification): string {
       return '/admin';
     case 'NEW_LOGIN':
     case 'BILLING':
+    case 'SUPPORT_CONTACT_CHANGED':
       return '/settings';
     default:
       return '/notifications';
