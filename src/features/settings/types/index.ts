@@ -47,7 +47,12 @@ export const businessProfileSchema = z.object({
   businessFaqs: z.array(businessFaqSchema).max(50),
   supportName: z.string().max(100),
   supportPhone: z.string().max(30),
-  supportEmail: z.string().max(200),
+  supportEmail: z
+    .string()
+    .max(200)
+    .refine((v) => v === '' || z.string().email().safeParse(v).success, {
+      message: 'Enter a valid email',
+    }),
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
