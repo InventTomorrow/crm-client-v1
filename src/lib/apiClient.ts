@@ -11,30 +11,37 @@ export const setLoggingOut = (value: boolean) => {
   isLoggingOut = value;
 };
 
-let isRefreshing = false;
-
 // Routes that must never trigger an auth redirect (the public landing page).
 const PUBLIC_ROUTES = ["/"];
 const onPublicRoute = () =>
   typeof window !== "undefined" &&
   PUBLIC_ROUTES.includes(window.location.pathname);
 
-// Queue to store requests that failed due to token expiration
-let failedQueue: Array<{
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
-}> = [];
+let refreshPromise: Promise<void> | null = null;
 
-// Process the queue of failed requests
-const processQueue = (error: any) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve();
-    }
-  });
-  failedQueue = [];
+// Single-flight /auth/refresh: every caller (the response interceptor's retry
+// path below, and the SSE reconnect in useAppEvents) awaits the same in-flight
+// request instead of each posting their own. The refresh endpoint rotates and
+// revokes the refresh token on use, so two concurrent calls sharing one
+// refresh-token cookie would race — the loser looks like token reuse to the
+// server and gets its whole token family revoked, killing the session.
+export const refreshAccessToken = (): Promise<void> => {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = apiClient
+    .post("/auth/refresh")
+    .then(() => undefined)
+    .catch((err) => {
+      if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
+        window.location.href = "/auth/login";
+      }
+      throw err;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
 };
 
 apiClient.interceptors.response.use(
@@ -52,33 +59,11 @@ apiClient.interceptors.response.use(
       error.response?.data?.error?.code === "auth/token_expired" &&
       !originalRequest._retry
     ) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(() => {
-            return apiClient(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
-
       try {
-        await apiClient.post("/auth/refresh");
-        isRefreshing = false;
-        processQueue(null);
+        await refreshAccessToken();
         return apiClient(originalRequest);
       } catch (refreshError) {
-        isRefreshing = false;
-        processQueue(refreshError);
-
-        if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
-          window.location.href = "/auth/login";
-        }
         return Promise.reject(refreshError);
       }
     }

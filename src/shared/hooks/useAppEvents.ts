@@ -5,7 +5,7 @@ import { applyConversationEvent } from "@/features/inbox/hooks/useConversations"
 import { applyTypingEvent } from "@/features/inbox/stores/typingStore";
 import { applyNotificationEvent } from "@/features/notifications/hooks/useNotifications";
 import type { NotificationStreamEvent } from "@/features/notifications/types";
-import { apiClient } from "@/lib/apiClient";
+import { refreshAccessToken } from "@/lib/apiClient";
 import { useAppStore } from "@/lib/appStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -82,21 +82,22 @@ export function useAppEvents() {
       // or was already stale at mount, kills the stream for good with no
       // browser-level recovery. apiClient's axios interceptor handles this
       // for REST calls by refreshing and retrying, but EventSource has no
-      // interceptor hook, so we replicate that here: refresh the cookie via
-      // the same /auth/refresh endpoint, then open a fresh connection. If
-      // the refresh itself fails (refresh token also expired), apiClient's
-      // own interceptor redirects to /auth/login — don't loop reconnecting.
+      // interceptor hook, so we replicate that here — using the same
+      // single-flight refreshAccessToken() the interceptor uses, so this
+      // doesn't race a concurrent REST 401 (e.g. clicking "Connect WhatsApp"
+      // right as the cookie expires) for the same rotate-and-revoke refresh
+      // token. If the refresh itself fails, refreshAccessToken() redirects
+      // to /auth/login — don't loop reconnecting.
       es.onerror = () => {
         es?.close();
         if (cancelled) return;
         reconnectTimer = setTimeout(() => {
-          apiClient
-            .post("/auth/refresh")
+          refreshAccessToken()
             .then(() => {
               if (!cancelled) connect();
             })
             .catch(() => {
-              /* refresh failed — apiClient interceptor handles redirect */
+              /* refresh failed — refreshAccessToken() handles the redirect */
             });
         }, RECONNECT_DELAY_MS);
       };
