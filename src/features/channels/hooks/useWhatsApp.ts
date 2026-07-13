@@ -1,10 +1,10 @@
 "use client";
 import { extractErrorMessage } from "@/lib/utils";
 import {
-  type QueryClient,
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -18,12 +18,6 @@ import {
 } from "../services/channelsService";
 import type { WAConfig, WASSEEvent, WAState } from "../types";
 
-// Timestamp of the last SSE WA event applied to the cache (set by
-// applyWAEventToCache below). A REST poll/refetch started before that point
-// but resolving after it carries a snapshot older than what's already on
-// screen — e.g. a PENDING+qr poll in flight when `isNewLogin` pushes
-// CONNECTING resolving a moment later and regressing the UI back to the QR
-// screen. The queryFn checks this to discard such stale responses.
 let lastWaSseEventAt = 0;
 
 export function useWAStatus() {
@@ -34,9 +28,7 @@ export function useWAStatus() {
       const startedAt = Date.now();
       const fresh = await getWAStatus();
       if (lastWaSseEventAt > startedAt) {
-        return (
-          queryClient.getQueryData<WAState>(["wa-status"]) ?? fresh
-        );
+        return queryClient.getQueryData<WAState>(["wa-status"]) ?? fresh;
       }
       return fresh;
     },
