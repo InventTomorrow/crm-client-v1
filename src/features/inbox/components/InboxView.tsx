@@ -49,14 +49,14 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import { useWAStatus } from "../../channels/hooks/useWhatsApp";
-import { STATUS_META } from "../../leads/types";
 import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
 import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
+import { STATUS_META } from "../../leads/types";
 import { OrderForm } from "../../orders/components/OrderForm";
 import { useCreateOrder, useLeadOrders } from "../../orders/hooks/useOrders";
 import {
@@ -85,6 +85,7 @@ import {
   useToggleAiMode,
   useUploadAttachment,
 } from "../hooks/useConversations";
+import { useInfiniteScrollSentinel } from "../hooks/useInfiniteScrollSentinel";
 import { groupByDay } from "../lib/time";
 import type {
   ConversationFilter,
@@ -94,6 +95,7 @@ import type {
 } from "../types";
 import { ConversationRow } from "./ConversationRow";
 import { DateSeparator } from "./DateSeparator";
+import { EmptyChatState } from "./EmptyChatState";
 import { EscalationBadge } from "./EscalationBadge";
 import { MessageBubble } from "./MessageBubble";
 import { NewChatDialog } from "./NewChatDialog";
@@ -101,7 +103,28 @@ import { ChatListSkeleton, MessageSkeleton } from "./Skeletons";
 
 export function InboxView() {
   const searchParams = useSearchParams();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  // Persist the open chat across tab switches / remounts so returning to the
+  // Inbox doesn't silently jump back to a different conversation.
+  const [selectedConversationId, setSelectedConversationIdState] = useState<
+    string | null
+  >(() => {
+    if (typeof window !== "undefined")
+      return localStorage.getItem("asaanrabta_selected_chat");
+    return null;
+  });
+  const setSelectedConversationId = useCallback((id: string | null) => {
+    setSelectedConversationIdState(id);
+    if (typeof window !== "undefined") {
+      if (id) localStorage.setItem("asaanrabta_selected_chat", id);
+      else localStorage.removeItem("asaanrabta_selected_chat");
+    }
+  }, []);
+  // True right after the currently-open chat was deleted, so the empty state
+  // can explain what happened instead of the generic "select a conversation"
+  // placeholder.
+  const [chatWasDeleted, setChatWasDeleted] = useState(false);
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -204,7 +227,7 @@ export function InboxView() {
       ? [pinnedConv, ...serverConversations]
       : serverConversations;
   const selectedLeadId =
-    conversations.find((c) => c.id === selectedId)?.lead.id ?? null;
+    conversations.find((c) => c.id === selectedConversationId)?.lead.id ?? null;
   const { data: leadOrders, isLoading: leadOrdersLoading } = useLeadOrders(
     showProfile ? selectedLeadId : null,
   );
@@ -213,19 +236,19 @@ export function InboxView() {
   const { data: leadDetail } = useLead(showProfile ? selectedLeadId : null);
   const updateLeadStatus = useUpdateLeadStatus();
 
-  const { data: detail } = useConversationDetail(selectedId);
+  const { data: detail } = useConversationDetail(selectedConversationId);
   const {
     data: messagesData,
     isLoading: messagesLoading,
     fetchNextPage: fetchNextMsgs,
     hasNextPage: hasMoreMsgs,
     isFetchingNextPage: fetchingNextMsgs,
-  } = useMessagesPaginated(selectedId);
+  } = useMessagesPaginated(selectedConversationId);
   const messages = [...(messagesData?.pages.flat() || [])].reverse();
 
-  const approveDraftMut = useApproveDraft(selectedId ?? "");
-  const sendReplyMut = useSendHumanReply(selectedId ?? "");
-  const sendMediaMut = useSendMedia(selectedId ?? "");
+  const approveDraftMut = useApproveDraft(selectedConversationId ?? "");
+  const sendReplyMut = useSendHumanReply(selectedConversationId ?? "");
+  const sendMediaMut = useSendMedia(selectedConversationId ?? "");
 
   // Agents can only message a lead while the WhatsApp session is live — the
   // server rejects sends otherwise, so we disable the composer to match.
@@ -236,9 +259,9 @@ export function InboxView() {
   const resolveMut = useResolve();
   const deleteChatMut = useDeleteChat();
   const openConvMut = useOpenConversation();
-  const aiModeMut = useToggleAiMode(selectedId ?? "");
-  const editMut = useEditMessage(selectedId ?? "");
-  const deleteMut = useDeleteMessage(selectedId ?? "");
+  const aiModeMut = useToggleAiMode(selectedConversationId ?? "");
+  const editMut = useEditMessage(selectedConversationId ?? "");
+  const deleteMut = useDeleteMessage(selectedConversationId ?? "");
 
   // Stable handlers so memoized MessageBubble rows skip re-render on keystrokes.
   const handleEditMessage = useCallback((m: ConversationMessage) => {
@@ -252,9 +275,11 @@ export function InboxView() {
 
   // Live updates arrive via the app-wide /events stream (mounted in AppTopBar).
   const typingConversationId = useLeadTyping();
-  const leadIsTyping = !!selectedId && typingConversationId === selectedId;
-  const { onType: notifyAgentTyping, stop: stopAgentTyping } =
-    useAgentTyping(selectedId);
+  const leadIsTyping =
+    !!selectedConversationId && typingConversationId === selectedConversationId;
+  const { onType: notifyAgentTyping, stop: stopAgentTyping } = useAgentTyping(
+    selectedConversationId,
+  );
 
   const filtered = filterConversations(
     conversations,
@@ -306,17 +331,21 @@ export function InboxView() {
       toast.success(archiving ? "Chat archived" : "Chat unarchived");
       return next;
     });
-    if (id === selectedId) setSelectedId(null);
+    if (id === selectedConversationId) setSelectedConversationId(null);
   };
 
   const confirmDeleteChat = () => {
     const id = deleteChatId;
     if (!id) return;
     // Soft-delete + wipe server-side; the lead survives so it can be re-opened
-    // later from the Leads page. Close the open chat right away — the optimistic
-    // list removal lets the auto-select effect advance to the next chat (or the
-    // empty state). The dialog stays (with its spinner) until the request settles.
-    if (id === selectedId) setSelectedId(null);
+    // later from the Leads page. Close the open chat right away and show the
+    // "start a conversation" empty state instead of auto-jumping to another
+    // chat — deleting shouldn't silently swap the user into a different one.
+    // The dialog stays (with its spinner) until the request settles.
+    if (id === selectedConversationId) {
+      setSelectedConversationId(null);
+      setChatWasDeleted(true);
+    }
     deleteChatMut.mutate(id, {
       onSettled: () => setDeleteChatId(null),
     });
@@ -346,17 +375,18 @@ export function InboxView() {
   const unreadCount = conversations.filter((c) => c.unreadCount > 0).length;
   // Fall back to `detail` so the right panel stays usable when the list is
   // momentarily empty (e.g. during a transient WA disconnect + refetch cycle).
-  const activeConv = (conversations.find((c) => c.id === selectedId) ??
-    detail) as ConversationListItem | undefined;
+  const activeConv = (conversations.find(
+    (c) => c.id === selectedConversationId,
+  ) ?? detail) as ConversationListItem | undefined;
 
   // Clear the unread badge when an unread conversation is opened.
   const markReadMut = useMarkConversationRead();
   useEffect(() => {
-    if (selectedId && activeConv && activeConv.unreadCount > 0) {
-      markReadMut.mutate(selectedId);
+    if (selectedConversationId && activeConv && activeConv.unreadCount > 0) {
+      markReadMut.mutate(selectedConversationId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, activeConv?.unreadCount]);
+  }, [selectedConversationId, activeConv?.unreadCount]);
 
   // A locally "deleted" chat is only hidden — the server conversation lives on
   // and keeps receiving messages. When a new inbound lands (unreadCount climbs
@@ -389,14 +419,20 @@ export function InboxView() {
 
   // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat,
   // creating the conversation on the fly if the lead has never been messaged.
+  // The ?lead= param is stripped from the URL the moment it's consumed — if we
+  // left it there, every later re-render (a refetch on tab refocus, a manual
+  // click on a different chat) would re-run this effect and snap the user
+  // back to that same lead's chat.
   const openedLeadRef = useRef<string | null>(null);
   useEffect(() => {
     const leadId = searchParams.get("lead");
     if (!leadId) return;
     const conv = conversations.find((c) => c.lead.id === leadId);
     if (conv) {
-      setSelectedId(conv.id);
+      setSelectedConversationId(conv.id);
+      setChatWasDeleted(false);
       setMobPane("chat");
+      router.replace(pathname, { scroll: false });
       return;
     }
     // Wait for the list before deciding the lead has no chat, then open one
@@ -421,49 +457,58 @@ export function InboxView() {
           lead: detail.lead,
           messages: [],
         });
-        setSelectedId(detail.id);
+        setSelectedConversationId(detail.id);
+        setChatWasDeleted(false);
         setMobPane("chat");
+        router.replace(pathname, { scroll: false });
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, conversations, listLoading]);
 
-  // Auto-select first conversation (only when not deep-linking)
+  // Keep `selectedConversationId` in sync with the loaded list: drop it if it
+  // no longer exists (deleted elsewhere, or a stale id restored from
+  // localStorage) so the "chat deleted" empty state shows; otherwise, on
+  // first load with nothing selected/deep-linked, default to the first chat.
   useEffect(() => {
-    if (!selectedId && !searchParams.get("lead") && filtered.length > 0) {
-      setSelectedId(filtered[0].id);
+    if (listLoading || openConvMut.isPending || searchParams.get("lead"))
+      return;
+    if (selectedConversationId) {
+      const stillExists = conversations.some(
+        (c) => c.id === selectedConversationId,
+      );
+      if (!stillExists) {
+        setSelectedConversationId(null);
+        setChatWasDeleted(true);
+      }
+    } else if (!chatWasDeleted && filtered.length > 0) {
+      setSelectedConversationId(filtered[0].id);
     }
-  }, [filtered, selectedId, searchParams]);
+  }, [
+    selectedConversationId,
+    conversations,
+    filtered,
+    chatWasDeleted,
+    listLoading,
+    openConvMut.isPending,
+    searchParams,
+  ]);
 
   const msgObserverTarget = useRef<HTMLDivElement>(null);
   const listObserverTarget = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreMsgs && !fetchingNextMsgs) {
-          fetchNextMsgs();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    if (msgObserverTarget.current) observer.observe(msgObserverTarget.current);
-    return () => observer.disconnect();
-  }, [hasMoreMsgs, fetchNextMsgs, selectedId, fetchingNextMsgs]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreConvs && !fetchingNextConvs) {
-          fetchNextConvs();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    if (listObserverTarget.current)
-      observer.observe(listObserverTarget.current);
-    return () => observer.disconnect();
-  }, [hasMoreConvs, fetchNextConvs, fetchingNextConvs]);
+  useInfiniteScrollSentinel(
+    msgObserverTarget,
+    hasMoreMsgs,
+    fetchingNextMsgs,
+    fetchNextMsgs,
+  );
+  useInfiniteScrollSentinel(
+    listObserverTarget,
+    hasMoreConvs,
+    fetchingNextConvs,
+    fetchNextConvs,
+  );
 
   const previousScrollHeight = useRef(0);
   const isFirstLoad = useRef(true);
@@ -491,10 +536,10 @@ export function InboxView() {
   // Reset first-load flag when conversation changes
   useEffect(() => {
     isFirstLoad.current = true;
-  }, [selectedId]);
+  }, [selectedConversationId]);
 
   const handleSend = () => {
-    if (!draft.trim() || !selectedId) return;
+    if (!draft.trim() || !selectedConversationId) return;
     if (!waConnected) {
       toast.error("WhatsApp is not connected. Reconnect in Channels to send.");
       return;
@@ -525,7 +570,7 @@ export function InboxView() {
   };
 
   const handleSendFile = async () => {
-    if (!pendingFile || !selectedId) return;
+    if (!pendingFile || !selectedConversationId) return;
     if (!waConnected) {
       toast.error("WhatsApp is not connected. Reconnect in Channels to send.");
       return;
@@ -569,7 +614,7 @@ export function InboxView() {
         const audioFile = new File([blob], `voice-${Date.now()}.webm`, {
           type: "audio/webm",
         });
-        if (!selectedId) return;
+        if (!selectedConversationId) return;
         try {
           const { url } = await uploadMut.mutateAsync(audioFile);
           await sendMediaMut.mutateAsync({
@@ -829,9 +874,10 @@ export function InboxView() {
             <ConversationRow
               key={conv.id}
               conv={conv}
-              active={conv.id === selectedId}
+              active={conv.id === selectedConversationId}
               onClick={() => {
-                setSelectedId(conv.id);
+                setSelectedConversationId(conv.id);
+                setChatWasDeleted(false);
                 setMobPane("chat");
               }}
               isFavorite={favorites.has(conv.id)}
@@ -854,20 +900,16 @@ export function InboxView() {
       <div
         className={`card inbox-chat flex-1 flex flex-col overflow-hidden min-w-0 relative ring ring-[var(--ink-mute)]/20 ${mobPane === "chat" ? "mob-on" : ""}`}
       >
-        {!selectedId ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-[var(--ink-mute)]">
-            {openConvMut.isPending ? (
-              <>
-                <Loader2 size={30} className="mb-3 animate-spin" />
-                <p className="text-[13px]">Opening chat…</p>
-              </>
-            ) : (
-              <>
-                <Bot size={36} className="mb-3 opacity-30" />
-                <p className="text-[13px]">Select a conversation</p>
-              </>
-            )}
-          </div>
+        {!selectedConversationId ? (
+          <EmptyChatState
+            variant={
+              openConvMut.isPending
+                ? "opening"
+                : chatWasDeleted
+                  ? "deleted"
+                  : "select"
+            }
+          />
         ) : (
           <>
             {/* Chat header */}
@@ -947,7 +989,8 @@ export function InboxView() {
                 <CRMSwitch
                   on={!!activeConv?.aiEnabled}
                   onChange={() => {
-                    if (selectedId && !aiModeMut.isPending) aiModeMut.mutate();
+                    if (selectedConversationId && !aiModeMut.isPending)
+                      aiModeMut.mutate();
                   }}
                 />
               </div>
@@ -964,18 +1007,23 @@ export function InboxView() {
                     <ShoppingCart size={13} className="mr-2" /> Create Order
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => selectedId && toggleFavorite(selectedId)}
+                    onClick={() =>
+                      selectedConversationId &&
+                      toggleFavorite(selectedConversationId)
+                    }
                   >
                     <Star
                       size={13}
                       className={cn(
                         "mr-2",
-                        selectedId && favorites.has(selectedId)
+                        selectedConversationId &&
+                          favorites.has(selectedConversationId)
                           ? "text-[#CA8A04]"
                           : "",
                       )}
                     />
-                    {selectedId && favorites.has(selectedId)
+                    {selectedConversationId &&
+                    favorites.has(selectedConversationId)
                       ? "Remove from Favorites"
                       : "Add to Favorites"}
                   </DropdownMenuItem>
@@ -986,18 +1034,20 @@ export function InboxView() {
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="w-44">
                         {customTabs.map((tab) => {
-                          const assigned = selectedId
+                          const assigned = selectedConversationId
                             ? (tabAssignments[tab.id] ?? []).includes(
-                                selectedId,
+                                selectedConversationId,
                               )
                             : false;
                           return (
                             <DropdownMenuItem
                               key={tab.id}
                               onClick={() => {
-                                if (!selectedId) return;
-                                if (assigned) removeFromTab(selectedId, tab.id);
-                                else assignToTab(selectedId, tab.id);
+                                if (!selectedConversationId) return;
+                                if (assigned)
+                                  removeFromTab(selectedConversationId, tab.id);
+                                else
+                                  assignToTab(selectedConversationId, tab.id);
                               }}
                             >
                               <span className="flex-1">{tab.label}</span>
@@ -1015,7 +1065,10 @@ export function InboxView() {
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => selectedId && resolveMut.mutate(selectedId)}
+                    onClick={() =>
+                      selectedConversationId &&
+                      resolveMut.mutate(selectedConversationId)
+                    }
                     disabled={resolveMut.isPending}
                   >
                     <CheckCheck size={13} className="mr-2 text-[#15803D]" />
@@ -1024,7 +1077,10 @@ export function InboxView() {
                       : "Mark as Done"}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => selectedId && escalateMut.mutate(selectedId)}
+                    onClick={() =>
+                      selectedConversationId &&
+                      escalateMut.mutate(selectedConversationId)
+                    }
                     disabled={escalateMut.isPending}
                   >
                     <Flame size={13} className="mr-2 text-[#EF4444]" />
@@ -1053,10 +1109,7 @@ export function InboxView() {
               }}
             >
               {messagesLoading && <MessageSkeleton />}
-              <div
-                ref={msgObserverTarget}
-                className="h-4 w-full flex-shrink-0"
-              />
+              <div ref={msgObserverTarget} className="h-4 w-full shrink-0" />
 
               <AnimatePresence initial={false}>
                 {fetchingNextMsgs && (
@@ -1066,7 +1119,7 @@ export function InboxView() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center justify-center py-2 gap-1.5 flex-shrink-0"
+                    className="flex items-center justify-center py-2 gap-1.5 shrink-0"
                   >
                     <Spinner size={14} />
                     <span className="text-xs text-[var(--ink-mute)]">
@@ -1184,10 +1237,10 @@ export function InboxView() {
                     <img
                       src={pendingFile.previewUrl}
                       alt="preview"
-                      className="h-12 w-12 object-cover rounded-lg flex-shrink-0"
+                      className="h-12 w-12 object-cover rounded-lg shrink-0"
                     />
                   ) : pendingFile.mimeType.startsWith("video/") ? (
-                    <div className="h-12 w-12 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center flex-shrink-0">
+                    <div className="h-12 w-12 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
                       <Video size={20} className="text-[var(--accent)]" />
                     </div>
                   ) : (
@@ -1231,14 +1284,14 @@ export function InboxView() {
                   <button
                     onClick={cancelRecording}
                     title="Delete recording"
-                    className="flex items-center justify-center w-9 h-9 rounded-full text-[#EF4444] hover:bg-[#FECACA]/40 flex-shrink-0"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-[#EF4444] hover:bg-[#FECACA]/40 shrink-0"
                   >
                     <Trash2 size={17} />
                   </button>
 
                   {/* Pulsing dot + timer */}
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-pulse flex-shrink-0" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-pulse shrink-0" />
                     <span className="text-[13px] font-medium text-[#EF4444] tabular-nums">
                       {Math.floor(recordingSeconds / 60)
                         .toString()
@@ -1295,7 +1348,7 @@ export function InboxView() {
                     <DropdownMenuTrigger asChild>
                       <button
                         disabled={!waConnected}
-                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-40 mb-0.5"
+                        className="shrink-0 w-8 h-8 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-40 mb-0.5"
                         title="Attach"
                       >
                         <Plus size={16} />
@@ -1458,7 +1511,7 @@ export function InboxView() {
       </div>
 
       {/* ── Profile Panel ── */}
-      {showProfile && selectedId && activeConv && (
+      {showProfile && selectedConversationId && activeConv && (
         <div
           className={`card inbox-profile w-[260px] flex-shrink-0 flex flex-col overflow-y-auto gap-3 p-4 border border-[var(--ink-mute)]/20 ${mobPane === "profile" ? "mob-on" : ""}`}
         >
@@ -1522,7 +1575,10 @@ export function InboxView() {
                       value={status}
                       onChange={(s) =>
                         selectedLeadId &&
-                        updateLeadStatus.mutate({ id: selectedLeadId, status: s })
+                        updateLeadStatus.mutate({
+                          id: selectedLeadId,
+                          status: s,
+                        })
                       }
                     />
                   </PermissionGuard>
@@ -1671,7 +1727,7 @@ export function InboxView() {
           {/* Escalation actions */}
           <div className="flex flex-col gap-2 mt-auto">
             <button
-              onClick={() => resolveMut.mutate(selectedId)}
+              onClick={() => resolveMut.mutate(selectedConversationId)}
               disabled={resolveMut.isPending}
               className={cn(
                 "btn justify-center py-2 text-[12px] text-[#15803D] border-[#BBF7D0]",
@@ -1686,7 +1742,7 @@ export function InboxView() {
                 : "Mark Done"}
             </button>
             <button
-              onClick={() => escalateMut.mutate(selectedId)}
+              onClick={() => escalateMut.mutate(selectedConversationId)}
               disabled={escalateMut.isPending}
               className={cn(
                 "btn justify-center py-2 text-[12px]",
@@ -1714,7 +1770,8 @@ export function InboxView() {
         onClose={() => setShowNewChat(false)}
         waConnected={waConnected}
         onStarted={(conversationId) => {
-          setSelectedId(conversationId);
+          setSelectedConversationId(conversationId);
+          setChatWasDeleted(false);
           setMobPane("chat");
         }}
       />
