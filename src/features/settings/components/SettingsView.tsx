@@ -577,14 +577,26 @@ const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
   workspaces: "settings:edit",
 };
 
+// Tabs that configure the workspace itself (billing tier, team access, other
+// workspaces, system health) rather than day-to-day operation — visible to
+// the workspace owner only. Notifications/Chatbot/Business/Channels stay
+// available to any permitted role since they're used to run the workspace.
+const SECTION_OWNER_ONLY = new Set<SettingsSection>([
+  "tier",
+  "access",
+  "workspaces",
+  "system",
+]);
+
 // ──────────────────── SettingsView (root) ────────────────────
 export function SettingsView() {
-  const { can, isLoading: permsLoading } = usePermissions();
+  const { can, isOwner, isLoading: permsLoading } = usePermissions();
   const [section, setSection] = useState<SettingsSection>("profile");
 
   // Hide tabs the active role can't access (placeholder tabs stay visible but
   // disabled, as before).
   const visibleNav = SECTION_NAV.filter((s) => {
+    if (SECTION_OWNER_ONLY.has(s.id) && !isOwner) return false;
     const perm = SECTION_PERMISSION[s.id];
     return !perm || can(perm);
   });
