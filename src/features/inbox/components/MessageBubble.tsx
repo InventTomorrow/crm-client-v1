@@ -11,6 +11,8 @@ import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { motion } from "framer-motion";
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   Download,
   Edit2,
   FileText,
@@ -21,7 +23,7 @@ import {
   User,
   Zap,
 } from "lucide-react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import type { ConversationMessage } from "../types";
 import { shortTime } from "../lib/time";
 import { AudioBubble } from "./AudioBubble";
@@ -59,6 +61,7 @@ function MessageBubbleBase({
   const age = Date.now() - new Date(msg.createdAt).getTime();
   const isWithin15Mins = age < 15 * 60 * 1000;
   const isWithin60Mins = age < 60 * 60 * 1000;
+  const [showTranscript, setShowTranscript] = useState(false);
 
   return (
     <motion.div
@@ -200,6 +203,41 @@ function MessageBubbleBase({
                 url={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
                 outbound={isOutbound}
               />
+              {msg.content && (
+                <div
+                  className={cn(
+                    "border-t px-2.5 py-1",
+                    isOutbound
+                      ? "border-white/20"
+                      : "border-[var(--line)]",
+                  )}
+                >
+                  <button
+                    onClick={() => setShowTranscript((v) => !v)}
+                    className={cn(
+                      "flex items-center gap-1 text-[10.5px] font-medium",
+                      isOutbound ? "text-white/80" : "text-[var(--ink-mute)]",
+                    )}
+                  >
+                    {showTranscript ? (
+                      <ChevronUp size={11} />
+                    ) : (
+                      <ChevronDown size={11} />
+                    )}
+                    {showTranscript ? "Hide transcript" : "Show transcript"}
+                  </button>
+                  {showTranscript && (
+                    <p
+                      className={cn(
+                        "mt-1 text-[12.5px] leading-snug",
+                        isOutbound ? "text-white" : "text-[var(--ink)]",
+                      )}
+                    >
+                      {msg.content}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : msg.mediaType === "VIDEO" && msg.mediaUrl ? (
             <div className="rounded-[14px] overflow-hidden max-w-[260px] bg-black">
