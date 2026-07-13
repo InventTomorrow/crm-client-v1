@@ -51,6 +51,8 @@ interface DataTableProps<TData> {
   /** Default page size */
   defaultPageSize?: number;
   className?: string;
+  /** Caps the table body height and makes it smoothly scroll internally, leaving the toolbar/pagination fixed. */
+  maxBodyHeight?: string;
 }
 
 export function DataTable<TData>({
@@ -65,6 +67,7 @@ export function DataTable<TData>({
   isLoading = false,
   defaultPageSize = 20,
   className,
+  maxBodyHeight,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -186,12 +189,24 @@ export function DataTable<TData>({
       )}
 
       {/* Table */}
-      <div className="card overflow-x-auto">
+      <div
+        className={cn(
+          "card overflow-x-auto",
+          maxBodyHeight && "overflow-y-auto scroll-smooth",
+        )}
+        style={maxBodyHeight ? { maxHeight: maxBodyHeight } : undefined}
+      >
         <div>
           <table className="w-full text-[13px]">
             <thead>
               {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} className="border-b border-[var(--line)] bg-[var(--surface-2)]">
+                <tr
+                  key={hg.id}
+                  className={cn(
+                    "border-b border-[var(--line)] bg-[var(--surface-2)]",
+                    maxBodyHeight && "sticky top-0 z-10",
+                  )}
+                >
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}

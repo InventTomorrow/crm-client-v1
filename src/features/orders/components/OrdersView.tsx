@@ -241,6 +241,7 @@ export function OrdersView() {
         onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
         defaultPageSize={20}
+        maxBodyHeight="60vh"
         toolbar={
           <div className="flex items-center gap-2 flex-1">
             <div className="relative flex-1 max-w-[340px]">
