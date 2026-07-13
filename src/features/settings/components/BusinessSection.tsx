@@ -10,6 +10,7 @@ import {
 } from '../hooks/useChatbotSettings';
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
 import { Button } from '@/shared/ui/Button';
+import { CRMSwitch } from '@/shared/ui/CRMSwitch';
 import { Input } from '@/shared/ui/Input';
 import { Textarea } from '@/shared/ui/Textarea';
 import {
@@ -28,6 +29,7 @@ const DEFAULTS: BusinessProfileForm = {
   supportName: '',
   supportPhone: '',
   supportEmail: '',
+  shareSupportContactOnHandoff: false,
 };
 
 export function BusinessSection() {
@@ -54,6 +56,7 @@ export function BusinessSection() {
         supportName: data.config.supportName ?? '',
         supportPhone: data.config.supportPhone ?? '',
         supportEmail: data.config.supportEmail ?? '',
+        shareSupportContactOnHandoff: data.config.shareSupportContactOnHandoff ?? false,
       });
     }
   }, [data, form]);
@@ -232,7 +235,9 @@ export function BusinessSection() {
             <div>
               <h4 className="text-[13.5px] font-semibold">Support Contact</h4>
               <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
-                The AI uses these details when directing customers to support (e.g. blocked cancellations, shipped orders).
+                Used only when the AI hands a conversation off to a human — never as
+                general conversation context. Phone defaults to your connected
+                WhatsApp number until you set one here.
               </p>
             </div>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -256,7 +261,7 @@ export function BusinessSection() {
                   <FormItem>
                     <FormLabel>WhatsApp / Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+92 300 0000000" {...field} />
+                      <Input placeholder="Defaults to connected WhatsApp number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,6 +281,30 @@ export function BusinessSection() {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="shareSupportContactOnHandoff"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
+                    <div>
+                      <FormLabel className="text-[12.5px]">
+                        Share these details with the customer on handoff
+                      </FormLabel>
+                      <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                        Off by default — the AI tells the customer a human will
+                        follow up, without naming a contact. Turn on to include
+                        the name/phone/email above in that message.
+                      </p>
+                    </div>
+                    <FormControl>
+                      <CRMSwitch on={field.value} onChange={() => field.onChange(!field.value)} />
+                    </FormControl>
+                  </div>
+                </FormItem>
+              )}
+            />
           </div>
 
           <div className="flex justify-end">
