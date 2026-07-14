@@ -5,7 +5,7 @@ import { Inbox, Users, ShoppingCart, Package, type LucideIcon } from "lucide-rea
  * (e.g. `/demo.mp4`) or swap in a hosted URL — the player falls back to a
  * placeholder while this is empty.
  */
-export const DEMO_VIDEO_SRC = "";
+export const DEMO_VIDEO_SRC = "/demo/crm-demo.mp4";
 
 /** localStorage key that triggers the welcome dialog once, right after onboarding. */
 export const SHOW_DEMO_FLAG = "asaanrabta_show_demo";

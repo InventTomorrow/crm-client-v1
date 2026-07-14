@@ -1,11 +1,15 @@
+"use client";
 import { Button } from "@/shared/ui/Button";
-import Link from "next/link";
+import { useState } from "react";
 import Container from "../Container";
 import { PrimaryCta } from "../LandingCta";
 import Reveal from "../Reveal";
 import { CTAFloatingPhone } from "../mockups";
+import { WatchDemoModal } from "../WatchDemoModal";
 
 export default function FinalCTA() {
+  const [demoOpen, setDemoOpen] = useState(false);
+
   return (
     <section className="py-16 md:py-20 bg-white">
       <Container>
@@ -28,11 +32,11 @@ export default function FinalCTA() {
                     Get Started Today
                   </PrimaryCta>
                   <Button
-                    asChild
                     variant="ghost"
+                    onClick={() => setDemoOpen(true)}
                     className="h-auto w-full sm:w-auto rounded-full border border-transparent bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:bg-brand-mint hover:text-brand-dark"
                   >
-                    <Link href="/auth/login">See How It Works</Link>
+                    Watch Demo
                   </Button>
                 </div>
               </div>
@@ -43,6 +47,7 @@ export default function FinalCTA() {
           </div>
         </Reveal>
       </Container>
+      <WatchDemoModal open={demoOpen} onOpenChange={setDemoOpen} />
     </section>
   );
 }

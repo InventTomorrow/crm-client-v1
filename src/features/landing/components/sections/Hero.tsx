@@ -3,11 +3,11 @@
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { motion } from "framer-motion";
-import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import Container from "../Container";
 import { PrimaryCta } from "../LandingCta";
 import { HeroDashboardMockup } from "../mockups";
+import { WatchDemoModal } from "../WatchDemoModal";
 
 const HEADLINE = [
   "Stop",
@@ -21,6 +21,8 @@ const HEADLINE = [
 ];
 
 export default function Hero() {
+  const [demoOpen, setDemoOpen] = useState(false);
+
   return (
     <section className="relative hero-bg pt-6 sm:pt-10 md:pt-12 lg:pt-16 pb-16 overflow-hidden">
       <Container className="relative">
@@ -73,11 +75,11 @@ export default function Hero() {
             Get Started
           </PrimaryCta>
           <Button
-            asChild
             variant="ghost"
+            onClick={() => setDemoOpen(true)}
             className="h-auto w-full sm:w-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-brand-green/40 hover:bg-brand-mint hover:text-brand-dark"
           >
-            <Link href="#how-it-works">See How It Works</Link>
+            Watch Demo
           </Button>
         </motion.div>
 
@@ -91,6 +93,7 @@ export default function Hero() {
           <HeroDashboardMockup />
         </motion.div>
       </Container>
+      <WatchDemoModal open={demoOpen} onOpenChange={setDemoOpen} />
     </section>
   );
 }
