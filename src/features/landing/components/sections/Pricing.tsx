@@ -5,67 +5,13 @@ import Container from "../Container";
 import { PrimaryCta } from "../LandingCta";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
+import { formatOfferCountdown, getOfferDaysRemaining } from "../../constants";
+import { PLANS } from "../../plans";
 import { CheckIcon, ZapIcon } from "../icons";
 
-type Plan = {
-  name: string;
-  tagline: string;
-  price: string;
-  originalPrice?: string;
-  discountPercentage?: number;
-  period: string;
-  cta: string;
-  featured: boolean;
-  comingSoon: boolean;
-  features: string[];
-};
-
-const PLANS: Plan[] = [
-  {
-    name: "Starter",
-    tagline: "For solo owners getting started on WhatsApp.",
-    price: "2,999",
-    originalPrice: "7,000",
-    discountPercentage: 57,
-    period: "/month",
-    cta: "Start With Starter",
-    featured: false,
-    comingSoon: false,
-    features: [
-      "1 workspace (business branch)",
-      "1 WhatsApp number connected",
-      "AI auto-replies for common questions",
-      "Lead CRM with pipeline & statuses",
-      "1000 Broadcast campaigns to your leads",
-      "Excel / CSV lead import",
-      "Single team member",
-      "Email support",
-    ],
-  },
-  {
-    name: "Business",
-    tagline: "For growing teams running multiple branches.",
-    price: "5,999",
-    originalPrice: "12,000",
-    discountPercentage: 50,
-    period: "/month",
-    cta: "Choose Business",
-    featured: true,
-    comingSoon: true,
-    features: [
-      "Unlimited workspaces (business branches)",
-      "One WhatsApp number per workspace",
-      "Unlimited AI auto-replies",
-      "Advanced Lead CRM & follow-ups",
-      "Unlimited broadcast campaigns",
-      "Excel / CSV lead import",
-      "Team members & roles per workspace",
-      "Priority WhatsApp support",
-    ],
-  },
-];
-
 export default function Pricing() {
+  const daysRemaining = getOfferDaysRemaining();
+
   return (
     <section
       id="pricing"
@@ -138,6 +84,9 @@ export default function Pricing() {
                       )}
                       <span className="rounded-full bg-brand-amber px-2.5 py-0.5 text-[12px] font-semibold text-white">
                         {plan.discountPercentage}% OFF
+                      </span>
+                      <span className="text-[12px] font-medium text-brand-amber">
+                        {formatOfferCountdown(daysRemaining)}
                       </span>
                     </div>
                   )}

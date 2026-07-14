@@ -3,10 +3,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { formatOfferCountdown, getOfferDaysRemaining } from "../../constants";
 import { ZapIcon } from "../icons";
 
 export default function OfferBanner() {
   const [visible, setVisible] = useState(true);
+  const daysRemaining = getOfferDaysRemaining();
 
   return (
     <AnimatePresence initial={false}>
@@ -23,7 +25,8 @@ export default function OfferBanner() {
             <p>
               <span className="font-semibold">Launch offer —</span> get the
               Starter plan at{" "}
-              <span className="font-semibold">57% off</span>. Limited time only.
+              <span className="font-semibold">50% off</span>.{" "}
+              {formatOfferCountdown(daysRemaining)}.
             </p>
             <button
               type="button"

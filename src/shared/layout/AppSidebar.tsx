@@ -26,6 +26,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProfileMenu } from "./ProfileMenu";
+import { SidebarOfferCard } from "./SidebarOfferCard";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 const NAV_ITEMS: {
@@ -212,6 +213,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
 
         {/* Footer */}
         <div className="p-3 flex flex-col gap-2.5 border-t border-[var(--line)] relative">
+          {!collapsed && <SidebarOfferCard />}
           {!collapsed ? (
             <div className="theme-seg">
               <button
