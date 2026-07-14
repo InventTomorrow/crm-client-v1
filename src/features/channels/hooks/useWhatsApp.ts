@@ -142,6 +142,13 @@ export function applyWAEventToCache(
     (old: WAState | undefined): WAState => {
       switch (event.type) {
         case "qr":
+          // A QR event can arrive after a CONNECTING/CONNECTED status event
+          // (server emits them from separate async handlers, so ordering on
+          // the SSE stream isn't guaranteed). Once past PENDING, ignore a
+          // stale QR instead of regressing the status back to PENDING.
+          if (old?.status === "CONNECTING" || old?.status === "CONNECTED") {
+            return old;
+          }
           return {
             status: "PENDING",
             phoneNumber: old?.phoneNumber,
