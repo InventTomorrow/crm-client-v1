@@ -221,7 +221,7 @@ export function LeadsView() {
 
       {/* Toolbar */}
       <div className="card leads-toolbar flex items-center gap-2 flex-wrap p-2">
-        <div className="relative flex-[1_1_220px] min-w-[200px]">
+        <div className="relative w-full flex-none md:flex-[1_1_220px] md:w-auto md:min-w-[200px]">
           <Search
             size={13}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
@@ -264,7 +264,7 @@ export function LeadsView() {
           <ToggleGroupItem value="active">Active</ToggleGroupItem>
           <ToggleGroupItem value="archived">Archived</ToggleGroupItem>
         </ToggleGroup>
-        <div className="flex-1" />
+        <div className="hidden md:block md:flex-1" />
         <ToggleGroup
           type="single"
           variant="outline"
