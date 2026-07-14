@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/apiClient';
+import { apiClient, runExclusiveAuthOp } from '@/lib/apiClient';
 import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse } from '../types';
 
 export async function login(data: LoginData): Promise<LoginResponse> {
@@ -98,7 +98,12 @@ export async function getMe(): Promise<UserResponse> {
 }
 
 export async function switchWorkspace(tenantId: string) {
-  const res = await apiClient.post('/auth/switch-workspace', { tenantId });
+  // Shares the exclusive lock with refreshAccessToken() — see apiClient.ts —
+  // so a concurrent /auth/refresh can't resolve after this and overwrite the
+  // new tenant's cookies with re-issued old-tenant ones.
+  const res = await runExclusiveAuthOp(() =>
+    apiClient.post('/auth/switch-workspace', { tenantId }),
+  );
   return res.data;
 }
 

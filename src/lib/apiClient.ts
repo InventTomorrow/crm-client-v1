@@ -22,6 +22,21 @@ const onPublicRoute = () =>
   typeof window !== "undefined" &&
   PUBLIC_ROUTES.includes(window.location.pathname);
 
+let authOpChain: Promise<unknown> = Promise.resolve();
+
+// Serializes every call that rotates the accessToken/refreshToken cookies
+// (refresh, switch-workspace) so they can't race. Without this, a refresh
+// triggered by a stale 401 right as the user switches workspace can resolve
+// *after* the switch and silently overwrite the new tenant's cookies with
+// re-issued old-tenant ones — the switch appears to work, then the next
+// request (or a background refetch) is authenticated as the old workspace
+// again. Callers queue behind whichever cookie-mutating call is in flight.
+export function runExclusiveAuthOp<T>(fn: () => Promise<T>): Promise<T> {
+  const result = authOpChain.catch(() => undefined).then(fn);
+  authOpChain = result.catch(() => undefined);
+  return result;
+}
+
 let refreshPromise: Promise<void> | null = null;
 
 // Single-flight /auth/refresh: every caller (the response interceptor's retry
@@ -33,8 +48,7 @@ let refreshPromise: Promise<void> | null = null;
 export const refreshAccessToken = (): Promise<void> => {
   if (refreshPromise) return refreshPromise;
 
-  refreshPromise = apiClient
-    .post("/auth/refresh")
+  refreshPromise = runExclusiveAuthOp(() => apiClient.post("/auth/refresh"))
     .then(() => undefined)
     .catch((err) => {
       if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
