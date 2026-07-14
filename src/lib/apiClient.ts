@@ -1,7 +1,12 @@
 import axios from "axios";
 
+// Hits the backend origin directly rather than the Next.js rewrite proxy —
+// the proxy mishandles multiple Set-Cookie headers on one response, silently
+// dropping the accessToken cookie set alongside refreshToken on login.
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "";
+
 export const apiClient = axios.create({
-  baseURL: "/api/v1",
+  baseURL: `${apiOrigin}/api/v1`,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
