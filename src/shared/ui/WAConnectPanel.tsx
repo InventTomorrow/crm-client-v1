@@ -381,7 +381,11 @@ export function WAConnectPanel({
             </div>
           </div>
           {showClose && onClose && (
-            <Button className="w-full justify-center gap-2" onClick={onClose}>
+            <Button
+              variant="outline"
+              className="w-full justify-center gap-2"
+              onClick={onClose}
+            >
               <X size={13} /> Close
             </Button>
           )}
