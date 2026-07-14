@@ -1,4 +1,5 @@
 import { Providers } from "@/lib/providers";
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import Script from "next/script";
@@ -74,7 +75,10 @@ export default function RootLayout({
           </noscript>
         )}
         <GTMProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            <Analytics />
+            {children}
+          </Providers>
         </GTMProvider>
       </body>
     </html>
