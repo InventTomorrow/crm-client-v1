@@ -270,7 +270,7 @@ export default function LeadDetailSheet({
                     <NextLink
                       key={order.id}
                       href={`/orders?order=${order.id}`}
-                      className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1.5 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
+                      className="card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-1.5 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[12.5px] font-semibold text-[var(--ink)]">

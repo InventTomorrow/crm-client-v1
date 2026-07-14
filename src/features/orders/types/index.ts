@@ -25,7 +25,7 @@ export const ORDER_STATUS_OPTIONS = [
   'CANCELLED',
 ] as const satisfies readonly OrderStatus[];
 
-export type OrderPlatform = 'SHOPIFY' | 'INTERNAL';
+export type OrderPlatform = 'SHOPIFY' | 'INTERNAL' | 'API';
 
 export interface OrderItem {
   id: string;
@@ -60,6 +60,7 @@ export interface OrderListItem {
   orderNumber: number;
   status: OrderStatus;
   platform: OrderPlatform;
+  isSandbox: boolean;
   customerName: string | null;
   customerPhone: string | null;
   total: string;

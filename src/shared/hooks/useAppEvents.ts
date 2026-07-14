@@ -1,6 +1,6 @@
 "use client";
-import { applyWAEventToCache } from "@/features/channels/hooks/useWhatsApp";
-import type { WASSEEvent } from "@/features/channels/types";
+import { applyWAEventToCache } from "@/features/channels/whatsapp/hooks/useWhatsApp";
+import type { WASSEEvent } from "@/features/channels/whatsapp/types";
 import { applyConversationEvent } from "@/features/inbox/hooks/useConversations";
 import { applyTypingEvent } from "@/features/inbox/stores/typingStore";
 import { applyNotificationEvent } from "@/features/notifications/hooks/useNotifications";

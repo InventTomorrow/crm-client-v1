@@ -37,6 +37,7 @@ import {
 import { downloadOrdersCsv } from "../utils/exportOrdersCsv";
 import { OrderDetailSheet } from "./OrderDetailSheet";
 import { OrderForm } from "./OrderForm";
+import { OrderPlatformBadge } from "./OrderPlatformBadge";
 import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
@@ -160,6 +161,19 @@ export function OrdersView() {
         enableSorting: true,
         size: 140,
         cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
+      },
+      {
+        id: "platform",
+        accessorFn: (o) => o.platform,
+        header: "Source",
+        enableSorting: true,
+        size: 160,
+        cell: ({ row }) => (
+          <OrderPlatformBadge
+            platform={row.original.platform}
+            isSandbox={row.original.isSandbox}
+          />
+        ),
       },
       {
         id: "createdAt",

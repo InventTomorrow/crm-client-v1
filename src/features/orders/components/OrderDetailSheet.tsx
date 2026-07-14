@@ -179,7 +179,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                       <Link
                         key={orderItem.id}
                         href={`/inventory?${params.toString()}`}
-                        className="group flex items-center justify-between px-3 py-2.5 border-b border-[var(--line-soft)] last:border-0 no-underline transition-colors hover:bg-[var(--surface-2)]"
+                        className="group hover-shimmer flex items-center justify-between px-3 py-2.5 border-b border-[var(--line-soft)] last:border-0 no-underline transition-colors hover:bg-[var(--surface-2)]"
                         title="View in inventory"
                       >
                         <div className="min-w-0">

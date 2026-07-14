@@ -26,7 +26,7 @@ function ToggleRow({
       <div className="flex min-w-0 items-start gap-3">
         <div
           className={cn(
-            "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
             iconClassName,
           )}
         >
@@ -81,7 +81,7 @@ export function AISettingsWidget() {
 
       {/* Identity */}
       <div className="mt-3 flex items-center gap-3">
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
           <Zap size={20} />
         </div>
         <div className="min-w-0">
@@ -134,7 +134,8 @@ export function AISettingsWidget() {
           </p>
         ) : (
           <p className="rounded-lg border border-[#FDE68A] bg-[#FEF9C3] px-3 py-2 text-[11.5px] text-[#854D0E]">
-            AI is paused — enable the chatbot in Settings to start auto-replying.
+            AI is paused — enable the chatbot in Settings to start
+            auto-replying.
           </p>
         )}
       </div>

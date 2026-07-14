@@ -1,6 +1,6 @@
 "use client";
-import { WhatsAppWidget } from "@/features/channels/components/WhatsAppWidget";
-import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
+import { WhatsAppWidget } from "@/features/channels/whatsapp/components/WhatsAppWidget";
+import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "./Dialog";

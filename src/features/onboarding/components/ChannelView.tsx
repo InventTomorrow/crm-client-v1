@@ -3,7 +3,7 @@ import {
   useWAConnect,
   useWADisconnect,
   useWAStatus,
-} from "@/features/channels/hooks/useWhatsApp";
+} from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { useAppEvents } from "@/shared/hooks/useAppEvents";
 import { cn } from "@/lib/utils";
 import {

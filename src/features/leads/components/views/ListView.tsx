@@ -43,7 +43,7 @@ export default function ListView({
         return (
           <div
             key={l.id}
-            className="card flex items-center gap-3.5 cursor-pointer p-3"
+            className="card flex items-center gap-3.5 cursor-pointer p-3 transition-colors hover:bg-[var(--surface-2)]"
             onClick={() => onSelect(l)}
             style={{ borderLeft: `3px solid ${statusMeta.color}` }}
           >

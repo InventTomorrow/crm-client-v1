@@ -1,6 +1,6 @@
 "use client";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
+import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import {
   WAConnectPanel,

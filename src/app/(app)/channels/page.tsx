@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ChannelsView } from '@/features/channels/components/ChannelsView';
+import { ChannelsView } from '@/features/channels/whatsapp/components/ChannelsView';
 
 export const metadata: Metadata = {
   title: 'Channels',

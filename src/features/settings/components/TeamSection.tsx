@@ -150,6 +150,8 @@ const PERMISSION_GROUPS = [
     perms: [
       { key: "channels:view", label: "View Channels" },
       { key: "channels:connect", label: "Connect / Disconnect WhatsApp" },
+      { key: "api_keys:view", label: "View Website Orders API Keys" },
+      { key: "api_keys:manage", label: "Create / Revoke Website Orders API Keys" },
     ],
   },
   {

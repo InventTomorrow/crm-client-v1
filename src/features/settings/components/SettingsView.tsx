@@ -1,7 +1,8 @@
 "use client";
 import { useMe, useUpdateMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
+import { OrderApiCard } from "@/features/channels/apiKey/components/OrderApiCard";
+import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import {
   useNotificationPreferences,
@@ -479,6 +480,9 @@ function ChannelsSection() {
           </p>
         )}
       </div>
+
+      <OrderApiCard />
+
       <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
     </>
   );

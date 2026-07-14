@@ -53,7 +53,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
-import { useWAStatus } from "../../channels/hooks/useWhatsApp";
+import { useWAStatus } from "../../channels/whatsapp/hooks/useWhatsApp";
 import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
 import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
 import { STATUS_META } from "../../leads/types";
@@ -1590,7 +1590,7 @@ export function InboxView() {
           {/* Lead info — click to open the lead's page + detail sheet */}
           <Link
             href={selectedLeadId ? `/leads?lead=${selectedLeadId}` : "/leads"}
-            className="card p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px] no-underline transition-colors hover:border-[var(--accent)]"
+            className="card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px] no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
           >
             <div className="flex items-center justify-between mb-0.5">
               <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
@@ -1682,7 +1682,7 @@ export function InboxView() {
                   <Link
                     key={order.id}
                     href={`/orders?order=${order.id}`}
-                    className="card p-3 bg-[var(--surface-2)] flex flex-col gap-1 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
+                    className="card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-1 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] font-semibold text-[var(--ink)]">

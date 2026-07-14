@@ -5,7 +5,7 @@ import {
   useWAStatus,
   useWATakeoverConfirm,
   useWATakeoverDeny,
-} from "@/features/channels/hooks/useWhatsApp";
+} from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {

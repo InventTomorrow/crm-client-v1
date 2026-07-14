@@ -15,7 +15,7 @@ import {
   getWAConfig,
   getWAStatus,
   updateWAConfig,
-} from "../services/channelsService";
+} from "../services/whatsapp.service";
 import type { WAConfig, WASSEEvent, WAState } from "../types";
 
 let lastWaSseEventAt = 0;

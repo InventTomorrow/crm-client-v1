@@ -1000,3 +1000,32 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
 .auth-ring-2 { animation: ringExpand 2.4s ease-out 0.8s infinite; }
 .auth-ring-3 { animation: ringExpand 2.4s ease-out 1.6s infinite; }
 .auth-shimmer::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent); animation: shimmerWave 2.2s linear infinite; }
+
+/* Reusable hover polish for clickable cards/rows/links app-wide (Channels
+   cards, Inbox lead-info/order-history cards, lead detail sheet, order detail
+   sheet item rows, etc.): background/border transitions stay on the element's
+   own `transition-colors hover:bg-*`/`hover:border-*` Tailwind classes — this
+   utility only adds the slow shimmer sweep on top, deliberately gentler/slower
+   than `.auth-shimmer`, and never translates/scales the element. */
+@keyframes hoverShimmerSweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+.hover-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.hover-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: translateX(-120%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+.hover-shimmer:hover::after {
+  opacity: 1;
+  animation: hoverShimmerSweep 3.2s ease-in-out infinite;
+}
