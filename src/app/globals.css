@@ -602,6 +602,7 @@ html.dark .seg button.on { background: #1F2535; color: white; }
 .hscroll::-webkit-scrollbar { display: none; }
 
 .inbox-back-mobile { display: none; }
+.settings-back-mobile { display: none; }
 
 /* ============ MOBILE RESPONSIVE ============ */
 
@@ -734,24 +735,28 @@ html.dark .seg button.on { background: #1F2535; color: white; }
   .inbox-profile.mob-on { display: flex !important; }
   .inbox-back-mobile { display: inline-flex !important; }
 
+  /* Settings — one pane (nav or section content) at a time */
+  .settings-layout {
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+  .settings-nav, .settings-content {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 1 100% !important;
+    min-height: 0;
+    border-radius: 0 !important;
+    border: none !important;
+    display: none !important;
+  }
+  .settings-nav { padding: 10px !important; }
+  .settings-content { padding: 14px !important; }
+  .settings-nav.mob-on, .settings-content.mob-on { display: flex !important; }
+  .settings-back-mobile { display: inline-flex !important; }
+
   /* Kanban list fallback */
   .kanban-grid { grid-template-columns: 1fr !important; }
-
-  /* settings */
-  .settings-layout { flex-direction: column !important; padding: 12px !important; gap: 10px !important; }
-  .settings-nav {
-    width: 100% !important;
-    flex-direction: row !important;
-    overflow-x: auto !important;
-    scrollbar-width: none;
-    padding: 6px !important;
-    gap: 4px !important;
-  }
-  .settings-nav::-webkit-scrollbar { display: none; }
-  .settings-nav .nav-item {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
 
   /* admin */
   .admin-stats { grid-template-columns: repeat(2, 1fr) !important; }

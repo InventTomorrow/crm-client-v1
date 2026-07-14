@@ -29,6 +29,7 @@ import {
   Bot,
   Building2,
   Check,
+  ChevronLeft,
   Cloud,
   Crown,
   Link,
@@ -596,6 +597,9 @@ const SECTION_OWNER_ONLY = new Set<SettingsSection>([
 export function SettingsView() {
   const { can, isOwner, isLoading: permsLoading } = usePermissions();
   const [section, setSection] = useState<SettingsSection>("profile");
+  // Mobile only: which pane is showing — the section nav or the active section's
+  // content. Desktop ignores this and shows both side by side (see globals.css).
+  const [mobShowNav, setMobShowNav] = useState(true);
 
   // Hide tabs the active role can't access (placeholder tabs stay visible but
   // disabled, as before).
@@ -613,9 +617,14 @@ export function SettingsView() {
   }, [permsLoading, section]);
 
   return (
-    <div className="flex gap-3.5 h-full overflow-hidden p-[18px]">
+    <div className="settings-layout flex gap-3.5 h-full overflow-hidden p-[18px]">
       {/* Sidebar nav */}
-      <div className="card shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]">
+      <div
+        className={cn(
+          "settings-nav card shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]",
+          mobShowNav && "mob-on",
+        )}
+      >
         <div className="text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1.5 text-[var(--ink-mute)]">
           Settings
         </div>
@@ -629,7 +638,11 @@ export function SettingsView() {
             <Button
               key={s.id}
               variant="ghost"
-              onClick={() => !disabled && setSection(s.id)}
+              onClick={() => {
+                if (disabled) return;
+                setSection(s.id);
+                setMobShowNav(false);
+              }}
               disabled={disabled}
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left w-full justify-start h-auto",
@@ -655,10 +668,23 @@ export function SettingsView() {
       {/* Content */}
       <div
         className={cn(
-          "scroll flex-1 overflow-y-auto flex flex-col gap-3.5",
+          "settings-content scroll flex-1 overflow-y-auto flex flex-col gap-3.5",
           section === "workspaces" && "p-0 gap-0",
+          !mobShowNav && "mob-on",
         )}
       >
+        <button
+          type="button"
+          onClick={() => setMobShowNav(true)}
+          className="settings-back-mobile items-center gap-1.5 text-[13px] font-medium text-[var(--ink-soft)] px-1 pt-1"
+        >
+          <ChevronLeft size={16} />
+          Settings
+          <span className="text-[var(--ink-mute)]">/</span>
+          <span className="text-[var(--ink)]">
+            {visibleNav.find((s) => s.id === section)?.label}
+          </span>
+        </button>
         {section === "profile" && <ProfileSection />}
         {section === "notif" && <NotifSection />}
         {section === "chatbot" && <ChatbotSection />}
