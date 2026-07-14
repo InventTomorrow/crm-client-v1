@@ -4,6 +4,8 @@ import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import {
   useCreateTenant,
   useDeleteTenant,
+  useLeaveWorkspace,
+  useLeftMembers,
   useRestoreTenant,
   useSwitchWorkspace,
 } from "@/features/tenant/hooks/useTenant";
@@ -22,10 +24,12 @@ import {
   Building2,
   Check,
   Crown,
+  LogOut,
   Loader2,
   Plus,
   Shield,
   Trash2,
+  UserMinus,
   Users,
 } from "lucide-react";
 import { useState } from "react";
@@ -224,6 +228,71 @@ function DeleteConfirmDialog({
 }
 
 // ─────────────────────────────────────────────────────────────
+// Leave Confirm Dialog
+// ─────────────────────────────────────────────────────────────
+function LeaveConfirmDialog({
+  workspaceName,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  workspaceName: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent
+        className="sm:max-w-[420px] p-0 gap-0 overflow-hidden"
+        showCloseButton={false}
+      >
+        <DialogHeader className="px-6 py-5 border-b border-[var(--line)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
+              <LogOut size={18} className="text-red-500" />
+            </div>
+            <div>
+              <DialogTitle className="text-[16px] font-semibold">
+                Leave Workspace
+              </DialogTitle>
+              <DialogDescription className="text-[12px] text-[var(--ink-mute)] mt-0.5">
+                You'll lose access immediately.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="p-6">
+          <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed">
+            You're about to leave{" "}
+            <strong className="text-[var(--ink)]">{workspaceName}</strong>.
+            You'll need a new invite to rejoin. The workspace owner will be
+            notified.
+          </p>
+        </div>
+        <div className="px-6 py-4 border-t border-[var(--line)] flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            {isPending ? (
+              <><Loader2 size={13} className="animate-spin" /> Leaving…</>
+            ) : (
+              <><LogOut size={13} /> Leave workspace</>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Workspace Card
 // ─────────────────────────────────────────────────────────────
 function WorkspaceCard({
@@ -233,6 +302,7 @@ function WorkspaceCard({
   onSwitch,
   onDelete,
   onRestore,
+  onLeave,
   isRestoring,
 }: {
   membership: {
@@ -251,6 +321,7 @@ function WorkspaceCard({
   onSwitch: () => void;
   onDelete: () => void;
   onRestore: () => void;
+  onLeave: () => void;
   isRestoring: boolean;
 }) {
   const color = PALETTE[index % PALETTE.length];
@@ -384,7 +455,7 @@ function WorkspaceCard({
                 <Check size={13} /> Currently active
               </div>
             )}
-            {isOwner && (
+            {isOwner ? (
               <Button
                 variant="outline"
                 size="icon"
@@ -393,6 +464,16 @@ function WorkspaceCard({
                 title="Delete workspace"
               >
                 <Trash2 size={14} />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="icon"
+                className="text-red-500 hover:bg-red-50 hover:border-red-200"
+                onClick={onLeave}
+                title="Leave workspace"
+              >
+                <UserMinus size={14} />
               </Button>
             )}
           </>
@@ -414,9 +495,15 @@ export function WorkspacesManagementView() {
   const { mutate: deleteWorkspace, isPending: isDeleting } = useDeleteTenant();
   const { mutate: restoreWorkspace, isPending: isRestoring } =
     useRestoreTenant();
+  const { mutate: leaveWorkspace, isPending: isLeaving } = useLeaveWorkspace();
+  const { data: leftMembers } = useLeftMembers();
 
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [leaveTarget, setLeaveTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
@@ -525,6 +612,9 @@ export function WorkspacesManagementView() {
                 setDeleteTarget({ id: m.tenant.id, name: m.tenant.name })
               }
               onRestore={() => restoreWorkspace(m.tenant.id)}
+              onLeave={() =>
+                setLeaveTarget({ id: m.tenant.id, name: m.tenant.name })
+              }
               isRestoring={isRestoring}
             />
           ))}
@@ -552,6 +642,37 @@ export function WorkspacesManagementView() {
         </div>
       )}
 
+      {/* Members who left (owner view) */}
+      {isOwner && leftMembers && leftMembers.length > 0 && (
+        <div className="card p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <UserMinus size={15} className="text-[var(--ink-mute)]" />
+            <h3 className="text-[13.5px] font-semibold text-[var(--ink)]">
+              Members who left
+            </h3>
+          </div>
+          <div className="flex flex-col divide-y divide-[var(--line)]">
+            {leftMembers.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between py-2.5 text-[12.5px]"
+              >
+                <span className="text-[var(--ink)] font-medium">
+                  {member.name ?? member.email ?? "Unknown member"}
+                </span>
+                <span className="text-[var(--ink-mute)]">
+                  {new Date(member.leftAt).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Dialogs */}
       {showCreate && (
         <CreateWorkspaceDialog onClose={() => setShowCreate(false)} />
@@ -567,6 +688,18 @@ export function WorkspacesManagementView() {
             );
           }}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+      {leaveTarget && (
+        <LeaveConfirmDialog
+          workspaceName={leaveTarget.name}
+          isPending={isLeaving}
+          onConfirm={() => {
+            leaveWorkspace(leaveTarget.id, {
+              onSuccess: () => setLeaveTarget(null),
+            });
+          }}
+          onClose={() => setLeaveTarget(null)}
         />
       )}
     </div>

@@ -97,6 +97,24 @@ export async function getMe(): Promise<UserResponse> {
   return res.data.data;
 }
 
+export interface LeftMemberItem {
+  id: string;
+  userId: string | null;
+  name: string | null;
+  email: string | null;
+  leftAt: string;
+}
+
+export async function leaveWorkspace(tenantId: string) {
+  const res = await apiClient.post('/auth/leave-workspace', { tenantId });
+  return res.data;
+}
+
+export async function getLeftMembers(): Promise<LeftMemberItem[]> {
+  const res = await apiClient.get<{ success: true; data: LeftMemberItem[] }>('/auth/left-members');
+  return res.data.data;
+}
+
 export async function switchWorkspace(tenantId: string) {
   // Shares the exclusive lock with refreshAccessToken() — see apiClient.ts —
   // so a concurrent /auth/refresh can't resolve after this and overwrite the

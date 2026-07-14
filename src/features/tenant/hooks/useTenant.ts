@@ -1,5 +1,10 @@
 "use client";
-import { getMe, switchWorkspace } from "@/features/auth/services/authService";
+import {
+  getLeftMembers,
+  getMe,
+  leaveWorkspace,
+  switchWorkspace,
+} from "@/features/auth/services/authService";
 import { useAppStore } from "@/lib/appStore";
 import { extractErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -112,6 +117,34 @@ export function useDeleteTenant() {
       }
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+/** Leave a workspace you're a non-owner member of */
+export function useLeaveWorkspace() {
+  const queryClient = useQueryClient();
+  const { currentWorkspaceId } = useAppStore();
+
+  return useMutation({
+    mutationFn: (tenantId: string) => leaveWorkspace(tenantId),
+    onSuccess: (_, tenantId) => {
+      toast.success("You left the workspace.");
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      if (tenantId === currentWorkspaceId) {
+        queryClient.invalidateQueries();
+      }
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+/** Members who left the current workspace (owner/admin view) */
+export function useLeftMembers() {
+  return useQuery({
+    queryKey: ["left-members"],
+    queryFn: getLeftMembers,
+    staleTime: 60 * 1000,
   });
 }
 
