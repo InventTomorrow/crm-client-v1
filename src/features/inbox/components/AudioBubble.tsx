@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { Mic, Pause, Play } from "lucide-react";
+import { Loader2, Mic, Pause, Play, RotateCw } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 
 // Static pseudo-waveform — deterministic bar heights for the WhatsApp look.
@@ -16,6 +16,8 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const knownDuration = Number.isFinite(duration) && duration > 0;
   const pct = knownDuration ? Math.min((progress / duration) * 100, 100) : 0;
@@ -57,11 +59,19 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
   const toggle = async () => {
     const a = audioRef.current;
     if (!a) return;
+
+    if (failed) {
+      setFailed(false);
+      a.load();
+    }
+
     if (a.paused) {
+      setLoading(true);
       try {
         await a.play();
       } catch {
-        /* autoplay/decoding guard */
+        setLoading(false);
+        setFailed(true);
       }
     } else {
       a.pause();
@@ -99,7 +109,10 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
       {/* Play / pause */}
       <button
         onClick={toggle}
-        aria-label={playing ? "Pause" : "Play"}
+        aria-label={
+          failed ? "Retry loading voice message" : playing ? "Pause" : "Play"
+        }
+        title={failed ? "Couldn't load voice message — tap to retry" : undefined}
         className={cn(
           "flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 transition-transform active:scale-95",
           outbound
@@ -107,7 +120,11 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
             : "bg-[var(--accent)] text-white",
         )}
       >
-        {playing ? (
+        {failed ? (
+          <RotateCw size={16} />
+        ) : loading ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : playing ? (
           <Pause size={16} fill="currentColor" />
         ) : (
           <Play size={16} fill="currentColor" className="ml-0.5" />
@@ -148,7 +165,11 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
             size={11}
             className={outbound ? "text-white/85" : "text-[var(--accent)]"}
           />
-          <span>{fmt(playing || progress > 0 ? progress : duration)}</span>
+          <span>
+            {failed
+              ? "Couldn't load — tap to retry"
+              : fmt(playing || progress > 0 ? progress : duration)}
+          </span>
         </div>
       </div>
 
@@ -159,11 +180,21 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
         onTimeUpdate={(e) => {
           if (!probingRef.current) setProgress(e.currentTarget.currentTime);
         }}
-        onPlay={() => setPlaying(true)}
+        onPlay={() => {
+          setPlaying(true);
+          setLoading(false);
+        }}
         onPause={() => setPlaying(false)}
         onEnded={() => {
           setPlaying(false);
           setProgress(0);
+        }}
+        onWaiting={() => setLoading(true)}
+        onCanPlay={() => setLoading(false)}
+        onError={() => {
+          setLoading(false);
+          setPlaying(false);
+          setFailed(true);
         }}
       />
     </div>
