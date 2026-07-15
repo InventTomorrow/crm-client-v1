@@ -1,9 +1,16 @@
-'use client';
-import { extractErrorMessage } from '@/lib/utils';
-import { keepPreviousData, type InfiniteData, type QueryClient, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
-import { useTypingStore } from '../stores/typingStore';
+"use client";
+import { extractErrorMessage } from "@/lib/utils";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   approveDraft,
   clearConversation,
@@ -12,10 +19,10 @@ import {
   escalateConversation,
   getConversation,
   getConversations,
-  openConversationForLead,
   getInboxUnreadCount,
   getMessages,
   markConversationRead,
+  openConversationForLead,
   resolveConversation,
   sendHumanMessage,
   sendMediaMessage,
@@ -24,14 +31,19 @@ import {
   toggleAiMode,
   uploadAttachment,
   type StartConversationInput,
-} from '../services/inboxService';
-import type { ConversationDetail, ConversationFilter, ConversationListItem } from '../types';
+} from "../services/inboxService";
+import { useTypingStore } from "../stores/typingStore";
+import type {
+  ConversationDetail,
+  ConversationFilter,
+  ConversationListItem,
+} from "../types";
 
 // Polls are slow fallbacks only — the /events SSE stream invalidates these
 // caches the moment something changes (see applyConversationEvent).
 export function useConversations() {
   return useQuery({
-    queryKey: ['conversations'],
+    queryKey: ["conversations"],
     queryFn: () => getConversations({}),
     refetchInterval: 60_000,
   });
@@ -39,7 +51,7 @@ export function useConversations() {
 
 export function useInboxUnreadCount() {
   return useQuery({
-    queryKey: ['conversations', 'unread-count'],
+    queryKey: ["conversations", "unread-count"],
     queryFn: getInboxUnreadCount,
     refetchInterval: 60_000,
   });
@@ -52,7 +64,7 @@ export function useMarkConversationRead() {
     onMutate: (id: string) => {
       // Optimistically zero-out unreadCount so the unread tab updates instantly.
       queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
-        { queryKey: ['conversations', 'infinite'] },
+        { queryKey: ["conversations", "infinite"] },
         (old) => {
           if (!old?.pages) return old;
           return {
@@ -65,17 +77,18 @@ export function useMarkConversationRead() {
       );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
 
 export function useInfiniteConversations(search?: string) {
   return useInfiniteQuery({
-    queryKey: ['conversations', 'infinite', search ?? ''],
+    queryKey: ["conversations", "infinite", search ?? ""],
     queryFn: ({ pageParam }) => getConversations({ pageParam, search }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
     refetchInterval: 60_000,
     // Keep stale data visible during background refetches so the list never
     // flashes empty while a fetch is in-flight (e.g. transient disconnect).
@@ -85,7 +98,7 @@ export function useInfiniteConversations(search?: string) {
 
 export function useConversationDetail(id: string | null) {
   return useQuery({
-    queryKey: ['conversation', id],
+    queryKey: ["conversation", id],
     queryFn: () => getConversation(id!),
     enabled: !!id,
     refetchInterval: 30_000,
@@ -94,10 +107,11 @@ export function useConversationDetail(id: string | null) {
 
 export function useMessagesPaginated(id: string | null) {
   return useInfiniteQuery({
-    queryKey: ['conversation', id, 'messages'],
+    queryKey: ["conversation", id, "messages"],
     queryFn: getMessages,
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.length === 30 ? lastPage[lastPage.length - 1].id : undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.length === 30 ? lastPage[lastPage.length - 1].id : undefined,
     enabled: !!id,
     refetchInterval: 30_000,
   });
@@ -108,10 +122,16 @@ export function useApproveDraft(conversationId: string) {
   return useMutation({
     mutationFn: (messageId: string) => approveDraft(conversationId, messageId),
     onSuccess: () => {
-      toast.success('Reply sent');
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
+      toast.success("Reply sent");
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send reply')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to send reply")),
   });
 }
 
@@ -120,32 +140,44 @@ export function useSendHumanReply(conversationId: string) {
   return useMutation({
     mutationFn: (content: string) => sendHumanMessage(conversationId, content),
     onMutate: async (content) => {
-      await queryClient.cancelQueries({ queryKey: ['conversation', conversationId] });
-      const prev = queryClient.getQueryData<ConversationDetail>(['conversation', conversationId]);
+      await queryClient.cancelQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      const prev = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        conversationId,
+      ]);
       if (prev) {
-        queryClient.setQueryData<ConversationDetail>(['conversation', conversationId], {
-          ...prev,
-          messages: [
-            ...prev.messages,
-            {
-              id: `optimistic-${Date.now()}`,
-              conversationId,
-              senderType: 'AGENT',
-              content,
-              isDraft: false,
-              createdAt: new Date().toISOString(),
-              isDeleted: false,
-            },
-          ],
-        });
+        queryClient.setQueryData<ConversationDetail>(
+          ["conversation", conversationId],
+          {
+            ...prev,
+            messages: [
+              ...prev.messages,
+              {
+                id: `optimistic-${Date.now()}`,
+                conversationId,
+                senderType: "AGENT",
+                content,
+                isDraft: false,
+                createdAt: new Date().toISOString(),
+                isDeleted: false,
+              },
+            ],
+          },
+        );
       }
       return { prev };
     },
     onError: (error, _content, ctx) => {
-      toast.error(extractErrorMessage(error, 'Failed to send message'));
-      if (ctx?.prev) queryClient.setQueryData(['conversation', conversationId], ctx.prev);
+      toast.error(extractErrorMessage(error, "Failed to send message"));
+      if (ctx?.prev)
+        queryClient.setQueryData(["conversation", conversationId], ctx.prev);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      }),
   });
 }
 
@@ -154,31 +186,51 @@ export function useStartConversation() {
   return useMutation({
     mutationFn: (input: StartConversationInput) => startConversation(input),
     onSuccess: () => {
-      toast.success('Chat started');
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
+      toast.success("Chat started");
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversations", "infinite"],
+      });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to start chat')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to start chat")),
   });
 }
 
 export function useSendMedia(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ mediaUrl, mimeType, caption, fileName }: { mediaUrl: string; mimeType: string; caption?: string; fileName?: string }) =>
+    mutationFn: ({
+      mediaUrl,
+      mimeType,
+      caption,
+      fileName,
+    }: {
+      mediaUrl: string;
+      mimeType: string;
+      caption?: string;
+      fileName?: string;
+    }) =>
       sendMediaMessage(conversationId, mediaUrl, mimeType, caption, fileName),
     onSuccess: () => {
-      toast.success('Media sent');
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
+      toast.success("Media sent");
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send media')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to send media")),
   });
 }
 
 export function useUploadAttachment() {
   return useMutation({
     mutationFn: (file: File) => uploadAttachment(file),
-    onError: (error) => toast.error(extractErrorMessage(error, 'Upload failed')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Upload failed")),
   });
 }
 
@@ -188,30 +240,55 @@ export function useToggleAiMode(conversationId: string) {
     mutationFn: () => toggleAiMode(conversationId),
     // Optimistically flip aiEnabled in the cached conversation detail + list.
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['conversation', conversationId] });
-      const prevDetail = queryClient.getQueryData<ConversationDetail>(['conversation', conversationId]);
-      const prevList = queryClient.getQueryData<ConversationListItem[]>(['conversations']);
+      await queryClient.cancelQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      const prevDetail = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        conversationId,
+      ]);
+      const prevList = queryClient.getQueryData<ConversationListItem[]>([
+        "conversations",
+      ]);
       if (prevDetail) {
-        queryClient.setQueryData<ConversationDetail>(['conversation', conversationId], { ...prevDetail, aiEnabled: !prevDetail.aiEnabled });
+        queryClient.setQueryData<ConversationDetail>(
+          ["conversation", conversationId],
+          { ...prevDetail, aiEnabled: !prevDetail.aiEnabled },
+        );
       }
       if (prevList) {
-        queryClient.setQueryData<ConversationListItem[]>(['conversations'], prevList.map((c) => c.id === conversationId ? { ...c, aiEnabled: !c.aiEnabled } : c));
+        queryClient.setQueryData<ConversationListItem[]>(
+          ["conversations"],
+          prevList.map((c) =>
+            c.id === conversationId ? { ...c, aiEnabled: !c.aiEnabled } : c,
+          ),
+        );
       }
       return { prevDetail, prevList };
     },
     onError: (error, _v, ctx) => {
-      if (ctx?.prevDetail) queryClient.setQueryData(['conversation', conversationId], ctx.prevDetail);
-      if (ctx?.prevList) queryClient.setQueryData(['conversations'], ctx.prevList);
-      toast.error(extractErrorMessage(error, 'Failed to toggle AI mode'));
+      if (ctx?.prevDetail)
+        queryClient.setQueryData(
+          ["conversation", conversationId],
+          ctx.prevDetail,
+        );
+      if (ctx?.prevList)
+        queryClient.setQueryData(["conversations"], ctx.prevList);
+      toast.error(extractErrorMessage(error, "Failed to toggle AI mode"));
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
 
-type EscalationStatus = ConversationListItem['escalationStatus'];
+type EscalationStatus = ConversationListItem["escalationStatus"];
 
 /** Optimistically writes the next escalation status into the list + detail caches. */
 function patchEscalationCache(
@@ -220,7 +297,7 @@ function patchEscalationCache(
   next: EscalationStatus,
 ) {
   queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
-    { queryKey: ['conversations', 'infinite'] },
+    { queryKey: ["conversations", "infinite"] },
     (old) => {
       if (!old?.pages) return old;
       return {
@@ -231,9 +308,15 @@ function patchEscalationCache(
       };
     },
   );
-  const detail = queryClient.getQueryData<ConversationDetail>(['conversation', id]);
+  const detail = queryClient.getQueryData<ConversationDetail>([
+    "conversation",
+    id,
+  ]);
   if (detail) {
-    queryClient.setQueryData<ConversationDetail>(['conversation', id], { ...detail, escalationStatus: next });
+    queryClient.setQueryData<ConversationDetail>(["conversation", id], {
+      ...detail,
+      escalationStatus: next,
+    });
   }
 }
 
@@ -243,22 +326,28 @@ export function useEscalate() {
   return useMutation({
     mutationFn: escalateConversation,
     onMutate: (id: string) => {
-      const detail = queryClient.getQueryData<ConversationDetail>(['conversation', id]);
+      const detail = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        id,
+      ]);
       const prev = detail?.escalationStatus;
-      const next: EscalationStatus = prev === 'ESCALATED' ? 'NONE' : 'ESCALATED';
+      const next: EscalationStatus =
+        prev === "ESCALATED" ? "NONE" : "ESCALATED";
       patchEscalationCache(queryClient, id, next);
       return { prev, next };
     },
     onSuccess: (_, __, ctx) => {
-      toast.success(ctx?.next === 'ESCALATED' ? 'Conversation flagged' : 'Flag removed');
+      toast.success(
+        ctx?.next === "ESCALATED" ? "Conversation flagged" : "Flag removed",
+      );
     },
     onError: (error, id, ctx) => {
       if (ctx?.prev) patchEscalationCache(queryClient, id, ctx.prev);
-      toast.error(extractErrorMessage(error, 'Failed to update'));
+      toast.error(extractErrorMessage(error, "Failed to update"));
     },
     onSettled: (_, __, id) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversation', id] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation", id] });
     },
   });
 }
@@ -269,22 +358,25 @@ export function useResolve() {
   return useMutation({
     mutationFn: resolveConversation,
     onMutate: (id: string) => {
-      const detail = queryClient.getQueryData<ConversationDetail>(['conversation', id]);
+      const detail = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        id,
+      ]);
       const prev = detail?.escalationStatus;
-      const next: EscalationStatus = prev === 'RESOLVED' ? 'NONE' : 'RESOLVED';
+      const next: EscalationStatus = prev === "RESOLVED" ? "NONE" : "RESOLVED";
       patchEscalationCache(queryClient, id, next);
       return { prev, next };
     },
     onSuccess: (_, __, ctx) => {
-      toast.success(ctx?.next === 'RESOLVED' ? 'Marked as done' : 'Reopened');
+      toast.success(ctx?.next === "RESOLVED" ? "Marked as done" : "Reopened");
     },
     onError: (error, id, ctx) => {
       if (ctx?.prev) patchEscalationCache(queryClient, id, ctx.prev);
-      toast.error(extractErrorMessage(error, 'Failed to update'));
+      toast.error(extractErrorMessage(error, "Failed to update"));
     },
     onSettled: (_, __, id) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversation', id] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation", id] });
     },
   });
 }
@@ -298,28 +390,36 @@ export function useDeleteChat() {
     // chat immediately — otherwise the auto-select effect re-picks the stale
     // (just-deleted) first row before the refetch lands.
     onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ['conversations', 'infinite'] });
-      const prev = queryClient.getQueriesData<InfiniteData<ConversationListItem[]>>({
-        queryKey: ['conversations', 'infinite'],
+      await queryClient.cancelQueries({
+        queryKey: ["conversations", "infinite"],
+      });
+      const prev = queryClient.getQueriesData<
+        InfiniteData<ConversationListItem[]>
+      >({
+        queryKey: ["conversations", "infinite"],
       });
       queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
-        { queryKey: ['conversations', 'infinite'] },
+        { queryKey: ["conversations", "infinite"] },
         (old) => {
           if (!old?.pages) return old;
-          return { ...old, pages: old.pages.map((page) => page.filter((c) => c.id !== id)) };
+          return {
+            ...old,
+            pages: old.pages.map((page) => page.filter((c) => c.id !== id)),
+          };
         },
       );
       return { prev };
     },
     onSuccess: (_, id) => {
-      queryClient.removeQueries({ queryKey: ['conversation', id] });
-      toast.success('Chat deleted');
+      queryClient.removeQueries({ queryKey: ["conversation", id] });
+      toast.success("Chat deleted");
     },
     onError: (error, _id, ctx) => {
       ctx?.prev?.forEach(([key, data]) => queryClient.setQueryData(key, data));
-      toast.error(extractErrorMessage(error, 'Failed to delete chat'));
+      toast.error(extractErrorMessage(error, "Failed to delete chat"));
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["conversations"] }),
   });
 }
 
@@ -329,10 +429,11 @@ export function useOpenConversation() {
   return useMutation({
     mutationFn: (leadId: string) => openConversationForLead(leadId),
     onSuccess: (detail) => {
-      queryClient.setQueryData(['conversation', detail.id], detail);
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.setQueryData(["conversation", detail.id], detail);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to open chat')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to open chat")),
   });
 }
 
@@ -347,11 +448,14 @@ export function filterConversations(
   // Locally deleted chats never appear anywhere.
   const visible = conversations.filter((c) => !hidden?.has(c.id));
   // The Archived tab shows only archived chats; every other view excludes them.
-  if (filter === 'archived') return visible.filter((c) => archived?.has(c.id) ?? false);
+  if (filter === "archived")
+    return visible.filter((c) => archived?.has(c.id) ?? false);
   const active = visible.filter((c) => !archived?.has(c.id));
-  if (filter === 'escalated') return active.filter((c) => c.escalationStatus === 'ESCALATED');
-  if (filter === 'unread') return active.filter((c) => c.unreadCount > 0);
-  if (filter === 'favorites') return active.filter((c) => favorites?.has(c.id) ?? false);
+  if (filter === "escalated")
+    return active.filter((c) => c.escalationStatus === "ESCALATED");
+  if (filter === "unread") return active.filter((c) => c.unreadCount > 0);
+  if (filter === "favorites")
+    return active.filter((c) => favorites?.has(c.id) ?? false);
   // Custom tab: only show assigned conversations
   if (tabAssignments && filter in tabAssignments) {
     const ids = tabAssignments[filter];
@@ -363,26 +467,48 @@ export function filterConversations(
 export function useDeleteMessage(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ messageId, everyone }: { messageId: string; everyone: boolean }) =>
-      deleteMessage(conversationId, messageId, everyone),
+    mutationFn: ({
+      messageId,
+      everyone,
+    }: {
+      messageId: string;
+      everyone: boolean;
+    }) => deleteMessage(conversationId, messageId, everyone),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
-      toast.success('Message deleted');
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
+      toast.success("Message deleted");
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to delete message')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to delete message")),
   });
 }
 
 export function useEditMessage(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
-      editMessage(conversationId, messageId, content),
+    mutationFn: ({
+      messageId,
+      content,
+    }: {
+      messageId: string;
+      content: string;
+    }) => editMessage(conversationId, messageId, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
-      toast.success('Message updated');
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
+      toast.success("Message updated");
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to update message')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to update message")),
   });
 }
 
@@ -405,17 +531,25 @@ export function applyConversationEvent(
   queryClient: QueryClient,
   event: { type: string; conversationId?: string },
 ): void {
-  if (event.type === 'new-message') {
-    queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
-    queryClient.invalidateQueries({ queryKey: ['conversation', event.conversationId] });
-    queryClient.invalidateQueries({ queryKey: ['conversation', event.conversationId, 'messages'] });
-    queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
+  if (event.type === "new-message") {
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["conversations", "infinite"] });
+    queryClient.invalidateQueries({
+      queryKey: ["conversation", event.conversationId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["conversation", event.conversationId, "messages"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["conversations", "unread-count"],
+    });
   }
-  if (event.type === 'new-conversation') {
-    queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
-    queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
+  if (event.type === "new-conversation") {
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["conversations", "infinite"] });
+    queryClient.invalidateQueries({
+      queryKey: ["conversations", "unread-count"],
+    });
   }
 }
 
