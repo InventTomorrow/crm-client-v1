@@ -1,16 +1,73 @@
 export type { Product } from '@/lib/mockData';
 import { z } from 'zod';
 
+<<<<<<< Updated upstream
 export const CATEGORIES = ['Apparel', 'Footwear', 'Kitchen', 'Accessories', 'Beauty', 'Electronics'] as const;
 export type Category = typeof CATEGORIES[number];
 
 export type InventoryView = 'grid' | 'list';
+=======
+export const CATEGORIES = [
+  "Apparel",
+  "Footwear",
+  "Kitchen",
+  "Accessories",
+  "Beauty",
+  "Electronics",
+  "Food",
+] as const;
+export type Category = (typeof CATEGORIES)[number];
+
+/** Food has no stock count — just an in-stock/active toggle — and no size/color/gender. */
+export function isFoodCategory(category?: string): boolean {
+  return category?.trim().toLowerCase() === "food";
+}
+
+export type InventoryView = "grid" | "list";
+>>>>>>> Stashed changes
 
 const numericField = z.union([z.string(), z.number()]).transform(v =>
   typeof v === 'string' ? (v === '' ? 0 : parseFloat(v)) : v
 );
 
 export const GENDERS = ['Unisex', 'Men', 'Women', 'Kids'] as const;
+
+export const DIETARY_TAGS = ["Veg", "Non-Veg", "Halal", "Vegan"] as const;
+
+/** Starter menu sections for the creatable Food "type" picker. */
+export const FOOD_TYPES = [
+  "Pizza",
+  "Burger",
+  "Wings",
+  "Fried Chicken",
+  "Wraps",
+  "Fries",
+  "Pasta",
+  "Steaks",
+  "Sides",
+  "Drinks",
+  "Add-ons",
+  "Deals",
+  "Desserts",
+] as const;
+
+/** Starter cuisines for the creatable cuisine picker — users can add their own. */
+export const CUISINES = [
+  "Desi",
+  "Pakistani",
+  "Indian",
+  "Chinese",
+  "Thai",
+  "Italian",
+  "Continental",
+  "Arabian",
+  "Fast Food",
+  "BBQ",
+  "Seafood",
+  "Mexican",
+  "Desserts",
+  "Beverages",
+] as const;
 
 /** Grouped size options for the product form's size selector. Values stay unique across groups. */
 export const SIZE_GROUPS = [
@@ -27,6 +84,7 @@ export function getSizeGroupsForCategory(category?: string): typeof SIZE_GROUPS[
   return SIZE_GROUPS.filter((g) => g.label === 'General');
 }
 
+<<<<<<< Updated upstream
 export const productSchema = z.object({
   name:   z.string().min(1, 'Product name is required'),
   sku:    z.string().optional(),
@@ -37,9 +95,107 @@ export const productSchema = z.object({
   gender: z.string().optional(),
   color:  z.string().optional(),
   desc:   z.string().optional(),
+=======
+/** A single food menu variant (size/portion) with its own absolute price. */
+export const variantSchema = z.object({
+  id: z.string().optional(),
+  label: z.string().min(1, "Required"),
+  price: numericField.pipe(z.number().positive("Must be > 0")),
+  discountPercentage: numericField
+    .pipe(z.number().min(0, "≥ 0").max(100, "≤ 100"))
+    .optional(),
+  available: z.boolean().default(true),
+  variantSku: z.string().optional(),
+>>>>>>> Stashed changes
 });
+export type VariantFormData = z.infer<typeof variantSchema>;
+
+export const productSchema = z
+  .object({
+    name: z.string().min(1, "Product name is required"),
+    sku: z.string().optional(),
+    price: numericField.pipe(z.number().min(0, "Price must be ≥ 0")).default(0),
+    discountPercentage: numericField
+      .pipe(
+        z
+          .number()
+          .min(0, "Discount must be ≥ 0")
+          .max(100, "Discount must be ≤ 100"),
+      )
+      .optional(),
+    stock: numericField.pipe(z.number().min(0, "Stock must be ≥ 0")).default(0),
+    inStock: z.boolean().default(true),
+    cat: z.string().default("Apparel"),
+    sizes: z.array(z.string()).default([]),
+    gender: z.string().optional(),
+    color: z.string().optional(),
+    cuisine: z.string().optional(),
+    dietaryTag: z.array(z.string()).default([]),
+    type: z.string().optional(),
+    subType: z.string().optional(),
+    variants: z.array(variantSchema).default([]),
+    desc: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (isFoodCategory(data.cat)) {
+      // Food is priced per variant — require at least one.
+      if (!data.variants || data.variants.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["variants"],
+          message: "Add at least one size / variant with a price",
+        });
+      }
+    } else if (!data.price || data.price <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["price"],
+        message: "Price must be positive",
+      });
+    }
+  });
 
 export type ProductFormData = z.infer<typeof productSchema>;
+/** Raw form-input shape (before Zod coercion) — used to type the RHF control. */
+export type ProductFormInput = z.input<typeof productSchema>;
+
+/**
+ * Category field registry — the scalable extension point for per-category
+ * fields. Add a category's config here and the form/save logic adapt without
+ * touching component internals. `default` covers any category not listed.
+ */
+export interface CategoryFieldConfig {
+  /** Priced per-variant (Food) rather than a single base price. */
+  usesVariants: boolean;
+  /** Hide the internal stock count (Food tracks availability per variant). */
+  hidesStock: boolean;
+  /** Which detail fields this category shows. */
+  detailFields: Array<
+    "cuisine" | "dietaryTag" | "type" | "subType" | "gender" | "color" | "sizes"
+  >;
+}
+
+const FOOD_FIELD_CONFIG: CategoryFieldConfig = {
+  usesVariants: true,
+  hidesStock: true,
+  detailFields: ["cuisine", "dietaryTag", "type", "subType"],
+};
+
+const DEFAULT_FIELD_CONFIG: CategoryFieldConfig = {
+  usesVariants: false,
+  hidesStock: false,
+  detailFields: ["gender", "color", "sizes"],
+};
+
+const CATEGORY_FIELD_CONFIG: Record<string, CategoryFieldConfig> = {
+  food: FOOD_FIELD_CONFIG,
+};
+
+/** Resolves the field config for a category (case-insensitive), with a default. */
+export function getCategoryFieldConfig(category?: string): CategoryFieldConfig {
+  const key = category?.trim().toLowerCase();
+  return (key && CATEGORY_FIELD_CONFIG[key]) || DEFAULT_FIELD_CONFIG;
+}
 
 export const TIERS = [
   { id: 1, name: 'Manual Catalog',  desc: 'Add products one-by-one. Best for small sellers starting out.', cta: 'Add Product', count: '6 active' },
