@@ -10,11 +10,22 @@ import {
 } from "./Dialog";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./Select";
+
+export type ExportFormat = "csv" | "json";
 
 /**
- * Reusable CSV export dialog: asks for a file name (pre-filled with a sensible
+ * Reusable export dialog: asks for a file name (pre-filled with a sensible
  * default) and shows a spinner while the export runs. The caller does the
- * actual CSV build/download in `onConfirm` and appends `.csv` itself.
+ * actual file build/download in `onConfirm`, which receives the chosen
+ * extension so it can branch on format. Pass `formats` with more than one
+ * entry to show an extension picker instead of a fixed suffix.
  */
 export function ExportDialog({
   open,
@@ -23,28 +34,35 @@ export function ExportDialog({
   defaultName,
   count,
   title = "Export CSV",
+  formats = ["csv"],
 }: {
   open: boolean;
   onClose: () => void;
-  onConfirm: (filename: string) => void | Promise<void>;
+  onConfirm: (filename: string, format: ExportFormat) => void | Promise<void>;
   defaultName: string;
   count?: number;
   title?: string;
+  /** File formats the caller can produce. Defaults to CSV-only. */
+  formats?: ExportFormat[];
 }) {
   const [name, setName] = useState(defaultName);
+  const [format, setFormat] = useState<ExportFormat>(formats[0]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName(defaultName);
+      setFormat(formats[0]);
       setLoading(false);
     }
+    // Formats is stable per caller — only re-seed when the dialog (re)opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultName]);
 
   const submit = async () => {
     setLoading(true);
     try {
-      await onConfirm(name.trim() || defaultName);
+      await onConfirm(name.trim() || defaultName, format);
       onClose();
     } finally {
       setLoading(false);
@@ -85,7 +103,27 @@ export function ExportDialog({
               }}
               disabled={loading}
             />
-            <span className="text-[12.5px] text-[var(--ink-mute)]">.csv</span>
+            {formats.length > 1 ? (
+              <Select
+                value={format}
+                onValueChange={(v) => setFormat(v as ExportFormat)}
+              >
+                <SelectTrigger className="w-[84px] text-[12.5px]" size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {formats.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      .{f}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className="text-[12.5px] text-[var(--ink-mute)]">
+                .{format}
+              </span>
+            )}
           </div>
         </div>
 
