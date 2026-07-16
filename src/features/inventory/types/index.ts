@@ -156,6 +156,12 @@ export type ProductFormData = z.infer<typeof productSchema>;
 /** Raw form-input shape (before Zod coercion) — used to type the RHF control. */
 export type ProductFormInput = z.input<typeof productSchema>;
 
+/** A row in the bulk-add/import review list, before it's saved as a product. */
+export interface BulkItem extends ProductFormData {
+  imageUrl?: string;
+  imageUrls?: string[];
+}
+
 /**
  * Category field registry — the scalable extension point for per-category
  * fields. Add a category's config here and the form/save logic adapt without

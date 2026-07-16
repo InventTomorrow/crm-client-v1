@@ -1,5 +1,6 @@
 import { parseCsv } from "@/lib/csv";
-import type { BulkItem } from "../components/BulkAddDialog";
+import { readFileTextWithMinDelay } from "@/lib/fileText";
+import type { BulkItem, VariantFormData } from "../types";
 
 /** Reads the first matching key from a row, tolerating spaces/underscores in headers. */
 function pick(o: Record<string, string>, ...keys: string[]): string {
@@ -44,6 +45,28 @@ function toNumber(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Parses a `variants` cell — pipe-separated `Label:Price` pairs, with optional
+ * `:Discount` and `:SKU` — into Food-category variant rows.
+ * e.g. "Small:600|Medium:1200:10|Large:1900::PIZZA-L" */
+function parseVariantsCell(raw: string): VariantFormData[] {
+  if (!raw) return [];
+  return raw
+    .split("|")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [label, price, discount, sku] = entry.split(":").map((s) => s.trim());
+      return {
+        label: label || "Regular",
+        price: toNumber(price ?? ""),
+        discountPercentage: discount ? toNumber(discount) : undefined,
+        available: true,
+        variantSku: sku || undefined,
+      };
+    })
+    .filter((v) => v.label && v.price > 0);
+}
+
 /** Maps a single parsed CSV/JSON row (keys already lowercased) to a BulkItem. */
 export function rowToBulkItem(o: Record<string, string>): BulkItem {
   const images = parseImages(o);
@@ -72,7 +95,7 @@ export function rowToBulkItem(o: Record<string, string>): BulkItem {
       .filter(Boolean),
     type: pick(o, "type", "menusection", "section"),
     subType: pick(o, "subtype", "sub_type"),
-    variants: [],
+    variants: parseVariantsCell(pick(o, "variants", "variant")),
     desc: pick(o, "description", "desc", "details"),
     imageUrl: images[0] ?? "",
     imageUrls: images,
@@ -106,4 +129,14 @@ export function parseProductsJson(text: string): BulkItem[] {
     ? j
     : (j.products ?? []);
   return arr.map((p) => rowToBulkItem(objectToRow(p))).filter((p) => p.name);
+}
+
+/** Single entry point for both import surfaces (the header dropdown and the
+ * bulk-add sheet's own dropzone): reads the file, holds it for the minimum
+ * overlay duration, and parses it by extension. */
+export async function parseProductImportFile(file: File): Promise<BulkItem[]> {
+  const text = await readFileTextWithMinDelay(file);
+  return file.name.toLowerCase().endsWith(".json")
+    ? parseProductsJson(text)
+    : parseProductsCsv(text);
 }

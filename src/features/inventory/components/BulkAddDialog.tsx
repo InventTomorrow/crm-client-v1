@@ -9,25 +9,30 @@ import {
   SheetTitle,
 } from "@/shared/ui/Sheet";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Form } from "@/shared/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ImageIcon, Loader2, Plus, Upload, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Check,
+  Grid2x2,
+  ImageIcon,
+  List,
+  Loader2,
+  Plus,
+  Upload,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { presignedUpload } from "../services/productsService";
-import type { ProductFormData, ProductFormInput } from "../types";
+import type { BulkItem, ProductFormData, ProductFormInput } from "../types";
 import { CATEGORIES, productSchema } from "../types";
-import {
-  parseProductsCsv,
-  parseProductsJson,
-} from "../utils/importProductsCsv";
+import { parseProductImportFile } from "../utils/importProductsCsv";
 import { ProductFormBody } from "./ProductFormBody";
 
-export interface BulkItem extends ProductFormData {
-  imageUrl?: string;
-  imageUrls?: string[];
-}
+export type { BulkItem };
 
 const EMPTY_ITEM = (): BulkItem => ({
   name: "",
@@ -146,18 +151,26 @@ function BulkCard({
   active,
   onClick,
   onRemove,
+  enterDelay = 0,
 }: {
   item: BulkItem;
   index: number;
   active: boolean;
   onClick: () => void;
   onRemove: () => void;
+  /** Stagger delay (seconds) for this card's entrance animation. */
+  enterDelay?: number;
 }) {
   const bad = !item.name || item.price <= 0 || item.stock < 0;
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.22, delay: enterDelay, ease: "easeOut" }}
       onClick={onClick}
-      className={`relative flex flex-col gap-1.5 rounded-[10px] border cursor-pointer p-[8px] transition-all
+      className={`relative flex flex-col gap-1.5 rounded-[10px] border cursor-pointer p-[8px] transition-colors
         ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : bad ? "border-[#FCA5A5] bg-[var(--surface)]" : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]"}`}
     >
       {/* Image */}
@@ -173,8 +186,21 @@ function BulkCard({
           <ImageIcon size={20} className="text-[var(--ink-mute)] opacity-40" />
         )}
       </div>
-      <div className="text-[12px] font-medium truncate">
+      <div
+        className="text-[12px] font-medium leading-tight line-clamp-2"
+        title={item.name}
+      >
         {item.name || `Item ${index + 1}`}
+      </div>
+      <div className="flex items-center justify-between gap-1 text-[10.5px] text-[var(--ink-mute)]">
+        <span className="font-[var(--font-mono)] truncate">
+          {item.sku || "—"}
+        </span>
+        {item.cat && (
+          <span className="badge shrink-0 py-px px-1.5 bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
+            {item.cat}
+          </span>
+        )}
       </div>
       <div className="flex items-center justify-between text-[11px]">
         <span className="font-[var(--font-mono)] text-[var(--ink-soft)]">
@@ -203,7 +229,91 @@ function BulkCard({
       >
         <X size={11} />
       </Button>
-    </div>
+    </motion.div>
+  );
+}
+
+// ── Product list row (list view) ────────────────────────────
+function BulkListRow({
+  item,
+  index,
+  active,
+  onClick,
+  onRemove,
+  enterDelay = 0,
+}: {
+  item: BulkItem;
+  index: number;
+  active: boolean;
+  onClick: () => void;
+  onRemove: () => void;
+  enterDelay?: number;
+}) {
+  const bad = !item.name || item.price <= 0 || item.stock < 0;
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -8 }}
+      transition={{ duration: 0.18, delay: enterDelay, ease: "easeOut" }}
+      onClick={onClick}
+      className={`relative flex items-center gap-3 rounded-[8px] border cursor-pointer px-2.5 py-2 transition-colors
+        ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : bad ? "border-[#FCA5A5] bg-[var(--surface)]" : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]"}`}
+    >
+      <div className="w-9 h-9 flex-shrink-0 rounded-[7px] overflow-hidden bg-[var(--surface-2)] flex items-center justify-center">
+        {item.imageUrl ? (
+          <ShimmerImage
+            src={getImageUrl(item.imageUrl)}
+            alt={item.name}
+            wrapperClassName="w-full h-full"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <ImageIcon size={14} className="text-[var(--ink-mute)] opacity-40" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[12.5px] font-medium truncate" title={item.name}>
+          {item.name || `Item ${index + 1}`}
+        </div>
+        <div className="flex items-center gap-2 text-[10.5px] text-[var(--ink-mute)]">
+          <span className="font-[var(--font-mono)] truncate">
+            {item.sku || "—"}
+          </span>
+          {item.cat && (
+            <span className="badge shrink-0 py-px px-1.5 bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
+              {item.cat}
+            </span>
+          )}
+        </div>
+      </div>
+      <span className="w-[70px] flex-shrink-0 text-right font-[var(--font-mono)] text-[11.5px] text-[var(--ink-soft)]">
+        {item.price ? pkr(item.price) : "—"}
+      </span>
+      <span
+        className={`badge w-[46px] flex-shrink-0 justify-center py-px px-1.5 font-medium ${item.stock > 0 ? "bg-[rgba(34,197,94,0.12)] text-[#15803D]" : "bg-[rgba(239,68,68,0.12)] text-[#DC2626]"}`}
+      >
+        {item.stock}
+      </span>
+      {bad && (
+        <div className="flex-shrink-0 px-1 py-px rounded-full text-[9px] font-bold text-white bg-[#EF4444]">
+          !
+        </div>
+      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 flex-shrink-0"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+      >
+        <X size={12} />
+      </Button>
+    </motion.div>
   );
 }
 
@@ -228,6 +338,13 @@ const IMPORT_COLUMNS: { name: string; detail: string; example: string }[] = [
   { name: "cuisine", detail: "Food cuisine / kitchen", example: "Fast Food" },
   { name: "dietaryTag", detail: "Diet label", example: "Halal" },
   { name: "type", detail: "Menu section", example: "Pizza" },
+  { name: "subType", detail: "Food finer group", example: "Char-Grilled Beef Burger" },
+  {
+    name: "variants",
+    detail:
+      "Food only: pipe-separated Label:Price pairs — one product, multiple priced sizes",
+    example: "Small:600|Medium:1200|Large:1900|Family:2400",
+  },
   { name: "gender", detail: "Apparel target gender", example: "Men" },
   { name: "color", detail: "Apparel colour", example: "Maroon" },
   { name: "sizes", detail: "Pipe-separated size list", example: "S | M | L" },
@@ -268,6 +385,8 @@ export function BulkAddDialog({
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [emptyMode, setEmptyMode] = useState<EmptyMode>("choose");
+  const [parsingInternal, setParsingInternal] = useState(false);
+  const [bulkView, setBulkView] = useState<"grid" | "list">("grid");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -296,23 +415,19 @@ export function BulkAddDialog({
     });
   };
 
-  const parseFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      try {
-        const parsed = file.name.endsWith(".json")
-          ? parseProductsJson(text)
-          : parseProductsCsv(text);
-        addItems(parsed);
-        toast.success(
-          `${parsed.length} product${parsed.length !== 1 ? "s" : ""} imported`,
-        );
-      } catch (err) {
-        toast.error(extractErrorMessage(err));
-      }
-    };
-    reader.readAsText(file);
+  const parseFile = async (file: File) => {
+    setParsingInternal(true);
+    try {
+      const parsed = await parseProductImportFile(file);
+      addItems(parsed);
+      toast.success(
+        `${parsed.length} product${parsed.length !== 1 ? "s" : ""} imported`,
+      );
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setParsingInternal(false);
+    }
   };
 
   const valid =
@@ -355,20 +470,39 @@ export function BulkAddDialog({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="flex flex-col gap-0 p-0 min-h-[80vh] rounded-t-2xl overflow-hidden"
+        className="flex flex-col gap-0 p-0 h-[85vh] max-h-[85vh] rounded-t-2xl overflow-hidden"
       >
         {/* Parsing overlay — shown while an imported file is being read */}
-        {parsing && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[var(--surface)]/85 backdrop-blur-sm">
-            <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
-            <span className="text-[13px] font-medium text-[var(--ink-soft)]">
-              Reading your file…
-            </span>
-            <span className="text-[11.5px] text-[var(--ink-mute)]">
-              Review the rows before saving
-            </span>
-          </div>
-        )}
+        <AnimatePresence>
+          {(parsing || parsingInternal) && (
+            <motion.div
+              key="parsing-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[var(--surface)]/85 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="flex flex-col items-center gap-3"
+              >
+                <Loader2
+                  size={28}
+                  className="animate-spin text-[var(--accent)]"
+                />
+                <span className="text-[13px] font-medium text-[var(--ink-soft)]">
+                  Reading your file…
+                </span>
+                <span className="text-[11.5px] text-[var(--ink-mute)]">
+                  Review the rows before saving
+                </span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Shared hidden file input — used by both the empty-state importer and
             the header Import button. */}
@@ -519,32 +653,69 @@ export function BulkAddDialog({
                 <span className="text-[12px] text-[var(--ink-soft)]">
                   {`${items.length} product${items.length > 1 ? "s" : ""}`}
                 </span>
-                <Button variant="outline" size="sm" onClick={appendEmptyItem}>
-                  <Plus size={11} /> Add
-                </Button>
+                <div className="flex items-center gap-2">
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    size="sm"
+                    value={bulkView}
+                    onValueChange={(v) => v && setBulkView(v as "grid" | "list")}
+                  >
+                    <ToggleGroupItem value="grid" aria-label="Grid view">
+                      <Grid2x2 size={12} />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" aria-label="List view">
+                      <List size={12} />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  <Button variant="outline" size="sm" onClick={appendEmptyItem}>
+                    <Plus size={11} /> Add
+                  </Button>
+                </div>
               </div>
               <div className="scroll flex-1 overflow-y-auto p-3">
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
-                  {items.map((item, i) => (
-                    <BulkCard
-                      key={i}
-                      item={item}
-                      index={i}
-                      active={selectedIdx === i}
-                      onClick={() => setSelectedIdx(i)}
-                      onRemove={() => removeItem(i)}
-                    />
-                  ))}
-                  <button
-                    onClick={appendEmptyItem}
-                    className="flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[130px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-                  >
-                    <Plus size={18} />
-                    <span className="text-[11.5px] font-medium">
-                      Add product
-                    </span>
-                  </button>
-                </div>
+                {bulkView === "grid" ? (
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2">
+                    <AnimatePresence>
+                      {items.map((item, i) => (
+                        <BulkCard
+                          key={i}
+                          item={item}
+                          index={i}
+                          active={selectedIdx === i}
+                          onClick={() => setSelectedIdx(i)}
+                          onRemove={() => removeItem(i)}
+                          enterDelay={Math.min(i, 20) * 0.02}
+                        />
+                      ))}
+                    </AnimatePresence>
+                    <button
+                      onClick={appendEmptyItem}
+                      className="flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[130px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                    >
+                      <Plus size={18} />
+                      <span className="text-[11.5px] font-medium">
+                        Add product
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    <AnimatePresence>
+                      {items.map((item, i) => (
+                        <BulkListRow
+                          key={i}
+                          item={item}
+                          index={i}
+                          active={selectedIdx === i}
+                          onClick={() => setSelectedIdx(i)}
+                          onRemove={() => removeItem(i)}
+                          enterDelay={Math.min(i, 20) * 0.015}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
             </div>
 

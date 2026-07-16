@@ -27,7 +27,10 @@ import { useMemo } from "react";
 import { useInventoryView } from "../hooks/useInventoryView";
 import type { InventoryView as InvViewType, Product } from "../types";
 import { TIERS } from "../types";
-import { exportProductsCsv } from "../utils/exportProductsCsv";
+import {
+  exportProductsCsv,
+  exportProductsJson,
+} from "../utils/exportProductsCsv";
 import { buildProductColumns } from "../utils/productColumns";
 import { AddMenuItem } from "./AddMenuItem";
 import { BulkAddDialog } from "./BulkAddDialog";
@@ -77,7 +80,6 @@ export function InventoryView() {
     setExportOpen,
     categoryOptions,
     importRef,
-    importType,
     addMenuRef,
     isSaving,
     isDeleting,
@@ -242,7 +244,6 @@ export function InventoryView() {
                         sub="Spreadsheet format"
                         onClick={() => {
                           setAddMenuOpen(false);
-                          importType.current = "csv";
                           importRef.current?.click();
                         }}
                       />
@@ -252,7 +253,6 @@ export function InventoryView() {
                         sub="API export format"
                         onClick={() => {
                           setAddMenuOpen(false);
-                          importType.current = "json";
                           importRef.current?.click();
                         }}
                       />
@@ -439,10 +439,15 @@ export function InventoryView() {
       <ExportDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
-        onConfirm={(name) => exportProductsCsv(filtered, name)}
+        onConfirm={(name, format) =>
+          format === "json"
+            ? exportProductsJson(filtered, name)
+            : exportProductsCsv(filtered, name)
+        }
         defaultName={`inventory_export_${new Date().toISOString().split("T")[0]}`}
         count={filtered.length}
         title="Export inventory"
+        formats={["csv", "json"]}
       />
     </div>
   );
