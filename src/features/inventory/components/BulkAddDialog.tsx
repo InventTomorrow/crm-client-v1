@@ -2,47 +2,32 @@
 import { extractErrorMessage, getImageUrl, pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/Dialog";
-import { ImageUploader } from "@/shared/ui/ImageUploader";
-import { Input } from "@/shared/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/Select";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/shared/ui/Sheet";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
-import { Textarea } from "@/shared/ui/Textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/form";
+import { Form } from "@/shared/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ImageIcon, Loader2, Plus, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import { presignedUpload } from "../services/productsService";
-import type { BulkItem, ProductFormData } from "../types";
+import type { ProductFormData, ProductFormInput } from "../types";
 import { CATEGORIES, productSchema } from "../types";
 import {
   parseProductsCsv,
   parseProductsJson,
 } from "../utils/importProductsCsv";
-import { SizeSelector } from "./SizeSelector";
+import { ProductFormBody } from "./ProductFormBody";
 
-export type { BulkItem };
+export interface BulkItem extends ProductFormData {
+  imageUrl?: string;
+  imageUrls?: string[];
+}
 
 const EMPTY_ITEM = (): BulkItem => ({
   name: "",
@@ -50,16 +35,42 @@ const EMPTY_ITEM = (): BulkItem => ({
   price: 0,
   discountPercentage: undefined,
   stock: 0,
+  inStock: true,
   cat: "Apparel",
   sizes: [],
+  dietaryTag: [],
   gender: "",
   color: "",
   desc: "",
   imageUrl: "",
   imageUrls: [],
+  variants: [],
 });
 
+/** Seeds the reusable product form from a bulk item row. */
+function toFormValues(item: BulkItem): ProductFormInput {
+  return {
+    name: item.name,
+    sku: item.sku ?? "",
+    price: item.price ?? 0,
+    discountPercentage: item.discountPercentage ?? undefined,
+    stock: item.stock ?? 0,
+    inStock: item.inStock ?? true,
+    cat: item.cat ?? "Apparel",
+    sizes: item.sizes ?? [],
+    gender: item.gender ?? "",
+    color: item.color ?? "",
+    cuisine: item.cuisine ?? "",
+    dietaryTag: item.dietaryTag ?? [],
+    type: item.type ?? "",
+    subType: item.subType ?? "",
+    variants: item.variants ?? [],
+    desc: item.desc ?? "",
+  };
+}
+
 // ── Inline Edit Panel ─────────────────────────────────────
+// Reuses the same accordion form as the single-product dialog.
 function EditPanel({
   item,
   onSave,
@@ -72,49 +83,19 @@ function EditPanel({
   const [imageUrl, setImageUrl] = useState(item.imageUrl ?? "");
   const [uploading, setUploading] = useState(false);
 
-  const form = useForm<z.input<typeof productSchema>, any, ProductFormData>({
+  const form = useForm<ProductFormInput, unknown, ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: item.name,
-      sku: item.sku ?? "",
-      price: item.price,
-      discountPercentage: item.discountPercentage ?? undefined,
-      stock: item.stock,
-      cat: item.cat,
-      sizes: item.sizes ?? [],
-      gender: item.gender ?? "",
-      color: item.color ?? "",
-      desc: item.desc ?? "",
-    },
+    defaultValues: toFormValues(item),
   });
-
-  useEffect(() => {
-    form.reset({
-      name: item.name,
-      sku: item.sku ?? "",
-      price: item.price,
-      discountPercentage: item.discountPercentage ?? undefined,
-      stock: item.stock,
-      cat: item.cat,
-      sizes: item.sizes ?? [],
-      gender: item.gender ?? "",
-      color: item.color ?? "",
-      desc: item.desc ?? "",
-    });
-    setImageUrl(item.imageUrl ?? "");
-  }, [item, form]);
 
   const handleUpload = useCallback(async (file: File) => {
     setUploading(true);
     try {
-      const url = await presignedUpload(file);
-      return url;
+      return await presignedUpload(file);
     } finally {
       setUploading(false);
     }
   }, []);
-
-  const selectedCategory = useWatch({ control: form.control, name: "cat" });
 
   const onSubmit = (data: ProductFormData) => {
     onSave({ ...data, imageUrl, imageUrls: imageUrl ? [imageUrl] : [] });
@@ -130,144 +111,13 @@ function EditPanel({
           Edit product
         </div>
 
-        <ImageUploader
-          value={imageUrl || null}
-          onChange={(v) => setImageUrl(v ?? "")}
+        <ProductFormBody
+          form={form}
+          categoryOptions={[...CATEGORIES]}
+          imageUrl={imageUrl || null}
+          onImageChange={(v: string | null) => setImageUrl(v ?? "")}
           onUpload={handleUpload}
           isUploading={uploading}
-          compact
-        />
-
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[11.5px]">Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="Product name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-2">
-          <FormField
-            control={form.control}
-            name="sku"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[11.5px]">SKU</FormLabel>
-                <FormControl>
-                  <Input placeholder="SKU" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="cat"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[11.5px]">Category</FormLabel>
-                <Select
-                  value={field.value || undefined}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[11.5px]">Price (PKR) *</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="discountPercentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[11.5px]">Max Disc %</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[11.5px]">Stock *</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="desc"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[11.5px]">Description</FormLabel>
-              <FormControl>
-                <Textarea rows={2} {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="sizes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[11.5px]">Available Sizes</FormLabel>
-              <FormControl>
-                <SizeSelector
-                  category={selectedCategory}
-                  value={field.value ?? []}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
         />
 
         <div className="flex gap-2 mt-auto pt-2 border-t border-[var(--line)]">
@@ -357,6 +207,45 @@ function BulkCard({
   );
 }
 
+/** Columns the importer recognises, with a one-line hint + example each.
+ * Shown as guidance — any of these that appear are imported, the rest stay
+ * empty for manual entry. */
+const IMPORT_COLUMNS: { name: string; detail: string; example: string }[] = [
+  {
+    name: "name",
+    detail: "Product / dish full name",
+    example: "Flamez Special Pizza (Large)",
+  },
+  { name: "sku", detail: "Your internal item code", example: "PIZZA-FLAMEZ-L" },
+  { name: "price", detail: "Selling price in PKR", example: "1900" },
+  {
+    name: "discountPercentage",
+    detail: "Max discount allowed, 0–100",
+    example: "10",
+  },
+  { name: "stock", detail: "Units in stock (skip for food)", example: "50" },
+  { name: "category", detail: "Top-level category", example: "Food" },
+  { name: "cuisine", detail: "Food cuisine / kitchen", example: "Fast Food" },
+  { name: "dietaryTag", detail: "Diet label", example: "Halal" },
+  { name: "type", detail: "Menu section", example: "Pizza" },
+  { name: "gender", detail: "Apparel target gender", example: "Men" },
+  { name: "color", detail: "Apparel colour", example: "Maroon" },
+  { name: "sizes", detail: "Pipe-separated size list", example: "S | M | L" },
+  {
+    name: "description",
+    detail: "Short item description",
+    example: "Loaded with cheese & chicken",
+  },
+  {
+    name: "image_urls",
+    detail: "Pipe-separated image links",
+    example: "https://…/a.jpg | https://…/b.jpg",
+  },
+];
+
+/** What the empty sheet shows before any product exists. */
+type EmptyMode = "choose" | "import";
+
 // ── Main BulkAddDialog ─────────────────────────────────────
 export function BulkAddDialog({
   open,
@@ -378,12 +267,14 @@ export function BulkAddDialog({
   const [items, setItems] = useState<BulkItem[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [emptyMode, setEmptyMode] = useState<EmptyMode>("choose");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setItems(initialItems ?? []);
       setSelectedIdx(initialItems && initialItems.length > 0 ? 0 : null);
+      setEmptyMode("choose");
     }
     // Only re-seed on open / when a fresh import arrives.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -394,6 +285,14 @@ export function BulkAddDialog({
       const next = [...prev, ...newItems];
       if (prev.length === 0 && newItems.length > 0) setSelectedIdx(0);
       return next;
+    });
+  };
+
+  // Append a blank product and open it in the editor.
+  const appendEmptyItem = () => {
+    setItems((prev) => {
+      setSelectedIdx(prev.length);
+      return [...prev, EMPTY_ITEM()];
     });
   };
 
@@ -418,7 +317,17 @@ export function BulkAddDialog({
 
   const valid =
     items.length > 0 &&
-    items.every((p) => p.name && p.price > 0 && p.stock >= 0);
+    items.every((p) => {
+      if (!p.name) return false;
+      if (p.cat?.toLowerCase() === "food") {
+        return (
+          Array.isArray(p.variants) &&
+          p.variants.length > 0 &&
+          p.variants.every((v) => v.price > 0)
+        );
+      }
+      return p.price > 0 && p.stock >= 0;
+    });
   const selectedItem = selectedIdx !== null ? items[selectedIdx] : null;
 
   const updateItem = (idx: number, data: BulkItem) => {
@@ -434,16 +343,19 @@ export function BulkAddDialog({
     });
   };
 
+  const hasItems = items.length > 0;
+
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v && !isSaving) onClose();
       }}
     >
-      <DialogContent
-        className="flex flex-col gap-0 p-0 sm:max-w-[900px] h-[min(680px,92vh)] overflow-hidden"
+      <SheetContent
+        side="bottom"
         showCloseButton={false}
+        className="flex flex-col gap-0 p-0 min-h-[80vh] rounded-t-2xl overflow-hidden"
       >
         {/* Parsing overlay — shown while an imported file is being read */}
         {parsing && (
@@ -458,148 +370,206 @@ export function BulkAddDialog({
           </div>
         )}
 
+        {/* Shared hidden file input — used by both the empty-state importer and
+            the header Import button. */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) parseFile(f);
+            e.target.value = "";
+          }}
+        />
+
         {/* Header */}
-        <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
+        <SheetHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
           <div>
-            <DialogTitle className="text-[16px] font-semibold">
+            <SheetTitle className="text-[16px] font-semibold">
               Bulk add products
-            </DialogTitle>
-            <DialogDescription className="text-[11.5px] mt-0.5 text-[var(--ink-mute)]">
+            </SheetTitle>
+            <SheetDescription className="text-[11.5px] mt-0.5 text-[var(--ink-mute)]">
               Import CSV / JSON or add manually. Select a card to edit details
               and upload images.
-            </DialogDescription>
+            </SheetDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </DialogHeader>
-
-        {/* Drop zone */}
-        <div className="px-5 pt-3 flex-shrink-0">
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOver(false);
-              const f = e.dataTransfer.files[0];
-              if (f) parseFile(f);
-            }}
-            onClick={() => fileRef.current?.click()}
-            className={`flex items-center gap-3 rounded-[10px] cursor-pointer transition-all py-3 px-4
-              ${dragOver ? "border-[1.5px] border-dashed border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)]"}`}
-          >
-            <span className="w-8 h-8 rounded-[9px] inline-flex items-center justify-center bg-[var(--accent-soft)] text-[var(--accent)]">
-              <Upload size={16} />
-            </span>
-            <div className="flex-1 text-[12.5px]">
-              <span className="font-medium">Drop CSV or JSON</span>
-              <span className="text-[var(--ink-mute)]">
-                {" "}
-                · columns:{" "}
-                <code>
-                  name, sku, price, discountPercentage, stock, category, gender,
-                  color, sizes, description, image_urls
-                </code>
-              </span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                fileRef.current?.click();
-              }}
-            >
-              Browse
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv,.json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) parseFile(f);
-                e.target.value = "";
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Body: left list + right edit panel */}
-        <div className="flex flex-1 min-h-0 gap-0">
-          {/* Left: card list */}
-          <div className="flex flex-col flex-1 min-w-0 border-r border-[var(--line)] overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-2 border-b border-[var(--line)]">
-              <span className="text-[12px] text-[var(--ink-soft)]">
-                {items.length === 0
-                  ? "No products yet"
-                  : `${items.length} product${items.length > 1 ? "s" : ""}`}
-              </span>
+          <div className="flex items-center gap-2">
+            {/* {hasItems && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const idx = items.length;
-                  setItems((prev) => [...prev, EMPTY_ITEM()]);
-                  setSelectedIdx(idx);
-                }}
+                onClick={() => fileRef.current?.click()}
               >
-                <Plus size={11} /> Add
+                <Upload size={13} /> Import
               </Button>
-            </div>
-            <div className="scroll flex-1 overflow-y-auto p-3">
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
-                {items.map((item, i) => (
-                  <BulkCard
-                    key={i}
-                    item={item}
-                    index={i}
-                    active={selectedIdx === i}
-                    onClick={() => setSelectedIdx(i)}
-                    onRemove={() => removeItem(i)}
-                  />
-                ))}
+            )} */}
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X size={18} />
+            </Button>
+          </div>
+        </SheetHeader>
+
+        {/* ── Empty state: no columns, just the add options ── */}
+        {!hasItems ? (
+          <div className="flex flex-1 min-h-0 items-center justify-center overflow-y-auto p-6">
+            {emptyMode === "choose" ? (
+              <div className="grid w-full max-w-[620px] gap-3 sm:grid-cols-2">
                 <button
-                  onClick={() => {
-                    const idx = items.length;
-                    setItems((prev) => [...prev, EMPTY_ITEM()]);
-                    setSelectedIdx(idx);
-                  }}
-                  className="flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[130px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                  type="button"
+                  onClick={appendEmptyItem}
+                  className="flex flex-col items-start gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-5 text-left transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
                 >
-                  <Plus size={18} />
-                  <span className="text-[11.5px] font-medium">Add product</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <Plus size={18} />
+                  </span>
+                  <span className="text-[13.5px] font-semibold">
+                    Add manually
+                  </span>
+                  <span className="text-[12px] text-[var(--ink-mute)]">
+                    Enter products one at a time and upload their images.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEmptyMode("import")}
+                  className="flex flex-col items-start gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-5 text-left transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <Upload size={18} />
+                  </span>
+                  <span className="text-[13.5px] font-semibold">
+                    Import CSV / JSON
+                  </span>
+                  <span className="text-[12px] text-[var(--ink-mute)]">
+                    Bring in many products at once from a spreadsheet or export.
+                  </span>
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* Right: edit panel */}
-          <div className="w-[300px] flex-shrink-0 flex flex-col overflow-hidden">
-            {selectedItem !== null && selectedIdx !== null ? (
-              <div className="scroll flex-1 overflow-y-auto p-4">
-                <EditPanel
-                  key={selectedIdx}
-                  item={selectedItem}
-                  onSave={(data) => updateItem(selectedIdx, data)}
-                  onDelete={() => removeItem(selectedIdx)}
-                />
-              </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[var(--ink-mute)] p-6 text-center">
-                <ImageIcon size={28} className="opacity-30" />
-                <span className="text-[12.5px]">
-                  Select a product card to edit it
-                </span>
+              <div className="flex w-full max-w-[620px] flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEmptyMode("choose")}
+                  className="self-start text-[12px] text-[var(--ink-mute)] hover:text-[var(--accent)]"
+                >
+                  ← Back
+                </button>
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const f = e.dataTransfer.files[0];
+                    if (f) parseFile(f);
+                  }}
+                  onClick={() => fileRef.current?.click()}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-all py-10 px-4 text-center
+                    ${dragOver ? "border-[1.5px] border-dashed border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)]"}`}
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <Upload size={18} />
+                  </span>
+                  <span className="text-[13px] font-medium">
+                    Drop a CSV or JSON file, or click to browse
+                  </span>
+                </div>
+                <div className="rounded-xl border border-[var(--line)] p-4">
+                  <p className="text-[12px] font-medium text-[var(--ink-soft)]">
+                    Columns we recognise
+                  </p>
+                  <p className="mt-0.5 mb-3 text-[11.5px] text-[var(--ink-mute)]">
+                    Just guidance — whichever of these appear get imported, the
+                    rest stay empty for you to fill in manually.
+                  </p>
+                  <dl className="flex flex-col divide-y divide-[var(--line)]">
+                    {IMPORT_COLUMNS.map((col) => (
+                      <div
+                        key={col.name}
+                        className="grid grid-cols-[130px_1fr] gap-3 py-1.5 first:pt-0 last:pb-0"
+                      >
+                        <dt className="font-mono text-[12px] font-semibold text-[var(--ink)]">
+                          {col.name}
+                        </dt>
+                        <dd className="text-[12px] text-[var(--ink-soft)]">
+                          {col.detail}
+                          <span className="text-[var(--ink-mute)]">
+                            {" "}
+                            — e.g. {col.example}
+                          </span>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
               </div>
             )}
           </div>
-        </div>
+        ) : (
+          /* ── Two-column layout: card list + inline editor ── */
+          <div className="flex flex-1 min-h-0 gap-0">
+            {/* Left: card list */}
+            <div className="flex flex-col flex-1 min-w-0 border-r border-[var(--line)] overflow-hidden w-2/3">
+              <div className="flex items-center justify-between px-5 py-2 border-b border-[var(--line)]">
+                <span className="text-[12px] text-[var(--ink-soft)]">
+                  {`${items.length} product${items.length > 1 ? "s" : ""}`}
+                </span>
+                <Button variant="outline" size="sm" onClick={appendEmptyItem}>
+                  <Plus size={11} /> Add
+                </Button>
+              </div>
+              <div className="scroll flex-1 overflow-y-auto p-3">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
+                  {items.map((item, i) => (
+                    <BulkCard
+                      key={i}
+                      item={item}
+                      index={i}
+                      active={selectedIdx === i}
+                      onClick={() => setSelectedIdx(i)}
+                      onRemove={() => removeItem(i)}
+                    />
+                  ))}
+                  <button
+                    onClick={appendEmptyItem}
+                    className="flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[130px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                  >
+                    <Plus size={18} />
+                    <span className="text-[11.5px] font-medium">
+                      Add product
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: edit panel */}
+            <div className="w-1/3 not-even:shrink-0 flex flex-col overflow-hidden">
+              {selectedItem !== null && selectedIdx !== null ? (
+                <div className="scroll flex-1 overflow-y-auto p-4">
+                  <EditPanel
+                    key={selectedIdx}
+                    item={selectedItem}
+                    onSave={(data) => updateItem(selectedIdx, data)}
+                    onDelete={() => removeItem(selectedIdx)}
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[var(--ink-mute)] p-6 text-center">
+                  <ImageIcon size={28} className="opacity-30" />
+                  <span className="text-[12.5px]">
+                    Select a product card to edit it
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--line)] flex-shrink-0">
@@ -614,7 +584,7 @@ export function BulkAddDialog({
                 />{" "}
                 Saving {items.length} product{items.length === 1 ? "" : "s"}…
               </>
-            ) : items.length > 0 ? (
+            ) : hasItems ? (
               valid ? (
                 <>
                   <Check size={12} className="text-[#15803D]" /> All{" "}
@@ -624,7 +594,7 @@ export function BulkAddDialog({
                 "Some products need details — click a card to edit"
               )
             ) : (
-              'Drop a file or click "Add product" to begin'
+              "Add a product or import a file to begin"
             )}
           </span>
           <div className="flex gap-2">
@@ -648,7 +618,7 @@ export function BulkAddDialog({
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

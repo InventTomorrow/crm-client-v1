@@ -35,7 +35,7 @@ export function exportProductsCsv(rows: Product[], filename?: string): void {
         p.price,
         p.discountPercentage ?? "",
         p.stock,
-        STOCK_LABEL[stockStatus(p.stock)],
+        STOCK_LABEL[stockStatus(p.stock, p.cat, p.inStock)],
         (p.sizes ?? []).join("|"),
         p.desc ?? "",
         (p.imageUrls ?? []).join("|"),

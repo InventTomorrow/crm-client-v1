@@ -1,4 +1,3 @@
-import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
@@ -7,31 +6,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
-import { ImageUploader } from "@/shared/ui/ImageUploader";
-import { Input } from "@/shared/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/Select";
-import { Textarea } from "@/shared/ui/Textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/form";
+import { Form } from "@/shared/ui/form";
 import { Check, Trash2, X } from "lucide-react";
-import { usePresignedUpload } from "../hooks/useProducts";
 import { useProductForm } from "../hooks/useProductForm";
-import { GENDERS } from "../types";
+import { usePresignedUpload } from "../hooks/useProducts";
 import type { Product, ProductFormData } from "../types";
-import { CreatableCategorySelect } from "./CreatableCategorySelect";
-import { SizeSelector } from "./SizeSelector";
+import { ProductFormBody } from "./ProductFormBody";
 
 export function ProductFormDialog({
   open,
@@ -55,20 +35,23 @@ export function ProductFormDialog({
   onDelete?: () => void;
 }) {
   const { upload: uploadImage, isPending: isUploading } = usePresignedUpload();
-  const { form, imageUrl, setImageUrl, selectedCategory, discountedPrice } =
-    useProductForm(open, initial);
+  const { form, imageUrl, setImageUrl } = useProductForm(open, initial);
 
   const handleSubmit = (data: ProductFormData) => {
     onSave({ ...data, imageUrls: imageUrl ? [imageUrl] : [] });
   };
 
-  const busy = isSaving || isDeleting || isUploading;
+  // Inputs lock only while a save/delete is in flight — an uploading image must
+  // not block filling out the rest of the form.
+  const isMutationPending = isSaving || isDeleting;
+  // Submit and close also wait for the image upload to settle.
+  const isActionPending = isMutationPending || isUploading;
 
   return (
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        if (!isOpen && !busy) onClose();
+        if (!isOpen && !isActionPending) onClose();
       }}
     >
       <DialogContent
@@ -89,7 +72,7 @@ export function ProductFormDialog({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            disabled={busy}
+            disabled={isMutationPending}
           >
             <X size={18} />
           </Button>
@@ -99,230 +82,24 @@ export function ProductFormDialog({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex flex-1 min-h-0 flex-col overflow-hidden"
           >
-            <div className="scroll overflow-y-auto flex-1 min-h-0 flex flex-col gap-3 p-[18px]">
-              <ImageUploader
-                value={imageUrl}
-                onChange={setImageUrl}
+            <div className="scroll overflow-y-auto flex-1 min-h-0 p-[18px]">
+              <ProductFormBody
+                form={form}
+                categoryOptions={categoryOptions}
+                imageUrl={imageUrl}
+                onImageChange={setImageUrl}
                 onUpload={uploadImage}
                 isUploading={isUploading}
-              />
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Lawn Suit 3-Piece Unstitched"
-                        autoFocus
-                        {...field}
-                        disabled={busy}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-2.5">
-                <FormField
-                  control={form.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="LWN-3P-001"
-                          {...field}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="cat"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <CreatableCategorySelect
-                          options={categoryOptions}
-                          value={field.value ?? ""}
-                          onChange={(v) => field.onChange(v)}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gender</FormLabel>
-                      <Select
-                        value={field.value || undefined}
-                        onValueChange={field.onChange}
-                        disabled={busy}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="—" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {GENDERS?.map((g) => (
-                            <SelectItem key={g} value={g}>
-                              {g}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Color</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Maroon"
-                          {...field}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-2.5">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="8999"
-                          {...field}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="discountPercentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Discount %</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          placeholder="0"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) => {
-                            const raw = e.target.value;
-                            if (raw === "") {
-                              field.onChange(raw);
-                              return;
-                            }
-                            const clamped = Math.min(
-                              100,
-                              Math.max(0, Number(raw)),
-                            );
-                            field.onChange(String(clamped));
-                          }}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                      {discountedPrice !== null && (
-                        <p className="text-xs text-muted-foreground">
-                          Discounted price: {pkr(discountedPrice)}
-                        </p>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="47"
-                          {...field}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="desc"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={3}
-                        placeholder="Premium unstitched lawn fabric, 3-piece set..."
-                        {...field}
-                        disabled={busy}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sizes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Available Sizes</FormLabel>
-                    <FormControl>
-                      <SizeSelector
-                        category={selectedCategory}
-                        value={field.value ?? []}
-                        onChange={field.onChange}
-                        disabled={busy}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                disabled={isMutationPending}
               />
             </div>
-            <div className="flex-shrink-0 flex justify-between gap-2 px-[18px] py-3 border-t border-[var(--line)] bg-[var(--surface)]">
+            <div className="shrink-0 flex justify-between gap-2 px-[18px] py-3 border-t border-[var(--line)] bg-[var(--surface)]">
               {onDelete ? (
                 <Button
                   type="button"
                   variant="destructive"
                   onClick={onDelete}
-                  disabled={busy}
+                  disabled={isMutationPending}
                 >
                   {isDeleting ? (
                     <>
@@ -343,11 +120,11 @@ export function ProductFormDialog({
                   type="button"
                   variant="outline"
                   onClick={onClose}
-                  disabled={busy}
+                  disabled={isMutationPending}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={busy}>
+                <Button type="submit" disabled={isActionPending}>
                   {isSaving ? (
                     <>
                       <span className="animate-spin inline-block mr-1.5 h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />

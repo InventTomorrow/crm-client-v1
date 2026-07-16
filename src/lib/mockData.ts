@@ -34,6 +34,16 @@ export interface Message {
   unread?: boolean;
 }
 
+/** A food menu variant (size/portion) with its own absolute price. */
+export interface FoodVariant {
+  id?: string;
+  label: string;
+  price: number;
+  discountPercentage?: number;
+  available: boolean;
+  variantSku?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -41,12 +51,18 @@ export interface Product {
   price: number;
   discountPercentage?: number;
   stock: number;
+  inStock?: boolean;
   status: 'in' | 'low' | 'out';
   cat: string;
   size?: string;
   sizes?: string[];
   gender?: string;
   color?: string;
+  cuisine?: string;
+  dietaryTag?: string[];
+  type?: string;
+  subType?: string;
+  variants?: FoodVariant[];
   desc?: string;
   imageUrls?: string[];
 }

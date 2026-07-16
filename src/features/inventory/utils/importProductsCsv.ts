@@ -1,5 +1,5 @@
 import { parseCsv } from "@/lib/csv";
-import type { BulkItem } from "../types";
+import type { BulkItem } from "../components/BulkAddDialog";
 
 /** Reads the first matching key from a row, tolerating spaces/underscores in headers. */
 function pick(o: Record<string, string>, ...keys: string[]): string {
@@ -60,10 +60,19 @@ export function rowToBulkItem(o: Record<string, string>): BulkItem {
     price: toNumber(pick(o, "price", "unit_price", "rate")),
     discountPercentage: discountRaw ? toNumber(discountRaw) : undefined,
     stock: toNumber(pick(o, "stock", "quantity", "qty", "inventory")),
+    inStock: true,
     cat: pick(o, "category", "cat") || "Apparel",
     sizes: parseSizes(o),
     gender: pick(o, "gender"),
     color: pick(o, "color", "colour"),
+    cuisine: pick(o, "cuisine"),
+    dietaryTag: pick(o, "dietarytag", "dietary_tag", "dietary", "diet")
+      .split(/[,|]+/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+    type: pick(o, "type", "menusection", "section"),
+    subType: pick(o, "subtype", "sub_type"),
+    variants: [],
     desc: pick(o, "description", "desc", "details"),
     imageUrl: images[0] ?? "",
     imageUrls: images,
@@ -71,7 +80,9 @@ export function rowToBulkItem(o: Record<string, string>): BulkItem {
 }
 
 /** Flattens an arbitrary object into a string-keyed, lowercased row for the mapper. */
-export function objectToRow(p: Record<string, unknown>): Record<string, string> {
+export function objectToRow(
+  p: Record<string, unknown>,
+): Record<string, string> {
   const row: Record<string, string> = {};
   for (const [k, v] of Object.entries(p)) {
     row[k.toLowerCase()] = Array.isArray(v)
@@ -91,8 +102,8 @@ export function parseProductsCsv(text: string): BulkItem[] {
 
 export function parseProductsJson(text: string): BulkItem[] {
   const j = JSON.parse(text);
-  const arr: Record<string, unknown>[] = Array.isArray(j) ? j : (j.products ?? []);
-  return arr
-    .map((p) => rowToBulkItem(objectToRow(p)))
-    .filter((p) => p.name);
+  const arr: Record<string, unknown>[] = Array.isArray(j)
+    ? j
+    : (j.products ?? []);
+  return arr.map((p) => rowToBulkItem(objectToRow(p))).filter((p) => p.name);
 }

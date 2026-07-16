@@ -1,8 +1,20 @@
 // src/features/inventory/services/productsService.ts
 import { apiClient } from '@/lib/apiClient';
-import type { Product } from '@/lib/mockData';
+import type { FoodVariant, Product } from '@/lib/mockData';
+import { stockStatus } from '../utils/stock';
 
 // ─── Types ────────────────────────────────────────────────
+
+interface ApiVariant {
+  id: string;
+  label: string | null;
+  price: number | null;
+  discountPercentage: number | null;
+  available: boolean | null;
+  variantSku: string | null;
+  // legacy generic fields (ignored by the food UI)
+  value?: string | null;
+}
 
 interface ApiProduct {
   id: string;
@@ -11,6 +23,11 @@ interface ApiProduct {
   price: number;
   discountPercentage: number | null;
   stock: number;
+  inStock: boolean | null;
+  cuisine: string | null;
+  dietaryTag: string[];
+  type: string | null;
+  subType: string | null;
   description: string | null;
   category: string | null;
   size: string | null;
@@ -18,11 +35,21 @@ interface ApiProduct {
   gender: string | null;
   color: string | null;
   imageUrls: string[];
-  variants?: unknown[];
+  variants?: ApiVariant[];
   tenantId: string;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Variant payload sent when creating/updating a product. */
+export interface ProductVariantPayload {
+  id?: string;
+  label: string;
+  price: number;
+  discountPercentage?: number;
+  available: boolean;
+  variantSku?: string;
 }
 
 export interface CreateProductPayload {
@@ -31,6 +58,11 @@ export interface CreateProductPayload {
   price: number;
   discountPercentage?: number;
   stock: number;
+  inStock?: boolean;
+  cuisine?: string;
+  dietaryTag?: string[];
+  type?: string;
+  subType?: string;
   description?: string;
   category?: string;
   size?: string;
@@ -38,6 +70,7 @@ export interface CreateProductPayload {
   gender?: string;
   color?: string;
   imageUrls?: string[];
+  variants?: ProductVariantPayload[];
 }
 
 export interface UpdateProductPayload {
@@ -46,6 +79,11 @@ export interface UpdateProductPayload {
   price?: number;
   discountPercentage?: number;
   stock?: number;
+  inStock?: boolean;
+  cuisine?: string;
+  dietaryTag?: string[];
+  type?: string;
+  subType?: string;
   description?: string;
   category?: string;
   size?: string;
@@ -53,6 +91,7 @@ export interface UpdateProductPayload {
   gender?: string;
   color?: string;
   imageUrls?: string[];
+  variants?: ProductVariantPayload[];
 }
 
 export interface PresignedUrlResult {
@@ -62,9 +101,24 @@ export interface PresignedUrlResult {
 
 // ─── Mapper ───────────────────────────────────────────────
 
+function mapVariant(v: ApiVariant): FoodVariant {
+  return {
+    id: v.id,
+    label: v.label ?? v.value ?? '',
+    price: v.price ?? 0,
+    discountPercentage: v.discountPercentage ?? undefined,
+    available: v.available ?? true,
+    variantSku: v.variantSku ?? undefined,
+  };
+}
+
 function mapProduct(p: ApiProduct): Product {
   const stock = p.stock ?? 0;
-  const status: Product['status'] = stock === 0 ? 'out' : stock <= 12 ? 'low' : 'in';
+  const status = stockStatus(stock, p.category ?? undefined, p.inStock ?? undefined);
+  // Only surface food variants (those carrying a label) to the UI.
+  const variants = (p.variants ?? [])
+    .filter((v) => v.label != null || v.price != null)
+    .map(mapVariant);
   return {
     id: p.id,
     name: p.name,
@@ -72,12 +126,18 @@ function mapProduct(p: ApiProduct): Product {
     price: p.price,
     discountPercentage: p.discountPercentage ?? undefined,
     stock,
+    inStock: p.inStock ?? undefined,
     status,
     cat: p.category ?? 'Uncategorized',
     size: p.size ?? '',
     sizes: p.sizes ?? [],
     gender: p.gender ?? '',
     color: p.color ?? '',
+    cuisine: p.cuisine ?? undefined,
+    dietaryTag: p.dietaryTag ?? [],
+    type: p.type ?? undefined,
+    subType: p.subType ?? undefined,
+    variants: variants.length ? variants : undefined,
     desc: p.description ?? '',
     imageUrls: p.imageUrls ?? [],
   };
@@ -115,6 +175,11 @@ export const duplicateProduct = async (product: Product): Promise<Product> => {
     price: product.price,
     discountPercentage: product.discountPercentage,
     stock: product.stock,
+    inStock: product.inStock,
+    cuisine: product.cuisine || undefined,
+    dietaryTag: product.dietaryTag?.length ? product.dietaryTag : undefined,
+    type: product.type || undefined,
+    subType: product.subType || undefined,
     description: product.desc,
     category: product.cat || undefined,
     size: product.size || undefined,
@@ -122,6 +187,13 @@ export const duplicateProduct = async (product: Product): Promise<Product> => {
     gender: product.gender || undefined,
     color: product.color || undefined,
     imageUrls: product.imageUrls ?? [],
+    variants: product.variants?.map((v) => ({
+      label: v.label,
+      price: v.price,
+      discountPercentage: v.discountPercentage,
+      available: v.available,
+      variantSku: v.variantSku,
+    })),
   };
   return createProduct(payload);
 };

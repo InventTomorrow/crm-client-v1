@@ -3,8 +3,10 @@ import { parseCsv } from "@/lib/csv";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { BulkItem, Product } from "../types";
+import type { Product, ProductFormData } from "../types";
+import type { BulkItem } from "../components/BulkAddDialog";
 import { CATEGORIES } from "../types";
+import { buildProductPayload } from "../utils/buildProductPayload";
 import { objectToRow, rowToBulkItem } from "../utils/importProductsCsv";
 import { stockStatus } from "../utils/stock";
 import {
@@ -15,7 +17,6 @@ import {
   useProducts,
   useUpdateProduct,
 } from "./useProducts";
-import type { ProductFormData } from "../types";
 
 /** Owns all Inventory tab state, derived data, and mutation wiring so the
  * view component stays a thin render layer. */
@@ -94,7 +95,7 @@ export function useInventoryView() {
     let low = 0;
     let out = 0;
     for (const p of products as Product[]) {
-      const s = stockStatus(p.stock);
+      const s = stockStatus(p.stock, p.cat, p.inStock);
       if (s === "in") inStock++;
       else if (s === "low") low++;
       else out++;
@@ -103,8 +104,7 @@ export function useInventoryView() {
   }, [products]);
 
   const toggleStock = useCallback(
-    (id: "in" | "low" | "out") =>
-      setFilterStock(filterStock === id ? "" : id),
+    (id: "in" | "low" | "out") => setFilterStock(filterStock === id ? "" : id),
     [filterStock, setFilterStock],
   );
 
@@ -114,7 +114,7 @@ export function useInventoryView() {
         if (search && !p.name.toLowerCase().includes(search.toLowerCase()))
           return false;
         if (filterCat && p.cat !== filterCat) return false;
-        const stock = stockStatus(p.stock);
+        const stock = stockStatus(p.stock, p.cat, p.inStock);
         if (filterStock && stock !== filterStock) return false;
         return true;
       }),
@@ -157,19 +157,8 @@ export function useInventoryView() {
 
   const handleSave = useCallback(
     (data: ProductFormData & { imageUrls: string[] }) => {
-      const payload = {
-        name: data.name,
-        sku: data.sku || undefined,
-        price: data.price,
-        discountPercentage: data.discountPercentage,
-        stock: data.stock,
-        description: data.desc || undefined,
-        category: data.cat || undefined,
-        sizes: data.sizes ?? [],
-        gender: data.gender || undefined,
-        color: data.color || undefined,
-        imageUrls: data.imageUrls,
-      };
+      const payload = buildProductPayload(data);
+
       if (editing?.id) {
         updateProduct.mutate(
           { id: editing.id, data: payload },
@@ -184,55 +173,50 @@ export function useInventoryView() {
 
   // Imported files are parsed into review cards and opened in the bulk dialog.
   // Nothing is written to the DB until the user confirms there.
-  const handleImport = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setImportedItems(undefined);
-      setParsingImport(true);
-      setBulkOpen(true);
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const text = ev.target?.result as string;
-        try {
-          let rows: Record<string, string>[] = [];
-          if (importType.current === "json") {
-            const j = JSON.parse(text);
-            const arr: Record<string, unknown>[] = Array.isArray(j)
-              ? j
-              : (j.products ?? []);
-            rows = arr.map(objectToRow);
-          } else {
-            rows = parseCsv(text);
-          }
-
-          const items: BulkItem[] = rows
-            .map(rowToBulkItem)
-            .filter((p) => p.name);
-
-          if (items.length === 0) {
-            toast.error("No valid rows found in the file");
-            setBulkOpen(false);
-          } else {
-            setImportedItems(items);
-          }
-        } catch {
-          toast.error("Failed to parse import file");
-          setBulkOpen(false);
-        } finally {
-          setParsingImport(false);
+  const handleImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportedItems(undefined);
+    setParsingImport(true);
+    setBulkOpen(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      try {
+        let rows: Record<string, string>[] = [];
+        if (importType.current === "json") {
+          const j = JSON.parse(text);
+          const arr: Record<string, unknown>[] = Array.isArray(j)
+            ? j
+            : (j.products ?? []);
+          rows = arr.map(objectToRow);
+        } else {
+          rows = parseCsv(text);
         }
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read file");
-        setParsingImport(false);
+
+        const items: BulkItem[] = rows.map(rowToBulkItem).filter((p) => p.name);
+
+        if (items.length === 0) {
+          toast.error("No valid rows found in the file");
+          setBulkOpen(false);
+        } else {
+          setImportedItems(items);
+        }
+      } catch {
+        toast.error("Failed to parse import file");
         setBulkOpen(false);
-      };
-      reader.readAsText(file);
-      e.target.value = "";
-    },
-    [],
-  );
+      } finally {
+        setParsingImport(false);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read file");
+      setParsingImport(false);
+      setBulkOpen(false);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }, []);
 
   const closeBulkDialog = useCallback(() => {
     setBulkOpen(false);
@@ -242,19 +226,12 @@ export function useInventoryView() {
 
   const saveBulkItems = useCallback(
     (items: BulkItem[]) => {
-      const payloads = items.map((p) => ({
-        name: p.name,
-        sku: p.sku || undefined,
-        price: p.price,
-        discountPercentage: p.discountPercentage,
-        stock: p.stock,
-        description: p.desc || undefined,
-        category: p.cat || undefined,
-        gender: p.gender || undefined,
-        color: p.color || undefined,
-        sizes: p.sizes ?? [],
-        imageUrls: p.imageUrls ?? (p.imageUrl ? [p.imageUrl] : []),
-      }));
+      const payloads = items.map((p) =>
+        buildProductPayload({
+          ...p,
+          imageUrls: p.imageUrls ?? (p.imageUrl ? [p.imageUrl] : []),
+        }),
+      );
       bulkAddProducts.mutate(payloads, {
         onSuccess: () => setBulkOpen(false),
       });
