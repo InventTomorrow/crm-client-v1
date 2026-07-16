@@ -25,7 +25,7 @@ const numericField = z
     typeof v === "string" ? (v === "" ? 0 : parseFloat(v)) : v,
   );
 
-export const GENDERS = ["Unisex", "Men", "Women", "Kids"] as const;
+export const GENDERS = ["Men", "Women", "Kids"] as const;
 
 export const DIETARY_TAGS = ["Veg", "Non-Veg", "Halal", "Vegan"] as const;
 
