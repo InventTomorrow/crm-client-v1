@@ -1,13 +1,12 @@
 import { useAppStore } from "@/lib/appStore";
-import { parseCsv } from "@/lib/csv";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { Product, ProductFormData } from "../types";
-import type { BulkItem } from "../components/BulkAddDialog";
+import type { BulkItem, Product, ProductFormData } from "../types";
 import { CATEGORIES } from "../types";
 import { buildProductPayload } from "../utils/buildProductPayload";
-import { objectToRow, rowToBulkItem } from "../utils/importProductsCsv";
+import { parseProductImportFile } from "../utils/importProductsCsv";
 import { stockStatus } from "../utils/stock";
 import {
   useAddProduct,
@@ -67,7 +66,6 @@ export function useInventoryView() {
     return out;
   }, [products]);
   const importRef = useRef<HTMLInputElement>(null);
-  const importType = useRef<"csv" | "json">("csv");
   const addMenuRef = useRef<HTMLDivElement>(null);
 
   const isSaving = addProduct.isPending || updateProduct.isPending;
@@ -108,17 +106,22 @@ export function useInventoryView() {
     [filterStock, setFilterStock],
   );
 
+  const debouncedSearch = useDebouncedValue(search);
+
   const filtered = useMemo(
     () =>
       products.filter((p: Product) => {
-        if (search && !p.name.toLowerCase().includes(search.toLowerCase()))
+        if (
+          debouncedSearch &&
+          !p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        )
           return false;
         if (filterCat && p.cat !== filterCat) return false;
         const stock = stockStatus(p.stock, p.cat, p.inStock);
         if (filterStock && stock !== filterStock) return false;
         return true;
       }),
-    [products, search, filterCat, filterStock],
+    [products, debouncedSearch, filterCat, filterStock],
   );
 
   const closeDialog = useCallback(() => {
@@ -173,50 +176,31 @@ export function useInventoryView() {
 
   // Imported files are parsed into review cards and opened in the bulk dialog.
   // Nothing is written to the DB until the user confirms there.
-  const handleImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImportedItems(undefined);
-    setParsingImport(true);
-    setBulkOpen(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      try {
-        let rows: Record<string, string>[] = [];
-        if (importType.current === "json") {
-          const j = JSON.parse(text);
-          const arr: Record<string, unknown>[] = Array.isArray(j)
-            ? j
-            : (j.products ?? []);
-          rows = arr.map(objectToRow);
-        } else {
-          rows = parseCsv(text);
-        }
-
-        const items: BulkItem[] = rows.map(rowToBulkItem).filter((p) => p.name);
-
-        if (items.length === 0) {
-          toast.error("No valid rows found in the file");
+  const handleImport = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      setImportedItems(undefined);
+      setParsingImport(true);
+      setBulkOpen(true);
+      parseProductImportFile(file)
+        .then((items) => {
+          if (items.length === 0) {
+            toast.error("No valid rows found in the file");
+            setBulkOpen(false);
+          } else {
+            setImportedItems(items);
+          }
+        })
+        .catch(() => {
+          toast.error("Failed to parse import file");
           setBulkOpen(false);
-        } else {
-          setImportedItems(items);
-        }
-      } catch {
-        toast.error("Failed to parse import file");
-        setBulkOpen(false);
-      } finally {
-        setParsingImport(false);
-      }
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read file");
-      setParsingImport(false);
-      setBulkOpen(false);
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  }, []);
+        })
+        .finally(() => setParsingImport(false));
+    },
+    [],
+  );
 
   const closeBulkDialog = useCallback(() => {
     setBulkOpen(false);
@@ -270,7 +254,6 @@ export function useInventoryView() {
     setExportOpen,
     categoryOptions,
     importRef,
-    importType,
     addMenuRef,
     isSaving,
     isDeleting,

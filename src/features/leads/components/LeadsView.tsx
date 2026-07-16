@@ -20,6 +20,7 @@ import {
 import { StatCard } from "@/shared/ui/StatCard";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   useAddLead,
@@ -71,6 +72,11 @@ export function LeadsView() {
     channel: "all",
     search: "",
   });
+  const debouncedSearch = useDebouncedValue(filter.search);
+  const debouncedFilter = useMemo(
+    () => ({ ...filter, search: debouncedSearch }),
+    [filter, debouncedSearch],
+  );
   const [selected, setSelected] = useState<Lead | null>(null);
   // Deep-link support: `/leads?lead=<id>` opens the detail sheet (e.g. from the inbox).
   const [leadParam, setLeadParam] = useUrlState("lead");
@@ -301,7 +307,7 @@ export function LeadsView() {
           <div className="hidden md:flex md:flex-col flex-1 min-h-0">
             <KanbanView
               leads={leads}
-              filter={filter}
+              filter={debouncedFilter}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
               onAddLead={openCreate}
@@ -310,7 +316,7 @@ export function LeadsView() {
           <div className="flex md:hidden flex-col flex-1 min-h-0">
             <TableView
               leads={leads}
-              filter={filter}
+              filter={debouncedFilter}
               archived={archived}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
@@ -328,7 +334,7 @@ export function LeadsView() {
       {!isLoading && leadsView === "list" && (
         <ListView
           leads={leads}
-          filter={filter}
+          filter={debouncedFilter}
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
@@ -342,7 +348,7 @@ export function LeadsView() {
       {!isLoading && leadsView === "table" && (
         <TableView
           leads={leads}
-          filter={filter}
+          filter={debouncedFilter}
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}

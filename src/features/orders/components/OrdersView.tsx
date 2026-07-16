@@ -1,5 +1,6 @@
 "use client";
 import { extractErrorMessage } from "@/lib/utils";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -49,9 +50,14 @@ export function OrdersView() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Order | null>(null);
 
+  const debouncedSearch = useDebouncedValue(search);
+
   const filters: OrderFilters = useMemo(
-    () => ({ ...(search ? { search } : {}), ...(status ? { status } : {}) }),
-    [search, status],
+    () => ({
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(status ? { status } : {}),
+    }),
+    [debouncedSearch, status],
   );
 
   const [orderPendingDeletion, setOrderPendingDeletion] =

@@ -16,6 +16,7 @@ import {
 } from "@/shared/ui/DropdownMenu";
 import { Input } from "@/shared/ui/Input";
 import { Spinner } from "@/shared/ui/Motion";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -127,7 +128,7 @@ export function InboxView() {
   const [chatWasDeleted, setChatWasDeleted] = useState(false);
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
   // A chat just opened from the Leads page has no messages yet, so the server
   // list query omits it. Pin it locally so it shows until the first message.
   const [pinnedConv, setPinnedConv] = useState<ConversationListItem | null>(
@@ -410,12 +411,6 @@ export function InboxView() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations, hiddenChats]);
-
-  // Debounce the chat search so the server is queried only after typing settles.
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => clearTimeout(t);
-  }, [search]);
 
   // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat,
   // creating the conversation on the fly if the lead has never been messaged.
