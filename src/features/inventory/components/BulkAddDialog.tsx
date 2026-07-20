@@ -459,7 +459,7 @@ export function BulkAddDialog({
         )}
 
         {/* Header */}
-        <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
+        <DialogHeader className="shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
           <div>
             <DialogTitle className="text-[16px] font-semibold">
               Bulk add products
@@ -475,7 +475,7 @@ export function BulkAddDialog({
         </DialogHeader>
 
         {/* Drop zone */}
-        <div className="px-5 pt-3 flex-shrink-0">
+        <div className="px-5 pt-3 shrink-0">
           <div
             onDragOver={(e) => {
               e.preventDefault();
