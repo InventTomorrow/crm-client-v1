@@ -1,4 +1,4 @@
-import type { OrderStatus } from '../types';
+import type { OrderPlatform, OrderStatus } from '../types';
 
 export const CURRENCIES: { code: string; name: string }[] = [
   { code: 'PKR', name: 'Pakistani Rupee' },
@@ -38,4 +38,15 @@ export const ORDER_STATUS_META: Record<OrderStatus, StatusMeta> = {
   COMPLETED: { label: 'Completed', cls: 'bg-[#D1FAE5] text-[#065F46]', dot: 'bg-[#059669]' },
   CANCELLED: { label: 'Cancelled', cls: 'bg-[#FEE2E2] text-[#991B1B]', dot: 'bg-[#DC2626]' },
   REFUNDED: { label: 'Refunded', cls: 'bg-[#FFEDD5] text-[#9A3412]', dot: 'bg-[#EA580C]' },
+};
+
+interface PlatformMeta {
+  label: string;
+  cls: string;
+}
+
+export const ORDER_PLATFORM_META: Record<OrderPlatform, PlatformMeta> = {
+  INTERNAL: { label: 'Internal', cls: 'bg-[var(--surface-2)] text-[var(--ink-soft)]' },
+  SHOPIFY: { label: 'Shopify', cls: 'bg-[#DCFCE7] text-[#15803D]' },
+  API: { label: 'Website', cls: 'bg-[#DBEAFE] text-[#1E40AF]' },
 };

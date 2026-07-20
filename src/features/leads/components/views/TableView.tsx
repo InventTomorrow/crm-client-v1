@@ -4,27 +4,38 @@ import { pkr } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
+import { Button } from "@/shared/ui/Button";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
 import LeadStatusSelect from "../LeadStatusSelect";
-import { Inbox, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Inbox, Pencil, Trash2 } from "lucide-react";
 
 export default function TableView({
   leads,
   filter,
+  archived = false,
   onSelect,
   onStatusChange,
   onOpenChat,
   onEdit,
+  onArchive,
+  onRestore,
   onDelete,
+  onBulkDelete,
+  onExport,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
+  archived?: boolean;
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onOpenChat: (l: Lead) => void;
   onEdit: (l: Lead) => void;
+  onArchive: (l: Lead) => void;
+  onRestore: (l: Lead) => void;
   onDelete: (l: Lead) => void;
+  onBulkDelete: (rows: Lead[]) => void;
+  onExport: (rows: Lead[]) => void;
 }) {
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
 
@@ -112,25 +123,36 @@ export default function TableView({
           const l = row.original;
           return (
             <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-              <button className="btn btn-ghost p-1.5" title="Open chat" onClick={() => onOpenChat(l)}>
+              <Button variant="ghost" size="icon" title="Open chat" onClick={() => onOpenChat(l)}>
                 <Inbox size={13} />
-              </button>
-              <button className="btn btn-ghost p-1.5" title="Edit" onClick={() => onEdit(l)}>
+              </Button>
+              <Button variant="ghost" size="icon" title="Edit" onClick={() => onEdit(l)}>
                 <Pencil size={13} />
-              </button>
-              <button
-                className="btn btn-ghost p-1.5 text-[#DC2626]"
-                title="Delete"
+              </Button>
+              {archived ? (
+                <Button variant="ghost" size="icon" title="Restore" onClick={() => onRestore(l)}>
+                  <ArchiveRestore size={13} />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" title="Archive" onClick={() => onArchive(l)}>
+                  <Archive size={13} />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Delete permanently"
+                className="text-[#DC2626]"
                 onClick={() => onDelete(l)}
               >
                 <Trash2 size={13} />
-              </button>
+              </Button>
             </div>
           );
         },
       },
     ],
-    [onSelect, onStatusChange, onOpenChat, onEdit, onDelete],
+    [archived, onSelect, onStatusChange, onOpenChat, onEdit, onArchive, onRestore, onDelete],
   );
 
   return (
@@ -138,7 +160,8 @@ export default function TableView({
       data={filtered}
       columns={columns}
       selectable
-      onDeleteSelected={(rows) => rows.forEach((l) => onDelete(l))}
+      onDeleteSelected={onBulkDelete}
+      onExport={onExport}
       emptyMessage="No matching leads."
       defaultPageSize={20}
       className="flex-1 min-h-0"

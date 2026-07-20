@@ -1,10 +1,19 @@
-'use client';
-import { extractErrorMessage } from '@/lib/utils';
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+"use client";
+import { extractErrorMessage } from "@/lib/utils";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   approveDraft,
+  clearConversation,
   deleteMessage,
   editMessage,
   escalateConversation,
@@ -13,28 +22,38 @@ import {
   getInboxUnreadCount,
   getMessages,
   markConversationRead,
+  openConversationForLead,
   resolveConversation,
   sendHumanMessage,
   sendMediaMessage,
   sendTyping,
+  startConversation,
   toggleAiMode,
   uploadAttachment,
-} from '../services/inboxService';
-import type { ConversationDetail, ConversationFilter, ConversationListItem } from '../types';
+  type StartConversationInput,
+} from "../services/inboxService";
+import { useTypingStore } from "../stores/typingStore";
+import type {
+  ConversationDetail,
+  ConversationFilter,
+  ConversationListItem,
+} from "../types";
 
+// Polls are slow fallbacks only — the /events SSE stream invalidates these
+// caches the moment something changes (see applyConversationEvent).
 export function useConversations() {
   return useQuery({
-    queryKey: ['conversations'],
+    queryKey: ["conversations"],
     queryFn: () => getConversations({}),
-    refetchInterval: 5_000,
+    refetchInterval: 60_000,
   });
 }
 
 export function useInboxUnreadCount() {
   return useQuery({
-    queryKey: ['conversations', 'unread-count'],
+    queryKey: ["conversations", "unread-count"],
     queryFn: getInboxUnreadCount,
-    refetchInterval: 10_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -44,34 +63,33 @@ export function useMarkConversationRead() {
     mutationFn: (id: string) => markConversationRead(id),
     onMutate: (id: string) => {
       // Optimistically zero-out unreadCount so the unread tab updates instantly.
-      queryClient.setQueriesData(
-        { queryKey: ['conversations', 'infinite'] },
-        (old: any) => {
+      queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
+        { queryKey: ["conversations", "infinite"] },
+        (old) => {
           if (!old?.pages) return old;
           return {
             ...old,
-            pages: old.pages.map((page: ConversationListItem[]) =>
-              page.map((c: ConversationListItem) =>
-                c.id === id ? { ...c, unreadCount: 0 } : c,
-              ),
+            pages: old.pages.map((page) =>
+              page.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
             ),
           };
         },
       );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
 
-export function useInfiniteConversations() {
+export function useInfiniteConversations(search?: string) {
   return useInfiniteQuery({
-    queryKey: ['conversations', 'infinite'],
-    queryFn: getConversations,
+    queryKey: ["conversations", "infinite", search ?? ""],
+    queryFn: ({ pageParam }) => getConversations({ pageParam, search }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
-    refetchInterval: 5_000,
+    getNextPageParam: (lastPage) =>
+      lastPage.length === 25 ? lastPage[lastPage.length - 1].id : undefined,
+    refetchInterval: 60_000,
     // Keep stale data visible during background refetches so the list never
     // flashes empty while a fetch is in-flight (e.g. transient disconnect).
     placeholderData: keepPreviousData,
@@ -80,21 +98,22 @@ export function useInfiniteConversations() {
 
 export function useConversationDetail(id: string | null) {
   return useQuery({
-    queryKey: ['conversation', id],
+    queryKey: ["conversation", id],
     queryFn: () => getConversation(id!),
     enabled: !!id,
-    refetchInterval: 3_000,
+    refetchInterval: 30_000,
   });
 }
 
 export function useMessagesPaginated(id: string | null) {
   return useInfiniteQuery({
-    queryKey: ['conversation', id, 'messages'],
+    queryKey: ["conversation", id, "messages"],
     queryFn: getMessages,
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.length === 30 ? lastPage[lastPage.length - 1].id : undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.length === 30 ? lastPage[lastPage.length - 1].id : undefined,
     enabled: !!id,
-    refetchInterval: 3_000,
+    refetchInterval: 30_000,
   });
 }
 
@@ -103,10 +122,16 @@ export function useApproveDraft(conversationId: string) {
   return useMutation({
     mutationFn: (messageId: string) => approveDraft(conversationId, messageId),
     onSuccess: () => {
-      toast.success('Reply sent');
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
+      toast.success("Reply sent");
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send reply')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to send reply")),
   });
 }
 
@@ -115,52 +140,97 @@ export function useSendHumanReply(conversationId: string) {
   return useMutation({
     mutationFn: (content: string) => sendHumanMessage(conversationId, content),
     onMutate: async (content) => {
-      await queryClient.cancelQueries({ queryKey: ['conversation', conversationId] });
-      const prev = queryClient.getQueryData<ConversationDetail>(['conversation', conversationId]);
+      await queryClient.cancelQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      const prev = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        conversationId,
+      ]);
       if (prev) {
-        queryClient.setQueryData<ConversationDetail>(['conversation', conversationId], {
-          ...prev,
-          messages: [
-            ...prev.messages,
-            {
-              id: `optimistic-${Date.now()}`,
-              conversationId,
-              senderType: 'AGENT',
-              content,
-              isDraft: false,
-              createdAt: new Date().toISOString(),
-              isDeleted: false,
-            },
-          ],
-        });
+        queryClient.setQueryData<ConversationDetail>(
+          ["conversation", conversationId],
+          {
+            ...prev,
+            messages: [
+              ...prev.messages,
+              {
+                id: `optimistic-${Date.now()}`,
+                conversationId,
+                senderType: "AGENT",
+                content,
+                isDraft: false,
+                createdAt: new Date().toISOString(),
+                isDeleted: false,
+              },
+            ],
+          },
+        );
       }
       return { prev };
     },
     onError: (error, _content, ctx) => {
-      toast.error(extractErrorMessage(error, 'Failed to send message'));
-      if (ctx?.prev) queryClient.setQueryData(['conversation', conversationId], ctx.prev);
+      toast.error(extractErrorMessage(error, "Failed to send message"));
+      if (ctx?.prev)
+        queryClient.setQueryData(["conversation", conversationId], ctx.prev);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      }),
+  });
+}
+
+export function useStartConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StartConversationInput) => startConversation(input),
+    onSuccess: () => {
+      toast.success("Chat started");
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversations", "infinite"],
+      });
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to start chat")),
   });
 }
 
 export function useSendMedia(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ mediaUrl, mimeType, caption, fileName }: { mediaUrl: string; mimeType: string; caption?: string; fileName?: string }) =>
+    mutationFn: ({
+      mediaUrl,
+      mimeType,
+      caption,
+      fileName,
+    }: {
+      mediaUrl: string;
+      mimeType: string;
+      caption?: string;
+      fileName?: string;
+    }) =>
       sendMediaMessage(conversationId, mediaUrl, mimeType, caption, fileName),
     onSuccess: () => {
-      toast.success('Media sent');
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
+      toast.success("Media sent");
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to send media')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to send media")),
   });
 }
 
 export function useUploadAttachment() {
   return useMutation({
     mutationFn: (file: File) => uploadAttachment(file),
-    onError: (error) => toast.error(extractErrorMessage(error, 'Upload failed')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Upload failed")),
   });
 }
 
@@ -170,52 +240,200 @@ export function useToggleAiMode(conversationId: string) {
     mutationFn: () => toggleAiMode(conversationId),
     // Optimistically flip aiEnabled in the cached conversation detail + list.
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['conversation', conversationId] });
-      const prevDetail = queryClient.getQueryData<ConversationDetail>(['conversation', conversationId]);
-      const prevList = queryClient.getQueryData<ConversationListItem[]>(['conversations']);
+      await queryClient.cancelQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      const prevDetail = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        conversationId,
+      ]);
+      const prevList = queryClient.getQueryData<ConversationListItem[]>([
+        "conversations",
+      ]);
       if (prevDetail) {
-        queryClient.setQueryData<ConversationDetail>(['conversation', conversationId], { ...prevDetail, aiEnabled: !prevDetail.aiEnabled });
+        queryClient.setQueryData<ConversationDetail>(
+          ["conversation", conversationId],
+          { ...prevDetail, aiEnabled: !prevDetail.aiEnabled },
+        );
       }
       if (prevList) {
-        queryClient.setQueryData<ConversationListItem[]>(['conversations'], prevList.map((c) => c.id === conversationId ? { ...c, aiEnabled: !c.aiEnabled } : c));
+        queryClient.setQueryData<ConversationListItem[]>(
+          ["conversations"],
+          prevList.map((c) =>
+            c.id === conversationId ? { ...c, aiEnabled: !c.aiEnabled } : c,
+          ),
+        );
       }
       return { prevDetail, prevList };
     },
     onError: (error, _v, ctx) => {
-      if (ctx?.prevDetail) queryClient.setQueryData(['conversation', conversationId], ctx.prevDetail);
-      if (ctx?.prevList) queryClient.setQueryData(['conversations'], ctx.prevList);
-      toast.error(extractErrorMessage(error, 'Failed to toggle AI mode'));
+      if (ctx?.prevDetail)
+        queryClient.setQueryData(
+          ["conversation", conversationId],
+          ctx.prevDetail,
+        );
+      if (ctx?.prevList)
+        queryClient.setQueryData(["conversations"], ctx.prevList);
+      toast.error(extractErrorMessage(error, "Failed to toggle AI mode"));
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
 
+type EscalationStatus = ConversationListItem["escalationStatus"];
+
+/** Optimistically writes the next escalation status into the list + detail caches. */
+function patchEscalationCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  id: string,
+  next: EscalationStatus,
+) {
+  queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
+    { queryKey: ["conversations", "infinite"] },
+    (old) => {
+      if (!old?.pages) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page) =>
+          page.map((c) => (c.id === id ? { ...c, escalationStatus: next } : c)),
+        ),
+      };
+    },
+  );
+  const detail = queryClient.getQueryData<ConversationDetail>([
+    "conversation",
+    id,
+  ]);
+  if (detail) {
+    queryClient.setQueryData<ConversationDetail>(["conversation", id], {
+      ...detail,
+      escalationStatus: next,
+    });
+  }
+}
+
+/** Toggles the flag: clicking an already-escalated chat clears it back to NONE. */
 export function useEscalate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: escalateConversation,
-    onSuccess: (_, id) => {
-      toast.success('Conversation escalated');
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversation', id] });
+    onMutate: (id: string) => {
+      const detail = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        id,
+      ]);
+      const prev = detail?.escalationStatus;
+      const next: EscalationStatus =
+        prev === "ESCALATED" ? "NONE" : "ESCALATED";
+      patchEscalationCache(queryClient, id, next);
+      return { prev, next };
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to escalate')),
+    onSuccess: (_, __, ctx) => {
+      toast.success(
+        ctx?.next === "ESCALATED" ? "Conversation flagged" : "Flag removed",
+      );
+    },
+    onError: (error, id, ctx) => {
+      if (ctx?.prev) patchEscalationCache(queryClient, id, ctx.prev);
+      toast.error(extractErrorMessage(error, "Failed to update"));
+    },
+    onSettled: (_, __, id) => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation", id] });
+    },
   });
 }
 
+/** Toggles done: clicking an already-resolved chat clears it back to NONE. */
 export function useResolve() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: resolveConversation,
-    onSuccess: (_, id) => {
-      toast.success('Conversation resolved');
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversation', id] });
+    onMutate: (id: string) => {
+      const detail = queryClient.getQueryData<ConversationDetail>([
+        "conversation",
+        id,
+      ]);
+      const prev = detail?.escalationStatus;
+      const next: EscalationStatus = prev === "RESOLVED" ? "NONE" : "RESOLVED";
+      patchEscalationCache(queryClient, id, next);
+      return { prev, next };
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to resolve')),
+    onSuccess: (_, __, ctx) => {
+      toast.success(ctx?.next === "RESOLVED" ? "Marked as done" : "Reopened");
+    },
+    onError: (error, id, ctx) => {
+      if (ctx?.prev) patchEscalationCache(queryClient, id, ctx.prev);
+      toast.error(extractErrorMessage(error, "Failed to update"));
+    },
+    onSettled: (_, __, id) => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation", id] });
+    },
+  });
+}
+
+/** Deletes a chat's history server-side; the lead is kept for later follow-up. */
+export function useDeleteChat() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => clearConversation(id),
+    // Optimistically drop the row from the list so the view advances to the next
+    // chat immediately — otherwise the auto-select effect re-picks the stale
+    // (just-deleted) first row before the refetch lands.
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({
+        queryKey: ["conversations", "infinite"],
+      });
+      const prev = queryClient.getQueriesData<
+        InfiniteData<ConversationListItem[]>
+      >({
+        queryKey: ["conversations", "infinite"],
+      });
+      queryClient.setQueriesData<InfiniteData<ConversationListItem[]>>(
+        { queryKey: ["conversations", "infinite"] },
+        (old) => {
+          if (!old?.pages) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => page.filter((c) => c.id !== id)),
+          };
+        },
+      );
+      return { prev };
+    },
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: ["conversation", id] });
+      toast.success("Chat deleted");
+    },
+    onError: (error, _id, ctx) => {
+      ctx?.prev?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      toast.error(extractErrorMessage(error, "Failed to delete chat"));
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+  });
+}
+
+/** Opens (or creates) a lead's chat so it can be messaged from the CRM. */
+export function useOpenConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (leadId: string) => openConversationForLead(leadId),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(["conversation", detail.id], detail);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to open chat")),
   });
 }
 
@@ -224,128 +442,122 @@ export function filterConversations(
   filter: ConversationFilter,
   favorites?: Set<string>,
   tabAssignments?: Record<string, string[]>,
+  archived?: Set<string>,
+  hidden?: Set<string>,
 ): ConversationListItem[] {
-  if (filter === 'escalated') return conversations.filter((c) => c.escalationStatus === 'ESCALATED');
-  if (filter === 'unread') return conversations.filter((c) => c.unreadCount > 0);
-  if (filter === 'favorites') return conversations.filter((c) => favorites?.has(c.id) ?? false);
+  // Locally deleted chats never appear anywhere.
+  const visible = conversations.filter((c) => !hidden?.has(c.id));
+  // The Archived tab shows only archived chats; every other view excludes them.
+  if (filter === "archived")
+    return visible.filter((c) => archived?.has(c.id) ?? false);
+  const active = visible.filter((c) => !archived?.has(c.id));
+  if (filter === "escalated")
+    return active.filter((c) => c.escalationStatus === "ESCALATED");
+  if (filter === "unread") return active.filter((c) => c.unreadCount > 0);
+  if (filter === "favorites")
+    return active.filter((c) => favorites?.has(c.id) ?? false);
   // Custom tab: only show assigned conversations
   if (tabAssignments && filter in tabAssignments) {
     const ids = tabAssignments[filter];
-    return conversations.filter((c) => ids.includes(c.id));
+    return active.filter((c) => ids.includes(c.id));
   }
-  return conversations;
+  return active;
 }
 
 export function useDeleteMessage(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ messageId, everyone }: { messageId: string; everyone: boolean }) =>
-      deleteMessage(conversationId, messageId, everyone),
+    mutationFn: ({
+      messageId,
+      everyone,
+    }: {
+      messageId: string;
+      everyone: boolean;
+    }) => deleteMessage(conversationId, messageId, everyone),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
-      toast.success('Message deleted');
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
+      toast.success("Message deleted");
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to delete message')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to delete message")),
   });
 }
 
 export function useEditMessage(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
-      editMessage(conversationId, messageId, content),
+    mutationFn: ({
+      messageId,
+      content,
+    }: {
+      messageId: string;
+      content: string;
+    }) => editMessage(conversationId, messageId, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] }); queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, 'messages'] });
-      toast.success('Message updated');
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId, "messages"],
+      });
+      toast.success("Message updated");
     },
-    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to update message')),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "Failed to update message")),
   });
 }
 
-// Safety auto-clear: the server emits a "stopped" event on flush, but if it is
-// missed we still drop the indicator after this long without a fresh keystroke.
-const LEAD_TYPING_TTL_MS = 8_000;
-
 /**
- * Subscribes to the WhatsApp SSE stream and returns the conversation id whose
- * lead is currently typing (or null). One stream powers both the thread
- * indicator and the conversation-list row.
+ * Conversation id whose lead is currently typing (or null). Fed by the
+ * app-wide /events stream via applyTypingEvent — no extra connection.
  */
 export function useLeadTyping(): string | null {
-  const [typingConversationId, setTypingConversationId] = useState<string | null>(null);
-  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const es = new EventSource('/api/v1/whatsapp/qr-stream', { withCredentials: true });
-
-    es.onmessage = (e: MessageEvent) => {
-      const event = JSON.parse(e.data as string) as { type: string; conversationId?: string; isTyping?: boolean };
-      if (event.type !== 'typing' || !event.conversationId) return;
-
-      if (event.isTyping) {
-        setTypingConversationId(event.conversationId);
-        if (clearTimer.current) clearTimeout(clearTimer.current);
-        clearTimer.current = setTimeout(() => setTypingConversationId(null), LEAD_TYPING_TTL_MS);
-      } else {
-        setTypingConversationId((prev) => (prev === event.conversationId ? null : prev));
-      }
-    };
-
-    es.onerror = () => es.close();
-
-    return () => {
-      es.close();
-      if (clearTimer.current) clearTimeout(clearTimer.current);
-    };
-  }, []);
-
-  return typingConversationId;
+  return useTypingStore((s) => s.typingConversationId);
 }
 
 const AGENT_TYPING_IDLE_MS = 2_500;
+
+/**
+ * Folds a conversation SSE event into the inbox caches by invalidation —
+ * list, thread, and unread badge refresh the moment something changes.
+ * Called by useAppEvents for every conversation event.
+ */
+export function applyConversationEvent(
+  queryClient: QueryClient,
+  event: { type: string; conversationId?: string },
+): void {
+  if (event.type === "new-message") {
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["conversations", "infinite"] });
+    queryClient.invalidateQueries({
+      queryKey: ["conversation", event.conversationId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["conversation", event.conversationId, "messages"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["conversations", "unread-count"],
+    });
+  }
+  if (event.type === "new-conversation") {
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["conversations", "infinite"] });
+    queryClient.invalidateQueries({
+      queryKey: ["conversations", "unread-count"],
+    });
+  }
+}
 
 /**
  * Mirrors the agent's composing state onto WhatsApp. Call `onType()` on each
  * keystroke and `stop()` when sending or leaving — sends start once, then a
  * single stop after the agent pauses, so we never spam the endpoint.
  */
-export function useConversationStream() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const es = new EventSource('/api/v1/conversations/stream', {
-      withCredentials: true,
-    });
-
-    es.onmessage = (e: MessageEvent) => {
-      try {
-        const data = JSON.parse(e.data as string) as {
-          type: string;
-          conversationId?: string;
-        };
-        if (data.type === 'new-message') {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
-          queryClient.invalidateQueries({ queryKey: ['conversation', data.conversationId] });
-          queryClient.invalidateQueries({ queryKey: ['conversation', data.conversationId, 'messages'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
-        }
-        if (data.type === 'new-conversation') {
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'infinite'] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', 'unread-count'] });
-        }
-      } catch {
-        /* malformed payload — ignore */
-      }
-    };
-
-    es.onerror = () => es.close();
-
-    return () => es.close();
-  }, [queryClient]);
-}
-
 export function useAgentTyping(conversationId: string | null) {
   const isTypingRef = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

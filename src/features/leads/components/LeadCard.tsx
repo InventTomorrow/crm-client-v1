@@ -31,9 +31,10 @@ export default function LeadCard({
   return (
     <div
       className={cn(
-        "card kanban-card flex flex-col gap-2 p-[11px]",
+        "card kanban-card flex flex-col gap-2 p-[11px] transition-colors",
         dragging ? "dragging" : "",
         draggable ? "cursor-grab" : "cursor-pointer",
+        "hover:bg-[var(--surface-2)]",
         lead.status === "hot"
           ? "border-[#FCA5A5] bg-[rgba(254,242,242,0.6)]"
           : "border-[var(--line)] bg-[var(--surface)]",

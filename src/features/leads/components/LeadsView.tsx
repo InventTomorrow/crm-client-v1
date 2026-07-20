@@ -1,20 +1,39 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
-import { pkr } from "@/lib/utils";
+import { cn, pkr } from "@/lib/utils";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { Download, Grid2x2, Layers, Plus, Search } from "lucide-react";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
+import {
+  Download,
+  Flame,
+  Grid2x2,
+  Layers,
+  Loader2,
+  Plus,
+  Search,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { StatCard } from "@/shared/ui/StatCard";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { WAStatusBadge } from "../../channels/components/WAStatusBadge";
+import { useEffect, useMemo, useState } from "react";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   useAddLead,
+  useArchiveLead,
   useDeleteLead,
-  useLeads,
+  useInfiniteLeads,
+  useLead,
+  useRestoreLead,
   useUpdateLead,
   useUpdateLeadStatus,
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
-import { ExportLeadsDialog } from "./ExportLeadsDialog";
+import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
+import { ExportDialog } from "@/shared/ui/ExportDialog";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
@@ -25,12 +44,27 @@ import TableView from "./views/TableView";
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
   const router = useRouter();
-  const { data: leads = [], isLoading } = useLeads();
+  const [archived, setArchived] = useState(false);
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteLeads(archived);
+  const leads = useMemo(() => data?.pages.flat() ?? [], [data]);
   const addLead = useAddLead();
   const updateLead = useUpdateLead();
   const updateStatus = useUpdateLeadStatus();
+  const archiveLead = useArchiveLead();
+  const restoreLead = useRestoreLead();
   const deleteLead = useDeleteLead();
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportRows, setExportRows] = useState<Lead[]>([]);
+  const openExport = (rows: Lead[]) => {
+    setExportRows(rows);
+    setExportOpen(true);
+  };
   const { leadsView, setLeadsView } = useAppStore();
 
   const [filter, setFilter] = useState<LeadsFilter>({
@@ -38,11 +72,26 @@ export function LeadsView() {
     search: "",
   });
   const [selected, setSelected] = useState<Lead | null>(null);
+  // Deep-link support: `/leads?lead=<id>` opens the detail sheet (e.g. from the inbox).
+  const [leadParam, setLeadParam] = useUrlState("lead");
+  const { data: paramLead } = useLead(leadParam || null);
+  useEffect(() => {
+    if (!leadParam) return;
+    const resolved = leads.find((l) => l.id === leadParam) ?? paramLead ?? null;
+    if (resolved && selected?.id !== resolved.id) setSelected(resolved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadParam, leads, paramLead]);
+  const closeSheet = () => {
+    setSelected(null);
+    setLeadParam("");
+  };
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Lead | null>(null);
+  const [createStatus, setCreateStatus] = useState<LeadStatus | undefined>();
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [bulkDeleteTargets, setBulkDeleteTargets] = useState<Lead[]>([]);
 
   const hot = leads.filter((l: Lead) => l.status === "hot").length;
   const totalValue = leads.reduce(
@@ -54,9 +103,10 @@ export function LeadsView() {
     updateStatus.mutate({ id, status });
   };
 
-  const openCreate = () => {
+  const openCreate = (status?: LeadStatus) => {
     setFormMode("create");
     setEditing(null);
+    setCreateStatus(status);
     setFormOpen(true);
   };
   const openEdit = (lead: Lead) => {
@@ -79,6 +129,14 @@ export function LeadsView() {
     }
   };
 
+  const handleArchive = (lead: Lead) => {
+    archiveLead.mutate(lead.id, { onSuccess: () => setSelected(null) });
+  };
+
+  const handleRestore = (lead: Lead) => {
+    restoreLead.mutate(lead.id, { onSuccess: () => setSelected(null) });
+  };
+
   const handleDelete = (lead: Lead) => setDeleteTarget(lead);
 
   const confirmDelete = () => {
@@ -89,6 +147,12 @@ export function LeadsView() {
         setDeleteTarget(null);
       },
     });
+  };
+
+  const confirmBulkDelete = () => {
+    bulkDeleteTargets.forEach((lead) => deleteLead.mutate(lead.id));
+    setBulkDeleteTargets([]);
+    setSelected(null);
   };
 
   const handleOpenChat = (lead: Lead) => {
@@ -107,8 +171,6 @@ export function LeadsView() {
   const CHANNEL_TABS = [
     { id: "all", label: "All" },
     { id: "wa", label: "WhatsApp" },
-    { id: "ig", label: "Instagram" },
-    { id: "fb", label: "Facebook" },
   ];
 
   return (
@@ -118,38 +180,54 @@ export function LeadsView() {
         <div>
           <h2 className="text-[20px] font-semibold">Leads pipeline</h2>
           <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
-            {leads.length} leads · {hot} hot · {pkr(totalValue)} projected
+            Track and convert your pipeline
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          <WAStatusBadge />
-          <button
-            className="btn btn-outline"
-            onClick={() => setExportOpen(true)}
-          >
-            <Download size={13} /> Export
-          </button>
-          <button
-            className="btn btn-outline"
-            onClick={() => setImportOpen(true)}
-          >
-            <Layers size={13} /> Import
-          </button>
-          <button className="btn btn-grad" onClick={openCreate}>
-            <Plus size={13} /> Add lead
-          </button>
+          <PermissionGuard permission="leads:export">
+            <Button variant="outline" onClick={() => openExport(leads)}>
+              <Download size={13} /> Export
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission="leads:create">
+            <Button
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+            >
+              <Layers size={13} /> Import
+            </Button>
+            <Button onClick={() => openCreate()}>
+              <Plus size={13} /> Add lead
+            </Button>
+          </PermissionGuard>
         </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatCard label="Total leads" value={leads.length} Icon={Users} />
+        <StatCard
+          label="Hot leads"
+          value={hot}
+          Icon={Flame}
+          accent="#EF4444"
+        />
+        <StatCard
+          label="Projected value"
+          value={pkr(totalValue)}
+          Icon={TrendingUp}
+        />
       </div>
 
       {/* Toolbar */}
       <div className="card leads-toolbar flex items-center gap-2 flex-wrap p-2">
-        <div className="relative flex-[1_1_220px] min-w-[200px]">
+        <div className="relative w-full flex-none md:flex-[1_1_220px] md:w-auto md:min-w-[200px]">
           <Search
             size={13}
-            className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
           />
-          <input
-            className="input pl-8"
+          <Input
+            className="pl-8"
             placeholder="Search leads..."
             value={filter.search}
             onChange={(e) =>
@@ -157,35 +235,58 @@ export function LeadsView() {
             }
           />
         </div>
-        <div className="seg">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={filter.channel}
+          onValueChange={(v) => {
+            if (v) setFilter((f) => ({ ...f, channel: v as LeadsFilter["channel"] }));
+          }}
+        >
           {CHANNEL_TABS.map((c) => (
-            <button
-              key={c.id}
-              className={filter.channel === c.id ? "on" : ""}
-              onClick={() =>
-                setFilter((f) => ({
-                  ...f,
-                  channel: c.id as LeadsFilter["channel"],
-                }))
-              }
-            >
+            <ToggleGroupItem key={c.id} value={c.id}>
               {c.label}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
-        <div className="flex-1" />
-        <div className="seg">
+        </ToggleGroup>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={archived ? "archived" : "active"}
+          onValueChange={(v) => {
+            if (v) setArchived(v === "archived");
+          }}
+        >
+          <ToggleGroupItem value="active">Active</ToggleGroupItem>
+          <ToggleGroupItem value="archived">Archived</ToggleGroupItem>
+        </ToggleGroup>
+        <div className="hidden md:block md:flex-1" />
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={leadsView}
+          onValueChange={(v) => {
+            if (v) setLeadsView(v as LeadsView);
+          }}
+        >
           {VIEW_BTNS.map(({ id, label, Icon }) => (
-            <button
+            <ToggleGroupItem
               key={id}
-              className={leadsView === id ? "on" : ""}
-              onClick={() => setLeadsView(id)}
+              value={id}
               title={label}
+              // Kanban isn't usable on phones — hide the toggle there.
+              className={cn(id === "kanban" && "hidden md:inline-flex")}
             >
               <Icon size={12} /> {label}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
       </div>
 
       {isLoading && (
@@ -195,21 +296,46 @@ export function LeadsView() {
       )}
 
       {!isLoading && leadsView === "kanban" && (
-        <KanbanView
-          leads={leads}
-          filter={filter}
-          onSelect={setSelected}
-          onStatusChange={handleStatusChange}
-        />
+        <>
+          {/* Kanban on desktop; phones fall back to the table view. */}
+          <div className="hidden md:flex md:flex-col flex-1 min-h-0">
+            <KanbanView
+              leads={leads}
+              filter={filter}
+              onSelect={setSelected}
+              onStatusChange={handleStatusChange}
+              onAddLead={openCreate}
+            />
+          </div>
+          <div className="flex md:hidden flex-col flex-1 min-h-0">
+            <TableView
+              leads={leads}
+              filter={filter}
+              archived={archived}
+              onSelect={setSelected}
+              onStatusChange={handleStatusChange}
+              onOpenChat={handleOpenChat}
+              onEdit={openEdit}
+              onArchive={handleArchive}
+              onRestore={handleRestore}
+              onDelete={handleDelete}
+              onBulkDelete={setBulkDeleteTargets}
+              onExport={openExport}
+            />
+          </div>
+        </>
       )}
       {!isLoading && leadsView === "list" && (
         <ListView
           leads={leads}
           filter={filter}
+          archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
           onOpenChat={handleOpenChat}
           onEdit={openEdit}
+          onArchive={handleArchive}
+          onRestore={handleRestore}
           onDelete={handleDelete}
         />
       )}
@@ -217,18 +343,42 @@ export function LeadsView() {
         <TableView
           leads={leads}
           filter={filter}
+          archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
           onOpenChat={handleOpenChat}
           onEdit={openEdit}
+          onArchive={handleArchive}
+          onRestore={handleRestore}
           onDelete={handleDelete}
+          onBulkDelete={setBulkDeleteTargets}
+          onExport={openExport}
         />
+      )}
+
+      {!isLoading && hasNextPage && (
+        <div className="flex justify-center py-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : null}
+            Load more leads
+          </Button>
+        </div>
       )}
 
       <LeadDetailSheet
         lead={selected}
-        onClose={() => setSelected(null)}
+        archived={archived}
+        onClose={closeSheet}
         onEdit={openEdit}
+        onArchive={handleArchive}
+        onRestore={handleRestore}
         onDelete={handleDelete}
         onOpenChat={handleOpenChat}
         isDeleting={deleteLead.isPending}
@@ -237,6 +387,7 @@ export function LeadsView() {
         open={formOpen}
         mode={formMode}
         initial={editing}
+        defaultStatus={createStatus}
         onClose={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}
         isSaving={isSavingForm}
@@ -245,22 +396,34 @@ export function LeadsView() {
         open={importOpen}
         onClose={() => setImportOpen(false)}
       />
-      <ExportLeadsDialog
+      <ExportDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
-        leads={leads}
+        onConfirm={(name) => downloadLeadsCsv(exportRows, name)}
+        defaultName={`leads_export_${new Date().toISOString().split("T")[0]}`}
+        count={exportRows.length}
+        title="Export leads"
       />
       <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title="Delete lead?"
+        title="Delete lead permanently?"
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" will be permanently removed. This can't be undone.`
+            ? `"${deleteTarget.name}" and their chat history will be permanently removed. This can't be undone. Leads with orders can't be deleted — archive them instead.`
             : undefined
         }
-        confirmLabel="Delete lead"
+        confirmLabel="Delete permanently"
+        loading={deleteLead.isPending}
+      />
+      <ConfirmDialog
+        open={bulkDeleteTargets.length > 0}
+        onClose={() => setBulkDeleteTargets([])}
+        onConfirm={confirmBulkDelete}
+        title={`Delete ${bulkDeleteTargets.length} lead${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
+        description="The selected leads will be permanently removed. This can't be undone."
+        confirmLabel="Delete leads"
         loading={deleteLead.isPending}
       />
     </div>

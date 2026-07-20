@@ -1,12 +1,8 @@
 "use client";
-import {
-  useInviteUser,
-  useMe,
-  useMembers,
-  useRemoveMember,
-  useUpdateMe,
-} from "@/features/auth/hooks/useAuth";
-import { useWAStatus } from "@/features/channels/hooks/useWhatsApp";
+import { useMe, useUpdateMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { OrderApiCard } from "@/features/channels/apiKey/components/OrderApiCard";
+import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import {
   useNotificationPreferences,
@@ -14,15 +10,27 @@ import {
 } from "@/features/notifications/hooks/useNotifications";
 import type { NotificationType } from "@/features/notifications/types";
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { CRMSwitch } from "@/shared/ui/CRMSwitch";
+import { Input } from "@/shared/ui/Input";
 import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/shared/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity,
   Bell,
   Bot,
   Building2,
   Check,
+  ChevronLeft,
   Cloud,
   Crown,
   Link,
@@ -31,17 +39,18 @@ import {
   Shield,
   Star,
   Store,
-  Trash2,
   Upload,
   User,
-  Users,
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import type { SettingsSection } from "../types";
 import { SECTION_NAV, SYSTEM_STATS } from "../types";
 import { BusinessSection } from "./BusinessSection";
 import { ChatbotSection } from "./ChatbotSection";
+import { TeamSection } from "./TeamSection";
 import { WorkspacesManagementView } from "./WorkspacesManagementView";
 
 const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
@@ -56,23 +65,14 @@ const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
   system: Activity,
 };
 
-// ──────────────────── Field (label wrapper) ────────────────────
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-[12px] font-semibold mb-1.5 text-[var(--ink-soft)]">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
+// ──────────────────── Profile form schema ────────────────────
+const profileSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Metric ────────────────────
 function Metric({ label, v, pct }: { label: string; v: string; pct: number }) {
@@ -103,23 +103,23 @@ function ProfileSection() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState(false);
 
-  const [draft, setDraft] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    avatarUrl: "",
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { firstName: "", lastName: "", phone: "", avatarUrl: "" },
   });
+
+  const avatarUrl = form.watch("avatarUrl") || "";
 
   useEffect(() => {
     if (user) {
-      setDraft({
+      form.reset({
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
         phone: user.phone ?? "",
         avatarUrl: user.avatarUrl ?? "",
       });
     }
-  }, [user]);
+  }, [user, form]);
 
   const fullName =
     `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "Your Name";
@@ -128,34 +128,25 @@ function ProfileSection() {
   const workspaceName = currentMembership?.tenant?.name ?? "";
   const roleName = currentMembership?.role?.name ?? "";
 
-  const originalDraft = {
-    firstName: user?.firstName ?? "",
-    lastName: user?.lastName ?? "",
-    phone: user?.phone ?? "",
-    avatarUrl: user?.avatarUrl ?? "",
-  };
-  const dirty = JSON.stringify(originalDraft) !== JSON.stringify(draft);
-
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
     try {
       const url = await uploadImage(file);
-      setDraft((d) => ({ ...d, avatarUrl: url }));
-      saveProfile({ avatarUrl: url });
+      form.setValue("avatarUrl", url, { shouldDirty: true });
     } catch {
       // error toast already shown by usePresignedUpload's onError
     }
   };
 
-  const handleSave = () => {
+  const handleSave = (data: ProfileFormValues) => {
     saveProfile(
       {
-        firstName: draft.firstName || undefined,
-        lastName: draft.lastName || undefined,
-        phone: draft.phone || undefined,
-        avatarUrl: draft.avatarUrl || undefined,
+        firstName: data.firstName || undefined,
+        lastName: data.lastName || undefined,
+        phone: data.phone || undefined,
+        avatarUrl: data.avatarUrl || undefined,
       },
       {
         onSuccess: () => {
@@ -179,12 +170,7 @@ function ProfileSection() {
       <h2 className="text-[20px] font-semibold">Profile</h2>
       <div className="card p-[22px]">
         <div className="flex items-center gap-4 mb-5">
-          <CRMAvatar
-            name={fullName}
-            src={draft.avatarUrl || null}
-            size={64}
-            ring
-          />
+          <CRMAvatar name={fullName} src={avatarUrl || null} size={64} ring />
           <div>
             <h4 className="text-[15px] font-semibold">{fullName}</h4>
             <div className="text-[12.5px] text-[var(--ink-mute)]">
@@ -199,8 +185,10 @@ function ProfileSection() {
               className="hidden"
               onChange={handlePhotoChange}
             />
-            <button
-              className="btn btn-outline mt-2 py-1 px-2.5 text-[12px]"
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
               onClick={() => photoInputRef.current?.click()}
               disabled={isUploading}
             >
@@ -213,82 +201,97 @@ function ProfileSection() {
                   <Upload size={12} /> Upload photo
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="First name">
-            <input
-              className="input"
-              value={draft.firstName}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, firstName: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="Last name">
-            <input
-              className="input"
-              value={draft.lastName}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, lastName: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="Email">
-            <input
-              className="input opacity-60 cursor-not-allowed"
-              value={displayEmail}
-              readOnly
-            />
-          </Field>
-          <Field label="Phone">
-            <input
-              className="input"
-              value={draft.phone}
-              placeholder="+92 300 0000000"
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, phone: e.target.value }))
-              }
-            />
-          </Field>
-        </div>
-        <div className="flex justify-between items-center mt-4">
-          <div
-            className={`text-[12.5px] flex items-center gap-1.5 ${saved ? "text-[#15803D]" : "text-[var(--ink-mute)]"}`}
-          >
-            {saved && (
-              <>
-                <Check size={13} /> Saved successfully
-              </>
-            )}
-            {!saved && dirty && "Unsaved changes"}
-          </div>
-          <div className="flex gap-2">
-            <button
-              className="btn btn-outline"
-              onClick={() => setDraft(originalDraft)}
-              disabled={!dirty || isSaving}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-grad"
-              onClick={handleSave}
-              disabled={!dirty || isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 size={13} className="animate-spin" /> Saving…
-                </>
-              ) : (
-                <>
-                  <Check size={14} /> Save changes
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSave)}>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <Input
+                  value={displayEmail}
+                  readOnly
+                  className="opacity-60 cursor-not-allowed"
+                />
+              </FormItem>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+92 300 0000000" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-between items-center mt-4">
+              <div
+                className={`text-[12.5px] flex items-center gap-1.5 ${saved ? "text-[#15803D]" : "text-[var(--ink-mute)]"}`}
+              >
+                {saved && (
+                  <>
+                    <Check size={13} /> Saved successfully
+                  </>
+                )}
+                {!saved && form.formState.isDirty && "Unsaved changes"}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => form.reset()}
+                  disabled={!form.formState.isDirty || isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!form.formState.isDirty || isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} /> Save changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
       </div>
     </>
   );
@@ -340,11 +343,15 @@ const NOTIF_META: Record<NotificationType, { title: string; desc: string }> = {
     title: "Billing",
     desc: "Payment confirmations and plan changes.",
   },
+  SUPPORT_CONTACT_CHANGED: {
+    title: "Support number changed",
+    desc: "When the workspace's support contact number is updated.",
+  },
 };
 
 function NotifSection() {
   const { data: prefs = [], isLoading } = useNotificationPreferences();
-  const { mutate: update, isPending } = useUpdateNotificationPreference();
+  const { mutate: update } = useUpdateNotificationPreference();
 
   if (isLoading) {
     return (
@@ -411,8 +418,10 @@ function NotifSection() {
 // ──────────────────── Channels Section ────────────────────
 function ChannelsSection() {
   const { data: statusData } = useWAStatus();
+  const { can } = usePermissions();
   const [waOpen, setWaOpen] = useState(false);
   const status = statusData?.status ?? "DISCONNECTED";
+  const canConnect = can("channels:connect");
 
   return (
     <>
@@ -454,18 +463,26 @@ function ChannelsSection() {
             />
             {status === "CONNECTED"
               ? "Connected"
-              : status === "PENDING"
+              : status === "PENDING" || status === "CONNECTING"
                 ? "Connecting…"
                 : "Disconnected"}
           </span>
-          <button
-            className="btn btn-outline text-[12.5px]"
-            onClick={() => setWaOpen(true)}
-          >
-            {status === "CONNECTED" ? "Manage" : "Connect"}
-          </button>
+          {canConnect && (
+            <Button variant="outline" size="sm" onClick={() => setWaOpen(true)}>
+              {status === "CONNECTED" ? "Manage" : "Connect"}
+            </Button>
+          )}
         </div>
+        {!canConnect && (
+          <p className="text-[11.5px] text-[var(--ink-mute)] mt-3">
+            You don&apos;t have permission to connect or disconnect WhatsApp.
+            Ask a workspace owner.
+          </p>
+        )}
       </div>
+
+      <OrderApiCard />
+
       <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
     </>
   );
@@ -495,202 +512,15 @@ function TierSection() {
               12,000 messages / month.
             </div>
           </div>
-          <button className="btn btn-grad flex-shrink-0">
+          <Button className="flex-shrink-0">
             <Zap size={14} /> Upgrade to ERP
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
           <Metric label="Messages used" v="8,420 / 12K" pct={70} />
           <Metric label="AI credits" v="4.2K / 10K" pct={42} />
           <Metric label="Storage" v="2.1 / 50 GB" pct={4} />
         </div>
-      </div>
-    </>
-  );
-}
-
-// ──────────────────── Access Section ────────────────────
-const ROLE_META: Record<string, { desc: string; color: string }> = {
-  OWNER: {
-    desc: "Full access: billing, integrations, all data.",
-    color: "bg-[rgba(124,58,237,0.12)] text-[#7C3AED]",
-  },
-  ADMIN: {
-    desc: "Manage leads, inventory, replies. No billing.",
-    color: "bg-[rgba(59,130,246,0.12)] text-[#2563EB]",
-  },
-  MANAGER: {
-    desc: "Manage leads, inventory, replies. No billing.",
-    color: "bg-[rgba(59,130,246,0.12)] text-[#2563EB]",
-  },
-  AGENT: {
-    desc: "Inbox + assigned leads only.",
-    color: "bg-[rgba(16,185,129,0.12)] text-[#059669]",
-  },
-};
-
-function AccessSection() {
-  const { data: members = [], isLoading } = useMembers();
-  const { mutate: removeM, isPending: isRemoving } = useRemoveMember();
-  const inviteMut = useInviteUser();
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [showInvite, setShowInvite] = useState(false);
-
-  const byRole = members.reduce<Record<string, number>>((acc, m) => {
-    acc[m.roleName] = (acc[m.roleName] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const handleInvite = () => {
-    if (!inviteEmail.trim()) return;
-    inviteMut.mutate(
-      { email: inviteEmail.trim() },
-      {
-        onSuccess: () => {
-          setInviteEmail("");
-          setShowInvite(false);
-        },
-      },
-    );
-  };
-
-  return (
-    <>
-      <h2 className="text-[20px] font-semibold">Access Control</h2>
-
-      {/* Role summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {(["OWNER", "ADMIN", "MANAGER", "AGENT"] as const).map((r) => (
-          <div key={r} className="card p-3.5">
-            <div className="text-[11.5px] font-medium text-[var(--ink-mute)]">
-              {r}
-            </div>
-            <div className="text-[22px] font-semibold mt-0.5">
-              {byRole[r] ?? 0}
-            </div>
-            <div className="text-[11px] text-[var(--ink-mute)] mt-1 leading-snug">
-              {ROLE_META[r]?.desc}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Members table */}
-      <div className="card overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--line)]">
-          <h4 className="text-[13.5px] font-semibold">
-            Team Members
-            {!isLoading && (
-              <span className="font-normal text-[12px] text-[var(--ink-mute)] ml-1.5">
-                · {members.length}
-              </span>
-            )}
-          </h4>
-          <button
-            className="btn btn-outline text-[12.5px] py-1.5 px-3"
-            onClick={() => setShowInvite((v) => !v)}
-          >
-            <Users size={13} /> Invite member
-          </button>
-        </div>
-
-        {/* Invite row */}
-        {showInvite && (
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--line)] bg-[var(--surface-2)]">
-            <input
-              className="input flex-1 text-[13px]"
-              placeholder="colleague@email.com"
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-              autoFocus
-            />
-            <button
-              className="btn btn-grad text-[12.5px]"
-              onClick={handleInvite}
-              disabled={inviteMut.isPending || !inviteEmail.trim()}
-            >
-              {inviteMut.isPending ? (
-                <Loader2 size={13} className="animate-spin" />
-              ) : (
-                <Check size={13} />
-              )}
-              Send invite
-            </button>
-            <button
-              className="btn btn-ghost p-2"
-              onClick={() => setShowInvite(false)}
-            >
-              <Zap size={13} className="rotate-45 opacity-60" />
-            </button>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 size={20} className="animate-spin text-[var(--accent)]" />
-          </div>
-        ) : members.length === 0 ? (
-          <div className="py-10 text-center text-[var(--ink-mute)] text-[13px]">
-            No members yet.
-          </div>
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Joined</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => {
-                const name =
-                  [m.firstName, m.lastName].filter(Boolean).join(" ") ||
-                  m.email;
-                const roleColor =
-                  ROLE_META[m.roleName]?.color ??
-                  "bg-[var(--surface-2)] text-[var(--ink-soft)]";
-                return (
-                  <tr key={m.membershipId}>
-                    <td>
-                      <div className="flex items-center gap-2.5">
-                        <CRMAvatar name={name} size={28} />
-                        <span className="font-medium">{name}</span>
-                      </div>
-                    </td>
-                    <td className="text-[var(--ink-mute)] text-[12.5px]">
-                      {m.email}
-                    </td>
-                    <td>
-                      <span className={cn("badge font-medium", roleColor)}>
-                        {m.roleName}
-                      </span>
-                    </td>
-                    <td className="text-[var(--ink-mute)] text-[12px]">
-                      {new Date(m.joinedAt).toLocaleDateString()}
-                    </td>
-                    <td className="text-right">
-                      {m.roleName !== "OWNER" && (
-                        <button
-                          className="btn btn-ghost p-1.5 text-[#DC2626]"
-                          title="Remove member"
-                          onClick={() => removeM(m.membershipId)}
-                          disabled={isRemoving}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
       </div>
     </>
   );
@@ -746,39 +576,95 @@ function SystemSection() {
   );
 }
 
+// Per-tab permission gate. Tabs without an entry (profile, notifications) are
+// always available — they only expose the signed-in user's own data.
+const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
+  chatbot: "chatbot:view",
+  business: "settings:view",
+  channels: "channels:view",
+  access: "members:view",
+  workspaces: "settings:edit",
+};
+
+// Tabs that configure the workspace itself (billing tier, team access, other
+// workspaces, system health) rather than day-to-day operation — visible to
+// the workspace owner only. Notifications/Chatbot/Business/Channels stay
+// available to any permitted role since they're used to run the workspace.
+const SECTION_OWNER_ONLY = new Set<SettingsSection>([
+  "tier",
+  "access",
+  "workspaces",
+  "system",
+]);
+
 // ──────────────────── SettingsView (root) ────────────────────
 export function SettingsView() {
+  const { can, isOwner, isLoading: permsLoading } = usePermissions();
   const [section, setSection] = useState<SettingsSection>("profile");
+  // Mobile only: which pane is showing — the section nav or the active section's
+  // content. Desktop ignores this and shows both side by side (see globals.css).
+  const [mobShowNav, setMobShowNav] = useState(true);
+
+  // Hide tabs the active role can't access (placeholder tabs stay visible but
+  // disabled, as before).
+  const visibleNav = SECTION_NAV.filter((s) => {
+    if (SECTION_OWNER_ONLY.has(s.id) && !isOwner) return false;
+    const perm = SECTION_PERMISSION[s.id];
+    return !perm || can(perm);
+  });
+
+  // If the current section became inaccessible, fall back to Profile.
+  useEffect(() => {
+    if (permsLoading) return;
+    if (!visibleNav.some((s) => s.id === section)) setSection("profile");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permsLoading, section]);
 
   return (
-    <div className="flex gap-3.5 h-full overflow-hidden p-[18px]">
+    <div className="settings-layout flex gap-3.5 h-full overflow-hidden p-[18px]">
       {/* Sidebar nav */}
-      <div className="card flex-shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]">
+      <div
+        className={cn(
+          "settings-nav card shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]",
+          mobShowNav && "mob-on",
+        )}
+      >
         <div className="text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1.5 text-[var(--ink-mute)]">
           Settings
         </div>
-        {SECTION_NAV.map((s) => {
+        {visibleNav.map((s) => {
           const Icon = SECTION_ICONS[s.id];
           const active = section === s.id;
-          const disabled = (["tier", "access", "system"] as SettingsSection[]).includes(s.id);
+          const disabled = (["tier", "system"] as SettingsSection[]).includes(
+            s.id,
+          );
           return (
-            <button
+            <Button
               key={s.id}
-              onClick={() => !disabled && setSection(s.id)}
+              variant="ghost"
+              onClick={() => {
+                if (disabled) return;
+                setSection(s.id);
+                setMobShowNav(false);
+              }}
               disabled={disabled}
               className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left transition-colors w-full border-none",
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13.5px] text-left w-full justify-start h-auto",
                 disabled
                   ? "opacity-35 cursor-not-allowed text-[var(--ink-soft)] font-medium"
                   : active
-                    ? "bg-[var(--accent-soft)] text-[var(--accent)] font-semibold cursor-pointer"
-                    : "bg-transparent text-[var(--ink-soft)] font-medium hover:bg-[var(--surface-2)] hover:text-[var(--ink)] cursor-pointer",
+                    ? "bg-[var(--accent-soft)] text-[var(--accent)] font-semibold hover:bg-[var(--accent-soft)]"
+                    : "bg-transparent text-[var(--ink-soft)] font-medium",
               )}
             >
               <Icon size={15} />
               <span className="flex-1">{s.label}</span>
-              {disabled && <span className="text-[9.5px] font-medium tracking-wide uppercase text-[var(--ink-mute)] opacity-70">Soon</span>}
-            </button>
+              {disabled && (
+                <span className="text-[9.5px] font-medium tracking-wide uppercase text-[var(--ink-mute)] opacity-70">
+                  Soon
+                </span>
+              )}
+            </Button>
           );
         })}
       </div>
@@ -786,17 +672,30 @@ export function SettingsView() {
       {/* Content */}
       <div
         className={cn(
-          "scroll flex-1 overflow-y-auto flex flex-col gap-3.5",
+          "settings-content scroll flex-1 overflow-y-auto flex flex-col gap-3.5",
           section === "workspaces" && "p-0 gap-0",
+          !mobShowNav && "mob-on",
         )}
       >
+        <button
+          type="button"
+          onClick={() => setMobShowNav(true)}
+          className="settings-back-mobile items-center gap-1.5 text-[13px] font-medium text-[var(--ink-soft)] px-1 pt-1"
+        >
+          <ChevronLeft size={16} />
+          Settings
+          <span className="text-[var(--ink-mute)]">/</span>
+          <span className="text-[var(--ink)]">
+            {visibleNav.find((s) => s.id === section)?.label}
+          </span>
+        </button>
         {section === "profile" && <ProfileSection />}
         {section === "notif" && <NotifSection />}
         {section === "chatbot" && <ChatbotSection />}
         {section === "business" && <BusinessSection />}
         {section === "channels" && <ChannelsSection />}
         {section === "tier" && <TierSection />}
-        {section === "access" && <AccessSection />}
+        {section === "access" && <TeamSection />}
         {section === "workspaces" && <WorkspacesManagementView />}
         {section === "system" && <SystemSection />}
       </div>

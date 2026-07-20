@@ -37,9 +37,9 @@ const NAV_ITEMS = [
     Icon: Box,
   },
   {
-    id: "analytics",
-    label: "Open Analytics",
-    sub: "Dashboards & funnel",
+    id: "dashboard",
+    label: "Open Dashboard",
+    sub: "KPIs, funnel & connectivity",
     Icon: BarChart2,
   },
   {
@@ -119,6 +119,7 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQ("");
       setDebouncedQ("");
     }
@@ -209,15 +210,15 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
               <div className="px-2 pt-3 pb-1 text-[11px] text-[var(--ink-mute)]">
                 Try searching{" "}
                 <span className="font-semibold text-[var(--ink-soft)]">
-                  "Ali"
+                  &quot;Ali&quot;
                 </span>
                 ,{" "}
                 <span className="font-semibold text-[var(--ink-soft)]">
-                  "Karachi"
+                  &quot;Karachi&quot;
                 </span>
                 , or{" "}
                 <span className="font-semibold text-[var(--ink-soft)]">
-                  "0300"
+                  &quot;0300&quot;
                 </span>
               </div>
             </>

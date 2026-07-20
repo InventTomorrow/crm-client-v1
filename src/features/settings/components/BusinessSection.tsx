@@ -9,6 +9,18 @@ import {
   useUpdateBusinessProfile,
 } from '../hooks/useChatbotSettings';
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
+import { Button } from '@/shared/ui/Button';
+import { CRMSwitch } from '@/shared/ui/CRMSwitch';
+import { Input } from '@/shared/ui/Input';
+import { Textarea } from '@/shared/ui/Textarea';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/ui/form';
 
 const DEFAULTS: BusinessProfileForm = {
   businessDescription: '',
@@ -17,6 +29,7 @@ const DEFAULTS: BusinessProfileForm = {
   supportName: '',
   supportPhone: '',
   supportEmail: '',
+  shareSupportContactOnHandoff: false,
 };
 
 export function BusinessSection() {
@@ -24,42 +37,38 @@ export function BusinessSection() {
   const { mutate: save, isPending } = useUpdateBusinessProfile();
   const { mutate: generate, isPending: isGenerating } = useGenerateBusinessIntro();
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    getValues,
-    setValue,
-    watch,
-    formState: { errors, isDirty },
-  } = useForm<BusinessProfileForm>({
+  const form = useForm<BusinessProfileForm>({
     resolver: zodResolver(businessProfileSchema),
     defaultValues: DEFAULTS,
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'businessFaqs' });
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'businessFaqs',
+  });
 
   useEffect(() => {
     if (data?.config) {
-      reset({
+      form.reset({
         businessDescription: data.config.businessDescription ?? '',
         businessInfoMessage: data.config.businessInfoMessage ?? '',
         businessFaqs: data.config.businessFaqs ?? [],
         supportName: data.config.supportName ?? '',
         supportPhone: data.config.supportPhone ?? '',
         supportEmail: data.config.supportEmail ?? '',
+        shareSupportContactOnHandoff: data.config.shareSupportContactOnHandoff ?? false,
       });
     }
-  }, [data, reset]);
+  }, [data, form]);
 
-  const description = watch('businessDescription');
+  const description = form.watch('businessDescription');
 
   const handleGenerate = () => {
-    const desc = (getValues('businessDescription') ?? '').trim();
+    const desc = (form.getValues('businessDescription') ?? '').trim();
     if (desc.length < 10) return;
     generate(desc, {
-      onSuccess: (message) => setValue('businessInfoMessage', message, { shouldDirty: true }),
+      onSuccess: (message) =>
+        form.setValue('businessInfoMessage', message, { shouldDirty: true }),
     });
   };
 
@@ -78,120 +87,237 @@ export function BusinessSection() {
         Describe your business and add common Q&amp;A — the chatbot uses these to answer questions about you.
       </p>
 
-      <form onSubmit={handleSubmit((d) => save(d, { onSuccess: () => reset(d) }))} className="flex flex-col gap-3.5">
-        {/* Description + generate */}
-        <div className="card p-[22px] flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-medium text-[var(--ink-soft)]">What does your business do?</label>
-            <textarea
-              className="input text-[13px] min-h-[80px] resize-y"
-              placeholder="e.g. We're a Karachi-based boutique selling handmade lawn suits and accessories, with nationwide COD delivery."
-              {...register('businessDescription')}
-            />
-            {errors.businessDescription && <p className="text-[11px] text-[var(--destructive)]">{errors.businessDescription.message}</p>}
-          </div>
-
-          <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
-            <div>
-              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Intro message</label>
-              <p className="text-[11px] text-[var(--ink-mute)]">Shown when a customer asks about your business. Generate, then edit freely.</p>
-            </div>
-            <button
-              type="button"
-              className="btn btn-outline flex-shrink-0"
-              onClick={handleGenerate}
-              disabled={isGenerating || (description ?? '').trim().length < 10}
-            >
-              {isGenerating ? <><Loader2 size={13} className="animate-spin" /> Generating…</> : <><Zap size={13} /> Generate with AI</>}
-            </button>
-          </div>
-          <textarea
-            className="input text-[13px] min-h-[96px] resize-y"
-            placeholder="Your business intro will appear here — or write your own."
-            {...register('businessInfoMessage')}
-          />
-          {errors.businessInfoMessage && <p className="text-[11px] text-[var(--destructive)]">{errors.businessInfoMessage.message}</p>}
-        </div>
-
-        {/* Q&A editor */}
-        <div className="card p-[22px] flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-[13.5px] font-semibold">Custom Q&amp;A</h4>
-              <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">Question → answer pairs the bot can use directly.</p>
-            </div>
-            <button type="button" className="btn btn-outline py-1 px-2.5 text-[12px]" onClick={() => append({ question: '', answer: '' })}>
-              <Plus size={13} /> Add
-            </button>
-          </div>
-
-          {fields.length === 0 && (
-            <p className="text-[12px] text-[var(--ink-mute)] py-2">No Q&amp;A yet. Add a pair like &ldquo;Do you deliver? → Yes, nationwide COD.&rdquo;</p>
-          )}
-
-          {fields.map((field, i) => (
-            <div key={field.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 flex flex-col gap-2">
-              <div className="flex items-start gap-2">
-                <div className="flex-1 flex flex-col gap-2">
-                  <input
-                    className="input text-[13px]"
-                    placeholder="Question"
-                    {...register(`businessFaqs.${i}.question` as const)}
-                  />
-                  <textarea
-                    className="input text-[13px] min-h-[56px] resize-y"
-                    placeholder="Answer"
-                    {...register(`businessFaqs.${i}.answer` as const)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  aria-label="Remove"
-                  className="text-[var(--ink-mute)] hover:text-[var(--destructive)] p-1.5 rounded-lg transition-colors"
-                  onClick={() => remove(i)}
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-              {(errors.businessFaqs?.[i]?.question || errors.businessFaqs?.[i]?.answer) && (
-                <p className="text-[11px] text-[var(--destructive)]">
-                  {errors.businessFaqs?.[i]?.question?.message ?? errors.businessFaqs?.[i]?.answer?.message}
-                </p>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit((d) => save(d, { onSuccess: () => form.reset(d) }))}
+          className="flex flex-col gap-3.5"
+        >
+          {/* Description + generate */}
+          <div className="card p-[22px] flex flex-col gap-3">
+            <FormField
+              control={form.control}
+              name="businessDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>What does your business do?</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      className="min-h-[80px] resize-y"
+                      placeholder="e.g. We're a Karachi-based boutique selling handmade lawn suits and accessories, with nationwide COD delivery."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-          ))}
-        </div>
+            />
 
-        {/* Support contact */}
-        <div className="card p-[22px] flex flex-col gap-3">
-          <div>
-            <h4 className="text-[13.5px] font-semibold">Support Contact</h4>
-            <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
-              The AI uses these details when directing customers to support (e.g. blocked cancellations, shipped orders).
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Team / Person name</label>
-              <input className="input text-[13px]" placeholder="e.g. Support Team" {...register('supportName')} />
+            <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
+              <div>
+                <FormLabel className="text-[12px] font-medium text-[var(--ink-soft)]">
+                  Intro message
+                </FormLabel>
+                <p className="text-[11px] text-[var(--ink-mute)]">
+                  Shown when a customer asks about your business. Generate, then edit freely.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-shrink-0"
+                onClick={handleGenerate}
+                disabled={isGenerating || (description ?? '').trim().length < 10}
+              >
+                {isGenerating ? (
+                  <><Loader2 size={13} className="animate-spin" /> Generating…</>
+                ) : (
+                  <><Zap size={13} /> Generate with AI</>
+                )}
+              </Button>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[12px] font-medium text-[var(--ink-soft)]">WhatsApp / Phone</label>
-              <input className="input text-[13px]" placeholder="+92 300 0000000" {...register('supportPhone')} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Email</label>
-              <input className="input text-[13px]" type="email" placeholder="support@yourbusiness.com" {...register('supportEmail')} />
-            </div>
-          </div>
-        </div>
 
-        <div className="flex justify-end">
-          <button type="submit" className="btn btn-grad" disabled={isPending || !isDirty}>
-            {isPending ? <><Loader2 size={13} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save changes</>}
-          </button>
-        </div>
-      </form>
+            <FormField
+              control={form.control}
+              name="businessInfoMessage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      className="min-h-[96px] resize-y"
+                      placeholder="Your business intro will appear here — or write your own."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Q&A editor */}
+          <div className="card p-[22px] flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-[13.5px] font-semibold">Custom Q&amp;A</h4>
+                <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                  Question → answer pairs the bot can use directly.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ question: '', answer: '' })}
+              >
+                <Plus size={13} /> Add
+              </Button>
+            </div>
+
+            {fields.length === 0 && (
+              <p className="text-[12px] text-[var(--ink-mute)] py-2">
+                No Q&amp;A yet. Add a pair like &ldquo;Do you deliver? → Yes, nationwide COD.&rdquo;
+              </p>
+            )}
+
+            {fields.map((field, i) => (
+              <div
+                key={field.id}
+                className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 flex flex-col gap-2"
+              >
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 flex flex-col gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`businessFaqs.${i}.question`}
+                      render={({ field: f }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input placeholder="Question" {...f} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`businessFaqs.${i}.answer`}
+                      render={({ field: f }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              className="min-h-[56px] resize-y"
+                              placeholder="Answer"
+                              {...f}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Remove"
+                    className="text-[var(--ink-mute)] hover:text-destructive mt-1"
+                    onClick={() => remove(i)}
+                  >
+                    <Trash2 size={15} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Support contact */}
+          <div className="card p-[22px] flex flex-col gap-3">
+            <div>
+              <h4 className="text-[13.5px] font-semibold">Support Contact</h4>
+              <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                Used only when the AI hands a conversation off to a human — never as
+                general conversation context. Phone defaults to your connected
+                WhatsApp number until you set one here.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="supportName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Team / Person name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Support Team" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="supportPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>WhatsApp / Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Defaults to connected WhatsApp number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="supportEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="support@yourbusiness.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="shareSupportContactOnHandoff"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
+                    <div>
+                      <FormLabel className="text-[12.5px]">
+                        Share these details with the customer on handoff
+                      </FormLabel>
+                      <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                        Off by default — the AI tells the customer a human will
+                        follow up, without naming a contact. Turn on to include
+                        the name/phone/email above in that message.
+                      </p>
+                    </div>
+                    <FormControl>
+                      <CRMSwitch on={field.value} onChange={() => field.onChange(!field.value)} />
+                    </FormControl>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isPending || !form.formState.isDirty}>
+              {isPending ? (
+                <><Loader2 size={13} className="animate-spin" /> Saving…</>
+              ) : (
+                <><Check size={14} /> Save changes</>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </>
   );
 }

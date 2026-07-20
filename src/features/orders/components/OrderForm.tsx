@@ -6,12 +6,15 @@ import { getImageUrl } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { formatMoney } from "../lib/format";
 import type { Order } from "../types";
 import { orderFormSchema, type OrderFormValues } from "../validations.order";
 import { SearchableSelect, type ComboOption } from "./SearchableSelect";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import { Textarea } from "@/shared/ui/Textarea";
 
 interface ProductRow {
   id: string;
@@ -97,6 +100,7 @@ export function OrderForm({
     register,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<OrderFormValues>({
     // Cast: zod `coerce`/`default` make the resolver's input type diverge from
@@ -106,6 +110,12 @@ export function OrderForm({
     ) as unknown as Resolver<OrderFormValues>,
     defaultValues: defaults,
   });
+
+  // The form stays mounted, so RHF keeps stale values when switching between
+  // create/edit or between orders. Reset to the current defaults on each open.
+  useEffect(() => {
+    if (open) reset(defaults);
+  }, [open, defaults, reset]);
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
 
@@ -128,9 +138,9 @@ export function OrderForm({
           <h3 className="text-[16px] font-semibold text-[var(--ink)]">
             {initial ? `Edit order #${initial.orderNumber}` : "New order"}
           </h3>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         <form
@@ -189,15 +199,16 @@ export function OrderForm({
               <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">
                 Items
               </label>
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost text-[12px] py-1 px-2"
+                variant="ghost"
+                size="sm"
                 onClick={() =>
                   append({ name: "", sku: "", quantity: 1, unitPrice: 0 })
                 }
               >
                 <Plus size={13} /> Add item
-              </button>
+              </Button>
             </div>
             <div className="flex flex-col gap-2 mt-1.5">
               {fields.map((field, i) => (
@@ -254,29 +265,31 @@ export function OrderForm({
                       )}
                     />
                   </div>
-                  <input
-                    className="input w-[64px]"
+                  <Input
+                    className="w-[64px]"
                     type="number"
                     min={1}
                     placeholder="Qty"
                     {...register(`items.${i}.quantity`)}
                   />
-                  <input
-                    className="input w-[90px]"
+                  <Input
+                    className="w-[90px]"
                     type="number"
                     min={0}
                     step="0.01"
                     placeholder="Price"
                     {...register(`items.${i}.unitPrice`)}
                   />
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-ghost p-2 text-[var(--ink-mute)]"
+                    variant="ghost"
+                    size="icon"
+                    className="text-[var(--ink-mute)] hover:text-destructive"
                     onClick={() => fields.length > 1 && remove(i)}
                     disabled={fields.length <= 1}
                   >
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -292,8 +305,8 @@ export function OrderForm({
             <label className="text-[12.5px] font-medium text-[var(--ink-soft)]">
               Notes
             </label>
-            <textarea
-              className="input mt-1 min-h-[60px]"
+            <Textarea
+              className="mt-1 min-h-[60px]"
               placeholder="Optional notes…"
               {...register("notes")}
             />
@@ -309,8 +322,8 @@ export function OrderForm({
               <span>Discount</span>
               <div className="flex items-center gap-1">
                 <span className="text-[var(--ink-mute)]">−</span>
-                <input
-                  className="input w-[120px] py-1 text-right text-[13px]"
+                <Input
+                  className="w-[120px] h-8 text-right"
                   type="number"
                   min={0}
                   step="0.01"
@@ -326,21 +339,20 @@ export function OrderForm({
         </form>
 
         <div className="p-[18px] border-t border-[var(--line)] flex justify-end gap-2">
-          <button
-            className="btn btn-outline"
+          <Button
+            variant="outline"
             onClick={onClose}
             disabled={isSubmitting}
           >
             Cancel
-          </button>
-          <button
-            className="btn btn-grad"
+          </Button>
+          <Button
             onClick={handleSubmit((v) => onSubmit(v))}
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}
             {initial ? "Save changes" : "Create order"}
-          </button>
+          </Button>
         </div>
       </div>
     </>

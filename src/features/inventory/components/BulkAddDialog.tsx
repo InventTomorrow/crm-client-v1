@@ -1,5 +1,6 @@
 "use client";
 import { extractErrorMessage, getImageUrl, pkr } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,16 @@ import {
   DialogTitle,
 } from "@/shared/ui/Dialog";
 import { ImageUploader } from "@/shared/ui/ImageUploader";
+import { Input } from "@/shared/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { Textarea } from "@/shared/ui/Textarea";
 import {
   Form,
   FormControl,
@@ -20,71 +30,34 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ImageIcon, Loader2, Plus, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { presignedUpload } from "../services/productsService";
-import type { ProductFormData } from "../types";
+import type { BulkItem, ProductFormData } from "../types";
 import { CATEGORIES, productSchema } from "../types";
+import {
+  parseProductsCsv,
+  parseProductsJson,
+} from "../utils/importProductsCsv";
+import { SizeSelector } from "./SizeSelector";
 
-interface BulkItem extends ProductFormData {
-  imageUrl?: string;
-}
+export type { BulkItem };
 
 const EMPTY_ITEM = (): BulkItem => ({
   name: "",
   sku: "",
   price: 0,
+  discountPercentage: undefined,
   stock: 0,
   cat: "Apparel",
+  sizes: [],
+  gender: "",
+  color: "",
   desc: "",
   imageUrl: "",
+  imageUrls: [],
 });
-
-function parseImageCol(o: Record<string, string>): string {
-  return o.image_url ?? o.imageurl ?? o.imageUrls ?? o.image ?? o.img ?? "";
-}
-
-function parseCSV(text: string): BulkItem[] {
-  const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  return lines
-    .slice(1)
-    .filter(Boolean)
-    .map((line) => {
-      const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-      const o: Record<string, string> = {};
-      headers.forEach((h, i) => {
-        o[h] = cells[i] ?? "";
-      });
-      return {
-        name: o.name ?? o.product ?? "",
-        sku: o.sku ?? "",
-        price: Number(o.price) || 0,
-        stock: Number(o.stock) || 0,
-        cat: o.category ?? o.cat ?? "Apparel",
-        desc: o.description ?? o.desc ?? "",
-        imageUrl: parseImageCol(o),
-      };
-    })
-    .filter((p) => p.name);
-}
-
-function parseJSON(text: string): BulkItem[] {
-  const j = JSON.parse(text);
-  const arr: any[] = Array.isArray(j) ? j : (j.products ?? []);
-  return arr
-    .map((p) => ({
-      name: p.name ?? "",
-      sku: p.sku ?? "",
-      price: Number(p.price) || 0,
-      stock: Number(p.stock) || 0,
-      cat: p.category ?? p.cat ?? "Apparel",
-      desc: p.description ?? p.desc ?? "",
-      imageUrl: p.imageUrl ?? p.image_url ?? p.image ?? "",
-    }))
-    .filter((p) => p.name);
-}
 
 // ── Inline Edit Panel ─────────────────────────────────────
 function EditPanel({
@@ -105,8 +78,12 @@ function EditPanel({
       name: item.name,
       sku: item.sku ?? "",
       price: item.price,
+      discountPercentage: item.discountPercentage ?? undefined,
       stock: item.stock,
       cat: item.cat,
+      sizes: item.sizes ?? [],
+      gender: item.gender ?? "",
+      color: item.color ?? "",
       desc: item.desc ?? "",
     },
   });
@@ -116,8 +93,12 @@ function EditPanel({
       name: item.name,
       sku: item.sku ?? "",
       price: item.price,
+      discountPercentage: item.discountPercentage ?? undefined,
       stock: item.stock,
       cat: item.cat,
+      sizes: item.sizes ?? [],
+      gender: item.gender ?? "",
+      color: item.color ?? "",
       desc: item.desc ?? "",
     });
     setImageUrl(item.imageUrl ?? "");
@@ -133,8 +114,10 @@ function EditPanel({
     }
   }, []);
 
+  const selectedCategory = useWatch({ control: form.control, name: "cat" });
+
   const onSubmit = (data: ProductFormData) => {
-    onSave({ ...data, imageUrl });
+    onSave({ ...data, imageUrl, imageUrls: imageUrl ? [imageUrl] : [] });
   };
 
   return (
@@ -147,19 +130,13 @@ function EditPanel({
           Edit product
         </div>
 
-        {uploading ? (
-          <div className="flex h-[80px] items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)]">
-            <Loader2 size={15} className="animate-spin text-[var(--accent)]" />
-            <span className="text-[12px] text-[var(--accent)]">Uploading…</span>
-          </div>
-        ) : (
-          <ImageUploader
-            value={imageUrl || null}
-            onChange={(v) => setImageUrl(v ?? "")}
-            onUpload={handleUpload}
-            compact
-          />
-        )}
+        <ImageUploader
+          value={imageUrl || null}
+          onChange={(v) => setImageUrl(v ?? "")}
+          onUpload={handleUpload}
+          isUploading={uploading}
+          compact
+        />
 
         <FormField
           control={form.control}
@@ -168,11 +145,7 @@ function EditPanel({
             <FormItem>
               <FormLabel className="text-[11.5px]">Name *</FormLabel>
               <FormControl>
-                <input
-                  className="input text-[12.5px] py-1.5"
-                  placeholder="Product name"
-                  {...field}
-                />
+                <Input placeholder="Product name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -187,11 +160,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">SKU</FormLabel>
                 <FormControl>
-                  <input
-                    className="input text-[12.5px] py-1.5"
-                    placeholder="SKU"
-                    {...field}
-                  />
+                  <Input placeholder="SKU" {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -202,19 +171,29 @@ function EditPanel({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[11.5px]">Category</FormLabel>
-                <FormControl>
-                  <select className="input text-[12.5px] py-1.5" {...field}>
+                <Select
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
                     {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
                     ))}
-                  </select>
-                </FormControl>
+                  </SelectContent>
+                </Select>
               </FormItem>
             )}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <FormField
             control={form.control}
             name="price"
@@ -222,10 +201,24 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">Price (PKR) *</FormLabel>
                 <FormControl>
-                  <input
-                    className="input text-[12.5px] py-1.5"
+                  <Input type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="discountPercentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[11.5px]">Max Disc %</FormLabel>
+                <FormControl>
+                  <Input
                     type="number"
+                    placeholder="0"
                     {...field}
+                    value={field.value ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -239,11 +232,7 @@ function EditPanel({
               <FormItem>
                 <FormLabel className="text-[11.5px]">Stock *</FormLabel>
                 <FormControl>
-                  <input
-                    className="input text-[12.5px] py-1.5"
-                    type="number"
-                    {...field}
-                  />
+                  <Input type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -258,26 +247,42 @@ function EditPanel({
             <FormItem>
               <FormLabel className="text-[11.5px]">Description</FormLabel>
               <FormControl>
-                <textarea className="input text-[12.5px]" rows={2} {...field} />
+                <Textarea rows={2} {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="sizes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-[11.5px]">Available Sizes</FormLabel>
+              <FormControl>
+                <SizeSelector
+                  category={selectedCategory}
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                />
               </FormControl>
             </FormItem>
           )}
         />
 
         <div className="flex gap-2 mt-auto pt-2 border-t border-[var(--line)]">
-          <button
+          <Button
             type="button"
-            className="btn btn-ghost text-[#DC2626] text-[12px]"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive"
             onClick={onDelete}
           >
             <X size={12} /> Remove
-          </button>
-          <button
-            type="submit"
-            className="btn btn-grad text-[12px] flex-1 justify-center"
-          >
+          </Button>
+          <Button type="submit" size="sm" className="flex-1 justify-center">
             <Check size={12} /> Apply
-          </button>
+          </Button>
         </div>
       </form>
     </Form>
@@ -336,16 +341,18 @@ function BulkCard({
           !
         </div>
       )}
-      <button
+      <Button
         type="button"
-        className="btn btn-ghost absolute top-1 right-1 p-0.5"
+        variant="ghost"
+        size="icon"
+        className="absolute top-1 right-1 h-5 w-5"
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
       >
         <X size={11} />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -356,11 +363,17 @@ export function BulkAddDialog({
   onClose,
   onSaveAll,
   isSaving = false,
+  initialItems,
+  parsing = false,
 }: {
   open: boolean;
   onClose: () => void;
   onSaveAll: (items: BulkItem[]) => void;
   isSaving?: boolean;
+  /** Rows parsed from an imported file — seeded for review before saving. */
+  initialItems?: BulkItem[];
+  /** Show a parsing overlay while the imported file is being read. */
+  parsing?: boolean;
 }) {
   const [items, setItems] = useState<BulkItem[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -369,10 +382,12 @@ export function BulkAddDialog({
 
   useEffect(() => {
     if (open) {
-      setItems([]);
-      setSelectedIdx(null);
+      setItems(initialItems ?? []);
+      setSelectedIdx(initialItems && initialItems.length > 0 ? 0 : null);
     }
-  }, [open]);
+    // Only re-seed on open / when a fresh import arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialItems]);
 
   const addItems = (newItems: BulkItem[]) => {
     setItems((prev) => {
@@ -388,8 +403,8 @@ export function BulkAddDialog({
       const text = e.target?.result as string;
       try {
         const parsed = file.name.endsWith(".json")
-          ? parseJSON(text)
-          : parseCSV(text);
+          ? parseProductsJson(text)
+          : parseProductsCsv(text);
         addItems(parsed);
         toast.success(
           `${parsed.length} product${parsed.length !== 1 ? "s" : ""} imported`,
@@ -430,6 +445,19 @@ export function BulkAddDialog({
         className="flex flex-col gap-0 p-0 sm:max-w-[900px] h-[min(680px,92vh)] overflow-hidden"
         showCloseButton={false}
       >
+        {/* Parsing overlay — shown while an imported file is being read */}
+        {parsing && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[var(--surface)]/85 backdrop-blur-sm">
+            <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
+            <span className="text-[13px] font-medium text-[var(--ink-soft)]">
+              Reading your file…
+            </span>
+            <span className="text-[11.5px] text-[var(--ink-mute)]">
+              Review the rows before saving
+            </span>
+          </div>
+        )}
+
         {/* Header */}
         <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
           <div>
@@ -441,9 +469,9 @@ export function BulkAddDialog({
               and upload images.
             </DialogDescription>
           </div>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={18} />
-          </button>
+          </Button>
         </DialogHeader>
 
         {/* Drop zone */}
@@ -473,19 +501,21 @@ export function BulkAddDialog({
                 {" "}
                 · columns:{" "}
                 <code>
-                  name, sku, price, stock, category, description, image_url
+                  name, sku, price, discountPercentage, stock, category, gender,
+                  color, sizes, description, image_urls
                 </code>
               </span>
             </div>
-            <button
-              className="btn btn-outline text-[12px]"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 fileRef.current?.click();
               }}
             >
               Browse
-            </button>
+            </Button>
             <input
               ref={fileRef}
               type="file"
@@ -510,8 +540,9 @@ export function BulkAddDialog({
                   ? "No products yet"
                   : `${items.length} product${items.length > 1 ? "s" : ""}`}
               </span>
-              <button
-                className="btn btn-outline text-[11.5px] py-0.5 px-2"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   const idx = items.length;
                   setItems((prev) => [...prev, EMPTY_ITEM()]);
@@ -519,7 +550,7 @@ export function BulkAddDialog({
                 }}
               >
                 <Plus size={11} /> Add
-              </button>
+              </Button>
             </div>
             <div className="scroll flex-1 overflow-y-auto p-3">
               <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
@@ -597,22 +628,16 @@ export function BulkAddDialog({
             )}
           </span>
           <div className="flex gap-2">
-            <button
-              className="btn btn-outline"
-              onClick={onClose}
-              disabled={isSaving}
-            >
+            <Button variant="outline" onClick={onClose} disabled={isSaving}>
               Cancel
-            </button>
-            <button
-              className="btn btn-grad"
+            </Button>
+            <Button
               disabled={!valid || isSaving}
               onClick={() => onSaveAll(items)}
             >
               {isSaving ? (
                 <>
-                  <span className="animate-spin inline-block h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />{" "}
-                  Saving…
+                  <Loader2 size={13} className="animate-spin" /> Saving…
                 </>
               ) : (
                 <>
@@ -620,7 +645,7 @@ export function BulkAddDialog({
                   {items.length === 1 ? "" : "s"}
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

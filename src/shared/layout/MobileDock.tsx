@@ -1,17 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, Users, Package, TrendingUp, Shield, Settings, ShoppingCart } from 'lucide-react';
+import { Inbox, Users, Package, LayoutDashboard, Shield, Settings, ShoppingCart } from 'lucide-react';
 import { useInboxUnreadCount } from '@/features/inbox/hooks/useConversations';
 import { useLeadsCount } from '@/features/leads/hooks/useLeads';
+import { usePermissions } from '@/features/auth/hooks/usePermissions';
 
-const DOCK_ITEMS = [
-  { href: '/inbox',     label: 'Inbox', Icon: Inbox },
-  { href: '/leads',     label: 'Leads', Icon: Users },
-  { href: '/orders',    label: 'Orders', Icon: ShoppingCart },
-  { href: '/inventory', label: 'Stock', Icon: Package },
-  { href: '/analytics', label: 'Stats', Icon: TrendingUp },
-  { href: '/admin',     label: 'Team',  Icon: Shield },
+const DOCK_ITEMS: { href: string; label: string; Icon: typeof Inbox; perm?: string }[] = [
+  { href: '/dashboard', label: 'Home',  Icon: LayoutDashboard, perm: 'reports:view' },
+  { href: '/inbox',     label: 'Inbox', Icon: Inbox,        perm: 'conversations:view' },
+  { href: '/leads',     label: 'Leads', Icon: Users,        perm: 'leads:view' },
+  { href: '/orders',    label: 'Orders', Icon: ShoppingCart, perm: 'orders:view' },
+  { href: '/inventory', label: 'Stock', Icon: Package,      perm: 'inventory:view' },
+  { href: '/admin',     label: 'Team',  Icon: Shield,       perm: 'members:view' },
   { href: '/settings',  label: 'More',  Icon: Settings },
 ];
 
@@ -19,13 +20,15 @@ export function MobileDock() {
   const pathname = usePathname();
   const { data: inboxUnread } = useInboxUnreadCount();
   const { data: leadsCount } = useLeadsCount();
+  const { can, isLoading: permsLoading } = usePermissions();
+  const dockItems = DOCK_ITEMS.filter((it) => permsLoading || !it.perm || can(it.perm));
   const badgeFor = (href: string): number | undefined =>
     href === '/inbox' ? inboxUnread || undefined : href === '/leads' ? leadsCount || undefined : undefined;
 
   return (
     <nav className="mobile-dock">
       <div className="dock-scroll">
-        {DOCK_ITEMS.map(it => {
+        {dockItems.map(it => {
           const active = pathname.startsWith(it.href);
           const badge = badgeFor(it.href);
           return (

@@ -14,7 +14,18 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export type OrderPlatform = 'SHOPIFY' | 'INTERNAL';
+// Curated, non-duplicate set shown in the filter dropdown + status picker.
+// The DB/type still accept every legacy value (e.g. FULFILLED) for display.
+export const ORDER_STATUS_OPTIONS = [
+  'PENDING',
+  'CONFIRMED',
+  'SHIPPED',
+  'DELIVERED',
+  'COMPLETED',
+  'CANCELLED',
+] as const satisfies readonly OrderStatus[];
+
+export type OrderPlatform = 'SHOPIFY' | 'INTERNAL' | 'API';
 
 export interface OrderItem {
   id: string;
@@ -49,6 +60,7 @@ export interface OrderListItem {
   orderNumber: number;
   status: OrderStatus;
   platform: OrderPlatform;
+  isSandbox: boolean;
   customerName: string | null;
   customerPhone: string | null;
   total: string;

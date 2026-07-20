@@ -1,11 +1,12 @@
 "use client";
+import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
 import { filterLeads } from "../../hooks/useLeads";
-import type { Lead, LeadsFilter, LeadStatus } from "../../types";
+import type { Lead, LeadStatus, LeadsFilter } from "../../types";
 import { STATUS_META } from "../../types";
 import LeadCard from "../LeadCard";
+import { Button } from "@/shared/ui/Button";
 
 // ──────────────────── Kanban View ────────────────────
 export default function KanbanView({
@@ -13,11 +14,13 @@ export default function KanbanView({
   filter,
   onSelect,
   onStatusChange,
+  onAddLead,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
+  onAddLead: (status: LeadStatus) => void;
 }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -77,9 +80,14 @@ export default function KanbanView({
                 {grouped[key]?.length ?? 0}
               </span>
             </div>
-            <button className="btn btn-ghost p-1" title="Add to column">
+            <Button
+              variant="ghost"
+              size="icon"
+              title={`Add ${c.label} lead`}
+              onClick={() => onAddLead(key as LeadStatus)}
+            >
               <Plus size={13} />
-            </button>
+            </Button>
           </div>
           <div className="scroll overflow-y-auto flex-1 flex flex-col gap-2 pr-0.5 min-h-[80px]">
             {grouped[key]?.map((l) => (

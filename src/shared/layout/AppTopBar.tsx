@@ -1,23 +1,28 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import { Maximize2, Minimize2, Menu, Search, Bell } from 'lucide-react';
-import { useAppStore } from '@/lib/appStore';
-import { useNotificationStream, useUnreadCount } from '@/features/notifications/hooks/useNotifications';
-import { useWAStatusStream } from '@/features/channels/hooks/useWhatsApp';
-import { WAConnectDialog, WAStatusButton } from '@/shared/ui/WAConnectDialog';
-import { NotificationsPanel } from './NotificationsPanel';
-import { SearchPalette } from './SearchPalette';
+"use client";
+import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
+import { useUnreadCount } from "@/features/notifications/hooks/useNotifications";
+import { useAppStore } from "@/lib/appStore";
+import { cn } from "@/lib/utils";
+import { useAppEvents } from "@/shared/hooks/useAppEvents";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
+import { Bell, Inbox, Maximize2, Menu, Minimize2, Search } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/Button";
+import { NotificationsPanel } from "./NotificationsPanel";
+import { SearchPalette } from "./SearchPalette";
 
 const TITLES: Record<string, string> = {
-  '/inbox':     'Unified Inbox',
-  '/leads':     'Leads',
-  '/orders':    'Orders',
-  '/inventory': 'Inventory',
-  '/analytics': 'Analytics',
-  '/admin':     'Team & Access',
-  '/notifications': 'Notifications',
-  '/settings':  'Settings',
+  "/dashboard": "Dashboard",
+  "/inbox": "Unified Inbox",
+  "/leads": "Leads",
+  "/orders": "Orders",
+  "/inventory": "Inventory",
+  "/admin": "Team & Access",
+  "/notifications": "Notifications",
+  "/settings": "Settings",
 };
 
 interface AppTopBarProps {
@@ -26,104 +31,176 @@ interface AppTopBarProps {
 
 export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const pathname = usePathname();
-  const { workspaces, currentWorkspaceId, toggleFullScreen, isFullScreen } = useAppStore();
+
+  const {
+    workspaces,
+    currentWorkspaceId,
+    toggleFullScreen,
+    isFullScreen,
+    toggleSidebar,
+  } = useAppStore();
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
 
-  // Always-on WA status stream so the header icon updates instantly on connect/disconnect.
-  useWAStatusStream();
-  // Live unread badge — SSE stream keeps it fresh, polled query is the fallback.
-  useNotificationStream();
+  // The app's single SSE subscription — WA status, notifications,
+  // conversations and typing all arrive over this one connection.
+  useAppEvents();
+
   const { data: unread = 0 } = useUnreadCount();
-  const ws = workspaces.find(w => w.id === currentWorkspaceId) || workspaces[0];
-  const title = Object.entries(TITLES).find(([k]) => pathname.startsWith(k))?.[1] ?? 'AsaanRabta';
+  const { data: inboxUnread = 0 } = useInboxUnreadCount();
+  const onInbox = pathname.startsWith("/inbox");
+  const ws =
+    workspaces.find((w) => w.id === currentWorkspaceId) || workspaces[0];
+  const title =
+    Object.entries(TITLES).find(([k]) => pathname.startsWith(k))?.[1] ??
+    "AsaanRabta";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
     if (!notifOpen) return;
     const onClick = (e: MouseEvent) => {
-      if ((e.target as Element)?.closest?.('[data-header-popover]')) return;
+      if ((e.target as Element)?.closest?.("[data-header-popover]")) return;
       setNotifOpen(false);
     };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, [notifOpen]);
 
   return (
-    <header className="h-14 flex-shrink-0 px-[18px] flex items-center gap-3.5 border-b border-[var(--line)] bg-[var(--surface)] relative z-30">
-      <button className="btn btn-ghost show-mobile-only p-1.5" onClick={onMobileMenu}>
+    <header className="h-14 shrink-0 px-2.5 sm:px-[18px] flex items-center gap-1 sm:gap-3.5 border-b border-[var(--line)] bg-[var(--surface)] relative z-30">
+      <Button
+        variant="outline"
+        size="icon"
+        className="show-mobile-only"
+        onClick={onMobileMenu}
+      >
         <Menu size={20} />
-      </button>
+      </Button>
+      {/* Desktop sidebar collapse toggle */}
+      <Button
+        variant="outline"
+        className="hide-mobile p-1.5 bg-transparent hover:bg-transparent hover:scale-[1.05] transition-all"
+        size="lg"
+        onClick={toggleSidebar}
+        title="Toggle sidebar"
+        aria-label="Toggle sidebar"
+      >
+        <Menu size={18} />
+      </Button>
       <div className="min-w-0">
-        <h3 className="text-[15px] font-semibold">{title}</h3>
-        <div className="text-[11px] text-[var(--ink-mute)] flex items-center gap-1.5">
-          <span>{ws?.name ?? 'AsaanRabta Boutique'}</span>
+        <h3 className="text-[14px] sm:text-[15px] font-semibold truncate">
+          {title}
+        </h3>
+        <div className="text-[11px] text-[var(--ink-mute)] flex hide-mobile items-center gap-1.5 truncate">
+          <span className="truncate">{ws?.name ?? "AsaanRabta Boutique"}</span>
           <span>·</span>
-          <span>{ws?.plan ?? 'Tier 3'}</span>
+          <span className="whitespace-nowrap">{ws?.plan ?? "Tier 3"}</span>
         </div>
       </div>
-      <div className="flex-1" />
+      <div className="flex-1 min-w-2" />
 
       {/* Desktop search */}
-      <button
+      <Button
         onClick={() => setSearchOpen(true)}
         className="hide-mobile topbar-search-btn flex items-center gap-2.5 px-3 py-[7px] rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-mute)] text-[12.5px] cursor-pointer min-w-[280px]"
       >
         <Search size={13} />
-        <span className="flex-1 text-left">Search leads, products, orders...</span>
-        <span className="font-[var(--font-mono)] text-[10.5px] px-[5px] py-px border border-[var(--line)] rounded">⌘K</span>
-      </button>
+        <span className="flex-1 text-left">
+          Search leads, products, orders...
+        </span>
+        <span className="font-[var(--font-mono)] text-[10.5px] px-[5px] py-px border border-[var(--line)] rounded">
+          ⌘K
+        </span>
+      </Button>
 
       {/* Mobile search */}
-      <button className="btn btn-ghost show-mobile-only p-2" onClick={() => setSearchOpen(true)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="show-mobile-only"
+        onClick={() => setSearchOpen(true)}
+      >
         <Search size={17} />
-      </button>
+      </Button>
 
-      {/* WhatsApp status */}
-      <WAStatusButton onClick={() => setWaOpen(true)} />
-      <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
+      {/* Inbox quick access */}
+      <Button
+        asChild
+        variant="ghost"
+        size="icon"
+        className={cn("relative", onInbox && "text-[var(--accent)]")}
+        title="Inbox"
+        aria-label="Open inbox"
+      >
+        <Link href="/inbox">
+          <Inbox size={18} />
+          {inboxUnread > 0 && (
+            <span className="absolute -top-1 right-0 min-w-4 h-4 px-1 rounded-full bg-[var(--accent)] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
+              {inboxUnread > 9 ? "9+" : inboxUnread}
+            </span>
+          )}
+        </Link>
+      </Button>
 
-      {/* Full screen toggle */}
-      <button
+      {/* WhatsApp status — only for members allowed to manage the connection */}
+      <PermissionGuard permission="channels:connect">
+        <WAStatusButton onClick={() => setWaOpen(true)} />
+        <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
+      </PermissionGuard>
+
+      {/* Full screen toggle — desktop only */}
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={toggleFullScreen}
-        className="btn btn-ghost p-2 text-[var(--ink-mute)] overflow-hidden"
         title={isFullScreen ? "Exit full screen" : "Full screen view"}
+        className="text-[var(--ink-mute)] hide-mobile"
       >
         <span
           className="block transition-all duration-200"
           style={{
-            transform: isFullScreen ? 'rotate(180deg) scale(1)' : 'rotate(0deg) scale(1)',
+            transform: isFullScreen
+              ? "rotate(180deg) scale(1)"
+              : "rotate(0deg) scale(1)",
           }}
         >
           {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </span>
-      </button>
+      </Button>
 
       {/* Notifications */}
       <div data-header-popover className="relative">
-        <button
-          className="btn btn-ghost relative p-2"
-          onClick={e => { e.stopPropagation(); setNotifOpen(v => !v); }}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={(e) => {
+            e.stopPropagation();
+            setNotifOpen((v) => !v);
+          }}
         >
-          <Bell size={17} />
+          <Bell size={18} />
           {unread > 0 && (
-            <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
-              {unread > 9 ? '9+' : unread}
+            <span className="absolute -top-1 right-0 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
+              {unread > 9 ? "9+" : unread}
             </span>
           )}
-        </button>
-        {notifOpen && <NotificationsPanel onClose={() => setNotifOpen(false)} />}
+        </Button>
+        {notifOpen && (
+          <NotificationsPanel onClose={() => setNotifOpen(false)} />
+        )}
       </div>
 
       <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />

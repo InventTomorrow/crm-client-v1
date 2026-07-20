@@ -19,31 +19,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
 import type { Lead } from "../types";
 import { STATUS_META } from "../types";
 
-// Common cities for the creatable city field (type a new one to add it).
-const CITY_OPTIONS = [
-  "Lahore",
-  "Karachi",
-  "Islamabad",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-  "Rawalpindi",
-  "Sialkot",
-  "Quetta",
-  "Hyderabad",
-  "Gujranwala",
-];
+
 
 const leadFormSchema = z.object({
   name: z.string().min(1, "Name required"),
   phone: z.string().optional(),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   city: z.string().optional(),
-  channel: z.enum(["wa", "ig", "fb", "tk"]),
-  status: z.enum(["prospect", "cold", "warm", "hot"]),
+  channel: z.enum(["wa"]),
+  status: z.enum(["prospect", "cold", "warm", "hot", "closed"]),
 });
 export type LeadFormData = z.infer<typeof leadFormSchema>;
 
@@ -51,6 +47,7 @@ export default function LeadFormDialog({
   open,
   mode,
   initial,
+  defaultStatus,
   onClose,
   onSubmit,
   isSaving,
@@ -58,6 +55,8 @@ export default function LeadFormDialog({
   open: boolean;
   mode: "create" | "edit";
   initial?: Lead | null;
+  /** Pre-selected status for new leads (e.g. the Kanban column the user clicked). */
+  defaultStatus?: LeadFormData["status"];
   onClose: () => void;
   onSubmit: (data: LeadFormData) => void;
   isSaving?: boolean;
@@ -81,10 +80,13 @@ export default function LeadFormDialog({
       phone: initial?.phone ?? "",
       email: initial?.email ?? "",
       city: initial?.city && initial.city !== "Unknown" ? initial.city : "",
-      channel: (initial?.channel as LeadFormData["channel"]) ?? "wa",
-      status: (initial?.status as LeadFormData["status"]) ?? "prospect",
+      channel: "wa",
+      status:
+        (initial?.status as LeadFormData["status"]) ??
+        defaultStatus ??
+        "prospect",
     });
-  }, [open, initial, form]);
+  }, [open, initial, defaultStatus, form]);
 
   return (
     <Dialog
@@ -104,17 +106,20 @@ export default function LeadFormDialog({
             </DialogTitle>
             <DialogDescription className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
               {mode === "edit"
-                ? "Update this lead’s information."
+                ? "Update this lead's information."
                 : "Manually create a lead — channel sync will fill the rest."}
             </DialogDescription>
           </div>
-          <button
-            className="btn btn-ghost p-1.5 flex-shrink-0"
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
+            className="flex-shrink-0"
           >
             <X size={18} />
-          </button>
+          </Button>
         </DialogHeader>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -128,17 +133,13 @@ export default function LeadFormDialog({
                   <FormItem>
                     <FormLabel>Customer name *</FormLabel>
                     <FormControl>
-                      <input
-                        className="input"
-                        placeholder="Ali Hassan"
-                        autoFocus
-                        {...field}
-                      />
+                      <Input placeholder="Ali Hassan" autoFocus {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <div className="grid grid-cols-2 gap-2.5">
                 <FormField
                   control={form.control}
@@ -147,11 +148,7 @@ export default function LeadFormDialog({
                     <FormItem>
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
-                        <input
-                          className="input"
-                          placeholder="+92 321 ..."
-                          {...field}
-                        />
+                        <Input placeholder="+92 321 ..." {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -163,17 +160,14 @@ export default function LeadFormDialog({
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <input
-                          className="input"
-                          placeholder="name@example.com"
-                          {...field}
-                        />
+                        <Input placeholder="name@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-2.5">
                 <FormField
                   control={form.control}
@@ -182,19 +176,8 @@ export default function LeadFormDialog({
                     <FormItem>
                       <FormLabel>City</FormLabel>
                       <FormControl>
-                        {/* Creatable: pick a suggestion or type a new city */}
-                        <input
-                          className="input"
-                          list="lead-city-options"
-                          placeholder="Type or pick a city"
-                          {...field}
-                        />
+                        <Input placeholder="e.g. Lahore" {...field} />
                       </FormControl>
-                      <datalist id="lead-city-options">
-                        {CITY_OPTIONS.map((c) => (
-                          <option key={c} value={c} />
-                        ))}
-                      </datalist>
                     </FormItem>
                   )}
                 />
@@ -204,18 +187,24 @@ export default function LeadFormDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Channel</FormLabel>
-                      <FormControl>
-                        <select className="input" {...field}>
-                          <option value="wa">WhatsApp</option>
-                          <option value="ig">Instagram</option>
-                          <option value="fb">Facebook</option>
-                          <option value="tk">TikTok</option>
-                        </select>
-                      </FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="wa">WhatsApp</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormItem>
                   )}
                 />
               </div>
+
               <FormField
                 control={form.control}
                 name="status"
@@ -231,15 +220,18 @@ export default function LeadFormDialog({
                             onClick={() => field.onChange(k)}
                             className="badge flex items-center gap-1.5 cursor-pointer font-medium py-[5px] px-3"
                             style={{
-                              background: field.value === k ? v.color : v.tint,
-                              color: field.value === k ? "white" : v.color,
+                              background:
+                                field.value === k ? v.color : v.tint,
+                              color:
+                                field.value === k ? "white" : v.color,
                               border: `1px solid ${field.value === k ? v.color : "transparent"}`,
                             }}
                           >
                             <span
                               className="dot w-1.5 h-1.5"
                               style={{
-                                background: field.value === k ? "white" : v.color,
+                                background:
+                                  field.value === k ? "white" : v.color,
                               }}
                             />
                             {v.label}
@@ -251,16 +243,17 @@ export default function LeadFormDialog({
                 )}
               />
             </div>
+
             <div className="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--line)]">
-              <button
+              <Button
                 type="button"
-                className="btn btn-outline"
+                variant="outline"
                 onClick={onClose}
                 disabled={isSaving}
               >
                 Cancel
-              </button>
-              <button type="submit" className="btn btn-grad" disabled={isSaving}>
+              </Button>
+              <Button type="submit" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 size={13} className="animate-spin" />{" "}
@@ -272,7 +265,7 @@ export default function LeadFormDialog({
                     {mode === "edit" ? "Save changes" : "Add lead"}
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         </Form>

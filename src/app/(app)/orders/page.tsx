@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function OrdersPage() {
   return (
-    <div className="p-4 md:p-8">
+    <div className="h-full">
       <OrdersView />
     </div>
   );

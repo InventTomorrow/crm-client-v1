@@ -1,5 +1,6 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import {
   useCreateTenant,
   useSwitchWorkspace,
@@ -13,8 +14,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { Input } from "@/shared/ui/Input";
+import { Button } from "@/shared/ui/Button";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+type Membership = {
+  tenant: { id: string; name: string; type: string };
+  role: { name: string };
+};
 
 // ─────────────────────────────────────────────────────────────
 // Create Dialog — calls real API
@@ -53,8 +61,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
             <label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
               Workspace name
             </label>
-            <input
-              className="input"
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Karachi Karahi Co."
@@ -66,34 +73,22 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
           <p className="text-[11.5px] text-[var(--ink-mute)] leading-relaxed">
-            You'll be the <strong>Owner</strong> of this workspace. Team members
+            You&apos;ll be the <strong>Owner</strong> of this workspace. Team members
             can be invited after setup.
           </p>
         </div>
 
         <div className="px-[14px] py-[14px] border-t border-[var(--line)] flex justify-end gap-2">
-          <button
-            className="btn btn-outline"
-            onClick={onClose}
-            disabled={isPending}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
-          </button>
-          <button
-            className="btn btn-grad"
-            onClick={handleCreate}
-            disabled={!name.trim() || isPending}
-          >
+          </Button>
+          <Button onClick={handleCreate} disabled={!name.trim() || isPending}>
             {isPending ? (
-              <>
-                <Loader2 size={13} className="animate-spin" /> Creating…
-              </>
+              <><Loader2 size={13} className="animate-spin" /> Creating…</>
             ) : (
-              <>
-                <Plus size={13} /> Create workspace
-              </>
+              <><Plus size={13} /> Create workspace</>
             )}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -118,6 +113,7 @@ const PALETTE = [
 export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   const { currentWorkspaceId } = useAppStore();
   const { user } = useMe();
+  const { isOwner } = usePermissions();
   const { mutate: switchWorkspace, isPending: isSwitching } =
     useSwitchWorkspace();
 
@@ -140,12 +136,12 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
 
   const currentMembership =
     memberships.find(
-      (membership: any) => membership.tenant.id === currentWorkspaceId,
+      (membership: Membership) => membership.tenant.id === currentWorkspaceId,
     ) ?? memberships[0];
 
   if (!currentMembership) return null;
 
-  const getDisplay = (m: (typeof memberships)[0], idx: number) => ({
+  const getDisplay = (m: Membership, idx: number) => ({
     id: m.tenant.id,
     name: m.tenant.name,
     short: m.tenant.name.substring(0, 2).toUpperCase(),
@@ -155,14 +151,14 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   });
 
   const currentIdx = memberships.findIndex(
-    (membership: any) => membership.tenant.id === currentMembership.tenant.id,
+    (membership: Membership) => membership.tenant.id === currentMembership.tenant.id,
   );
   const current = getDisplay(
     currentMembership,
     currentIdx < 0 ? 0 : currentIdx,
   );
 
-  const handleSwitch = (membership: any, idx: number) => {
+  const handleSwitch = (membership: Membership) => {
     if (membership.tenant.id === currentWorkspaceId) {
       setOpen(false);
       return;
@@ -172,6 +168,44 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
       tenantId: membership.tenant.id,
       tenantName: membership.tenant.name,
     });
+  };
+
+  // Keep the original index so each workspace keeps a stable colour.
+  const indexed = memberships.map((m: Membership, index: number) => ({ m, index }));
+  const ownedGroup = indexed.filter(({ m }) => m.role.name === "OWNER");
+  const joinedGroup = indexed.filter(({ m }) => m.role.name !== "OWNER");
+
+  const renderWorkspaceRow = ({ m, index }: { m: Membership; index: number }) => {
+    const workspace = getDisplay(m, index);
+    const isActive = workspace.id === currentWorkspaceId;
+    return (
+      <button
+        key={workspace.id}
+        onClick={() => handleSwitch(m)}
+        className={cn(
+          "flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] hover:bg-[var(--accent-soft)] transition-colors",
+          isActive && "bg-[var(--accent-soft)]",
+        )}
+      >
+        <div
+          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-semibold text-[11.5px] flex-shrink-0"
+          style={{ background: workspace.color }}
+        >
+          {workspace.short}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium text-[var(--ink)]">
+            {workspace.name}
+          </div>
+          <div className="text-[11px] text-[var(--ink-mute)]">
+            {workspace.plan} · {workspace.role}
+          </div>
+        </div>
+        {isActive && (
+          <Check size={14} className="text-[var(--accent)] flex-shrink-0" />
+        )}
+      </button>
+    );
   };
 
   return (
@@ -238,60 +272,45 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
             width: collapsed ? 280 : "auto",
           }}
         >
-          <div className="px-[10px] pt-2 pb-1.5 text-[10.5px] text-[var(--ink-mute)] uppercase tracking-[0.08em] font-semibold">
-            Switch workspace
-          </div>
+          {ownedGroup.length > 0 && (
+            <>
+              <div className="px-[10px] pt-2 pb-1.5 text-[10.5px] text-[var(--ink-mute)] uppercase tracking-[0.08em] font-semibold">
+                Your workspaces
+              </div>
+              {ownedGroup.map(renderWorkspaceRow)}
+            </>
+          )}
 
-          {memberships.map((membership: any, index: number) => {
-            const workspace = getDisplay(membership, index);
-            const isActive = workspace.id === currentWorkspaceId;
-            return (
+          {joinedGroup.length > 0 && (
+            <>
+              {ownedGroup.length > 0 && (
+                <div className="h-px bg-[var(--line)] my-1" />
+              )}
+              <div className="px-[10px] pt-2 pb-1.5 text-[10.5px] text-[var(--ink-mute)] uppercase tracking-[0.08em] font-semibold">
+                Joined workspaces
+              </div>
+              {joinedGroup.map(renderWorkspaceRow)}
+            </>
+          )}
+
+          {isOwner && (
+            <>
+              <div className="h-px bg-[var(--line)] my-1" />
+
               <button
-                key={workspace.id}
-                onClick={() => handleSwitch(membership, index)}
-                className={cn(
-                  "flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] hover:bg-[var(--accent-soft)] transition-colors",
-                  isActive && "bg-[var(--accent-soft)]",
-                )}
+                onClick={() => {
+                  setOpen(false);
+                  setShowCreate(true);
+                }}
+                className="flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] text-[var(--accent)] text-[13px] font-medium hover:bg-[var(--accent-soft)] transition-colors"
               >
-                <div
-                  className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-semibold text-[11.5px] flex-shrink-0"
-                  style={{ background: workspace.color }}
-                >
-                  {workspace.short}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium text-[var(--ink)]">
-                    {workspace.name}
-                  </div>
-                  <div className="text-[11px] text-[var(--ink-mute)]">
-                    {workspace.plan} · {workspace.role}
-                  </div>
-                </div>
-                {isActive && (
-                  <Check
-                    size={14}
-                    className="text-[var(--accent)] flex-shrink-0"
-                  />
-                )}
+                <span className="w-[30px] h-[30px] rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center border border-dashed border-[var(--accent)]">
+                  <Plus size={14} />
+                </span>
+                Create new workspace
               </button>
-            );
-          })}
-
-          <div className="h-px bg-[var(--line)] my-1" />
-
-          <button
-            onClick={() => {
-              setOpen(false);
-              setShowCreate(true);
-            }}
-            className="flex items-center gap-2.5 w-full px-[10px] py-2 border-none bg-transparent cursor-pointer rounded-lg text-left font-[inherit] text-[var(--accent)] text-[13px] font-medium hover:bg-[var(--accent-soft)] transition-colors"
-          >
-            <span className="w-[30px] h-[30px] rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center border border-dashed border-[var(--accent)]">
-              <Plus size={14} />
-            </span>
-            Create new workspace
-          </button>
+            </>
+          )}
         </div>
       )}
 

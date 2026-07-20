@@ -15,6 +15,7 @@ const TYPES: { type: NotificationType; label: string; emailDefault: boolean }[] 
   { type: 'BROADCAST_COMPLETED', label: 'Broadcast completed', emailDefault: false },
   { type: 'NEW_LOGIN', label: 'New sign-in (security)', emailDefault: true },
   { type: 'BILLING', label: 'Billing & subscription', emailDefault: true },
+  { type: 'SUPPORT_CONTACT_CHANGED', label: 'Support number changed', emailDefault: true },
 ];
 
 function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {

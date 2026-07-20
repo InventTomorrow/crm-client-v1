@@ -3,6 +3,8 @@ export interface Tenant {
   name: string;
   type: 'INDIVIDUAL' | 'ORGANIZATION';
   status: 'ACTIVE' | 'SUSPENDED' | 'CHURNED';
+  /** Set when the workspace is soft-deleted; purged 60 days later. */
+  deletedAt?: string | null;
   createdAt: string;
   _count?: {
     memberships: number;

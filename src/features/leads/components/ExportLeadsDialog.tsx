@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download, X, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/ui/Dialog';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
+import { Button } from '@/shared/ui/Button';
 import { cn } from '@/lib/utils';
 import { STATUS_META } from '../types';
 import type { Lead, LeadStatus } from '../types';
@@ -101,7 +102,7 @@ export function ExportLeadsDialog({ open, onClose, leads }: {
               Filter by status, pick the leads you want, then export to CSV.
             </DialogDescription>
           </div>
-          <button className="btn btn-ghost p-1.5" onClick={onClose}><X size={18} /></button>
+          <Button variant="ghost" size="icon" onClick={onClose}><X size={18} /></Button>
         </DialogHeader>
 
         {/* Status filters */}
@@ -176,10 +177,10 @@ export function ExportLeadsDialog({ open, onClose, leads }: {
               : 'Select leads to export'}
           </span>
           <div className="flex gap-2">
-            <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-            <button className="btn btn-grad" disabled={selectedCount === 0} onClick={handleExport}>
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button disabled={selectedCount === 0} onClick={handleExport}>
               <Download size={13} /> Export {selectedCount || ''}
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

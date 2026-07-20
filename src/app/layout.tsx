@@ -1,4 +1,5 @@
 import { Providers } from "@/lib/providers";
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import Script from "next/script";
@@ -18,15 +19,17 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "https://asaanrabta.com",
   ),
   title: {
-    default: "AsaanRabta",
+    default:
+      "AsaanRabta – Turn WhatsApp Into Your 24/7 Sales Team (Pakistan WhatsApp CRM)",
     template: "%s · AsaanRabta",
   },
   description:
-    "AI-powered CRM for Pakistani e-commerce sellers — one inbox for WhatsApp, Instagram, and more.",
+    "WhatsApp CRM in Pakistan with AI that responds to customers instantly. Reply faster, manage leads, send broadcasts, and grow sales. Fast setup, Urdu & English support.",
   applicationName: "AsaanRabta",
   openGraph: {
     title: "AsaanRabta",
-    description: "AI-powered CRM for Pakistani e-commerce sellers.",
+    description:
+      "WhatsApp CRM in Pakistan with AI that responds to customers instantly. Reply faster, manage leads, send broadcasts, and grow sales. Fast setup, Urdu & English support.",
     siteName: "AsaanRabta",
     type: "website",
   },
@@ -56,7 +59,10 @@ export default function RootLayout({
           </Script>
         )}
       </head>
-      <body className="min-h-full font-sans antialiased bg-[var(--bg)] text-[var(--ink)]">
+      <body
+        className="min-h-full font-sans antialiased bg-[var(--bg)] text-[var(--ink)]"
+        suppressHydrationWarning
+      >
         {/* GTM <noscript> fallback for JS-disabled clients; must be the first body node. */}
         {GTM_ID && (
           <noscript>
@@ -69,7 +75,10 @@ export default function RootLayout({
           </noscript>
         )}
         <GTMProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            <Analytics />
+            {children}
+          </Providers>
         </GTMProvider>
       </body>
     </html>

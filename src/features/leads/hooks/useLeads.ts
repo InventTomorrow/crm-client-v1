@@ -1,16 +1,20 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Lead } from '@/lib/mockData';
 import type { LeadsFilter } from '../types';
 import { extractErrorMessage } from '@/lib/utils';
 import {
   fetchLeads,
+  fetchLead,
+  fetchLeadsPage,
   fetchLeadsCount,
   searchLeads,
   createLead,
   updateLead,
   updateLeadStatus,
+  archiveLead,
+  restoreLead,
   deleteLead,
   exportLeads,
   parseImportCsv,
@@ -18,12 +22,76 @@ import {
   type UpdateLeadInput,
 } from '../services/leadsService';
 
-export function useLeads() {
-  return useQuery({ queryKey: ['leads'], queryFn: fetchLeads });
+// Active and archived leads are cached separately so switching between them
+// refetches. `LIST_KEY` matches both the plain list (pickers) and the
+// paginated list below for cross-list optimistic updates.
+const LIST_KEY = ['leads', 'list'] as const;
+const listKey = (archived: boolean) => [...LIST_KEY, archived] as const;
+
+const LEADS_PAGE_SIZE = 50;
+
+/** Used only by pick-lists (broadcast recipients, order/new-chat lead select) — a
+ *  single bounded page is enough there; the search box covers anything further. */
+export function useLeads(archived = false) {
+  return useQuery({ queryKey: listKey(archived), queryFn: () => fetchLeads(archived) });
 }
 
+/** Paginated leads for the main pipeline table/kanban/list views. */
+export function useInfiniteLeads(archived = false) {
+  return useInfiniteQuery({
+    queryKey: [...listKey(archived), 'infinite'] as const,
+    queryFn: ({ pageParam }) => fetchLeadsPage(archived, pageParam, LEADS_PAGE_SIZE),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length === LEADS_PAGE_SIZE ? lastPageParam + 1 : undefined,
+  });
+}
+
+// Both useLeads (plain array) and useInfiniteLeads (InfiniteData<Lead[]>) share
+// the LIST_KEY prefix, so optimistic mutations must update whichever shape a
+// given cached query currently holds.
+type LeadsCacheData = Lead[] | InfiniteData<Lead[]>;
+
+function updateLeadsCaches(
+  queryClient: QueryClient,
+  map: (lead: Lead) => Lead,
+): void {
+  queryClient.setQueriesData<LeadsCacheData>(
+    { queryKey: LIST_KEY },
+    (old: LeadsCacheData | undefined) => {
+      if (!old) return old;
+      if (Array.isArray(old)) return old.map(map);
+      return { ...old, pages: old.pages.map((page: Lead[]) => page.map(map)) };
+    },
+  );
+}
+
+function removeFromLeadsCaches(queryClient: QueryClient, id: string): void {
+  queryClient.setQueriesData<LeadsCacheData>(
+    { queryKey: LIST_KEY },
+    (old: LeadsCacheData | undefined) => {
+      if (!old) return old;
+      if (Array.isArray(old)) return old.filter((lead) => lead.id !== id);
+      return {
+        ...old,
+        pages: old.pages.map((page: Lead[]) => page.filter((lead) => lead.id !== id)),
+      };
+    },
+  );
+}
+
+/** Single lead by id — used where the list isn't loaded (e.g. the inbox profile). */
+export function useLead(id: string | null | undefined) {
+  return useQuery({
+    queryKey: ['leads', 'detail', id],
+    queryFn: () => fetchLead(id!),
+    enabled: !!id,
+  });
+}
+
+// Slow fallback only — the badge is cheap but doesn't need to be second-fresh.
 export function useLeadsCount() {
-  return useQuery({ queryKey: ['leads', 'count'], queryFn: fetchLeadsCount, refetchInterval: 30_000 });
+  return useQuery({ queryKey: ['leads', 'count'], queryFn: fetchLeadsCount, refetchInterval: 300_000 });
 }
 
 export function useAddLead() {
@@ -59,42 +127,53 @@ export function useUpdateLeadStatus() {
     mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) =>
       updateLeadStatus(id, status),
     onMutate: async ({ id, status }) => {
-      await queryClient.cancelQueries({ queryKey: ['leads'] });
-      const previousLeads = queryClient.getQueryData<Lead[]>(['leads']) ?? [];
-      queryClient.setQueryData(
-        ['leads'],
-        previousLeads.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
-      );
-      return { previousLeads };
+      await queryClient.cancelQueries({ queryKey: LIST_KEY });
+      const previous = queryClient.getQueriesData<LeadsCacheData>({ queryKey: LIST_KEY });
+      updateLeadsCaches(queryClient, (lead) => (lead.id === id ? { ...lead, status } : lead));
+      return { previous };
     },
-    onError: (error, _variables, rollbackContext) => {
+    onError: (error, _variables, ctx) => {
       toast.error(extractErrorMessage(error));
-      if (rollbackContext?.previousLeads) {
-        queryClient.setQueryData(['leads'], rollbackContext.previousLeads);
-      }
+      ctx?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
 }
 
-export function useDeleteLead() {
+// Shared behaviour for archive / restore / delete: drop the lead from whichever
+// list is currently rendered, then reconcile with the server on settle.
+function useRemoveFromListMutation(
+  mutationFn: (id: string) => Promise<{ id: string }>,
+  successMessage: string,
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteLead,
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['leads'] });
-      const previousLeads = queryClient.getQueryData<Lead[]>(['leads']) ?? [];
-      queryClient.setQueryData(['leads'], previousLeads.filter((lead) => lead.id !== id));
-      return { previousLeads };
+    mutationFn,
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: LIST_KEY });
+      const previous = queryClient.getQueriesData<LeadsCacheData>({ queryKey: LIST_KEY });
+      removeFromLeadsCaches(queryClient, id);
+      return { previous };
     },
-    onError: (error, _id, rollbackContext) => {
+    onSuccess: () => toast.success(successMessage),
+    onError: (error, _id, ctx) => {
       toast.error(extractErrorMessage(error));
-      if (rollbackContext?.previousLeads) {
-        queryClient.setQueryData(['leads'], rollbackContext.previousLeads);
-      }
+      ctx?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
+}
+
+export function useArchiveLead() {
+  return useRemoveFromListMutation(archiveLead, 'Lead archived');
+}
+
+export function useRestoreLead() {
+  return useRemoveFromListMutation(restoreLead, 'Lead restored');
+}
+
+export function useDeleteLead() {
+  return useRemoveFromListMutation(deleteLead, 'Lead deleted');
 }
 
 export function useExportLeads() {

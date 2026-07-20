@@ -2,8 +2,9 @@
 import {
   useWAConnect,
   useWADisconnect,
-  useWAEventStream,
-} from "@/features/channels/hooks/useWhatsApp";
+  useWAStatus,
+} from "@/features/channels/whatsapp/hooks/useWhatsApp";
+import { useAppEvents } from "@/shared/hooks/useAppEvents";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2,
@@ -16,6 +17,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useSkipOnboarding } from "../hooks/useOnboarding";
 import { OnboardingShell } from "./OnboardingShell";
+import { Button } from "@/shared/ui/Button";
 
 // ── QR panel (inline for onboarding, not a modal) ───────────────────────────
 
@@ -57,14 +59,20 @@ function QRFrame({ src }: { src: string }) {
 function QRPanel({ onSuccess }: { onSuccess: () => void }) {
   const { mutate: connectWA, isPending: isConnecting } = useWAConnect();
   const { mutate: disconnectWA } = useWADisconnect();
-  const [streamActive, setStreamActive] = useState(false);
-  const { qr, liveStatus, liveError } = useWAEventStream(streamActive);
+  // Onboarding has no AppTopBar, so open the SSE here to feed the wa-status
+  // cache, then read live QR/status/error from it (single source of truth).
+  useAppEvents();
+  const { data: statusData } = useWAStatus();
+  const [started, setStarted] = useState(false);
+
+  const liveStatus = statusData?.status;
+  const qr = statusData?.qr;
+  const liveError = statusData?.error;
 
   useEffect(() => {
     connectWA(undefined, {
-      onSuccess: () => setStreamActive(true),
+      onSuccess: () => setStarted(true),
     });
-    return () => setStreamActive(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,9 +82,9 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
 
   const handleRetry = () => {
     disconnectWA();
-    setStreamActive(false);
+    setStarted(false);
     setTimeout(() => {
-      connectWA(undefined, { onSuccess: () => setStreamActive(true) });
+      connectWA(undefined, { onSuccess: () => setStarted(true) });
     }, 800);
   };
 
@@ -101,9 +109,23 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
           <WifiOff size={22} className="text-[#DC2626]" />
         </div>
         <p className="text-[13px] text-[var(--ink)] text-center">{liveError}</p>
-        <button className="btn btn-outline text-[13px]" onClick={handleRetry}>
+        <Button variant="outline" size="sm" onClick={handleRetry}>
           <RefreshCw size={13} /> Retry
-        </button>
+        </Button>
+      </div>
+    );
+  }
+
+  if (liveStatus === "CONNECTING") {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6">
+        <Loader2 size={24} className="animate-spin text-[#25D366]" />
+        <p className="text-[13px] font-semibold text-[var(--ink)]">
+          QR scanned — connecting…
+        </p>
+        <p className="text-[12px] text-[var(--ink-mute)]">
+          Keep this page open.
+        </p>
       </div>
     );
   }
@@ -125,7 +147,7 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div className="flex flex-col items-center gap-3 py-6">
-      {isConnecting || streamActive ? (
+      {isConnecting || started ? (
         <>
           <div className="w-[200px] h-[200px] rounded-xl border-2 border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)]">
             <Loader2 size={24} className="animate-spin text-[#25D366]" />
@@ -210,15 +232,17 @@ export function ChannelView() {
           </div>
         )}
 
-        <button
+        <Button
           type="button"
-          className="btn btn-outline w-full justify-center text-[13px] mt-1"
+          variant="outline"
+          size="lg"
+          className="w-full justify-center mt-1"
           onClick={() => skip()}
           disabled={isSkipping}
         >
           {isSkipping ? <Loader2 size={13} className="animate-spin" /> : null}
           Skip for now — set up later in Settings
-        </button>
+        </Button>
       </div>
     </OnboardingShell>
   );

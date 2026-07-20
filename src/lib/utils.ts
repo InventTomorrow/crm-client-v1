@@ -93,9 +93,14 @@ export function extractErrorMessage(
   return fallback;
 }
 
+// Hits the API origin directly rather than the Next.js rewrite proxy — the
+// accessToken cookie is host-only (COOKIE_DOMAIN unset), scoped to the API
+// origin because apiClient authenticates against it directly. A relative
+// path here would send the <img> request to the frontend origin instead,
+// which never had the cookie set on it, and 401 at the backend.
 export function getImageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  return url.includes('amazonaws.com')
-    ? `/api/v1/upload/image?url=${encodeURIComponent(url)}`
-    : url;
+  if (!url.includes('amazonaws.com')) return url;
+  const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? '';
+  return `${apiOrigin}/api/v1/upload/image?url=${encodeURIComponent(url)}`;
 }

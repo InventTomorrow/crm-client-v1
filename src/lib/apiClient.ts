@@ -1,26 +1,66 @@
-import axios from 'axios';
+import axios from "axios";
+
+// Hits the backend origin directly rather than the Next.js rewrite proxy —
+// the proxy mishandles multiple Set-Cookie headers on one response, silently
+// dropping the accessToken cookie set alongside refreshToken on login.
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${apiOrigin}/api/v1`,
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
-}> = [];
+let isLoggingOut = false;
+export const setLoggingOut = (value: boolean) => {
+  isLoggingOut = value;
+};
 
-const processQueue = (error: any) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve();
-    }
-  });
-  failedQueue = [];
+// Routes that must never trigger an auth redirect (the public landing page).
+const PUBLIC_ROUTES = ["/"];
+const onPublicRoute = () =>
+  typeof window !== "undefined" &&
+  PUBLIC_ROUTES.includes(window.location.pathname);
+
+let authOpChain: Promise<unknown> = Promise.resolve();
+
+// Serializes every call that rotates the accessToken/refreshToken cookies
+// (refresh, switch-workspace) so they can't race. Without this, a refresh
+// triggered by a stale 401 right as the user switches workspace can resolve
+// *after* the switch and silently overwrite the new tenant's cookies with
+// re-issued old-tenant ones — the switch appears to work, then the next
+// request (or a background refetch) is authenticated as the old workspace
+// again. Callers queue behind whichever cookie-mutating call is in flight.
+export function runExclusiveAuthOp<T>(fn: () => Promise<T>): Promise<T> {
+  const result = authOpChain.catch(() => undefined).then(fn);
+  authOpChain = result.catch(() => undefined);
+  return result;
+}
+
+let refreshPromise: Promise<void> | null = null;
+
+// Single-flight /auth/refresh: every caller (the response interceptor's retry
+// path below, and the SSE reconnect in useAppEvents) awaits the same in-flight
+// request instead of each posting their own. The refresh endpoint rotates and
+// revokes the refresh token on use, so two concurrent calls sharing one
+// refresh-token cookie would race — the loser looks like token reuse to the
+// server and gets its whole token family revoked, killing the session.
+export const refreshAccessToken = (): Promise<void> => {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = runExclusiveAuthOp(() => apiClient.post("/auth/refresh"))
+    .then(() => undefined)
+    .catch((err) => {
+      if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
+        window.location.href = "/auth/login";
+      }
+      throw err;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
 };
 
 apiClient.interceptors.response.use(
@@ -35,52 +75,31 @@ apiClient.interceptors.response.use(
     // Check if the error is due to an expired access token and is not already a retry
     if (
       error.response?.status === 401 &&
-      error.response?.data?.error?.code === 'auth/token_expired' &&
+      error.response?.data?.error?.code === "auth/token_expired" &&
       !originalRequest._retry
     ) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(() => {
-            return apiClient(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
-
       try {
-        await apiClient.post('/auth/refresh');
-        isRefreshing = false;
-        processQueue(null);
+        await refreshAccessToken();
         return apiClient(originalRequest);
       } catch (refreshError) {
-        isRefreshing = false;
-        processQueue(refreshError);
-
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
         return Promise.reject(refreshError);
       }
     }
 
     // If it's a 401 error but NOT a token expiration issue, or if the refresh attempt itself failed
     if (error.response?.status === 401) {
-      const url = originalRequest.url ?? '';
-      const isAuthRoute = url.endsWith('/auth/login') || url.endsWith('/auth/refresh');
+      const url = originalRequest.url ?? "";
+      const isAuthRoute =
+        url.endsWith("/auth/login") || url.endsWith("/auth/refresh");
 
-      if (!isAuthRoute) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
+      if (!isAuthRoute && !onPublicRoute()) {
+        if (typeof window !== "undefined" && !isLoggingOut) {
+          window.location.href = "/auth/login";
         }
       }
     }
-
+    //
     return Promise.reject(error);
   },
 );

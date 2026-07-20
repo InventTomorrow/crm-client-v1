@@ -47,9 +47,26 @@ export const businessProfileSchema = z.object({
   businessFaqs: z.array(businessFaqSchema).max(50),
   supportName: z.string().max(100),
   supportPhone: z.string().max(30),
-  supportEmail: z.string().max(200),
+  supportEmail: z
+    .string()
+    .max(200)
+    .refine((v) => v === '' || z.string().email().safeParse(v).success, {
+      message: 'Enter a valid email',
+    }),
+  shareSupportContactOnHandoff: z.boolean(),
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
+
+// Invite a workspace member. Only email + roleId are persisted by the API; the
+// invitee sets their own name when they accept. city/phone are captured for
+// display and future use.
+export const inviteMemberSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Enter a valid email'),
+  roleId: z.string().min(1, 'Select a role'),
+  city: z.string().max(60).optional().or(z.literal('')),
+  phone: z.string().max(30).optional().or(z.literal('')),
+});
+export type InviteMemberForm = z.infer<typeof inviteMemberSchema>;
 
 // Full config returned by GET /chatbot/config
 export interface ChatbotConfigResponse {
@@ -65,6 +82,7 @@ export interface ChatbotConfigResponse {
     supportName: string | null;
     supportPhone: string | null;
     supportEmail: string | null;
+    shareSupportContactOnHandoff: boolean;
   } | null;
   workspaceName: string | null;
 }

@@ -13,6 +13,7 @@ export const notificationTypeSchema = z.enum([
   'BROADCAST_COMPLETED',
   'NEW_LOGIN',
   'BILLING',
+  'SUPPORT_CONTACT_CHANGED',
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
@@ -39,7 +40,7 @@ export const notificationPreferenceSchema = z.object({
 });
 export type NotificationPreference = z.infer<typeof notificationPreferenceSchema>;
 
-/** SSE payloads from /notifications/stream. */
+/** Notification payloads on the app-wide /events SSE stream. */
 export type NotificationStreamEvent =
   | { type: 'unread-count'; count: number }
   | { type: 'notification'; notification: Notification };
