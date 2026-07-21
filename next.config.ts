@@ -8,8 +8,7 @@ const nextConfig: NextConfig = {
     qualities: [75, 90, 100],
   },
   async rewrites() {
-    const apiOrigin =
-      process.env.NEXT_PUBLIC_API_URL || "http://52.205.151.170";
+    const apiOrigin = process.env.NEXT_PUBLIC_API_URL || "http://13.53.201.19";
     return [
       {
         source: "/api/v1/:path*",
