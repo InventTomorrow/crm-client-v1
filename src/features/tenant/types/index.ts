@@ -1,8 +1,11 @@
+export type BusinessVertical = 'ECOMMERCE' | 'RESTAURANT';
+
 export interface Tenant {
   id: string;
   name: string;
   type: 'INDIVIDUAL' | 'ORGANIZATION';
   status: 'ACTIVE' | 'SUSPENDED' | 'CHURNED';
+  businessVertical: BusinessVertical;
   /** Set when the workspace is soft-deleted; purged 60 days later. */
   deletedAt?: string | null;
   createdAt: string;

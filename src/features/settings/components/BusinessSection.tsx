@@ -9,6 +9,10 @@ import {
   useUpdateBusinessProfile,
 } from '../hooks/useChatbotSettings';
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
+import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
+import { useUpdateBusinessVertical } from '@/features/tenant/hooks/useTenant';
+import { BUSINESS_VERTICALS, type BusinessVertical } from '@/lib/business-verticals';
+import { VerticalCard } from '@/features/onboarding/components/VerticalCard';
 import { Button } from '@/shared/ui/Button';
 import { CRMSwitch } from '@/shared/ui/CRMSwitch';
 import { Input } from '@/shared/ui/Input';
@@ -36,6 +40,8 @@ export function BusinessSection() {
   const { data, isLoading } = useChatbotConfig();
   const { mutate: save, isPending } = useUpdateBusinessProfile();
   const { mutate: generate, isPending: isGenerating } = useGenerateBusinessIntro();
+  const { tenant } = useCurrentTenant();
+  const { mutate: updateVertical, isPending: isUpdatingVertical } = useUpdateBusinessVertical();
 
   const form = useForm<BusinessProfileForm>({
     resolver: zodResolver(businessProfileSchema),
@@ -86,6 +92,30 @@ export function BusinessSection() {
       <p className="text-[12.5px] text-[var(--ink-mute)] -mt-2">
         Describe your business and add common Q&amp;A — the chatbot uses these to answer questions about you.
       </p>
+
+      <div className="card p-[22px] flex flex-col gap-3">
+        <div>
+          <h4 className="text-[13.5px] font-semibold">Business category</h4>
+          <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+            Determines which AI agents and workspace pages you get. Changing this switches your
+            AI assistant&apos;s behavior immediately.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {BUSINESS_VERTICALS.map((vertical, index) => (
+            <VerticalCard
+              key={vertical.value}
+              icon={vertical.icon}
+              title={vertical.title}
+              description={vertical.description}
+              selected={tenant?.businessVertical === vertical.value}
+              disabled={isUpdatingVertical}
+              index={index}
+              onSelect={() => updateVertical(vertical.value as BusinessVertical)}
+            />
+          ))}
+        </div>
+      </div>
 
       <Form {...form}>
         <form

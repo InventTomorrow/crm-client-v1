@@ -6,6 +6,7 @@ import {
   switchWorkspace,
 } from "@/features/auth/services/authService";
 import { useAppStore } from "@/lib/appStore";
+import type { BusinessVertical } from "@/lib/business-verticals";
 import { extractErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import {
   deleteTenant,
   getTenants,
   restoreTenant,
+  updateTenant,
 } from "../services/tenantService";
 import type { CreateTenantPayload } from "../types";
 
@@ -59,6 +61,23 @@ export function useCreateTenant() {
       } finally {
         setWorkspaceSwitching(false);
       }
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+/** Update the active workspace's business category */
+export function useUpdateBusinessVertical() {
+  const queryClient = useQueryClient();
+  const { currentWorkspaceId } = useAppStore();
+
+  return useMutation({
+    mutationFn: (businessVertical: BusinessVertical) =>
+      updateTenant(currentWorkspaceId, { businessVertical }),
+    onSuccess: () => {
+      toast.success('Business category updated');
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });

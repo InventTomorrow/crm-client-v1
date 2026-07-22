@@ -4,6 +4,8 @@ import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useLeadsCount } from "@/features/leads/hooks/useLeads";
 import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import type { BusinessVertical } from "@/lib/business-verticals";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
@@ -18,6 +20,7 @@ import {
   Settings,
   ShoppingCart,
   Sun,
+  UtensilsCrossed,
   Users,
   Wifi,
 } from "lucide-react";
@@ -34,6 +37,8 @@ const NAV_ITEMS: {
   label: string;
   Icon: typeof Inbox;
   perm?: string;
+  /** Restricts this item to specific business verticals; omit to show for all. */
+  verticals?: BusinessVertical[];
 }[] = [
   {
     href: "/dashboard",
@@ -49,6 +54,14 @@ const NAV_ITEMS: {
     label: "Inventory",
     Icon: Package,
     perm: "inventory:view",
+    verticals: ["ECOMMERCE"],
+  },
+  {
+    href: "/menu",
+    label: "Menu",
+    Icon: UtensilsCrossed,
+    perm: "inventory:view",
+    verticals: ["RESTAURANT"],
   },
   { href: "/channels", label: "Channels", Icon: Wifi, perm: "channels:view" },
   // { href: '/admin',     label: 'Team & Access', Icon: Shield,       perm: 'members:view' },
@@ -72,8 +85,11 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const { sidebarCollapsed, toggleSidebar, theme, toggleTheme } = useAppStore();
   const { user } = useMe();
   const { can, isLoading: permsLoading } = usePermissions();
+  const { tenant } = useCurrentTenant();
   const navItems = NAV_ITEMS.filter(
-    (item) => permsLoading || !item.perm || can(item.perm),
+    (item) =>
+      (permsLoading || !item.perm || can(item.perm)) &&
+      (!item.verticals || !tenant || item.verticals.includes(tenant.businessVertical)),
   );
   const { data: inboxUnread } = useInboxUnreadCount();
   const { data: leadsCount } = useLeadsCount();

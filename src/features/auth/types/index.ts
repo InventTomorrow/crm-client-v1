@@ -71,7 +71,7 @@ export interface LoginResponse {
   tenantId: string | null;
   role: string;
   onboardingStatus: 'EMAIL_UNVERIFIED' | 'COMPLETE';
-  onboardingStep: 'WORKSPACE' | 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
+  onboardingStep: 'WORKSPACE' | 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
   isTester: boolean;
 }
 
@@ -87,7 +87,7 @@ export interface UserResponse {
   memberships: Array<{
     id: string;
     role: { id: string; name: string };
-    tenant: { id: string; name: string; type: string; deletedAt?: string | null };
+    tenant: { id: string; name: string; type: string; businessVertical: 'ECOMMERCE' | 'RESTAURANT'; deletedAt?: string | null };
     isActive?: boolean;
   }>;
   // Active-membership convenience fields (resolved server-side from the JWT tenant)

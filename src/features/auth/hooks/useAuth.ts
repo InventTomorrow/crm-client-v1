@@ -98,7 +98,7 @@ export function useCreateWorkspace() {
     onSuccess: () => {
       // Fresh session cookies now carry the new tenantId — refetch identity.
       queryClient.invalidateQueries({ queryKey: ['me'] });
-      router.push('/onboarding/channel');
+      router.push('/onboarding/category');
     },
     // Error surfaced inline via <AuthFormError /> in the view (mutation.error).
   });

@@ -4,16 +4,19 @@ import { cn } from '@/lib/utils';
 
 const STEPS = [
   { key: 'WORKSPACE', label: 'Create workspace' },
+  { key: 'CATEGORY', label: 'Business type' },
   { key: 'CHANNEL', label: 'Connect WhatsApp' },
   { key: 'CHATBOT', label: 'Configure chatbot' },
 ];
 
 interface Props {
-  currentStep: 'WORKSPACE' | 'CHANNEL' | 'CHATBOT';
+  currentStep: 'WORKSPACE' | 'CATEGORY' | 'CHANNEL' | 'CHATBOT';
   children: React.ReactNode;
+  /** Wider column for steps that need more room, e.g. a card grid — default is the narrow form column. */
+  wide?: boolean;
 }
 
-export function OnboardingShell({ currentStep, children }: Props) {
+export function OnboardingShell({ currentStep, children, wide = false }: Props) {
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
   return (
@@ -22,7 +25,7 @@ export function OnboardingShell({ currentStep, children }: Props) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="w-full max-w-[520px] mx-auto"
+      className={cn('w-full mx-auto', wide ? 'max-w-[900px]' : 'max-w-[520px]')}
     >
       {/* Stepper */}
       <div className="flex items-center gap-0 mb-8">
