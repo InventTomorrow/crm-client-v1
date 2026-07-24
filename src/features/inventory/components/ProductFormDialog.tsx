@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
-import { ImageUploader } from "@/shared/ui/ImageUploader";
+import { FileUpload } from "@/shared/ui/FileUpload";
 import { Input } from "@/shared/ui/Input";
 import {
   Select,
@@ -26,10 +26,10 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { Check, Trash2, X } from "lucide-react";
-import { usePresignedUpload } from "../hooks/useProducts";
 import { useProductForm } from "../hooks/useProductForm";
-import { GENDERS } from "../types";
+import { usePresignedUpload } from "../hooks/useProducts";
 import type { Product, ProductFormData } from "../types";
+import { GENDERS } from "../types";
 import { CreatableCategorySelect } from "./CreatableCategorySelect";
 import { SizeSelector } from "./SizeSelector";
 
@@ -75,7 +75,7 @@ export function ProductFormDialog({
         className="flex flex-col gap-0 p-0 max-h-[90vh] sm:max-w-[540px] overflow-hidden"
         showCloseButton={false}
       >
-        <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-[18px] py-3.5 border-b border-[var(--line)]">
+        <DialogHeader className="shrink-0 flex-row items-start justify-between gap-2 px-[18px] py-3.5 border-b border-[var(--line)]">
           <div>
             <DialogTitle className="text-[16px] font-semibold">
               {title || "Add Product"}
@@ -100,11 +100,23 @@ export function ProductFormDialog({
             className="flex flex-1 min-h-0 flex-col overflow-hidden"
           >
             <div className="scroll overflow-y-auto flex-1 min-h-0 flex flex-col gap-3 p-[18px]">
-              <ImageUploader
+              <FileUpload
                 value={imageUrl}
                 onChange={setImageUrl}
                 onUpload={uploadImage}
                 isUploading={isUploading}
+                accept="image/*"
+                aspectRatio="aspect-square"
+                title="Upload product photo"
+                description="Drag and drop a photo here, or click to browse"
+                hint="Recommended: square, 1000×1000px • Max size: 5MB"
+                tipsTitle="Photo guidelines"
+                tips={[
+                  "Use a plain background so the product stands out",
+                  "Shoot in good, even lighting — avoid harsh shadows",
+                  "Show the actual product customers will receive",
+                  "Supported formats: JPG, PNG, WebP",
+                ]}
               />
               <FormField
                 control={form.control}
