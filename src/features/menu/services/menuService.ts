@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { MenuItem, MenuItemFilters } from '../types';
+import type { MenuCategory, MenuItem, MenuItemAddon, MenuItemFilters, MenuItemVariant, MenuTag } from '../types';
 
 export async function getMenuItems(params: MenuItemFilters & { cursor?: string; limit?: number }) {
   const res = await apiClient.get<{ success: true; data: MenuItem[] }>('/menu', { params });
@@ -12,14 +12,18 @@ export async function getMenuItem(menuItemId: string) {
 }
 
 export interface CreateMenuItemPayload {
+  categoryId: string;
   name: string;
-  category: string;
   description?: string;
-  price: number;
-  ingredients?: string[];
-  allergens?: string[];
-  isAvailable?: boolean;
+  basePrice: number;
   imageUrl?: string;
+  isAvailable?: boolean;
+  isFeatured?: boolean;
+  preparationTime?: number;
+  calories?: number;
+  variants?: MenuItemVariant[];
+  addons?: MenuItemAddon[];
+  tagIds?: string[];
 }
 
 export type UpdateMenuItemPayload = Partial<CreateMenuItemPayload>;
@@ -36,5 +40,52 @@ export async function updateMenuItem(menuItemId: string, payload: UpdateMenuItem
 
 export async function deleteMenuItem(menuItemId: string) {
   const res = await apiClient.delete(`/menu/${menuItemId}`);
+  return res.data;
+}
+
+// ─── Categories ─────────────────────────────────────────────────────────────
+
+export async function getMenuCategories() {
+  const res = await apiClient.get<{ success: true; data: MenuCategory[] }>('/menu/categories');
+  return res.data.data;
+}
+
+export interface CreateMenuCategoryPayload {
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+}
+
+export async function createMenuCategory(payload: CreateMenuCategoryPayload) {
+  const res = await apiClient.post<{ success: true; data: MenuCategory }>('/menu/categories', payload);
+  return res.data.data;
+}
+
+export async function deleteMenuCategory(categoryId: string) {
+  const res = await apiClient.delete(`/menu/categories/${categoryId}`);
+  return res.data;
+}
+
+// ─── Tags ───────────────────────────────────────────────────────────────────
+
+export async function getMenuTags() {
+  const res = await apiClient.get<{ success: true; data: MenuTag[] }>('/menu/tags');
+  return res.data.data;
+}
+
+export interface CreateMenuTagPayload {
+  name: string;
+  color?: string;
+  icon?: string;
+}
+
+export async function createMenuTag(payload: CreateMenuTagPayload) {
+  const res = await apiClient.post<{ success: true; data: MenuTag }>('/menu/tags', payload);
+  return res.data.data;
+}
+
+export async function deleteMenuTag(tagId: string) {
+  const res = await apiClient.delete(`/menu/tags/${tagId}`);
   return res.data;
 }

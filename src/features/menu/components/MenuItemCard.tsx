@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { ImageIcon, Pencil, Trash2 } from 'lucide-react';
+import { ImageIcon, Pencil, Star, Trash2 } from 'lucide-react';
 import { cn, getImageUrl, pkr } from '@/lib/utils';
 import { Button } from '@/shared/ui/Button';
 import { ShimmerImage } from '@/shared/ui/ShimmerImage';
@@ -43,6 +43,11 @@ function MenuItemCardBase({
         >
           {menuItem.isAvailable ? 'Available' : 'Unavailable'}
         </span>
+        {menuItem.isFeatured && (
+          <span className="badge absolute top-2 left-2 flex items-center gap-1 font-medium text-white backdrop-blur-sm bg-[rgba(217,119,6,0.92)]">
+            <Star size={11} fill="currentColor" /> Featured
+          </span>
+        )}
         <div
           className={cn(
             'absolute inset-0 flex items-end gap-1.5 p-2.5 transition-opacity duration-150 bg-[linear-gradient(to_top,rgba(15,23,42,0.55),transparent_50%)]',
@@ -70,9 +75,9 @@ function MenuItemCardBase({
         <div className="text-[12.5px] font-medium truncate text-[var(--ink)]">{menuItem.name}</div>
         <div className="flex items-center justify-between mt-1">
           <span className="font-semibold text-[13px] font-[var(--font-mono)] text-[var(--ink)]">
-            {pkr(menuItem.price)}
+            {pkr(menuItem.basePrice)}
           </span>
-          <span className="text-[11px] text-[var(--ink-mute)]">{menuItem.category}</span>
+          <span className="text-[11px] text-[var(--ink-mute)]">{menuItem.category.name}</span>
         </div>
       </div>
     </div>

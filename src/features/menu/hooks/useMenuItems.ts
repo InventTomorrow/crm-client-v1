@@ -1,10 +1,11 @@
 'use client';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/utils';
 import {
   createMenuItem,
   deleteMenuItem,
+  getMenuItem,
   getMenuItems,
   updateMenuItem,
   type CreateMenuItemPayload,
@@ -17,19 +18,29 @@ const PAGE_SIZE = 25;
 const menuItemKeys = {
   all: ['menu-items'] as const,
   list: (filters: MenuItemFilters) => ['menu-items', 'list', filters] as const,
+  detail: (menuItemId: string) => ['menu-items', 'detail', menuItemId] as const,
 };
 
 function invalidateMenuItems(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: menuItemKeys.all });
 }
 
-export function useMenuItems(filters: MenuItemFilters) {
+export function useMenuItems(filters: MenuItemFilters, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: menuItemKeys.list(filters),
     queryFn: ({ pageParam }) => getMenuItems({ ...filters, cursor: pageParam, limit: PAGE_SIZE }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1]?.id : undefined,
+    enabled: options?.enabled,
+  });
+}
+
+export function useMenuItem(menuItemId: string | undefined) {
+  return useQuery({
+    queryKey: menuItemKeys.detail(menuItemId ?? ''),
+    queryFn: () => getMenuItem(menuItemId as string),
+    enabled: !!menuItemId,
   });
 }
 
