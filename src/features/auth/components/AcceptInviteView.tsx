@@ -1,15 +1,15 @@
 'use client';
-import { useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
-import Link from 'next/link';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form';
-import { acceptInviteSchema, type AcceptInviteData } from '../types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AlertCircle, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAcceptInvite, useValidateInvite } from '../hooks/useAuth';
+import { acceptInviteSchema, type AcceptInviteData } from '../types';
 
 const INVALID_COPY: Record<string, { title: string; body: string }> = {
   NOT_FOUND: {

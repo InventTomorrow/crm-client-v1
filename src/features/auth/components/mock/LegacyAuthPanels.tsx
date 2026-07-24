@@ -643,4 +643,3 @@ export function AcceptInviteVisualPanel() {
     </div>
   );
 }
-
