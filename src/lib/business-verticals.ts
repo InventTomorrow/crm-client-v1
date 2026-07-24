@@ -25,3 +25,13 @@ export const BUSINESS_VERTICALS: BusinessVerticalOption[] = [
     icon: UtensilsCrossed,
   },
 ];
+
+const BUSINESS_VERTICAL_SHORT_LABELS: Record<BusinessVertical, string> = {
+  ECOMMERCE: 'Retail',
+  RESTAURANT: 'Restaurant',
+};
+
+/** Short label for compact UI (workspace switcher, tenant tabs) — the full title is too long for a badge. */
+export function getBusinessVerticalShortLabel(businessVertical: BusinessVertical): string {
+  return BUSINESS_VERTICAL_SHORT_LABELS[businessVertical];
+}

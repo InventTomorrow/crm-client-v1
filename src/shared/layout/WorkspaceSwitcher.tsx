@@ -6,7 +6,9 @@ import {
   useSwitchWorkspace,
 } from "@/features/tenant/hooks/useTenant";
 import { useAppStore } from "@/lib/appStore";
+import { BUSINESS_VERTICALS, getBusinessVerticalShortLabel, type BusinessVertical } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
+import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import {
   Dialog,
   DialogContent,
@@ -15,12 +17,13 @@ import {
   DialogTitle,
 } from "@/shared/ui/Dialog";
 import { Input } from "@/shared/ui/Input";
+import { Label } from "@/shared/ui/Label";
 import { Button } from "@/shared/ui/Button";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Membership = {
-  tenant: { id: string; name: string; type: string };
+  tenant: { id: string; name: string; type: string; businessVertical: BusinessVertical };
   role: { name: string };
 };
 
@@ -29,11 +32,14 @@ type Membership = {
 // ─────────────────────────────────────────────────────────────
 function CreateDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
+  const [businessVertical, setBusinessVertical] = useState<BusinessVertical | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
 
+  const canCreate = !!name.trim() && !!businessVertical;
+
   const handleCreate = () => {
-    if (!name.trim()) return;
-    createTenant({ name: name.trim() }, { onSuccess: () => onClose() });
+    if (!canCreate || !businessVertical) return;
+    createTenant({ name: name.trim(), businessVertical }, { onSuccess: () => onClose() });
   };
 
   return (
@@ -44,7 +50,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
       }}
     >
       <DialogContent
-        className="flex flex-col gap-0 p-0 sm:max-w-[440px] overflow-hidden"
+        className="flex flex-col gap-0 p-0 sm:max-w-[480px] overflow-hidden"
         showCloseButton={false}
       >
         <DialogHeader className="px-5 py-4 border-b border-[var(--line)]">
@@ -58,9 +64,9 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
 
         <div className="p-5 flex flex-col gap-3.5">
           <div>
-            <label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
+            <Label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
               Workspace name
-            </label>
+            </Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -72,6 +78,27 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
               disabled={isPending}
             />
           </div>
+
+          <div>
+            <Label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
+              Business type
+            </Label>
+            <div className="flex flex-col gap-2">
+              {BUSINESS_VERTICALS.map((vertical, index) => (
+                <VerticalCard
+                  key={vertical.value}
+                  icon={vertical.icon}
+                  title={vertical.title}
+                  description={vertical.description}
+                  selected={businessVertical === vertical.value}
+                  disabled={isPending}
+                  index={index}
+                  onSelect={() => setBusinessVertical(vertical.value)}
+                />
+              ))}
+            </div>
+          </div>
+
           <p className="text-[11.5px] text-[var(--ink-mute)] leading-relaxed">
             You&apos;ll be the <strong>Owner</strong> of this workspace. Team members
             can be invited after setup.
@@ -82,7 +109,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
           <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!name.trim() || isPending}>
+          <Button onClick={handleCreate} disabled={!canCreate || isPending}>
             {isPending ? (
               <><Loader2 size={13} className="animate-spin" /> Creating…</>
             ) : (
@@ -145,7 +172,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
     id: m.tenant.id,
     name: m.tenant.name,
     short: m.tenant.name.substring(0, 2).toUpperCase(),
-    plan: m.tenant.type === "INDIVIDUAL" ? "Individual" : "Organization",
+    category: getBusinessVerticalShortLabel(m.tenant.businessVertical),
     role: m.role.name,
     color: PALETTE[idx % PALETTE.length],
   });
@@ -198,7 +225,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
             {workspace.name}
           </div>
           <div className="text-[11px] text-[var(--ink-mute)]">
-            {workspace.plan} · {workspace.role}
+            {workspace.category} · {workspace.role}
           </div>
         </div>
         {isActive && (
@@ -245,7 +272,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
                 {current.name}
               </div>
               <div className="text-[11px] text-[var(--ink-mute)] flex items-center gap-1 mt-px">
-                <span>{current.plan}</span>
+                <span>{current.category}</span>
                 <span>·</span>
                 <span>{current.role}</span>
               </div>

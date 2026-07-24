@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { BUSINESS_VERTICALS, type BusinessVertical } from '@/lib/business-verticals';
+import { Button } from '@/shared/ui/Button';
 import { useSelectCategory } from '../hooks/useOnboarding';
 import { OnboardingShell } from './OnboardingShell';
 import { VerticalCard } from './VerticalCard';
@@ -10,9 +11,9 @@ export function CategoryView() {
   const [selected, setSelected] = useState<BusinessVertical | null>(null);
   const { mutate: selectCategory, isPending } = useSelectCategory();
 
-  const handleSelect = (businessVertical: BusinessVertical) => {
-    setSelected(businessVertical);
-    selectCategory({ businessVertical });
+  const handleNext = () => {
+    if (!selected) return;
+    selectCategory({ businessVertical: selected });
   };
 
   return (
@@ -34,17 +35,24 @@ export function CategoryView() {
             selected={selected === vertical.value}
             disabled={isPending}
             index={index}
-            onSelect={() => handleSelect(vertical.value)}
+            onSelect={() => setSelected(vertical.value)}
           />
         ))}
       </div>
 
-      {isPending && (
-        <div className="flex items-center justify-center gap-2 mt-6 text-[12.5px] text-[var(--ink-mute)]">
-          <Loader2 size={13} className="animate-spin" />
-          Setting up your workspace…
-        </div>
-      )}
+      <div className="flex justify-end mt-6">
+        <Button onClick={handleNext} disabled={!selected || isPending}>
+          {isPending ? (
+            <>
+              <Loader2 size={13} className="animate-spin" /> Setting up…
+            </>
+          ) : (
+            <>
+              Next <ArrowRight size={13} />
+            </>
+          )}
+        </Button>
+      </div>
     </OnboardingShell>
   );
 }

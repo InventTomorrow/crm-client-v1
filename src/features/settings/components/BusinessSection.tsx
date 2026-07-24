@@ -1,7 +1,7 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Loader2, Plus, Zap, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import {
   useChatbotConfig,
@@ -11,9 +11,10 @@ import {
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
 import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
 import { useUpdateBusinessVertical } from '@/features/tenant/hooks/useTenant';
-import { BUSINESS_VERTICALS, type BusinessVertical } from '@/lib/business-verticals';
+import { BUSINESS_VERTICALS, getBusinessVerticalShortLabel, type BusinessVertical } from '@/lib/business-verticals';
 import { VerticalCard } from '@/features/onboarding/components/VerticalCard';
 import { Button } from '@/shared/ui/Button';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { CRMSwitch } from '@/shared/ui/CRMSwitch';
 import { Input } from '@/shared/ui/Input';
 import { Textarea } from '@/shared/ui/Textarea';
@@ -42,6 +43,7 @@ export function BusinessSection() {
   const { mutate: generate, isPending: isGenerating } = useGenerateBusinessIntro();
   const { tenant } = useCurrentTenant();
   const { mutate: updateVertical, isPending: isUpdatingVertical } = useUpdateBusinessVertical();
+  const [pendingVertical, setPendingVertical] = useState<BusinessVertical | null>(null);
 
   const form = useForm<BusinessProfileForm>({
     resolver: zodResolver(businessProfileSchema),
@@ -111,11 +113,25 @@ export function BusinessSection() {
               selected={tenant?.businessVertical === vertical.value}
               disabled={isUpdatingVertical}
               index={index}
-              onSelect={() => updateVertical(vertical.value as BusinessVertical)}
+              onSelect={() => setPendingVertical(vertical.value)}
             />
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingVertical}
+        onClose={() => setPendingVertical(null)}
+        onConfirm={() => {
+          if (!pendingVertical) return;
+          updateVertical(pendingVertical, { onSuccess: () => setPendingVertical(null) });
+        }}
+        title={`Switch to ${pendingVertical ? getBusinessVerticalShortLabel(pendingVertical) : ''}?`}
+        description="This changes which AI agents and workspace pages your team gets, effective immediately. Existing data isn't deleted, but the assistant's behavior switches right away."
+        confirmLabel="Switch business type"
+        destructive={false}
+        loading={isUpdatingVertical}
+      />
 
       <Form {...form}>
         <form

@@ -10,7 +10,9 @@ import {
   useSwitchWorkspace,
 } from "@/features/tenant/hooks/useTenant";
 import { useAppStore } from "@/lib/appStore";
+import { BUSINESS_VERTICALS, type BusinessVertical } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
+import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import {
   Dialog,
   DialogContent,
@@ -55,11 +57,14 @@ const PALETTE = [
 // ─────────────────────────────────────────────────────────────
 function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
+  const [businessVertical, setBusinessVertical] = useState<BusinessVertical | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
 
+  const canCreate = !!name.trim() && !!businessVertical;
+
   const handleCreate = () => {
-    if (!name.trim()) return;
-    createTenant({ name: name.trim() }, { onSuccess: () => onClose() });
+    if (!canCreate || !businessVertical) return;
+    createTenant({ name: name.trim(), businessVertical }, { onSuccess: () => onClose() });
   };
 
   return (
@@ -90,9 +95,9 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
         </DialogHeader>
         <div className="p-6 flex flex-col gap-4">
           <div>
-            <label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
+            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
               Workspace name <span className="text-red-500">*</span>
-            </label>
+            </Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -103,6 +108,25 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                 if (e.key === "Enter") handleCreate();
               }}
             />
+          </div>
+          <div>
+            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
+              Business type <span className="text-red-500">*</span>
+            </Label>
+            <div className="flex flex-col gap-2">
+              {BUSINESS_VERTICALS.map((vertical, index) => (
+                <VerticalCard
+                  key={vertical.value}
+                  icon={vertical.icon}
+                  title={vertical.title}
+                  description={vertical.description}
+                  selected={businessVertical === vertical.value}
+                  disabled={isPending}
+                  index={index}
+                  onSelect={() => setBusinessVertical(vertical.value)}
+                />
+              ))}
+            </div>
           </div>
           <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3.5 text-[12px] text-[var(--ink-soft)] leading-relaxed">
             <span className="font-semibold text-[var(--ink)]">
@@ -116,7 +140,7 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
           <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={!name.trim() || isPending}>
+          <Button onClick={handleCreate} disabled={!canCreate || isPending}>
             {isPending ? (
               <><Loader2 size={13} className="animate-spin" /> Creating…</>
             ) : (

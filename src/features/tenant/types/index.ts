@@ -21,4 +21,5 @@ export interface TenantWithMembership extends Tenant {
 
 export interface CreateTenantPayload {
   name: string;
+  businessVertical: BusinessVertical;
 }
