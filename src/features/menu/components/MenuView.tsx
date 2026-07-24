@@ -1,5 +1,7 @@
 'use client';
-import { Loader2, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { BookOpen, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { Skeleton } from '@/shared/ui/Motion';
@@ -7,9 +9,11 @@ import { useMenuView } from '../hooks/useMenuView';
 import { MenuEmptyState } from './MenuEmptyState';
 import { MenuFilters } from './MenuFilters';
 import { MenuItemCard } from './MenuItemCard';
-import { MenuItemFormDialog } from './MenuItemFormDialog';
+import { MenuPreviewSheet } from './MenuPreviewSheet';
 
 export function MenuView() {
+  const router = useRouter();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const {
     menuItems,
     isLoading,
@@ -18,16 +22,9 @@ export function MenuView() {
     isFetchingNextPage,
     search,
     setSearch,
-    filterCategory,
-    setFilterCategory,
-    categoryOptions,
-    formDialogOpen,
-    editingItem,
-    openAddDialog,
-    openEditDialog,
-    closeFormDialog,
-    handleSave,
-    isSaving,
+    filterCategoryId,
+    setFilterCategoryId,
+    categories,
     deleteTarget,
     setDeleteTarget,
     confirmDelete,
@@ -45,13 +42,18 @@ export function MenuView() {
         <MenuFilters
           search={search}
           onSearchChange={setSearch}
-          filterCategory={filterCategory}
-          onFilterCategoryChange={setFilterCategory}
-          categoryOptions={categoryOptions}
+          filterCategoryId={filterCategoryId}
+          onFilterCategoryIdChange={setFilterCategoryId}
+          categories={categories}
         />
-        <Button size="sm" onClick={openAddDialog}>
-          <Plus size={14} /> Add menu item
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="lg" onClick={() => setPreviewOpen(true)}>
+            <BookOpen size={14} /> Preview menu
+          </Button>
+          <Button size="lg" onClick={() => router.push('/menu/new')}>
+            <Plus size={14} /> Add menu item
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -61,7 +63,7 @@ export function MenuView() {
           ))}
         </div>
       ) : menuItems.length === 0 ? (
-        <MenuEmptyState onAdd={openAddDialog} />
+        <MenuEmptyState onAdd={() => router.push('/menu/new')} />
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -69,7 +71,7 @@ export function MenuView() {
               <MenuItemCard
                 key={menuItem.id}
                 menuItem={menuItem}
-                onEdit={openEditDialog}
+                onEdit={(item) => router.push(`/menu/${item.id}/edit`)}
                 onDelete={setDeleteTarget}
               />
             ))}
@@ -86,17 +88,6 @@ export function MenuView() {
         </>
       )}
 
-      <MenuItemFormDialog
-        open={formDialogOpen}
-        initial={editingItem}
-        title={editingItem ? 'Edit Menu Item' : 'Add Menu Item'}
-        isSaving={isSaving}
-        isDeleting={isDeleting}
-        onClose={closeFormDialog}
-        onSave={handleSave}
-        onDelete={editingItem ? () => setDeleteTarget(editingItem) : undefined}
-      />
-
       <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -106,6 +97,8 @@ export function MenuView() {
         confirmLabel="Delete"
         loading={isDeleting}
       />
+
+      <MenuPreviewSheet open={previewOpen} onOpenChange={setPreviewOpen} />
     </div>
   );
 }
