@@ -39,23 +39,19 @@ export function useCreateTenant() {
       toast.success(`Workspace "${tenant.name}" created!`);
       setWorkspaceSwitching(true, tenant.name);
       try {
-        // 1. Refetch /me so the new membership is in the cache before we switch
-        await queryClient.invalidateQueries({ queryKey: ["me"] });
-        await queryClient.refetchQueries({ queryKey: ["me"] });
-
-        // 2. Now switch — the backend membership exists, so it will succeed
+        // Switch first — the new membership already exists server-side by the
+        // time createTenant resolves, and switching rotates the JWT cookies to
+        // scope them to the new tenant.
         await switchWorkspace(tenant.id);
+
+        // Wipe all cached data (including the old /me) and refetch /me fresh —
+        // its roleId/tenant now reflect the new JWT, which useSyncActiveWorkspace
+        // relies on to confirm the switch instead of reverting it.
+        queryClient.clear();
+        await queryClient.fetchQuery({ queryKey: ["me"], queryFn: getMe });
         setCurrentWorkspace(tenant.id);
 
-        // 3. Invalidate all data for the new workspace
-        await queryClient.invalidateQueries({ queryKey: ["tenants"] });
-        await queryClient.invalidateQueries({ queryKey: ["leads"] });
-        await queryClient.invalidateQueries({ queryKey: ["inventory"] });
-        queryClient.removeQueries({ queryKey: ["conversations"] });
-        queryClient.removeQueries({ queryKey: ["conversation"] });
-        queryClient.removeQueries({ queryKey: ["orders"] });
-
-        await new Promise((r) => setTimeout(r, 600));
+        await new Promise((r) => setTimeout(r, 80));
       } catch (err) {
         toast.error(extractErrorMessage(err, "Could not switch to new workspace."));
       } finally {
