@@ -4,6 +4,7 @@ import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWor
 import { useAppStore } from "@/lib/appStore";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { AppTopBar } from "@/shared/layout/AppTopBar";
+import { AuthGate } from "@/shared/layout/AuthGate";
 import { EscalateDialog } from "@/shared/layout/EscalateDialog";
 import { HotToast } from "@/shared/layout/HotToast";
 import { MobileDock } from "@/shared/layout/MobileDock";
@@ -46,38 +47,40 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useSyncActiveWorkspace();
 
   return (
-    <div className="app-shell">
-      {!isFullScreen && (
-        <AppSidebar
-          mobileOpen={mobileMenuOpen}
-          onCloseMobile={() => setMobileMenuOpen(false)}
-        />
-      )}
-      <div className="app-main">
+    <AuthGate>
+      <div className="app-shell">
         {!isFullScreen && (
-          <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
+          <AppSidebar
+            mobileOpen={mobileMenuOpen}
+            onCloseMobile={() => setMobileMenuOpen(false)}
+          />
         )}
-        {isFullScreen && <FullScreenBar />}
-        <main key={currentWorkspaceId} className="app-content">
-          <RouteGuard>{children}</RouteGuard>
-        </main>
-      </div>
-      <MobileDock />
+        <div className="app-main">
+          {!isFullScreen && (
+            <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
+          )}
+          {isFullScreen && <FullScreenBar />}
+          <main key={currentWorkspaceId} className="app-content">
+            <RouteGuard>{children}</RouteGuard>
+          </main>
+        </div>
+        <MobileDock />
 
-      {escalatingLead && (
-        <EscalateDialog
-          lead={escalatingLead}
-          onClose={() => setEscalatingLead(null)}
-          onConfirm={() => {
-            setEscalatingLead(null);
-            setHotLead(escalatingLead);
-          }}
-        />
-      )}
-      {hotLead && <HotToast lead={hotLead} onClose={() => setHotLead(null)} />}
-      <Toaster richColors position="top-right" />
-      <WorkspaceSwitchingOverlay />
-      <WelcomeDemoDialog />
-    </div>
+        {escalatingLead && (
+          <EscalateDialog
+            lead={escalatingLead}
+            onClose={() => setEscalatingLead(null)}
+            onConfirm={() => {
+              setEscalatingLead(null);
+              setHotLead(escalatingLead);
+            }}
+          />
+        )}
+        {hotLead && <HotToast lead={hotLead} onClose={() => setHotLead(null)} />}
+        <Toaster richColors position="top-right" />
+        <WorkspaceSwitchingOverlay />
+        <WelcomeDemoDialog />
+      </div>
+    </AuthGate>
   );
 }
