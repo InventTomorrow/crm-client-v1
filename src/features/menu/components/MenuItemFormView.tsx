@@ -240,7 +240,7 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                       <FormControl>
                         <Textarea
                           rows={3}
-                          placeholder="Spicy chicken karahi, serves 2..."
+                          placeholder="Spicy chicken karahi, Ingredients..."
                           {...field}
                           disabled={busy}
                         />
