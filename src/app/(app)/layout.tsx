@@ -16,7 +16,7 @@ import { Minimize2 } from "lucide-react";
 function FullScreenBar() {
   const { toggleFullScreen } = useAppStore();
   return (
-    <div className="h-8 flex-shrink-0 flex items-center justify-end px-3 bg-[var(--surface)] border-b border-[var(--line)]">
+    <div className="h-8 shrink-0 flex items-center justify-end px-3 bg-[var(--surface)] border-b border-[var(--line)]">
       <Button
         variant="ghost"
         onClick={toggleFullScreen}
