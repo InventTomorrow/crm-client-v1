@@ -54,6 +54,7 @@ export const businessProfileSchema = z.object({
       message: 'Enter a valid email',
     }),
   shareSupportContactOnHandoff: z.boolean(),
+  notifyOnEscalation: z.boolean(),
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
@@ -83,6 +84,7 @@ export interface ChatbotConfigResponse {
     supportPhone: string | null;
     supportEmail: string | null;
     shareSupportContactOnHandoff: boolean;
+    notifyOnEscalation: boolean;
   } | null;
   workspaceName: string | null;
 }

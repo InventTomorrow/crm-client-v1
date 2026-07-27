@@ -35,6 +35,7 @@ const DEFAULTS: BusinessProfileForm = {
   supportPhone: '',
   supportEmail: '',
   shareSupportContactOnHandoff: false,
+  notifyOnEscalation: false,
 };
 
 export function BusinessSection() {
@@ -65,6 +66,7 @@ export function BusinessSection() {
         supportPhone: data.config.supportPhone ?? '',
         supportEmail: data.config.supportEmail ?? '',
         shareSupportContactOnHandoff: data.config.shareSupportContactOnHandoff ?? false,
+        notifyOnEscalation: data.config.notifyOnEscalation ?? false,
       });
     }
   }, [data, form]);
@@ -342,6 +344,30 @@ export function BusinessSection() {
                         Off by default — the AI tells the customer a human will
                         follow up, without naming a contact. Turn on to include
                         the name/phone/email above in that message.
+                      </p>
+                    </div>
+                    <FormControl>
+                      <CRMSwitch on={field.value} onChange={() => field.onChange(!field.value)} />
+                    </FormControl>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notifyOnEscalation"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
+                    <div>
+                      <FormLabel className="text-[12.5px]">
+                        Notify me on WhatsApp when a chat is escalated
+                      </FormLabel>
+                      <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                        Off by default. Turn on to receive the lead&apos;s info and
+                        escalation reason on the support number above whenever the
+                        AI hands a conversation off to a human.
                       </p>
                     </div>
                     <FormControl>
