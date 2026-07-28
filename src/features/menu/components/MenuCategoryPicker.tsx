@@ -1,10 +1,21 @@
 'use client';
-import { useMemo } from 'react';
-import { CreateableAutoComplete, type CreateableOption } from '@/shared/ui/CreateableAutoComplete';
-import { MENU_CATEGORY_SUGGESTIONS } from '../data/menuSeedSuggestions';
+import { useState, useMemo, useEffect } from 'react';
+import {
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+} from '@/shared/ui/AutoComplete';
 import { useCreateMenuCategory, useMenuCategories } from '../hooks/useMenuCategories';
+import { MENU_CATEGORY_SUGGESTIONS } from '../data/menuSeedSuggestions';
 
-const SUGGESTED_PREFIX = '__suggested__:';
+export interface CategoryOption {
+  id: string;
+  label: string;
+  isSuggested?: boolean;
+}
 
 export function MenuCategoryPicker({
   categoryId,
@@ -16,20 +27,29 @@ export function MenuCategoryPicker({
   disabled?: boolean;
 }) {
   const { data: categories = [] } = useMenuCategories();
-  const { mutateAsync: createCategory } = useCreateMenuCategory();
+  const createCategoryMutation = useCreateMenuCategory();
+  const [isCreating, setIsCreating] = useState(false);
 
-  // Stable option identities across re-renders — CreateableAutoComplete resets its
-  // input text whenever the `selected` object reference changes, so a fresh array
-  // on every render would fight the user mid-keystroke.
-  const options: CreateableOption[] = useMemo(() => {
-    const real = categories.map((category) => ({ id: category.id, label: category.name }));
-    const realNames = new Set(real.map((option) => option.label.toLowerCase()));
-    // Default suggestions (from a sample restaurant menu) for categories not yet created —
-    // picking one creates it, exactly like the "Create …" row.
-    const suggested = MENU_CATEGORY_SUGGESTIONS.filter((name) => !realNames.has(name.toLowerCase())).map(
-      (name) => ({ id: `${SUGGESTED_PREFIX}${name}`, label: name }),
-    );
-    return [...real, ...suggested];
+  const options: CategoryOption[] = useMemo(() => {
+    const existingMap = new Map<string, string>();
+    const dynamic: CategoryOption[] = categories.map((c) => {
+      existingMap.set(c.name.trim().toLowerCase(), c.id);
+      return { id: c.id, label: c.name, isSuggested: false };
+    });
+
+    const suggestedCategories: CategoryOption[] = [];
+    for (const suggestedCategoryName of MENU_CATEGORY_SUGGESTIONS) {
+      const lower = suggestedCategoryName.trim().toLowerCase();
+      if (!existingMap.has(lower)) {
+        suggestedCategories.push({
+          id: `__suggested__:${suggestedCategoryName}`,
+          label: suggestedCategoryName,
+          isSuggested: true,
+        });
+      }
+    }
+
+    return [...dynamic, ...suggestedCategories];
   }, [categories]);
 
   const selected = useMemo(
@@ -37,27 +57,75 @@ export function MenuCategoryPicker({
     [options, categoryId],
   );
 
-  const handleSelect = async (option: CreateableOption) => {
-    if (!option.id.startsWith(SUGGESTED_PREFIX)) {
-      onChange(option.id);
-      return;
+  const [query, setQuery] = useState(selected?.label ?? '');
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setQuery(selected?.label ?? '');
+  }, [selected]);
+
+  const filteredItems = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return options;
+    return options.filter((item) => item.label.toLowerCase().includes(trimmed));
+  }, [options, query]);
+
+  const handleSelect = async (item: CategoryOption) => {
+    if (item.isSuggested || item.id.startsWith('__suggested__:')) {
+      try {
+        setIsCreating(true);
+        const newCategory = await createCategoryMutation.mutateAsync({ name: item.label });
+        onChange(newCategory.id);
+        setQuery(newCategory.name);
+      } finally {
+        setIsCreating(false);
+        setOpen(false);
+      }
+    } else {
+      onChange(item.id);
+      setQuery(item.label);
+      setOpen(false);
     }
-    const created = await createCategory({ name: option.label });
-    onChange(created.id);
   };
 
+  const isBusy = disabled || isCreating || createCategoryMutation.isPending;
+
   return (
-    <CreateableAutoComplete
-      items={options}
-      selected={selected}
-      onSelect={handleSelect}
-      onCreate={async (name) => {
-        const created = await createCategory({ name });
-        return { id: created.id, label: created.name };
-      }}
-      placeholder="Select or create a category…"
-      emptyLabel="No categories yet"
-      disabled={disabled}
-    />
+    <Autocomplete
+      items={filteredItems}
+      value={query}
+      onValueChange={(val) => setQuery(val)}
+      itemToStringValue={(item: unknown) => (item as CategoryOption).label}
+      disabled={isBusy}
+      open={open}
+      onOpenChange={setOpen}
+      openOnInputClick
+    >
+      <AutocompleteInput
+        placeholder="Select category…"
+        className="w-full"
+        showClear
+        showTrigger
+        onFocus={() => setOpen(true)}
+      />
+      <AutocompleteContent sideOffset={4}>
+        {filteredItems.length === 0 && (
+          <AutocompleteEmpty>No matching categories found</AutocompleteEmpty>
+        )}
+        <AutocompleteList>
+          {(item: CategoryOption) => (
+            <AutocompleteItem
+              key={item.id}
+              value={item}
+              onClick={() => handleSelect(item)}
+            >
+              {item.label}
+            </AutocompleteItem>
+          )}
+        </AutocompleteList>
+      </AutocompleteContent>
+    </Autocomplete>
   );
 }
+
+

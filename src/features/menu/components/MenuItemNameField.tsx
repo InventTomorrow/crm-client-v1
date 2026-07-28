@@ -34,30 +34,34 @@ export function MenuItemNameField({
     return () => clearTimeout(timer);
   }, [value]);
 
-  const { data } = useMenuItems(
-    {
-      search: debouncedQuery.trim() || undefined,
-      categoryId: categoryId || undefined,
-    },
-    // No category selected yet — nothing to scope suggestions to, so skip the fetch
-    // entirely rather than showing dishes from every category.
-    { enabled: !!categoryId },
-  );
+  const { data } = useMenuItems({
+    search: debouncedQuery.trim() || undefined,
+    categoryId: categoryId || undefined,
+  });
 
   const options: CreateableOption[] = useMemo(() => {
-    if (!categoryId) return [];
-    const items = data?.pages[0] ?? [];
+    const items = data?.pages.flatMap((page) => page) ?? [];
     const real = items
       .filter((item) => item.id !== excludeMenuItemId)
       .map((item) => ({ id: item.id, label: item.name }));
     const realNames = new Set(real.map((option) => option.label.toLowerCase()));
 
-    const seeded = (categoryName && MENU_DISH_NAME_SUGGESTIONS[categoryName]) || [];
-    const suggested = seeded
+    let suggestedDishNames: string[] = [];
+    if (categoryId) {
+      suggestedDishNames = (categoryName && MENU_DISH_NAME_SUGGESTIONS[categoryName]) || [];
+    } else {
+      const allSuggestedSet = new Set<string>();
+      Object.values(MENU_DISH_NAME_SUGGESTIONS).forEach((dishArray) => {
+        dishArray.forEach((dish) => allSuggestedSet.add(dish));
+      });
+      suggestedDishNames = Array.from(allSuggestedSet);
+    }
+
+    const suggestedOptions = suggestedDishNames
       .filter((name) => !realNames.has(name.toLowerCase()))
       .map((name) => ({ id: `__suggested__:${name}`, label: name }));
 
-    return [...real, ...suggested];
+    return [...real, ...suggestedOptions];
   }, [data, excludeMenuItemId, categoryName, categoryId]);
 
   const selected: CreateableOption | null = useMemo(() => {
@@ -77,7 +81,7 @@ export function MenuItemNameField({
       onSelect={(option) => onChange(option.label)}
       onCreate={(name) => ({ id: name, label: name })}
       onQueryChange={onChange}
-      placeholder={categoryId ? 'Chicken Karahi' : 'Select a category first…'}
+      placeholder="Chicken Karahi"
       emptyLabel="No matching dishes"
       disabled={disabled}
     />
