@@ -21,18 +21,14 @@ import {
 } from "@/shared/ui/Select";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
 import { useMenuCategories } from "../hooks/useMenuCategories";
 import { useMenuItemForm } from "../hooks/useMenuItemForm";
-import {
-  BROAD_CATEGORIES,
-  BROAD_CATEGORY_LABELS,
-  SERVING_SIZES,
-  SERVING_SIZE_LABELS,
-} from "../types";
+import { SERVING_SIZES, SERVING_SIZE_LABELS } from "../types";
+import { FoodTypeAutocomplete } from "./FoodTypeAutocomplete";
 import { MenuCategoryPicker } from "./MenuCategoryPicker";
 import { MenuItemAddonsField } from "./MenuItemAddonsField";
 import { MenuItemNameField } from "./MenuItemNameField";
@@ -97,6 +93,18 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
       });
     }
   }, [variants, hasVariants, form]);
+
+  // Serves is hidden by default — shown once the admin opts in via "+ Add serves",
+  // or automatically once a value already exists (loaded from an existing item, or
+  // synced down from a variant's serving size above).
+  const [servesFieldOpened, setServesFieldOpened] = useState(false);
+  const servingSizeValue = useWatch({ control: form.control, name: "servingSize" });
+  const showServesField = hasVariants ? Boolean(servingSizeValue) : servesFieldOpened || Boolean(servingSizeValue);
+
+  const handleRemoveServes = () => {
+    setServesFieldOpened(false);
+    form.setValue("servingSize", undefined, { shouldDirty: true });
+  };
 
   // Cap the variants/addons column to the details column's rendered height so it
   // scrolls internally instead of stretching the page when there are many entries.
@@ -229,43 +237,78 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  <FormField
-                    control={form.control}
-                    name="broadCategory"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Food Type</FormLabel>
-                        <Select
-                          value={field.value || undefined}
-                          onValueChange={field.onChange}
+                <FormField
+                  control={form.control}
+                  name="broadCategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Food Type</FormLabel>
+                      <FormControl>
+                        <FoodTypeAutocomplete
+                          value={field.value}
+                          onChange={field.onChange}
                           disabled={busy}
-                        >
-                          <FormControl>
-                            <SelectTrigger size="lg" className="w-full">
-                              <SelectValue placeholder="—" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {BROAD_CATEGORIES.map((code) => (
-                              <SelectItem key={code} value={code}>
-                                {BROAD_CATEGORY_LABELS[code]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Dish Name *</FormLabel>
+                        {!hasVariants && !showServesField && (
+                          <button
+                            type="button"
+                            onClick={() => setServesFieldOpened(true)}
+                            disabled={busy}
+                            className="flex items-center gap-1 text-[11px] text-[var(--ink-mute)] hover:text-[var(--ink)] disabled:pointer-events-none disabled:opacity-50"
+                          >
+                            <Plus size={12} /> Add serves
+                          </button>
+                        )}
+                      </div>
+                      <FormControl>
+                        <MenuItemNameField
+                          value={field.value}
+                          onChange={field.onChange}
+                          categoryId={selectedCategoryId}
+                          categoryName={selectedCategoryName}
+                          excludeMenuItemId={menuItemId}
+                          disabled={busy}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {showServesField && (
                   <FormField
                     control={form.control}
                     name="servingSize"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          {hasVariants ? "Serves (auto)" : "Serves"}
-                        </FormLabel>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>
+                            {hasVariants ? "Serves (auto)" : "Serves"}
+                          </FormLabel>
+                          {!hasVariants && (
+                            <button
+                              type="button"
+                              onClick={handleRemoveServes}
+                              disabled={busy}
+                              className="text-[var(--ink-mute)] hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
                         <Select
                           value={field.value || undefined}
                           onValueChange={field.onChange}
@@ -293,28 +336,7 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dish Name *</FormLabel>
-                      <FormControl>
-                        <MenuItemNameField
-                          value={field.value}
-                          onChange={field.onChange}
-                          categoryId={selectedCategoryId}
-                          categoryName={selectedCategoryName}
-                          excludeMenuItemId={menuItemId}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                )}
 
                 <FormField
                   control={form.control}
