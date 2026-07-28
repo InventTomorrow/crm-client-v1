@@ -90,6 +90,12 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
         shouldValidate: true,
       });
     }
+    if (defaultVariant.servingSize !== form.getValues("servingSize")) {
+      form.setValue("servingSize", defaultVariant.servingSize, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
   }, [variants, hasVariants, form]);
 
   // Cap the variants/addons column to the details column's rendered height so it
@@ -162,7 +168,7 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                       maxSize={5 * 1024 * 1024}
                       compact
                       compactHeight="h-[120px]"
-                      description="Drop image or click to upload"
+                      description="Drop dish image or click to upload"
                       hint="PNG, JPG, WEBP — up to 5 MB"
                       tipsCollapsible
                       tipsTitle="Photo tips"
@@ -236,7 +242,7 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                           disabled={busy}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger size="lg" className="w-full">
                               <SelectValue placeholder="—" />
                             </SelectTrigger>
                           </FormControl>
@@ -257,14 +263,16 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                     name="servingSize"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Serves</FormLabel>
+                        <FormLabel>
+                          {hasVariants ? "Serves (auto)" : "Serves"}
+                        </FormLabel>
                         <Select
                           value={field.value || undefined}
                           onValueChange={field.onChange}
-                          disabled={busy}
+                          disabled={busy || hasVariants}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger size="lg" className="w-full">
                               <SelectValue placeholder="—" />
                             </SelectTrigger>
                           </FormControl>
@@ -276,6 +284,11 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                             ))}
                           </SelectContent>
                         </Select>
+                        {hasVariants && (
+                          <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                            Synced to the default variant&apos;s serving size
+                          </p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
