@@ -1,5 +1,42 @@
 import { z } from 'zod';
 
+// Mirrors the server's Prisma BroadCategory / ServingSize enums.
+export const BROAD_CATEGORIES = [
+  'FAST_FOOD',
+  'FRIED_CHICKEN',
+  'BBQ_GRILL',
+  'DESI',
+  'CHINESE',
+  'PIZZA',
+  'SEAFOOD',
+  'BREAKFAST',
+  'DESSERTS',
+  'DRINKS',
+] as const;
+export type BroadCategory = (typeof BROAD_CATEGORIES)[number];
+
+export const BROAD_CATEGORY_LABELS: Record<BroadCategory, string> = {
+  FAST_FOOD: 'Fast Food',
+  FRIED_CHICKEN: 'Fried Chicken',
+  BBQ_GRILL: 'BBQ & Grill',
+  DESI: 'Desi',
+  CHINESE: 'Chinese',
+  PIZZA: 'Pizza',
+  SEAFOOD: 'Seafood',
+  BREAKFAST: 'Breakfast',
+  DESSERTS: 'Desserts',
+  DRINKS: 'Drinks',
+};
+
+export const SERVING_SIZES = ['SOLO', 'SMALL_GROUP', 'FAMILY'] as const;
+export type ServingSize = (typeof SERVING_SIZES)[number];
+
+export const SERVING_SIZE_LABELS: Record<ServingSize, string> = {
+  SOLO: 'Solo (1 person)',
+  SMALL_GROUP: 'Small group (2-3)',
+  FAMILY: 'Family (4+)',
+};
+
 export interface MenuCategory {
   id: string;
   name: string;
@@ -48,6 +85,8 @@ export interface MenuItem {
   variants: MenuItemVariant[];
   addons: MenuItemAddon[];
   tagIds: string[];
+  broadCategory?: BroadCategory | null;
+  servingSize?: ServingSize | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -86,6 +125,8 @@ export const menuItemFormSchema = z
     variants: z.array(menuItemVariantFormSchema).default([]),
     addons: z.array(menuItemAddonFormSchema).default([]),
     tagIds: z.array(z.string()).default([]),
+    broadCategory: z.enum(BROAD_CATEGORIES).optional(),
+    servingSize: z.enum(SERVING_SIZES).optional(),
   })
   .superRefine((data, ctx) => {
     // No variants → basePrice is the real price field, must be positive.

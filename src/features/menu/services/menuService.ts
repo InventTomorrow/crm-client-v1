@@ -1,5 +1,14 @@
 import { apiClient } from '@/lib/apiClient';
-import type { MenuCategory, MenuItem, MenuItemAddon, MenuItemFilters, MenuItemVariant, MenuTag } from '../types';
+import type {
+  BroadCategory,
+  MenuCategory,
+  MenuItem,
+  MenuItemAddon,
+  MenuItemFilters,
+  MenuItemVariant,
+  MenuTag,
+  ServingSize,
+} from '../types';
 
 export async function getMenuItems(params: MenuItemFilters & { cursor?: string; limit?: number }) {
   const res = await apiClient.get<{ success: true; data: MenuItem[] }>('/menu', { params });
@@ -24,6 +33,8 @@ export interface CreateMenuItemPayload {
   variants?: MenuItemVariant[];
   addons?: MenuItemAddon[];
   tagIds?: string[];
+  broadCategory?: BroadCategory;
+  servingSize?: ServingSize;
 }
 
 export type UpdateMenuItemPayload = Partial<CreateMenuItemPayload>;

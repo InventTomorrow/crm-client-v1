@@ -12,6 +12,13 @@ import {
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/Input";
 import { Skeleton } from "@/shared/ui/Motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/Select";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -20,6 +27,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
 import { useMenuCategories } from "../hooks/useMenuCategories";
 import { useMenuItemForm } from "../hooks/useMenuItemForm";
+import {
+  BROAD_CATEGORIES,
+  BROAD_CATEGORY_LABELS,
+  SERVING_SIZES,
+  SERVING_SIZE_LABELS,
+} from "../types";
 import { MenuCategoryPicker } from "./MenuCategoryPicker";
 import { MenuItemAddonsField } from "./MenuItemAddonsField";
 import { MenuItemNameField } from "./MenuItemNameField";
@@ -204,6 +217,65 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                             Synced to the default variant&apos;s price
                           </p>
                         )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <FormField
+                    control={form.control}
+                    name="broadCategory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Food Type</FormLabel>
+                        <Select
+                          value={field.value || undefined}
+                          onValueChange={field.onChange}
+                          disabled={busy}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="—" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {BROAD_CATEGORIES.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {BROAD_CATEGORY_LABELS[code]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="servingSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Serves</FormLabel>
+                        <Select
+                          value={field.value || undefined}
+                          onValueChange={field.onChange}
+                          disabled={busy}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="—" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {SERVING_SIZES.map((size) => (
+                              <SelectItem key={size} value={size}>
+                                {SERVING_SIZE_LABELS[size]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

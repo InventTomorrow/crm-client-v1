@@ -35,6 +35,8 @@ function toFormValues(item: MenuItem): z.input<typeof menuItemFormSchema> {
     variants: item.variants.map((variant) => ({ ...variant, imageUrl: variant.imageUrl ?? '' })),
     addons: item.addons,
     tagIds: item.tagIds,
+    broadCategory: item.broadCategory ?? undefined,
+    servingSize: item.servingSize ?? undefined,
   };
 }
 
@@ -79,6 +81,8 @@ export function useMenuItemForm(menuItemId?: string) {
       })),
       addons: data.addons,
       tagIds: data.tagIds,
+      broadCategory: data.broadCategory,
+      servingSize: data.servingSize,
     };
     if (isEditMode && menuItemId) {
       updateMenuItem.mutate({ menuItemId, payload }, { onSuccess: () => router.push('/menu') });
