@@ -32,7 +32,11 @@ function toFormValues(item: MenuItem): z.input<typeof menuItemFormSchema> {
     isFeatured: item.isFeatured,
     preparationTime: item.preparationTime ?? undefined,
     calories: item.calories ?? undefined,
-    variants: item.variants.map((variant) => ({ ...variant, imageUrl: variant.imageUrl ?? '' })),
+    variants: item.variants.map((variant) => ({
+      ...variant,
+      imageUrl: variant.imageUrl ?? '',
+      servingSize: variant.servingSize ?? undefined,
+    })),
     addons: item.addons,
     tagIds: item.tagIds,
     broadCategory: item.broadCategory ?? undefined,

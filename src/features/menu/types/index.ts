@@ -60,6 +60,7 @@ export interface MenuItemVariant {
   price: number;
   isDefault: boolean;
   imageUrl?: string | null;
+  servingSize?: ServingSize | null;
 }
 
 export interface MenuItemAddon {
@@ -100,6 +101,7 @@ const menuItemVariantFormSchema = z.object({
   price: numericField.pipe(z.number().positive('Price must be positive')),
   isDefault: z.boolean().default(false),
   imageUrl: z.string().url().optional().or(z.literal('')),
+  servingSize: z.enum(SERVING_SIZES).optional(),
 });
 
 const menuItemAddonFormSchema = z.object({

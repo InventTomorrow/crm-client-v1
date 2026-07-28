@@ -5,9 +5,16 @@ import { Button } from '@/shared/ui/Button';
 import { FileUpload } from '@/shared/ui/FileUpload';
 import { Input } from '@/shared/ui/Input';
 import { Label } from '@/shared/ui/Label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui/Select';
 import { Plus, Star, Trash2 } from 'lucide-react';
 import { useWatch, type UseFieldArrayReturn, type UseFormReturn } from 'react-hook-form';
-import type { MenuItemFormInput } from '../types';
+import { SERVING_SIZES, SERVING_SIZE_LABELS, type MenuItemFormInput } from '../types';
 
 export function MenuItemVariantsField({
   form,
@@ -81,6 +88,26 @@ export function MenuItemVariantsField({
                 disabled={disabled}
                 {...form.register(`variants.${index}.price`)}
               />
+              <Select
+                value={variants?.[index]?.servingSize || undefined}
+                onValueChange={(value) =>
+                  form.setValue(`variants.${index}.servingSize`, value as (typeof SERVING_SIZES)[number], {
+                    shouldDirty: true,
+                  })
+                }
+                disabled={disabled}
+              >
+                <SelectTrigger size="lg" className="w-32.5 shrink-0">
+                  <SelectValue placeholder="Serves —" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SERVING_SIZES.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {SERVING_SIZE_LABELS[size]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 type="button"
                 variant="ghost"
