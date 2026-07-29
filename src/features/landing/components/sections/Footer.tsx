@@ -5,7 +5,10 @@ import Logo from "../Logo";
 const FOOTER_LINKS = [
   { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "How it works" },
-  { href: "#who-its-for", label: "Who it's for" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/data-deletion", label: "Data Deletion" },
   { href: "/auth/login", label: "Login" },
 ];
 
