@@ -8,7 +8,6 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "overview",
     title: "1. Overview & Data Controller",
     icon: "shield",
-    defaultOpen: true,
     summary: "Scope of privacy policy and our commitment to protecting your business data.",
     content: (
       <div className="space-y-3">
@@ -28,7 +27,6 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "information-collected",
     title: "2. Information We Collect",
     icon: "eye",
-    defaultOpen: true,
     summary: "Personal details, WhatsApp conversation logs, customer records, and system telemetry.",
     content: (
       <div className="space-y-3">
@@ -60,27 +58,26 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "how-we-use-data",
     title: "3. How We Use Your Information",
     icon: "database",
-    defaultOpen: true,
     summary: "Purpose of data processing for AI response, order booking, and CRM operations.",
     content: (
       <div className="space-y-3">
         <p>We process your data strictly to operate, improve, and secure our CRM services. Specific processing purposes include:</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200/80">
-            <h4 className="font-bold text-brand-dark text-xs mb-1">AI Lead Classification & Auto-Reply</h4>
-            <p className="text-xs text-brand-text">Analyzing customer intent, extracting order inquiries, and rendering automated 24/7 AI responses to your WhatsApp leads.</p>
+            <h4 className="font-bold text-brand-dark text-sm mb-1">AI Lead Classification & Auto-Reply</h4>
+            <p className="text-sm text-brand-text">Analyzing customer intent, extracting order inquiries, and rendering automated 24/7 AI responses to your WhatsApp leads.</p>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200/80">
-            <h4 className="font-bold text-brand-dark text-xs mb-1">Unified Multi-Agent Inbox</h4>
-            <p className="text-xs text-brand-text">Routing inbound chats to team members, managing agent performance, tracking response times, and maintaining audit logs.</p>
+            <h4 className="font-bold text-brand-dark text-sm mb-1">Unified Multi-Agent Inbox</h4>
+            <p className="text-sm text-brand-text">Routing inbound chats to team members, managing agent performance, tracking response times, and maintaining audit logs.</p>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200/80">
-            <h4 className="font-bold text-brand-dark text-xs mb-1">Broadcasts & Order Booking</h4>
-            <p className="text-xs text-brand-text">Executing customer broadcast campaigns, menu lookups, address collection, and invoice generation.</p>
+            <h4 className="font-bold text-brand-dark text-sm mb-1">Broadcasts & Order Booking</h4>
+            <p className="text-sm text-brand-text">Executing customer broadcast campaigns, menu lookups, address collection, and invoice generation.</p>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200/80">
-            <h4 className="font-bold text-brand-dark text-xs mb-1">Security & System Uptime</h4>
-            <p className="text-xs text-brand-text">Detecting fraudulent activity, securing session tokens, preventing rate abuse, and maintaining high platform stability.</p>
+            <h4 className="font-bold text-brand-dark text-sm mb-1">Security & System Uptime</h4>
+            <p className="text-sm text-brand-text">Detecting fraudulent activity, securing session tokens, preventing rate abuse, and maintaining high platform stability.</p>
           </div>
         </div>
       </div>
@@ -90,7 +87,6 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "meta-whatsapp-policy",
     title: "4. Meta Platform & WhatsApp Data Rights",
     icon: "share-2",
-    defaultOpen: true,
     summary: "Strict adherence to Meta Developer Policies and Meta Graph API data rules.",
     content: (
       <div className="space-y-3">
@@ -110,7 +106,6 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "data-security",
     title: "5. Data Storage & Encryption",
     icon: "lock",
-    defaultOpen: false,
     summary: "Technical and organizational measures to safeguard your credentials and message data.",
     content: (
       <div className="space-y-3">
@@ -130,7 +125,6 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "data-retention-rights",
     title: "6. Retention, Export & Deletion Rights",
     icon: "user-check",
-    defaultOpen: true,
     summary: "Your right to access, export, or permanently erase your data at any time.",
     content: (
       <div className="space-y-3">
@@ -143,7 +137,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         <div className="pt-1">
           <Link
             href="/data-deletion"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-green text-white font-bold text-xs rounded-xl hover:bg-brand-green-hover transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-green text-white font-bold text-sm rounded-xl hover:bg-brand-green-hover transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
             View Data Deletion Instructions →
@@ -156,12 +150,11 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "privacy-contact",
     title: "7. Contact Compliance Team",
     icon: "mail",
-    defaultOpen: true,
     summary: "How to reach our Data Protection Officer for inquiries or privacy requests.",
     content: (
       <div className="space-y-3">
         <p>If you have any questions, privacy concerns, or data requests regarding this Privacy Policy, please reach out to our team:</p>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-1">
+        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm space-y-1">
           <p className="font-bold text-brand-dark">AsaanRabta Privacy Compliance Team</p>
           <p className="text-brand-text">Website: <a href="https://asaanrabta.com" className="text-brand-green underline">https://asaanrabta.com</a></p>
           <p className="text-brand-text">Email: <a href="mailto:support@asaanrabta.com" className="text-brand-green underline">support@asaanrabta.com</a></p>
