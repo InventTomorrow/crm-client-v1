@@ -1,13 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { Trash2, Smartphone, Share2, Mail, Clock, ShieldCheck, CheckCircle, ExternalLink } from "lucide-react";
+import { Share2, ShieldCheck } from "lucide-react";
 import { LegalSection } from "../components/LegalLayout";
 
 export const DELETION_SECTIONS: LegalSection[] = [
   {
     id: "deletion-overview",
     title: "1. Data Deletion Policy & Meta Compliance",
-    icon: Trash2,
+    icon: "trash-2",
     defaultOpen: true,
     summary: "Our commitment to data erasure, GDPR compliance, and Meta Data Deletion callback support.",
     content: (
@@ -31,7 +31,7 @@ export const DELETION_SECTIONS: LegalSection[] = [
   {
     id: "option-1-in-app",
     title: "2. Option 1: Instant In-App Data & Account Deletion (Self-Service)",
-    icon: Smartphone,
+    icon: "smartphone",
     defaultOpen: true,
     summary: "Delete your workspace, customer contacts, and session data directly from the AsaanRabta dashboard.",
     content: (
@@ -54,7 +54,7 @@ export const DELETION_SECTIONS: LegalSection[] = [
   {
     id: "option-2-meta-facebook",
     title: "3. Option 2: Revoking Meta / Facebook App Access & Data Deletion Callback",
-    icon: Share2,
+    icon: "share-2",
     defaultOpen: true,
     summary: "How to remove AsaanRabta from your Facebook Settings and request automatic Meta data deletion.",
     content: (
@@ -86,7 +86,7 @@ export const DELETION_SECTIONS: LegalSection[] = [
   {
     id: "option-3-email-request",
     title: "4. Option 3: Manual Deletion Request via Email",
-    icon: Mail,
+    icon: "mail",
     defaultOpen: true,
     summary: "Submit a written data removal request to our compliance team.",
     content: (
@@ -108,7 +108,7 @@ export const DELETION_SECTIONS: LegalSection[] = [
   {
     id: "deletion-timeline",
     title: "5. Processing Timeline & Data Purge Guarantee",
-    icon: Clock,
+    icon: "clock",
     defaultOpen: false,
     summary: "What happens to your data after a deletion request is initiated.",
     content: (
@@ -137,7 +137,7 @@ export const DELETION_SECTIONS: LegalSection[] = [
   {
     id: "legal-retention-exceptions",
     title: "6. Mandatory Legal Retention Exceptions",
-    icon: ShieldCheck,
+    icon: "shield-check",
     defaultOpen: false,
     summary: "Records retained solely to comply with tax, invoice, and statutory legal requirements.",
     content: (

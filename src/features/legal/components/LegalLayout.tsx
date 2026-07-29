@@ -1,30 +1,66 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import Container from "@/features/landing/components/Container";
+import Logo from "@/features/landing/components/Logo";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Shield,
-  FileText,
-  Trash2,
-  Search,
+  AlertTriangle,
   ArrowLeft,
+  Ban,
+  BookOpen,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
-  AlertTriangle,
+  Clock,
+  CreditCard,
+  Database,
+  Eye,
+  FileText,
   Lock,
-  ExternalLink,
-  BookOpen,
+  Mail,
+  RefreshCw,
+  Scale,
+  Search,
+  Share2,
+  Shield,
+  ShieldCheck,
+  Smartphone,
   Sparkles,
+  Trash2,
+  UserCheck,
+  type LucideIcon,
 } from "lucide-react";
-import Logo from "@/features/landing/components/Logo";
-import Container from "@/features/landing/components/Container";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+// Icons are referenced by name so section data can cross the server → client boundary
+const SECTION_ICONS = {
+  "alert-triangle": AlertTriangle,
+  ban: Ban,
+  "check-square": CheckSquare,
+  clock: Clock,
+  "credit-card": CreditCard,
+  database: Database,
+  eye: Eye,
+  "file-text": FileText,
+  lock: Lock,
+  mail: Mail,
+  "refresh-cw": RefreshCw,
+  scale: Scale,
+  "share-2": Share2,
+  shield: Shield,
+  "shield-check": ShieldCheck,
+  smartphone: Smartphone,
+  "trash-2": Trash2,
+  "user-check": UserCheck,
+} satisfies Record<string, LucideIcon>;
+
+export type LegalSectionIconName = keyof typeof SECTION_ICONS;
 
 export interface LegalSection {
   id: string;
   title: string;
-  icon?: any;
+  icon?: LegalSectionIconName;
   summary?: string;
   content: React.ReactNode;
   defaultOpen?: boolean;
@@ -72,13 +108,15 @@ export default function LegalLayout({
   warningBanner,
 }: LegalLayoutProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    sections.forEach((sec) => {
-      initial[sec.id] = sec.defaultOpen ?? true;
-    });
-    return initial;
-  });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(
+    () => {
+      const initial: Record<string, boolean> = {};
+      sections.forEach((sec) => {
+        initial[sec.id] = sec.defaultOpen ?? true;
+      });
+      return initial;
+    },
+  );
 
   const toggleSection = (id: string) => {
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -103,7 +141,7 @@ export default function LegalLayout({
       (sec) =>
         sec.title.toLowerCase().includes(q) ||
         sec.summary?.toLowerCase().includes(q) ||
-        sec.id.toLowerCase().includes(q)
+        sec.id.toLowerCase().includes(q),
     );
   }, [sections, searchQuery]);
 
@@ -174,7 +212,9 @@ export default function LegalLayout({
               <Sparkles className="w-3.5 h-3.5" />
               <span>{badge}</span>
               <span className="w-1 h-1 rounded-full bg-brand-green/40" />
-              <span className="text-brand-text font-medium">Last updated: {lastUpdated}</span>
+              <span className="text-brand-text font-medium">
+                Last updated: {lastUpdated}
+              </span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-brand-dark tracking-tight leading-tight">
@@ -214,9 +254,7 @@ export default function LegalLayout({
       <main className="flex-1 py-12">
         <Container>
           {warningBanner && (
-            <div className="max-w-4xl mx-auto mb-10">
-              {warningBanner}
-            </div>
+            <div className="max-w-4xl mx-auto mb-10">{warningBanner}</div>
           )}
 
           <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -225,7 +263,10 @@ export default function LegalLayout({
               <div className="sticky top-28 bg-white p-6 rounded-2xl border border-gray-100 shadow-card space-y-6">
                 {/* Search Box */}
                 <div className="space-y-2">
-                  <label htmlFor="search-input" className="text-xs font-bold text-brand-dark uppercase tracking-wider block">
+                  <label
+                    htmlFor="search-input"
+                    className="text-xs font-bold text-brand-dark uppercase tracking-wider block"
+                  >
                     Search Document
                   </label>
                   <div className="relative">
@@ -262,10 +303,16 @@ export default function LegalLayout({
                           href={`#${sec.id}`}
                           onClick={(e) => {
                             e.preventDefault();
-                            setOpenSections((prev) => ({ ...prev, [sec.id]: true }));
+                            setOpenSections((prev) => ({
+                              ...prev,
+                              [sec.id]: true,
+                            }));
                             const el = document.getElementById(sec.id);
                             if (el) {
-                              el.scrollIntoView({ behavior: "smooth", block: "start" });
+                              el.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              });
                             }
                           }}
                           className={`group flex items-center justify-between p-2.5 rounded-xl transition-all ${
@@ -312,7 +359,8 @@ export default function LegalLayout({
                     <span>Have Legal Questions?</span>
                   </div>
                   <p className="text-gray-300 text-[11px] leading-relaxed">
-                    Our compliance team is here to assist with data privacy, compliance, and terms inquiry.
+                    Our compliance team is here to assist with data privacy,
+                    compliance, and terms inquiry.
                   </p>
                   <a
                     href="mailto:support@asaanrabta.com"
@@ -329,8 +377,14 @@ export default function LegalLayout({
               {filteredSections.length === 0 ? (
                 <div className="bg-white p-8 rounded-2xl border border-gray-100 text-center space-y-3">
                   <Search className="w-8 h-8 text-gray-300 mx-auto" />
-                  <h3 className="text-base font-bold text-brand-dark">No matching sections found</h3>
-                  <p className="text-xs text-brand-text">Try searching for terms like &quot;WhatsApp&quot;, &quot;Data&quot;, &quot;Account&quot;, or &quot;Deletion&quot;.</p>
+                  <h3 className="text-base font-bold text-brand-dark">
+                    No matching sections found
+                  </h3>
+                  <p className="text-xs text-brand-text">
+                    Try searching for terms like &quot;WhatsApp&quot;,
+                    &quot;Data&quot;, &quot;Account&quot;, or
+                    &quot;Deletion&quot;.
+                  </p>
                   <button
                     onClick={() => setSearchQuery("")}
                     className="text-xs font-bold text-brand-green hover:underline"
@@ -341,7 +395,9 @@ export default function LegalLayout({
               ) : (
                 filteredSections.map((sec, idx) => {
                   const isOpen = !!openSections[sec.id];
-                  const SectionIcon = sec.icon || FileText;
+                  const SectionIcon = sec.icon
+                    ? SECTION_ICONS[sec.icon]
+                    : FileText;
 
                   return (
                     <div
@@ -351,8 +407,8 @@ export default function LegalLayout({
                         sec.isWarning
                           ? "border-amber-200 shadow-md shadow-amber-500/5"
                           : isOpen
-                          ? "border-brand-green/30 shadow-card"
-                          : "border-gray-100 hover:border-gray-200"
+                            ? "border-brand-green/30 shadow-card"
+                            : "border-gray-100 hover:border-gray-200"
                       }`}
                     >
                       {/* Section Accordion Header */}
@@ -362,8 +418,8 @@ export default function LegalLayout({
                           sec.isWarning
                             ? "bg-amber-50/50 hover:bg-amber-50"
                             : isOpen
-                            ? "bg-brand-mint-soft/40"
-                            : "hover:bg-gray-50/70"
+                              ? "bg-brand-mint-soft/40"
+                              : "hover:bg-gray-50/70"
                         }`}
                         aria-expanded={isOpen}
                       >
@@ -373,8 +429,8 @@ export default function LegalLayout({
                               sec.isWarning
                                 ? "bg-amber-100 text-amber-700"
                                 : isOpen
-                                ? "bg-brand-green text-white shadow-sm"
-                                : "bg-brand-mint-soft text-brand-green"
+                                  ? "bg-brand-green text-white shadow-sm"
+                                  : "bg-brand-mint-soft text-brand-green"
                             }`}
                           >
                             <SectionIcon className="w-4 h-4" />
@@ -390,7 +446,8 @@ export default function LegalLayout({
                               </h2>
                               {sec.isWarning && (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
-                                  <AlertTriangle className="w-3 h-3" /> Warning & Risk Alert
+                                  <AlertTriangle className="w-3 h-3" /> Warning
+                                  & Risk Alert
                                 </span>
                               )}
                             </div>
@@ -418,7 +475,10 @@ export default function LegalLayout({
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                            transition={{
+                              duration: 0.25,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
                             className="overflow-hidden"
                           >
                             <div className="p-6 pt-2 border-t border-gray-100 text-xs sm:text-sm text-brand-text leading-relaxed space-y-4">
@@ -442,25 +502,41 @@ export default function LegalLayout({
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <Logo />
             <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold">
-              <Link href="/" className="text-brand-text hover:text-brand-green transition-colors">
+              <Link
+                href="/"
+                className="text-brand-text hover:text-brand-green transition-colors"
+              >
                 Home
               </Link>
-              <Link href="/privacy-policy" className="text-brand-text hover:text-brand-green transition-colors">
+              <Link
+                href="/privacy-policy"
+                className="text-brand-text hover:text-brand-green transition-colors"
+              >
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-brand-text hover:text-brand-green transition-colors">
+              <Link
+                href="/terms"
+                className="text-brand-text hover:text-brand-green transition-colors"
+              >
                 Terms of Service
               </Link>
-              <Link href="/data-deletion" className="text-brand-text hover:text-brand-green transition-colors">
+              <Link
+                href="/data-deletion"
+                className="text-brand-text hover:text-brand-green transition-colors"
+              >
                 Data Deletion Instructions
               </Link>
-              <Link href="/auth/login" className="text-brand-text hover:text-brand-green transition-colors">
+              <Link
+                href="/auth/login"
+                className="text-brand-text hover:text-brand-green transition-colors"
+              >
                 Login
               </Link>
             </nav>
           </div>
           <p className="mt-8 text-center text-brand-text text-xs">
-            © 2026 AsaanRabta. All rights reserved. WhatsApp CRM & AI Automation.
+            © 2026 AsaanRabta. All rights reserved. WhatsApp CRM & AI
+            Automation.
           </p>
         </Container>
       </footer>

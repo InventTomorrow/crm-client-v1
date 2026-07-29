@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import LegalLayout from "@/features/legal/components/LegalLayout";
 import { PRIVACY_SECTIONS } from "@/features/legal/data/privacyContent";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · AsaanRabta",

@@ -1,13 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { FileText, AlertTriangle, ShieldAlert, CreditCard, Ban, Scale, RefreshCw, CheckSquare } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { LegalSection } from "../components/LegalLayout";
 
 export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "acceptance",
     title: "1. Acceptance of Terms",
-    icon: FileText,
+    icon: "file-text",
     defaultOpen: true,
     summary: "Binding agreement between you and AsaanRabta governing platform usage.",
     content: (
@@ -24,7 +24,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "whatsapp-qr-disclaimer",
     title: "2. IMPORTANT: WhatsApp & QR Code Connection Disclaimer (No Ban Guarantee)",
-    icon: AlertTriangle,
+    icon: "alert-triangle",
     defaultOpen: true,
     isWarning: true,
     summary: "Critical warning regarding WhatsApp account ban risks when connecting via QR code / web sessions.",
@@ -66,7 +66,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "service-description",
     title: "3. Scope of Service & Platform Capabilities",
-    icon: CheckSquare,
+    icon: "check-square",
     defaultOpen: true,
     summary: "Overview of CRM features, multi-agent routing, AI auto-replies, and ordering tools.",
     content: (
@@ -84,7 +84,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "acceptable-use",
     title: "4. User Conduct & Acceptable Use Policy",
-    icon: Ban,
+    icon: "ban",
     defaultOpen: false,
     summary: "Prohibited activities, spam restrictions, and compliance with anti-spam laws.",
     content: (
@@ -102,7 +102,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "subscriptions-billing",
     title: "5. Subscriptions, Fees & Refunds",
-    icon: CreditCard,
+    icon: "credit-card",
     defaultOpen: false,
     summary: "Subscription cycles, renewal terms, cancellations, and non-refundable plan policies.",
     content: (
@@ -121,7 +121,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "limitation-liability",
     title: "6. Limitation of Liability & Warranty Disclaimer",
-    icon: Scale,
+    icon: "scale",
     defaultOpen: true,
     summary: "Service provided 'AS IS' with capped maximum financial liability.",
     content: (
@@ -138,7 +138,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: "modifications-law",
     title: "7. Modifications to Terms & Governing Law",
-    icon: RefreshCw,
+    icon: "refresh-cw",
     defaultOpen: false,
     summary: "Right to update terms and governing legal jurisdiction.",
     content: (
