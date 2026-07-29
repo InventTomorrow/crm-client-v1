@@ -6,22 +6,61 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   ArrowLeft,
+  Ban,
   BookOpen,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
+  Clock,
+  CreditCard,
+  Database,
+  Eye,
   FileText,
+  Lock,
+  Mail,
+  RefreshCw,
+  Scale,
   Search,
+  Share2,
   Shield,
+  ShieldCheck,
+  Smartphone,
   Sparkles,
   Trash2,
+  UserCheck,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+// Icons are referenced by name so section data can cross the server → client boundary
+const SECTION_ICONS = {
+  "alert-triangle": AlertTriangle,
+  ban: Ban,
+  "check-square": CheckSquare,
+  clock: Clock,
+  "credit-card": CreditCard,
+  database: Database,
+  eye: Eye,
+  "file-text": FileText,
+  lock: Lock,
+  mail: Mail,
+  "refresh-cw": RefreshCw,
+  scale: Scale,
+  "share-2": Share2,
+  shield: Shield,
+  "shield-check": ShieldCheck,
+  smartphone: Smartphone,
+  "trash-2": Trash2,
+  "user-check": UserCheck,
+} satisfies Record<string, LucideIcon>;
+
+export type LegalSectionIconName = keyof typeof SECTION_ICONS;
+
 export interface LegalSection {
   id: string;
   title: string;
-  icon?: any;
+  icon?: LegalSectionIconName;
   summary?: string;
   content: React.ReactNode;
   defaultOpen?: boolean;
@@ -356,7 +395,9 @@ export default function LegalLayout({
               ) : (
                 filteredSections.map((sec, idx) => {
                   const isOpen = !!openSections[sec.id];
-                  const SectionIcon = sec.icon || FileText;
+                  const SectionIcon = sec.icon
+                    ? SECTION_ICONS[sec.icon]
+                    : FileText;
 
                   return (
                     <div

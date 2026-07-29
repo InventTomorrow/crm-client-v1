@@ -1,13 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { Shield, Eye, Lock, Server, Share2, UserCheck, Mail, Database, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { LegalSection } from "../components/LegalLayout";
 
 export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "overview",
     title: "1. Overview & Data Controller",
-    icon: Shield,
+    icon: "shield",
     defaultOpen: true,
     summary: "Scope of privacy policy and our commitment to protecting your business data.",
     content: (
@@ -27,7 +27,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "information-collected",
     title: "2. Information We Collect",
-    icon: Eye,
+    icon: "eye",
     defaultOpen: true,
     summary: "Personal details, WhatsApp conversation logs, customer records, and system telemetry.",
     content: (
@@ -59,7 +59,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "how-we-use-data",
     title: "3. How We Use Your Information",
-    icon: Database,
+    icon: "database",
     defaultOpen: true,
     summary: "Purpose of data processing for AI response, order booking, and CRM operations.",
     content: (
@@ -89,7 +89,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "meta-whatsapp-policy",
     title: "4. Meta Platform & WhatsApp Data Rights",
-    icon: Share2,
+    icon: "share-2",
     defaultOpen: true,
     summary: "Strict adherence to Meta Developer Policies and Meta Graph API data rules.",
     content: (
@@ -109,7 +109,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "data-security",
     title: "5. Data Storage & Encryption",
-    icon: Lock,
+    icon: "lock",
     defaultOpen: false,
     summary: "Technical and organizational measures to safeguard your credentials and message data.",
     content: (
@@ -129,7 +129,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "data-retention-rights",
     title: "6. Retention, Export & Deletion Rights",
-    icon: UserCheck,
+    icon: "user-check",
     defaultOpen: true,
     summary: "Your right to access, export, or permanently erase your data at any time.",
     content: (
@@ -155,7 +155,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: "privacy-contact",
     title: "7. Contact Compliance Team",
-    icon: Mail,
+    icon: "mail",
     defaultOpen: true,
     summary: "How to reach our Data Protection Officer for inquiries or privacy requests.",
     content: (
