@@ -21,7 +21,6 @@ export default function PrivacyPolicyPage() {
       subtitle="Transparent data privacy, Meta Graph API standards, and security safeguards for your WhatsApp CRM and customer contacts."
       badge="Privacy & Trust"
       lastUpdated="July 29, 2026"
-      activeTab="privacy"
       sections={PRIVACY_SECTIONS}
     />
   );

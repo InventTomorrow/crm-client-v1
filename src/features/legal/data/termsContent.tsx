@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { LegalSection } from "../components/LegalLayout";
 
@@ -8,7 +7,6 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "acceptance",
     title: "1. Acceptance of Terms",
     icon: "file-text",
-    defaultOpen: true,
     summary: "Binding agreement between you and AsaanRabta governing platform usage.",
     content: (
       <div className="space-y-3">
@@ -25,22 +23,21 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "whatsapp-qr-disclaimer",
     title: "2. IMPORTANT: WhatsApp & QR Code Connection Disclaimer (No Ban Guarantee)",
     icon: "alert-triangle",
-    defaultOpen: true,
     isWarning: true,
     summary: "Critical warning regarding WhatsApp account ban risks when connecting via QR code / web sessions.",
     content: (
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-amber-50 border-2 border-amber-300 text-amber-900 space-y-2">
-          <div className="flex items-center gap-2 font-bold text-sm text-amber-950">
+          <div className="flex items-center gap-2 font-bold text-base text-amber-950">
             <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0" />
             <span>PLEASE READ CAREFULLY: NO GUARANTEE AGAINST WHATSAPP ACCOUNT BANS</span>
           </div>
-          <p className="text-xs leading-relaxed font-medium">
+          <p className="text-sm leading-relaxed font-medium">
             AsaanRabta provides WhatsApp integration capabilities utilizing Web Socket / QR Code connection protocols (such as Baileys technology) as well as Meta APIs. Connecting your WhatsApp account via QR Code or web session is done at your own risk.
           </p>
         </div>
 
-        <ul className="list-disc pl-5 space-y-2.5 text-xs">
+        <ul className="list-disc pl-5 space-y-2.5 text-sm">
           <li>
             <strong>No Guarantee of Account Safety or Anti-Ban Protection:</strong> WhatsApp (Meta Platforms, Inc.) strictly monitors automated messaging and enforces anti-spam policies. <strong>AsaanRabta DOES NOT GUARANTEE that your WhatsApp number or account will not be restricted, temporarily suspended, or permanently banned by WhatsApp or Meta.</strong>
           </li>
@@ -52,7 +49,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
           </li>
           <li>
             <strong>Best Practices to Reduce Ban Risk:</strong> We strongly advise users to:
-            <ul className="list-circle pl-5 pt-1 space-y-1 text-[11px] text-gray-600">
+            <ul className="list-circle pl-5 pt-1 space-y-1 text-sm text-gray-600">
               <li>Use established WhatsApp Business numbers with prior conversation history rather than freshly registered SIM cards.</li>
               <li>Send broadcast messages only to customers who have explicitly opted in or initiated a conversation with your business.</li>
               <li>Avoid sending high-volume unsolicited promotional blasts, spam links, or repetitive bulk messages.</li>
@@ -67,12 +64,11 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "service-description",
     title: "3. Scope of Service & Platform Capabilities",
     icon: "check-square",
-    defaultOpen: true,
     summary: "Overview of CRM features, multi-agent routing, AI auto-replies, and ordering tools.",
     content: (
       <div className="space-y-3">
         <p>AsaanRabta grants subscribers a non-exclusive, non-transferable, revocable license to access our platform services, which include:</p>
-        <ul className="list-disc pl-5 space-y-1.5 text-xs">
+        <ul className="list-disc pl-5 space-y-1.5 text-sm">
           <li>Multi-agent unified inbox for managing WhatsApp, Instagram, and web lead conversations.</li>
           <li>AI-powered automated lead qualification, intent classification, and order booking agents.</li>
           <li>Lead management kanban, tag assignment, customer notes, and analytics dashboards.</li>
@@ -85,12 +81,11 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "acceptable-use",
     title: "4. User Conduct & Acceptable Use Policy",
     icon: "ban",
-    defaultOpen: false,
     summary: "Prohibited activities, spam restrictions, and compliance with anti-spam laws.",
     content: (
       <div className="space-y-3">
         <p>When using AsaanRabta, you agree NOT to engage in any of the following prohibited activities:</p>
-        <ul className="list-disc pl-5 space-y-2 text-xs">
+        <ul className="list-disc pl-5 space-y-2 text-sm">
           <li>Sending unsolicited commercial spam, pyramid schemes, fraudulent offers, or deceptive claims via WhatsApp.</li>
           <li>Harassing, stalking, or threatening any individual or sending illegal, offensive, or hate speech content.</li>
           <li>Attempting to bypass platform security, reverse engineer software components, or overload server infrastructure.</li>
@@ -103,14 +98,13 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "subscriptions-billing",
     title: "5. Subscriptions, Fees & Refunds",
     icon: "credit-card",
-    defaultOpen: false,
     summary: "Subscription cycles, renewal terms, cancellations, and non-refundable plan policies.",
     content: (
       <div className="space-y-3">
         <p>
           Services are billed on a recurring subscription basis (monthly or annually) according to your selected plan.
         </p>
-        <ul className="list-disc pl-5 space-y-2 text-xs">
+        <ul className="list-disc pl-5 space-y-2 text-sm">
           <li><strong>Billing & Renewal:</strong> Subscriptions automatically renew at the end of each billing period unless cancelled prior to the renewal date.</li>
           <li><strong>Cancellations:</strong> You can cancel your subscription at any time through your dashboard settings. Cancellation takes effect at the conclusion of the current prepaid billing period.</li>
           <li><strong>Refund Policy:</strong> Unless required by law, subscription fees are non-refundable once billed due to server provisioning and API compute costs incurred.</li>
@@ -122,14 +116,13 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "limitation-liability",
     title: "6. Limitation of Liability & Warranty Disclaimer",
     icon: "scale",
-    defaultOpen: true,
     summary: "Service provided 'AS IS' with capped maximum financial liability.",
     content: (
       <div className="space-y-3">
         <p>
           TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ASAANRABTA AND ITS PROVIDERS DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
         </p>
-        <p className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs text-brand-dark font-medium">
+        <p className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-sm text-brand-dark font-medium">
           IN NO EVENT SHALL ASAANRABTA BE LIABLE FOR INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, OR PUNITIVE DAMAGES, OR FOR LOSS OF PROFITS, DATA, GOODWILL, OR WHATSAPP ACCOUNT ACCESS, REGARDLESS OF THE THEORY OF LIABILITY.
         </p>
       </div>
@@ -139,7 +132,6 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "modifications-law",
     title: "7. Modifications to Terms & Governing Law",
     icon: "refresh-cw",
-    defaultOpen: false,
     summary: "Right to update terms and governing legal jurisdiction.",
     content: (
       <div className="space-y-3">

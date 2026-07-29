@@ -21,7 +21,6 @@ export default function DataDeletionPage() {
       subtitle="Complete guide for requesting data erasure, revoking Meta Facebook app authorizations, and purging CRM workspace records."
       badge="Meta & GDPR Compliance"
       lastUpdated="July 29, 2026"
-      activeTab="deletion"
       sections={DELETION_SECTIONS}
     />
   );
