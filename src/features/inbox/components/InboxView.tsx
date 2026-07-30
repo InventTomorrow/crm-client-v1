@@ -53,7 +53,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
-import { useWAStatus } from "../../channels/whatsapp/hooks/useWhatsApp";
+import { useUnifiedWAStatus } from "../../channels/whatsapp/hooks/useWhatsApp";
 import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
 import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
 import { STATUS_META } from "../../leads/types";
@@ -252,7 +252,7 @@ export function InboxView() {
 
   // Agents can only message a lead while the WhatsApp session is live — the
   // server rejects sends otherwise, so we disable the composer to match.
-  const { data: waStatus } = useWAStatus();
+  const { data: waStatus } = useUnifiedWAStatus();
   const waConnected = waStatus?.status === "CONNECTED";
   const uploadMut = useUploadAttachment();
   const escalateMut = useEscalate();

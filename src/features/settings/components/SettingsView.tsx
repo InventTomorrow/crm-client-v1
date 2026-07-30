@@ -2,7 +2,7 @@
 import { useMe, useUpdateMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { OrderApiCard } from "@/features/channels/apiKey/components/OrderApiCard";
-import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
+import { useUnifiedWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import {
   useNotificationPreferences,
@@ -417,7 +417,7 @@ function NotifSection() {
 
 // ──────────────────── Channels Section ────────────────────
 function ChannelsSection() {
-  const { data: statusData } = useWAStatus();
+  const { data: statusData } = useUnifiedWAStatus();
   const { can } = usePermissions();
   const [waOpen, setWaOpen] = useState(false);
   const status = statusData?.status ?? "DISCONNECTED";
@@ -442,7 +442,7 @@ function ChannelsSection() {
             <div className="text-[12px] text-[var(--ink-mute)] mt-px">
               {status === "CONNECTED"
                 ? `Connected · +${statusData?.phoneNumber ?? ""}`
-                : "Not connected — scan QR to link your number"}
+                : "Not connected — link your number in Channels"}
             </div>
           </div>
           <span

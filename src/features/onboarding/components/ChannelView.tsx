@@ -1,5 +1,9 @@
 "use client";
 import {
+  useMetaEmbeddedSignup,
+  useMetaWAState,
+} from "@/features/channels/whatsapp/hooks/useMetaWhatsApp";
+import {
   useWAConnect,
   useWADisconnect,
   useWAStatus,
@@ -8,6 +12,7 @@ import { useAppEvents } from "@/shared/hooks/useAppEvents";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle2,
+  Cloud,
   Loader2,
   QrCode,
   RefreshCw,
@@ -171,10 +176,21 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
 export function ChannelView() {
   const [connecting, setConnecting] = useState(false);
   const { mutate: skip, isPending: isSkipping } = useSkipOnboarding();
+  const { openSignup, isConnecting: isMetaConnecting } =
+    useMetaEmbeddedSignup();
+  const { data: metaState } = useMetaWAState();
 
   const handleConnected = () => {
     setTimeout(() => skip(), 1200);
   };
+
+  // Meta connects via the OAuth popup (no inline panel) — advance once the
+  // exchange lands the connection.
+  const metaConnected = metaState?.status === "CONNECTED";
+  useEffect(() => {
+    if (metaConnected) handleConnected();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metaConnected]);
 
   return (
     <OnboardingShell currentStep="CHANNEL">
@@ -183,7 +199,7 @@ export function ChannelView() {
           Connect your channel
         </h1>
         <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
-          Scan the QR code to link your WhatsApp
+          Link WhatsApp with a QR scan, or through Meta&apos;s official API
         </p>
       </div>
 
@@ -206,7 +222,7 @@ export function ChannelView() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[13.5px] font-medium text-[var(--ink)]">
-                WhatsApp
+                WhatsApp — QR scan
               </div>
               <p className="text-[12px] text-[var(--ink-mute)] mt-0.5">
                 Connect via QR code scan — no API keys needed
@@ -230,6 +246,35 @@ export function ChannelView() {
             </div>
             <QRPanel onSuccess={handleConnected} />
           </div>
+        )}
+
+        {/* Meta Cloud API card — OAuth popup, no inline panel needed */}
+        {!connecting && (
+          <button
+            type="button"
+            onClick={() => void openSignup()}
+            disabled={isMetaConnecting}
+            className="flex items-center gap-3.5 p-3.5 rounded-xl border border-[var(--line)] bg-[var(--surface)] hover:border-[#1877F2] hover:bg-[rgba(24,119,242,0.04)] text-left transition-all disabled:opacity-60"
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(24,119,242,0.1)" }}
+            >
+              {isMetaConnecting ? (
+                <Loader2 size={18} className="animate-spin text-[#1877F2]" />
+              ) : (
+                <Cloud size={18} className="text-[#1877F2]" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13.5px] font-medium text-[var(--ink)]">
+                WhatsApp — Meta Business API
+              </div>
+              <p className="text-[12px] text-[var(--ink-mute)] mt-0.5">
+                Connect through Meta&apos;s official API with Facebook login
+              </p>
+            </div>
+          </button>
         )}
 
         <Button

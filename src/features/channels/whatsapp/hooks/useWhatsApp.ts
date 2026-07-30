@@ -12,6 +12,7 @@ import {
   connectWA,
   denyWATakeover,
   disconnectWA,
+  getUnifiedWAStatus,
   getWAConfig,
   getWAStatus,
   updateWAConfig,
@@ -19,6 +20,20 @@ import {
 import type { WAConfig, WASSEEvent, WAState } from "../types";
 
 let lastWaSseEventAt = 0;
+
+/**
+ * Provider-agnostic connectivity — which provider (QR/Baileys or Meta API)
+ * the workspace is connected through. Use this wherever the UI only needs
+ * "is WhatsApp connected + as which number", regardless of provider.
+ */
+export function useUnifiedWAStatus() {
+  return useQuery({
+    queryKey: ["wa-unified-status"],
+    queryFn: getUnifiedWAStatus,
+    refetchInterval: (query) =>
+      query.state.data?.status === "CONNECTED" ? 30_000 : 10_000,
+  });
+}
 
 export function useWAStatus() {
   const queryClient = useQueryClient();
@@ -72,6 +87,7 @@ export function useWADisconnect() {
     onSuccess: () => {
       toast.success("WhatsApp disconnected");
       queryClient.invalidateQueries({ queryKey: ["wa-status"] });
+      queryClient.invalidateQueries({ queryKey: ["wa-unified-status"] });
     },
     onError: (error) =>
       toast.error(extractErrorMessage(error, "Failed to disconnect")),
@@ -137,6 +153,11 @@ export function applyWAEventToCache(
   // check in useWAStatus instead of regressing the cache.
   lastWaSseEventAt = Date.now();
   void queryClient.cancelQueries({ queryKey: ["wa-status"], exact: true });
+  // Baileys connectivity changed — refresh the provider-agnostic status too
+  // (topbar badge, inbox composer gate) so both views stay in sync.
+  if (event.type === "status") {
+    void queryClient.invalidateQueries({ queryKey: ["wa-unified-status"] });
+  }
   queryClient.setQueryData<WAState>(
     ["wa-status"],
     (old: WAState | undefined): WAState => {

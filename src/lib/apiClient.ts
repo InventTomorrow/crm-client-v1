@@ -8,7 +8,14 @@ const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "";
 export const apiClient = axios.create({
   baseURL: `${apiOrigin}/api/v1`,
   withCredentials: true,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    // Free-plan ngrok tunnels answer browser XHR with an HTML warning page
+    // unless this header is present. Harmless on non-ngrok origins.
+    ...(apiOrigin.includes("ngrok")
+      ? { "ngrok-skip-browser-warning": "true" }
+      : {}),
+  },
 });
 
 let isLoggingOut = false;

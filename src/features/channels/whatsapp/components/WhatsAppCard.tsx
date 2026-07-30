@@ -2,12 +2,12 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import Link from "next/link";
-import { useWAStatus } from "../hooks/useWhatsApp";
+import { useUnifiedWAStatus } from "../hooks/useWhatsApp";
 
 const WA_GREEN = "#25D366";
 
 export function WhatsAppCard() {
-  const { data: statusData } = useWAStatus();
+  const { data: statusData } = useUnifiedWAStatus();
   const status = statusData?.status ?? "DISCONNECTED";
   const isConnected = status === "CONNECTED";
   const isPending = status === "PENDING" || status === "CONNECTING";

@@ -2,15 +2,20 @@
 import { cn } from "@/lib/utils";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { useWAStatus } from "../hooks/useWhatsApp";
+import { useUnifiedWAStatus } from "../hooks/useWhatsApp";
 import type { WASessionStatus } from "../types";
 
 // Visuals mirror the StatusPill in ChannelsView so the WhatsApp state reads the
 // same everywhere it appears (Channels page, Leads, Inbox).
 const MAP: Record<
-  WASessionStatus,
+  WASessionStatus | "ERROR",
   { label: string; pill: string; dot: string }
 > = {
+  ERROR: {
+    label: "Needs reconnect",
+    pill: "bg-[rgba(220,38,38,0.10)] text-[#B91C1C]",
+    dot: "bg-[#DC2626]",
+  },
   CONNECTED: {
     label: "Connected",
     pill: "bg-[#DCFCE7] text-[#15803D]",
@@ -45,8 +50,8 @@ export function WAStatusBadge({
   showLabel?: boolean;
   className?: string;
 }) {
-  const { data } = useWAStatus();
-  const status: WASessionStatus = data?.status ?? "DISCONNECTED";
+  const { data } = useUnifiedWAStatus();
+  const status: WASessionStatus | "ERROR" = data?.status ?? "DISCONNECTED";
   const { label, pill, dot } = MAP[status];
   const title = `WhatsApp: ${label}${data?.phoneNumber ? ` · ${data.phoneNumber}` : ""}`;
 

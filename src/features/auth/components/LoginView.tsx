@@ -24,9 +24,20 @@ export function LoginView() {
   const [showPw, setShowPw] = useState(false);
   const { mutate, isPending, error } = useLogin();
 
+  const defaultLoginValues =
+    process.env.NODE_ENV === "production"
+      ? {
+          email: "",
+          password: "",
+        }
+      : {
+          email: "abwaheed0013@gmail.com",
+          password: "Password@123",
+        };
+
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: defaultLoginValues,
   });
 
   const onSubmit = (data: LoginData) => {
