@@ -1,13 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { formatOfferCountdown, getOfferDaysRemaining } from "../../constants";
+import { PLANS } from "../../plans";
 import Container from "../Container";
+import { CheckIcon, ZapIcon } from "../icons";
 import { PrimaryCta } from "../LandingCta";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
-import { formatOfferCountdown, getOfferDaysRemaining } from "../../constants";
-import { PLANS } from "../../plans";
-import { CheckIcon, ZapIcon } from "../icons";
 
 export default function Pricing() {
   const daysRemaining = getOfferDaysRemaining();
@@ -67,11 +67,11 @@ export default function Pricing() {
                   >
                     {plan.name}
                   </h3>
-                  <p
+                  {/* <p
                     className={`mt-2 text-[15px] leading-relaxed ${plan.featured ? "text-white/70" : "text-brand-text"}`}
                   >
                     {plan.tagline}
-                  </p>
+                  </p> */}
 
                   {plan.discountPercentage && (
                     <div className="mt-6 flex items-center gap-2">
