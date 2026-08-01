@@ -97,7 +97,12 @@ export function useAppEvents() {
               if (!cancelled) connect();
             })
             .catch(() => {
-              /* refresh failed — refreshAccessToken() handles the redirect */
+              // A genuinely invalid session redirects to /auth/login inside
+              // refreshAccessToken(), which unmounts this before the next
+              // attempt fires. Anything else (server restart, network blip)
+              // is transient — retry instead of leaving the stream dead and
+              // the status badge stuck on stale data forever.
+              if (!cancelled) connect();
             });
         }, RECONNECT_DELAY_MS);
       };
