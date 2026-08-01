@@ -51,7 +51,19 @@ export const refreshAccessToken = (): Promise<void> => {
   refreshPromise = runExclusiveAuthOp(() => apiClient.post("/auth/refresh"))
     .then(() => undefined)
     .catch((err) => {
-      if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
+      // Only a real 401 (missing/expired/reused refresh token) means the
+      // session is actually dead — redirect there. A 429 (rate limit) or
+      // 5xx/network failure (server restart, blip) is transient: redirecting
+      // here would log the user out of a still-valid session just because
+      // the backend was briefly unreachable. Let the caller's own retry
+      // (the SSE reconnect loop, or the response interceptor) try again.
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      if (
+        status === 401 &&
+        typeof window !== "undefined" &&
+        !isLoggingOut &&
+        !onPublicRoute()
+      ) {
         window.location.href = "/auth/login";
       }
       throw err;
