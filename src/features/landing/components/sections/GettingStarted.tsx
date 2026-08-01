@@ -85,8 +85,7 @@ export default function GettingStarted() {
           <div className="mt-12 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-x-2 gap-y-3 text-center text-[15px] text-brand-dark">
             <span className="inline-flex items-center gap-2 text-brand-text">
               <ChatIcon className="w-5 h-5 shrink-0 text-brand-dark" />
-              100% Safe &amp; Secure. Designed to keep your WhatsApp account
-              protected while you scale.
+              Simple setup, seamless conversations as you scale.
             </span>
             <CtaTextLink className="font-semibold underline underline-offset-4 inline-flex items-center gap-1 text-brand-dark hover:text-brand-green transition-colors">
               Connect WhatsApp <ArrowRightIcon className="w-4 h-4" />

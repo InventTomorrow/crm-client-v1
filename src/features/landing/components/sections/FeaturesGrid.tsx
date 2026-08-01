@@ -72,8 +72,8 @@ export default function FeaturesGrid() {
         <SectionHeading
           title={
             <>
-              Everything You Need To Maximize
-              <br className="hidden md:block" /> Your WhatsApp Conversions
+              Everything You Need To Scale
+              <br className="hidden md:block" /> Your Business
             </>
           }
         />

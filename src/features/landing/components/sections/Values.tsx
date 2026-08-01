@@ -41,7 +41,7 @@ export default function Values() {
           <div>
             <Reveal
               as="h2"
-              className="text-[1.875rem] sm:text-[2.25rem] md:text-[2.5rem] lg:text-[2.75rem] font-bold leading-[1.12] tracking-tight text-brand-dark text-center lg:text-left text-balance"
+              className="text-2xl sm:text-[1.875rem] md:text-[2.25rem] lg:text-[2.75rem] font-bold leading-[1.12] tracking-tight text-brand-dark text-center lg:text-left text-balance"
             >
               More Than WhatsApp Business.
               <br className="hidden lg:block" /> Simpler Than a Traditional CRM.

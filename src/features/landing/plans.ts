@@ -14,7 +14,7 @@ export type Plan = {
 export const PLANS: Plan[] = [
   {
     name: "Starter",
-    tagline: "For solo owners getting started on WhatsApp.",
+    tagline: "For solo owner/business getting started on WhatsApp.",
     price: "2,999",
     originalPrice: "5,999",
     discountPercentage: 50,
@@ -23,14 +23,12 @@ export const PLANS: Plan[] = [
     featured: false,
     comingSoon: false,
     features: [
-      "1 workspace (business branch)",
-      "1 WhatsApp number connected",
-      "AI auto-replies for common questions",
-      "Lead CRM with pipeline & statuses",
-      "1000 Broadcast campaigns to your leads",
+      "Unlimited Workspaces",
+      "Unlimited AI-Powered Replies",
+      "Unlimited Product Inventory",
+      "Unlimited Broadcast Campaigns",
       "Excel / CSV lead import",
-      "Single team member",
-      "Email support",
+      "Free Onboarding & Personal Setup Assistance",
     ],
   },
   {
