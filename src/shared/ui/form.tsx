@@ -73,6 +73,12 @@ function FormControl({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
   );
 }
 
+function FormDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p className={cn('text-[11.5px] text-[var(--ink-mute)]', className)} {...props} />
+  );
+}
+
 function FormMessage({ className, children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   const { error } = useFormField();
   const body = error ? String(error.message) : children;
@@ -87,4 +93,4 @@ function FormMessage({ className, children, ...props }: React.HTMLAttributes<HTM
   );
 }
 
-export { Form, FormField, FormItem, FormLabel, FormControl, FormMessage };
+export { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage };

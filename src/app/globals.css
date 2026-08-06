@@ -353,6 +353,16 @@ html.dark .btn-outline:hover { background: #1A2031; border-color: #2A3146; }
 html.dark .scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); }
 .scroll::-webkit-scrollbar-track { background: transparent; }
 
+/* Slim, token-coloured scrollbar for scroll windows inside a form section */
+.scroll-themed { scrollbar-width: thin; scrollbar-color: var(--ink-mute) transparent; }
+.scroll-themed::-webkit-scrollbar { width: 6px; height: 6px; }
+.scroll-themed::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 999px; }
+.scroll-themed::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--ink-mute) 55%, transparent);
+  border-radius: 999px;
+}
+.scroll-themed::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
 /* sidebar nav item */
 .nav-item {
   display: flex; align-items: center; gap: 12px;
