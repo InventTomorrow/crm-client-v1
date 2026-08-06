@@ -10,6 +10,7 @@ export function useMenuView() {
   const [search, setSearch] = useUrlState('q');
   const [filterCategoryId, setFilterCategoryId] = useUrlState('cat');
   const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null);
+  const [previewMenuItem, setPreviewMenuItem] = useState<MenuItem | null>(null);
 
   const filters = useMemo(
     () => ({ search: search || undefined, categoryId: filterCategoryId || undefined }),
@@ -42,6 +43,8 @@ export function useMenuView() {
     categories,
     deleteTarget,
     setDeleteTarget,
+    previewMenuItem,
+    setPreviewMenuItem,
     confirmDelete,
     isDeleting: deleteMenuItem.isPending,
   };

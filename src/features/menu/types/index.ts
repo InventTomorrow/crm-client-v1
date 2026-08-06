@@ -1,33 +1,6 @@
 import { z } from 'zod';
 
-// Mirrors the server's Prisma BroadCategory / ServingSize enums.
-export const BROAD_CATEGORIES = [
-  'FAST_FOOD',
-  'FRIED_CHICKEN',
-  'BBQ_GRILL',
-  'DESI',
-  'CHINESE',
-  'PIZZA',
-  'SEAFOOD',
-  'BREAKFAST',
-  'DESSERTS',
-  'DRINKS',
-] as const;
-export type BroadCategory = (typeof BROAD_CATEGORIES)[number];
-
-export const BROAD_CATEGORY_LABELS: Record<BroadCategory, string> = {
-  FAST_FOOD: 'Fast Food',
-  FRIED_CHICKEN: 'Fried Chicken',
-  BBQ_GRILL: 'BBQ & Grill',
-  DESI: 'Desi',
-  CHINESE: 'Chinese',
-  PIZZA: 'Pizza',
-  SEAFOOD: 'Seafood',
-  BREAKFAST: 'Breakfast',
-  DESSERTS: 'Desserts',
-  DRINKS: 'Drinks',
-};
-
+// Mirrors the server's Prisma ServingSize enum.
 export const SERVING_SIZES = ['SOLO', 'SMALL_GROUP', 'FAMILY'] as const;
 export type ServingSize = (typeof SERVING_SIZES)[number];
 
@@ -47,6 +20,27 @@ export interface MenuCategory {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * A photo of the physical menu card. Purely presentational — customers browse
+ * these, then order by name and the assistant resolves that name against the
+ * real MenuItem records. Never a source of prices or availability.
+ */
+export interface MenuCard {
+  id: string;
+  imageUrl: string;
+  title?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+// Mirrors the server's createMenuCardSchema.
+export const menuCardFormSchema = z.object({
+  imageUrl: z.string().url('A menu card image is required'),
+  title: z.string().max(120).optional(),
+  isActive: z.boolean().default(true),
+});
+export type MenuCardFormData = z.infer<typeof menuCardFormSchema>;
 
 export interface MenuTag {
   id: string;
@@ -86,7 +80,6 @@ export interface MenuItem {
   variants: MenuItemVariant[];
   addons: MenuItemAddon[];
   tagIds: string[];
-  broadCategory?: BroadCategory | null;
   servingSize?: ServingSize | null;
   createdAt: string;
   updatedAt: string;
@@ -127,7 +120,6 @@ export const menuItemFormSchema = z
     variants: z.array(menuItemVariantFormSchema).default([]),
     addons: z.array(menuItemAddonFormSchema).default([]),
     tagIds: z.array(z.string()).default([]),
-    broadCategory: z.enum(BROAD_CATEGORIES).optional(),
     servingSize: z.enum(SERVING_SIZES).optional(),
   })
   .superRefine((data, ctx) => {

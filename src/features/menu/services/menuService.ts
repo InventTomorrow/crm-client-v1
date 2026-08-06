@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import type {
-  BroadCategory,
+  MenuCard,
   MenuCategory,
   MenuItem,
   MenuItemAddon,
@@ -33,7 +33,6 @@ export interface CreateMenuItemPayload {
   variants?: MenuItemVariant[];
   addons?: MenuItemAddon[];
   tagIds?: string[];
-  broadCategory?: BroadCategory;
   servingSize?: ServingSize;
 }
 
@@ -73,8 +72,58 @@ export async function createMenuCategory(payload: CreateMenuCategoryPayload) {
   return res.data.data;
 }
 
+export type UpdateMenuCategoryPayload = Partial<CreateMenuCategoryPayload>;
+
+export async function updateMenuCategory(categoryId: string, payload: UpdateMenuCategoryPayload) {
+  const res = await apiClient.put<{ success: true; data: MenuCategory }>(
+    `/menu/categories/${categoryId}`,
+    payload,
+  );
+  return res.data.data;
+}
+
 export async function deleteMenuCategory(categoryId: string) {
   const res = await apiClient.delete(`/menu/categories/${categoryId}`);
+  return res.data;
+}
+
+// ─── Menu cards ─────────────────────────────────────────────────────────────
+// Photos of the physical menu, sent to customers who ask to see it.
+
+export async function getMenuCards() {
+  const res = await apiClient.get<{ success: true; data: MenuCard[] }>('/menu/cards');
+  return res.data.data ?? [];
+}
+
+export interface CreateMenuCardPayload {
+  imageUrl: string;
+  title?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export type UpdateMenuCardPayload = Partial<CreateMenuCardPayload>;
+
+export async function createMenuCard(payload: CreateMenuCardPayload) {
+  const res = await apiClient.post<{ success: true; data: MenuCard }>('/menu/cards', payload);
+  return res.data.data;
+}
+
+export async function updateMenuCard(cardId: string, payload: UpdateMenuCardPayload) {
+  const res = await apiClient.put<{ success: true; data: MenuCard }>(`/menu/cards/${cardId}`, payload);
+  return res.data.data;
+}
+
+/** Server persists sortOrder from the array position, so send every card id. */
+export async function reorderMenuCards(cardIds: string[]) {
+  const res = await apiClient.put<{ success: true; data: MenuCard[] }>('/menu/cards/reorder', {
+    cardIds,
+  });
+  return res.data.data;
+}
+
+export async function deleteMenuCard(cardId: string) {
+  const res = await apiClient.delete(`/menu/cards/${cardId}`);
   return res.data;
 }
 

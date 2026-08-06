@@ -28,7 +28,6 @@ import { useWatch } from "react-hook-form";
 import { useMenuCategories } from "../hooks/useMenuCategories";
 import { useMenuItemForm } from "../hooks/useMenuItemForm";
 import { SERVING_SIZES, SERVING_SIZE_LABELS } from "../types";
-import { FoodTypeAutocomplete } from "./FoodTypeAutocomplete";
 import { MenuCategoryPicker } from "./MenuCategoryPicker";
 import { MenuItemAddonsField } from "./MenuItemAddonsField";
 import { MenuItemNameField } from "./MenuItemNameField";
@@ -236,24 +235,6 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="broadCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Food Type</FormLabel>
-                      <FormControl>
-                        <FoodTypeAutocomplete
-                          value={field.value}
-                          onChange={field.onChange}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={form.control}

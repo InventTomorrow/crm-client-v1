@@ -2,13 +2,14 @@
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Skeleton } from "@/shared/ui/Motion";
-import { BookOpen, Loader2, Plus } from "lucide-react";
+import { BookOpen, Images, Loader2, Plus, Tags } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMenuView } from "../hooks/useMenuView";
 import { MenuEmptyState } from "./MenuEmptyState";
 import { MenuFilters } from "./MenuFilters";
 import { MenuItemCard } from "./MenuItemCard";
+import { MenuItemPreviewDialog } from "./MenuItemPreviewDialog";
 import { MenuPreviewSheet } from "./MenuPreviewSheet";
 
 export function MenuView() {
@@ -27,6 +28,8 @@ export function MenuView() {
     categories,
     deleteTarget,
     setDeleteTarget,
+    previewMenuItem,
+    setPreviewMenuItem,
     confirmDelete,
     isDeleting,
   } = useMenuView();
@@ -48,7 +51,13 @@ export function MenuView() {
           onFilterCategoryIdChange={setFilterCategoryId}
           categories={categories}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="lg" onClick={() => router.push("/menu/categories")}>
+            <Tags size={14} /> Categories
+          </Button>
+          <Button variant="outline" size="lg" onClick={() => router.push("/menu/cards")}>
+            <Images size={14} /> Menu cards
+          </Button>
           <Button
             variant="outline"
             size="lg"
@@ -77,6 +86,7 @@ export function MenuView() {
               <MenuItemCard
                 key={menuItem.id}
                 menuItem={menuItem}
+                onPreview={setPreviewMenuItem}
                 onEdit={(item) => router.push(`/menu/${item.id}/edit`)}
                 onDelete={setDeleteTarget}
               />
@@ -112,6 +122,15 @@ export function MenuView() {
       />
 
       <MenuPreviewSheet open={previewOpen} onOpenChange={setPreviewOpen} />
+
+      <MenuItemPreviewDialog
+        menuItem={previewMenuItem}
+        onClose={() => setPreviewMenuItem(null)}
+        onEdit={(menuItem) => {
+          setPreviewMenuItem(null);
+          router.push(`/menu/${menuItem.id}/edit`);
+        }}
+      />
     </div>
   );
 }

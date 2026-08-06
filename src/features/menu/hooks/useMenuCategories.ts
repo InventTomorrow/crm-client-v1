@@ -6,7 +6,9 @@ import {
   createMenuCategory,
   deleteMenuCategory,
   getMenuCategories,
+  updateMenuCategory,
   type CreateMenuCategoryPayload,
+  type UpdateMenuCategoryPayload,
 } from '../services/menuService';
 
 const menuCategoryKeys = {
@@ -28,6 +30,24 @@ export function useCreateMenuCategory() {
       queryClient.invalidateQueries({ queryKey: menuCategoryKeys.all });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to create category')),
+  });
+}
+
+export function useUpdateMenuCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      categoryId,
+      payload,
+    }: {
+      categoryId: string;
+      payload: UpdateMenuCategoryPayload;
+    }) => updateMenuCategory(categoryId, payload),
+    onSuccess: () => {
+      toast.success('Category updated');
+      queryClient.invalidateQueries({ queryKey: menuCategoryKeys.all });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Failed to update category')),
   });
 }
 

@@ -7,10 +7,12 @@ import type { MenuItem } from '../types';
 
 function MenuItemCardBase({
   menuItem,
+  onPreview,
   onEdit,
   onDelete,
 }: {
   menuItem: MenuItem;
+  onPreview: (menuItem: MenuItem) => void;
   onEdit: (menuItem: MenuItem) => void;
   onDelete: (menuItem: MenuItem) => void;
 }) {
@@ -18,7 +20,20 @@ function MenuItemCardBase({
 
   return (
     <div
-      className="card overflow-hidden flex flex-col p-0 transition-shadow"
+      role="button"
+      tabIndex={0}
+      aria-label={`Preview ${menuItem.name}`}
+      className={cn(
+        'card overflow-hidden flex flex-col p-0 transition-shadow cursor-pointer',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
+      )}
+      onClick={() => onPreview(menuItem)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onPreview(menuItem);
+        }
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -57,14 +72,20 @@ function MenuItemCardBase({
           <Button
             size="sm"
             className="flex-1 bg-white/95 text-slate-900 hover:bg-white"
-            onClick={() => onEdit(menuItem)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(menuItem);
+            }}
           >
             <Pencil size={12} /> Edit
           </Button>
           <Button
             size="icon-sm"
             className="bg-[rgba(239,68,68,0.95)] text-white hover:bg-[rgba(239,68,68,1)]"
-            onClick={() => onDelete(menuItem)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(menuItem);
+            }}
             title="Delete"
           >
             <Trash2 size={13} />
