@@ -1,23 +1,11 @@
 'use client';
-import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Check, Loader2 } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreference } from '../hooks/useNotifications';
+import { NOTIFICATION_PREFERENCE_META, NOTIFICATION_TYPES } from '../lib/preferenceMeta';
 import type { NotificationType } from '../types';
 
-// Display order + labels + default in-app/email behaviour (mirrors the server defaults).
-const TYPES: { type: NotificationType; label: string; inAppDefault: boolean; emailDefault: boolean }[] = [
-  { type: 'NEW_MESSAGE', label: 'New inbound message', inAppDefault: false, emailDefault: false },
-  { type: 'CHAT_ESCALATED', label: 'Chat escalated to a human', inAppDefault: true, emailDefault: false },
-  { type: 'NEW_LEAD', label: 'New lead', inAppDefault: true, emailDefault: false },
-  { type: 'LEAD_ASSIGNED', label: 'Lead assigned to me', inAppDefault: true, emailDefault: false },
-  { type: 'ORDER_CREATED', label: 'Order created', inAppDefault: true, emailDefault: false },
-  { type: 'ORDER_STATUS_CHANGED', label: 'Order status changed', inAppDefault: true, emailDefault: false },
-  { type: 'MEMBER_INVITED', label: 'Member invited', inAppDefault: true, emailDefault: true },
-  { type: 'MEMBER_JOINED', label: 'Member joined', inAppDefault: true, emailDefault: false },
-  { type: 'BROADCAST_COMPLETED', label: 'Broadcast completed', inAppDefault: true, emailDefault: false },
-  { type: 'NEW_LOGIN', label: 'New sign-in (security)', inAppDefault: true, emailDefault: true },
-  { type: 'BILLING', label: 'Billing & subscription', inAppDefault: true, emailDefault: true },
-  { type: 'SUPPORT_CONTACT_CHANGED', label: 'Support number changed', inAppDefault: true, emailDefault: true },
-];
+const ROW_GRID = 'grid grid-cols-[1fr_56px_56px] gap-2 items-center';
 
 function Toggle({
   on,
@@ -54,57 +42,76 @@ function Toggle({
 }
 
 export function NotificationPreferences() {
-  const { data: prefs } = useNotificationPreferences();
+  const { data: preferences } = useNotificationPreferences();
   const update = useUpdateNotificationPreference();
 
-  const find = (type: NotificationType) => prefs?.find((p) => p.type === type);
   // Only the toggle actually being changed shows a loader/disables — not every
   // row — since the mutation is a single shared instance across the grid.
-  const isPending = (type: NotificationType, channel: 'inApp' | 'email') =>
+  const isSaving = (type: NotificationType, channel: 'inApp' | 'email') =>
     update.isPending && update.variables?.type === type && update.variables?.[channel] !== undefined;
 
   return (
-    <section className="card p-5 mt-6">
-      <h2 className="text-[15px] font-semibold text-[var(--ink)]">Notification preferences</h2>
-      <p className="text-[12.5px] text-[var(--ink-mute)] mt-0.5 mb-4">
-        Choose how you’re notified for each event.
-      </p>
+    <section className="card p-0 overflow-hidden h-fit">
+      <div className="px-4 pt-4 pb-3">
+        <h2 className="text-[15px] font-semibold text-[var(--ink)]">Notification preferences</h2>
+        <p className="text-[12.5px] text-[var(--ink-mute)] mt-0.5">
+          Choose how you’re notified for each event.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-1 items-center">
-        <div />
-        <div className="text-[11px] font-medium text-[var(--ink-mute)] text-center">In-app</div>
-        <div className="text-[11px] font-medium text-[var(--ink-mute)] text-center">Email</div>
+      <div
+        className={cn(
+          ROW_GRID,
+          'px-4 py-2 border-y border-[var(--line)] bg-[var(--surface-2)] text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]',
+        )}
+      >
+        <span>Event</span>
+        <span className="text-center">In-app</span>
+        <span className="text-center">Email</span>
+      </div>
 
-        {TYPES.map(({ type, label, inAppDefault, emailDefault }) => {
-          const pref = find(type);
-          const inApp = pref?.inApp ?? inAppDefault;
-          const email = pref?.email ?? emailDefault;
-          const inAppLoading = isPending(type, 'inApp');
-          const emailLoading = isPending(type, 'email');
-          return (
-            <div key={type} className="contents">
-              <div className="text-[13px] text-[var(--ink)] py-2 border-t border-[var(--line-soft)]">
-                {label}
-              </div>
-              <div className="flex justify-center py-2 border-t border-[var(--line-soft)]">
-                <Toggle
-                  on={inApp}
-                  loading={inAppLoading}
-                  disabled={inAppLoading}
-                  onClick={() => update.mutate({ type, inApp: !inApp })}
-                />
-              </div>
-              <div className="flex justify-center py-2 border-t border-[var(--line-soft)]">
-                <Toggle
-                  on={email}
-                  loading={emailLoading}
-                  disabled={emailLoading}
-                  onClick={() => update.mutate({ type, email: !email })}
-                />
-              </div>
+      {NOTIFICATION_TYPES.map((type, index) => {
+        const meta = NOTIFICATION_PREFERENCE_META[type];
+        const saved = preferences?.find((preference) => preference.type === type);
+        const inApp = saved?.inApp ?? meta.inAppDefault;
+        const email = saved?.email ?? meta.emailDefault;
+        const inAppSaving = isSaving(type, 'inApp');
+        const emailSaving = isSaving(type, 'email');
+        return (
+          <div
+            key={type}
+            className={cn(
+              ROW_GRID,
+              'px-4 py-3',
+              index > 0 && 'border-t border-[var(--line-soft)]',
+            )}
+          >
+            <div className="min-w-0">
+              <div className="text-[13px] font-medium text-[var(--ink)]">{meta.title}</div>
+              <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">{meta.description}</div>
             </div>
-          );
-        })}
+            <div className="flex justify-center">
+              <Toggle
+                on={inApp}
+                loading={inAppSaving}
+                disabled={inAppSaving}
+                onClick={() => update.mutate({ type, inApp: !inApp })}
+              />
+            </div>
+            <div className="flex justify-center">
+              <Toggle
+                on={email}
+                loading={emailSaving}
+                disabled={emailSaving}
+                onClick={() => update.mutate({ type, email: !email })}
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="flex items-center gap-1.5 px-4 py-3 border-t border-[var(--line)] text-[11.5px] text-[var(--ink-mute)]">
+        <Check size={12} className="text-[#15803D]" /> Preferences save automatically
       </div>
     </section>
   );

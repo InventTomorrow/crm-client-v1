@@ -1,20 +1,12 @@
 "use client";
 import { useMe, useUpdateMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import { OrderApiCard } from "@/features/channels/apiKey/components/OrderApiCard";
-import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
-import {
-  useNotificationPreferences,
-  useUpdateNotificationPreference,
-} from "@/features/notifications/hooks/useNotifications";
-import type { NotificationType } from "@/features/notifications/types";
+import { NotificationPreferences } from "@/features/notifications/components/NotificationPreferences";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
-import { CRMSwitch } from "@/shared/ui/CRMSwitch";
 import { Input } from "@/shared/ui/Input";
-import { WAConnectDialog } from "@/shared/ui/WAConnectDialog";
 import {
   Form,
   FormControl,
@@ -30,7 +22,6 @@ import {
   Bot,
   Building2,
   Check,
-  ChevronLeft,
   Cloud,
   Crown,
   Link,
@@ -43,22 +34,26 @@ import {
   User,
   Zap,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { SettingsSection } from "../types";
 import { SECTION_NAV, SYSTEM_STATS } from "../types";
 import { BusinessSection } from "./BusinessSection";
+// import { ChannelsSection } from "./ChannelsSection";
 import { ChatbotSection } from "./ChatbotSection";
 import { TeamSection } from "./TeamSection";
 import { WorkspacesManagementView } from "./WorkspacesManagementView";
 
+// Used by the in-page section nav, currently commented out in SettingsView.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SECTION_ICONS: Record<SettingsSection, React.ElementType> = {
   profile: User,
-  notif: Bell,
   chatbot: Bot,
   business: Store,
   channels: Link,
+  notifications: Bell,
   tier: Crown,
   access: Shield,
   workspaces: Building2,
@@ -298,192 +293,13 @@ function ProfileSection() {
 }
 
 // ──────────────────── Notifications Section ────────────────────
-const NOTIF_META: Record<NotificationType, { title: string; desc: string }> = {
-  NEW_MESSAGE: {
-    title: "New message",
-    desc: "When a lead sends you a new message.",
-  },
-  CHAT_ESCALATED: {
-    title: "Chat escalated",
-    desc: "When a conversation is flagged for attention.",
-  },
-  NEW_LEAD: {
-    title: "New lead",
-    desc: "When a new lead is created or imported.",
-  },
-  LEAD_ASSIGNED: {
-    title: "Lead assigned",
-    desc: "When a lead is assigned to you.",
-  },
-  ORDER_CREATED: {
-    title: "Order created",
-    desc: "When a new order is placed.",
-  },
-  ORDER_STATUS_CHANGED: {
-    title: "Order status changed",
-    desc: "When an order status is updated.",
-  },
-  MEMBER_INVITED: {
-    title: "Member invited",
-    desc: "When someone is invited to your workspace.",
-  },
-  MEMBER_JOINED: {
-    title: "Member joined",
-    desc: "When an invited member accepts and joins.",
-  },
-  BROADCAST_COMPLETED: {
-    title: "Broadcast completed",
-    desc: "When a broadcast campaign finishes.",
-  },
-  NEW_LOGIN: {
-    title: "New login",
-    desc: "When your account is accessed from a new device.",
-  },
-  BILLING: {
-    title: "Billing",
-    desc: "Payment confirmations and plan changes.",
-  },
-  SUPPORT_CONTACT_CHANGED: {
-    title: "Support number changed",
-    desc: "When the workspace's support contact number is updated.",
-  },
-};
-
-function NotifSection() {
-  const { data: prefs = [], isLoading } = useNotificationPreferences();
-  const { mutate: update } = useUpdateNotificationPreference();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <Loader2 size={22} className="animate-spin text-[var(--accent)]" />
-      </div>
-    );
-  }
-
+function NotificationsSection() {
   return (
     <>
       <h2 className="text-[20px] font-semibold">Notifications</h2>
-      <div className="card overflow-hidden">
-        {/* Column headers */}
-        <div className="grid grid-cols-[1fr_64px_64px] gap-2 px-4 py-2 border-b border-[var(--line)] bg-[var(--surface-2)] text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
-          <span>Event</span>
-          <span className="text-center">In-app</span>
-          <span className="text-center">Email</span>
-        </div>
-        {(Object.keys(NOTIF_META) as NotificationType[]).map((type, i) => {
-          const pref = prefs.find((p) => p.type === type);
-          const meta = NOTIF_META[type];
-          const last = i === Object.keys(NOTIF_META).length - 1;
-          return (
-            <div
-              key={type}
-              className={cn(
-                "grid grid-cols-[1fr_64px_64px] gap-2 items-center px-4 py-3",
-                !last && "border-b border-[var(--line-soft)]",
-              )}
-            >
-              <div>
-                <div className="font-medium text-[13.5px]">{meta.title}</div>
-                <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
-                  {meta.desc}
-                </div>
-              </div>
-              <div className="flex justify-center">
-                <CRMSwitch
-                  on={pref?.inApp ?? true}
-                  onChange={(v) => update({ type, inApp: v })}
-                  size="md"
-                />
-              </div>
-              <div className="flex justify-center">
-                <CRMSwitch
-                  on={pref?.email ?? false}
-                  onChange={(v) => update({ type, email: v })}
-                  size="md"
-                />
-              </div>
-            </div>
-          );
-        })}
+      <div className="max-w-2xl">
+        <NotificationPreferences />
       </div>
-      <div className="text-[11.5px] flex items-center gap-1.5 text-[var(--ink-mute)]">
-        <Check size={12} className="text-[#15803D]" /> Preferences save
-        automatically
-      </div>
-    </>
-  );
-}
-
-// ──────────────────── Channels Section ────────────────────
-function ChannelsSection() {
-  const { data: statusData } = useWAStatus();
-  const { can } = usePermissions();
-  const [waOpen, setWaOpen] = useState(false);
-  const status = statusData?.status ?? "DISCONNECTED";
-  const canConnect = can("channels:connect");
-
-  return (
-    <>
-      <h2 className="text-[20px] font-semibold">Connected Channels</h2>
-      <div className="card p-5">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "#25D366" }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-              <path d="M11.996 1.998C6.478 1.998 2 6.476 2 11.994c0 1.762.461 3.416 1.268 4.853L2 22l5.294-1.247a9.95 9.95 0 0 0 4.702 1.19c5.518 0 9.996-4.477 9.996-9.995 0-5.518-4.478-9.95-9.996-9.95zm0 18.19a8.187 8.187 0 0 1-4.18-1.148l-.3-.178-3.115.733.779-3.023-.196-.31A8.153 8.153 0 0 1 3.81 11.994c0-4.516 3.672-8.187 8.186-8.187s8.187 3.671 8.187 8.187c0 4.515-3.673 8.187-8.187 8.187z" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-[14px]">WhatsApp Business</div>
-            <div className="text-[12px] text-[var(--ink-mute)] mt-px">
-              {status === "CONNECTED"
-                ? `Connected · +${statusData?.phoneNumber ?? ""}`
-                : "Not connected — scan QR to link your number"}
-            </div>
-          </div>
-          <span
-            className={cn(
-              "badge font-medium px-2.5 py-1",
-              status === "CONNECTED"
-                ? "bg-[rgba(34,197,94,0.12)] text-[#15803D]"
-                : "bg-[var(--surface-2)] text-[var(--ink-mute)]",
-            )}
-          >
-            <span
-              className={cn(
-                "w-[6px] h-[6px] rounded-full mr-1.5 inline-block",
-                status === "CONNECTED"
-                  ? "bg-[#15803D]"
-                  : "bg-[var(--ink-mute)]",
-              )}
-            />
-            {status === "CONNECTED"
-              ? "Connected"
-              : status === "PENDING" || status === "CONNECTING"
-                ? "Connecting…"
-                : "Disconnected"}
-          </span>
-          {canConnect && (
-            <Button variant="outline" size="sm" onClick={() => setWaOpen(true)}>
-              {status === "CONNECTED" ? "Manage" : "Connect"}
-            </Button>
-          )}
-        </div>
-        {!canConnect && (
-          <p className="text-[11.5px] text-[var(--ink-mute)] mt-3">
-            You don&apos;t have permission to connect or disconnect WhatsApp.
-            Ask a workspace owner.
-          </p>
-        )}
-      </div>
-
-      <OrderApiCard />
-
-      <WAConnectDialog open={waOpen} onOpenChange={setWaOpen} />
     </>
   );
 }
@@ -576,8 +392,8 @@ function SystemSection() {
   );
 }
 
-// Per-tab permission gate. Tabs without an entry (profile, notifications) are
-// always available — they only expose the signed-in user's own data.
+// Per-tab permission gate. Tabs without an entry (profile) are always
+// available — they only expose the signed-in user's own data.
 const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
   chatbot: "chatbot:view",
   business: "settings:view",
@@ -588,8 +404,8 @@ const SECTION_PERMISSION: Partial<Record<SettingsSection, string>> = {
 
 // Tabs that configure the workspace itself (billing tier, team access, other
 // workspaces, system health) rather than day-to-day operation — visible to
-// the workspace owner only. Notifications/Chatbot/Business/Channels stay
-// available to any permitted role since they're used to run the workspace.
+// the workspace owner only. Chatbot/Business/Channels stay available to any
+// permitted role since they're used to run the workspace.
 const SECTION_OWNER_ONLY = new Set<SettingsSection>([
   "tier",
   "access",
@@ -599,11 +415,12 @@ const SECTION_OWNER_ONLY = new Set<SettingsSection>([
 
 // ──────────────────── SettingsView (root) ────────────────────
 export function SettingsView() {
-  const { can, isOwner, isLoading: permsLoading } = usePermissions();
-  const [section, setSection] = useState<SettingsSection>("profile");
-  // Mobile only: which pane is showing — the section nav or the active section's
-  // content. Desktop ignores this and shows both side by side (see globals.css).
-  const [mobShowNav, setMobShowNav] = useState(true);
+  const { can, isOwner } = usePermissions();
+  // The section is driven entirely by `?section=` — the sidebar's Settings
+  // submenu is the tab bar now (the in-page nav below is kept, commented out).
+  const requestedSection = useSearchParams().get(
+    "section",
+  ) as SettingsSection | null;
 
   // Hide tabs the active role can't access (placeholder tabs stay visible but
   // disabled, as before).
@@ -613,16 +430,17 @@ export function SettingsView() {
     return !perm || can(perm);
   });
 
-  // If the current section became inaccessible, fall back to Profile.
-  useEffect(() => {
-    if (permsLoading) return;
-    if (!visibleNav.some((s) => s.id === section)) setSection("profile");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permsLoading, section]);
+  // An unknown or inaccessible section falls back to Profile.
+  const section: SettingsSection =
+    requestedSection && visibleNav.some((s) => s.id === requestedSection)
+      ? requestedSection
+      : "profile";
 
   return (
     <div className="settings-layout flex gap-3.5 h-full overflow-hidden p-[18px]">
-      {/* Sidebar nav */}
+      {/* Sidebar nav — moved into the app sidebar's Settings submenu. Kept here
+          so it can be restored by un-commenting this block and the mobile
+          back-button below.
       <div
         className={cn(
           "settings-nav card shrink-0 flex flex-col gap-1 h-fit p-3.5 w-[220px]",
@@ -668,15 +486,19 @@ export function SettingsView() {
           );
         })}
       </div>
+      */}
 
       {/* Content */}
       <div
         className={cn(
-          "settings-content scroll flex-1 overflow-y-auto flex flex-col gap-3.5",
+          // Sections must keep their natural height — without shrink-0 a tall
+          // section is squeezed by the flex column instead of scrolling.
+          "settings-content mob-on scroll flex-1 overflow-y-auto flex flex-col gap-3.5 *:shrink-0",
           section === "workspaces" && "p-0 gap-0",
-          !mobShowNav && "mob-on",
         )}
       >
+        {/* Mobile back-link into the in-page nav — restore with the block above
+            (needs the ChevronLeft import back).
         <button
           type="button"
           onClick={() => setMobShowNav(true)}
@@ -689,11 +511,12 @@ export function SettingsView() {
             {visibleNav.find((s) => s.id === section)?.label}
           </span>
         </button>
+        */}
         {section === "profile" && <ProfileSection />}
-        {section === "notif" && <NotifSection />}
         {section === "chatbot" && <ChatbotSection />}
         {section === "business" && <BusinessSection />}
-        {section === "channels" && <ChannelsSection />}
+        {/* {section === "channels" && <ChannelsSection />} */}
+        {section === "notifications" && <NotificationsSection />}
         {section === "tier" && <TierSection />}
         {section === "access" && <TeamSection />}
         {section === "workspaces" && <WorkspacesManagementView />}

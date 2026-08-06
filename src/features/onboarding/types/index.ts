@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import type { BusinessVertical } from '@/lib/business-verticals';
+import { BUSINESS_VERTICAL_VALUES, type BusinessVertical } from '@/lib/business-verticals';
 
 export const selectCategorySchema = z.object({
-  businessVertical: z.enum(['ECOMMERCE', 'RESTAURANT']),
+  businessVertical: z.enum(BUSINESS_VERTICAL_VALUES),
 });
 
 export const connectChannelSchema = z.object({

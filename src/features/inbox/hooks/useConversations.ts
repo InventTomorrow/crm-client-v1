@@ -49,6 +49,17 @@ export function useConversations() {
   });
 }
 
+/** Newest chats for the header dropdown — the full list, trimmed client-side. */
+export function useRecentConversations(limit = 5) {
+  return useQuery({
+    queryKey: ["conversations"],
+    queryFn: () => getConversations({}),
+    select: (conversations: ConversationListItem[]) =>
+      conversations.slice(0, limit),
+    refetchInterval: 60_000,
+  });
+}
+
 export function useInboxUnreadCount() {
   return useQuery({
     queryKey: ["conversations", "unread-count"],

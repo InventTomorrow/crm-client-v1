@@ -4,10 +4,10 @@ export type { UserProfile, NotifSettings } from '@/lib/mockData';
 
 export type SettingsSection =
   | 'profile'
-  | 'notif'
   | 'chatbot'
   | 'business'
   | 'channels'
+  | 'notifications'
   | 'tier'
   | 'access'
   | 'system'
@@ -15,10 +15,10 @@ export type SettingsSection =
 
 export const SECTION_NAV: Array<{ id: SettingsSection; label: string }> = [
   { id: 'profile',    label: 'Profile' },
-  { id: 'notif',      label: 'Notifications' },
   { id: 'chatbot',    label: 'Chatbot' },
   { id: 'business',   label: 'Business' },
-  { id: 'channels',   label: 'Channels' },
+  // { id: 'channels',   label: 'Channels' },
+  { id: 'notifications', label: 'Notifications' },
   { id: 'tier',       label: 'Integration Tier' },
   { id: 'access',     label: 'Access Control' },
   { id: 'workspaces', label: 'Workspaces' },

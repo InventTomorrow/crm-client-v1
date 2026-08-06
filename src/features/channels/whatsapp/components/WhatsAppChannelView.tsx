@@ -1,6 +1,6 @@
 "use client";
 import { ChannelBreadcrumb } from "@/features/channels/components/ChannelBreadcrumb";
-import { AISettingsWidget } from "./AISettingsWidget";
+import { AssistantSettingsCard } from "./AssistantSettingsCard";
 import { WhatsAppWidget } from "./WhatsAppWidget";
 
 export function WhatsAppChannelView() {
@@ -19,7 +19,7 @@ export function WhatsAppChannelView() {
 
       <div className="flex max-w-md flex-col gap-4">
         <WhatsAppWidget />
-        <AISettingsWidget />
+        <AssistantSettingsCard />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, Check, Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISettingsWidget';
 import { cn } from '@/lib/utils';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
@@ -146,6 +147,8 @@ export function ChatbotSection() {
           </Button>
         </div>
       </form>
+
+      <AISettingsWidget />
     </>
   );
 }

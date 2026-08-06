@@ -1,4 +1,8 @@
-export type BusinessVertical = 'ECOMMERCE' | 'RESTAURANT';
+// Single source of truth lives in the vertical registry — re-exported here so
+// existing `@/features/tenant/types` imports keep working.
+export type { BusinessVertical } from '@/lib/business-verticals';
+
+import type { BusinessVertical } from '@/lib/business-verticals';
 
 export interface Tenant {
   id: string;

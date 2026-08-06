@@ -1,5 +1,6 @@
 import { SettingsView } from "@/features/settings/components/SettingsView";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 export default function SettingsPage() {
   return (
     <div className="h-full">
-      <SettingsView />
+      <Suspense>
+        <SettingsView />
+      </Suspense>
     </div>
   );
 }
