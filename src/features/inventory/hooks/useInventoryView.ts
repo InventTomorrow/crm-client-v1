@@ -49,6 +49,7 @@ export function useInventoryView() {
   const [parsingImport, setParsingImport] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<Product[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
 
@@ -287,6 +288,8 @@ export function useInventoryView() {
     editing,
     deleteTarget,
     setDeleteTarget,
+    previewProduct,
+    setPreviewProduct,
     bulkDeleteTargets,
     setBulkDeleteTargets,
     exportOpen,

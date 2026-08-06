@@ -33,6 +33,7 @@ import { AddMenuItem } from "./AddMenuItem";
 import { BulkAddDialog } from "./BulkAddDialog";
 import { ProductFormDialog } from "./ProductFormDialog";
 import { ProductGridCard } from "./ProductGridCard";
+import { ProductPreviewDialog } from "./ProductPreviewDialog";
 import { TierCard } from "./TierCard";
 import {
   ErpPanel,
@@ -71,6 +72,8 @@ export function InventoryView() {
     editing,
     deleteTarget,
     setDeleteTarget,
+    previewProduct,
+    setPreviewProduct,
     bulkDeleteTargets,
     setBulkDeleteTargets,
     exportOpen,
@@ -347,6 +350,7 @@ export function InventoryView() {
                   key={p.id}
                   product={p}
                   highlight={!!highlightId && p.id === highlightId}
+                  onPreview={setPreviewProduct}
                   onEdit={openEditDialog}
                   onDelete={setDeleteTarget}
                   onDuplicate={duplicateProduct.mutate}
@@ -374,6 +378,7 @@ export function InventoryView() {
               data={filtered}
               columns={columns}
               selectable
+              onRowClick={setPreviewProduct}
               onDeleteSelected={setBulkDeleteTargets}
               emptyMessage="No products match your filters."
               isLoading={isLoading}
@@ -401,6 +406,15 @@ export function InventoryView() {
         onClose={closeDialog}
         onSave={handleSave}
         onDelete={editing ? () => setDeleteTarget(editing) : undefined}
+      />
+
+      <ProductPreviewDialog
+        product={previewProduct}
+        onClose={() => setPreviewProduct(null)}
+        onEdit={(product) => {
+          setPreviewProduct(null);
+          openEditDialog(product);
+        }}
       />
 
       <BulkAddDialog

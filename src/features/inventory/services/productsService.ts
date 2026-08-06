@@ -131,7 +131,7 @@ export const bulkCreateProducts = async (products: CreateProductPayload[]): Prom
   return (data.data ?? []).map(mapProduct);
 };
 
-export type UploadFolder = 'products' | 'menu' | 'avatars' | 'attachments';
+export type UploadFolder = 'products' | 'menu' | 'avatars' | 'attachments' | 'resources';
 
 /** Step 1: get a presigned PUT URL from our backend */
 export const getPresignedUrl = async (
