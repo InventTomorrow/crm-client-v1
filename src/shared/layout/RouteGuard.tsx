@@ -5,7 +5,8 @@ import { Button } from "@/shared/ui/Button";
 import { Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getRequiredPermission, getRequiredVerticals } from "./routePermissions";
+import { hasCapability } from "@/lib/business-verticals";
+import { getRequiredCapability, getRequiredPermission } from "./routePermissions";
 
 /**
  * Client-side gate for `(app)` pages. Resolves the permission required by the
@@ -18,13 +19,13 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   const { can, isLoading } = usePermissions();
   const { tenant, isLoading: isTenantLoading } = useCurrentTenant();
   const required = getRequiredPermission(pathname);
-  const requiredVerticals = getRequiredVerticals(pathname);
+  const requiredCapability = getRequiredCapability(pathname);
 
   // Wait for both to resolve so we never flash "no access" on load, and never
   // render a page left over from the previous (still-unmounting) workspace.
   if (isLoading || isTenantLoading) return null;
 
-  if (requiredVerticals && tenant && !requiredVerticals.includes(tenant.businessVertical)) {
+  if (requiredCapability && tenant && !hasCapability(tenant.businessVertical, requiredCapability)) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="card flex max-w-sm flex-col items-center gap-3 p-8 text-center">

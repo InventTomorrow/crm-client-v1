@@ -10,26 +10,8 @@ import { HotToast } from "@/shared/layout/HotToast";
 import { MobileDock } from "@/shared/layout/MobileDock";
 import { RouteGuard } from "@/shared/layout/RouteGuard";
 import { WorkspaceSwitchingOverlay } from "@/shared/layout/WorkspaceSwitchingOverlay";
-import { Button } from "@/shared/ui/Button";
 import { Toaster } from "@/shared/ui/Sonner";
-import { Minimize2 } from "lucide-react";
-
-function FullScreenBar() {
-  const { toggleFullScreen } = useAppStore();
-  return (
-    <div className="h-8 shrink-0 flex items-center justify-end px-3 bg-[var(--surface)] border-b border-[var(--line)]">
-      <Button
-        variant="ghost"
-        onClick={toggleFullScreen}
-        className="h-7 px-2 text-[var(--ink-mute)] text-[11px] flex items-center gap-1.5"
-        title="Exit full screen"
-      >
-        <Minimize2 size={13} />
-        <span>Exit full screen</span>
-      </Button>
-    </div>
-  );
-}
+import { Suspense } from "react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const {
@@ -39,7 +21,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     hotLead,
     setEscalatingLead,
     setHotLead,
-    isFullScreen,
     currentWorkspaceId,
   } = useAppStore();
 
@@ -49,17 +30,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate>
       <div className="app-shell">
-        {!isFullScreen && (
+        {/* AppSidebar reads `?section=` to light the active Settings tab. */}
+        <Suspense>
           <AppSidebar
             mobileOpen={mobileMenuOpen}
             onCloseMobile={() => setMobileMenuOpen(false)}
           />
-        )}
+        </Suspense>
         <div className="app-main">
-          {!isFullScreen && (
-            <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
-          )}
-          {isFullScreen && <FullScreenBar />}
+          <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
           <main key={currentWorkspaceId} className="app-content">
             <RouteGuard>{children}</RouteGuard>
           </main>

@@ -12,7 +12,6 @@ interface AppState {
   // Layout (not persisted)
   sidebarCollapsed: boolean;
   mobileMenuOpen: boolean;
-  isFullScreen: boolean;
 
   // Overlay state (not persisted)
   escalatingLead: Lead | null;
@@ -28,6 +27,7 @@ interface AppState {
   // Persisted UI
   theme: 'light' | 'dark';
   leadsView: 'kanban' | 'list' | 'table';
+  servicesView: 'grid' | 'table';
   inventoryView: 'grid' | 'list';
 
   // Persisted data
@@ -39,13 +39,14 @@ interface AppState {
 
   // Actions
   toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   setMobileMenuOpen: (open: boolean) => void;
-  toggleFullScreen: () => void;
   setTheme: (t: 'light' | 'dark') => void;
   toggleTheme: () => void;
   setEscalatingLead: (lead: Lead | null) => void;
   setHotLead: (lead: Lead | null) => void;
   setLeadsView: (v: 'kanban' | 'list' | 'table') => void;
+  setServicesView: (v: 'grid' | 'table') => void;
   setInventoryView: (v: 'grid' | 'list') => void;
   markNotificationRead: (id: string) => void;
   markAllRead: () => void;
@@ -62,7 +63,6 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       sidebarCollapsed: false,
       mobileMenuOpen: false,
-      isFullScreen: false,
       escalatingLead: null,
       hotLead: null,
       isSwitchingWorkspace: false,
@@ -70,6 +70,7 @@ export const useAppStore = create<AppState>()(
       authTransition: false,
       theme: 'light',
       leadsView: 'kanban',
+      servicesView: 'grid',
       inventoryView: 'grid',
       notifications: INITIAL_NOTIFICATIONS,
       workspaces: INITIAL_WORKSPACES,
@@ -78,13 +79,14 @@ export const useAppStore = create<AppState>()(
       notifSettings: INITIAL_NOTIF_SETTINGS,
 
       toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
-      toggleFullScreen: () => set(s => ({ isFullScreen: !s.isFullScreen })),
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
       setEscalatingLead: (escalatingLead) => set({ escalatingLead }),
       setHotLead: (hotLead) => set({ hotLead }),
       setLeadsView: (leadsView) => set({ leadsView }),
+      setServicesView: (servicesView) => set({ servicesView }),
       setInventoryView: (inventoryView) => set({ inventoryView }),
 
       markNotificationRead: (id) =>
@@ -109,6 +111,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         theme: state.theme,
         leadsView: state.leadsView,
+        servicesView: state.servicesView,
         inventoryView: state.inventoryView,
         notifications: state.notifications,
         workspaces: state.workspaces,

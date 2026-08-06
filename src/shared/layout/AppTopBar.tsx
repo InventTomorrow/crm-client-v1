@@ -1,16 +1,24 @@
 "use client";
-import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useUnreadCount } from "@/features/notifications/hooks/useNotifications";
 import { useAppStore } from "@/lib/appStore";
-import { cn } from "@/lib/utils";
 import { useAppEvents } from "@/shared/hooks/useAppEvents";
+import { useBrowserFullscreen } from "@/shared/hooks/useBrowserFullscreen";
+import { HeaderIconButton } from "@/shared/ui/HeaderIconButton";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/Popover";
 import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
-import { Bell, Inbox, Maximize2, Menu, Minimize2, Search } from "lucide-react";
-import Link from "next/link";
+import {
+  Bell,
+  Maximize,
+  Menu,
+  Minimize,
+  PanelLeft,
+  Search,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/Button";
+import { ChatsDropdown } from "./ChatsDropdown";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { SearchPalette } from "./SearchPalette";
 
@@ -32,13 +40,7 @@ interface AppTopBarProps {
 export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const pathname = usePathname();
 
-  const {
-    workspaces,
-    currentWorkspaceId,
-    toggleFullScreen,
-    isFullScreen,
-    toggleSidebar,
-  } = useAppStore();
+  const { workspaces, currentWorkspaceId, toggleSidebar } = useAppStore();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -48,9 +50,8 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   // conversations and typing all arrive over this one connection.
   useAppEvents();
 
+  const { isFullscreen, toggleFullscreen } = useBrowserFullscreen();
   const { data: unread = 0 } = useUnreadCount();
-  const { data: inboxUnread = 0 } = useInboxUnreadCount();
-  const onInbox = pathname.startsWith("/inbox");
   const ws =
     workspaces.find((w) => w.id === currentWorkspaceId) || workspaces[0];
   const title =
@@ -68,91 +69,62 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    if (!notifOpen) return;
-    const onClick = (e: MouseEvent) => {
-      if ((e.target as Element)?.closest?.("[data-header-popover]")) return;
-      setNotifOpen(false);
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [notifOpen]);
-
   return (
-    <header className="h-14 shrink-0 px-2.5 sm:px-[18px] flex items-center gap-1 sm:gap-3.5 border-b border-[var(--line)] bg-[var(--surface)] relative z-30">
-      <Button
-        variant="outline"
-        size="icon"
+    <header className="relative z-30 flex h-14 shrink-0 items-center gap-1.5 border-b border-[var(--line)] bg-[var(--surface)] px-2.5 sm:gap-2.5 sm:px-[18px]">
+      <HeaderIconButton
+        label="Open menu"
         className="show-mobile-only"
         onClick={onMobileMenu}
       >
-        <Menu size={20} />
-      </Button>
-      {/* Desktop sidebar collapse toggle */}
-      <Button
-        variant="outline"
-        className="hide-mobile p-1.5 bg-transparent hover:bg-transparent hover:scale-[1.05] transition-all"
-        size="lg"
-        onClick={toggleSidebar}
-        title="Toggle sidebar"
-        aria-label="Toggle sidebar"
-      >
         <Menu size={18} />
-      </Button>
-      <div className="min-w-0">
-        <h3 className="text-[14px] sm:text-[15px] font-semibold truncate">
+      </HeaderIconButton>
+
+      {/* Desktop sidebar collapse toggle */}
+      <HeaderIconButton
+        label="Toggle sidebar"
+        className="hide-mobile"
+        onClick={toggleSidebar}
+      >
+        <PanelLeft size={18} />
+      </HeaderIconButton>
+
+      <div className="ml-1 min-w-0">
+        <h3 className="truncate text-[14px] font-semibold sm:text-[15px]">
           {title}
         </h3>
-        <div className="text-[11px] text-[var(--ink-mute)] flex hide-mobile items-center gap-1.5 truncate">
+        <div className="hide-mobile flex items-center gap-1.5 truncate text-[11px] text-[var(--ink-mute)]">
           <span className="truncate">{ws?.name ?? "AsaanRabta Boutique"}</span>
           <span>·</span>
           <span className="whitespace-nowrap">{ws?.plan ?? "Tier 3"}</span>
         </div>
       </div>
-      <div className="flex-1 min-w-2" />
+      <div className="min-w-2 flex-1" />
 
       {/* Desktop search */}
       <Button
         onClick={() => setSearchOpen(true)}
-        className="hide-mobile topbar-search-btn flex items-center gap-2.5 px-3 py-[7px] rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-mute)] text-[12.5px] cursor-pointer min-w-[280px]"
+        className="hide-mobile topbar-search-btn mr-1 flex min-w-[280px] cursor-pointer items-center gap-2.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-3 py-[7px] text-[12.5px] text-[var(--ink-mute)]"
       >
         <Search size={13} />
         <span className="flex-1 text-left">
           Search leads, products, orders...
         </span>
-        <span className="font-[var(--font-mono)] text-[10.5px] px-[5px] py-px border border-[var(--line)] rounded">
+        <span className="rounded border border-[var(--line)] px-[5px] py-px font-[var(--font-mono)] text-[10.5px]">
           ⌘K
         </span>
       </Button>
 
       {/* Mobile search */}
-      <Button
-        variant="ghost"
-        size="icon"
+      <HeaderIconButton
+        label="Search"
         className="show-mobile-only"
         onClick={() => setSearchOpen(true)}
       >
         <Search size={17} />
-      </Button>
+      </HeaderIconButton>
 
-      {/* Inbox quick access */}
-      <Button
-        asChild
-        variant="ghost"
-        size="icon"
-        className={cn("relative", onInbox && "text-[var(--accent)]")}
-        title="Inbox"
-        aria-label="Open inbox"
-      >
-        <Link href="/inbox">
-          <Inbox size={18} />
-          {inboxUnread > 0 && (
-            <span className="absolute -top-1 right-0 min-w-4 h-4 px-1 rounded-full bg-[var(--accent)] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
-              {inboxUnread > 9 ? "9+" : inboxUnread}
-            </span>
-          )}
-        </Link>
-      </Button>
+      {/* Recent chats — jumps into the unified inbox */}
+      <ChatsDropdown />
 
       {/* WhatsApp status — only for members allowed to manage the connection */}
       <PermissionGuard permission="channels:connect">
@@ -161,47 +133,29 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
       </PermissionGuard>
 
       {/* Full screen toggle — desktop only */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleFullScreen}
-        title={isFullScreen ? "Exit full screen" : "Full screen view"}
-        className="text-[var(--ink-mute)] hide-mobile"
+      <HeaderIconButton
+        label={isFullscreen ? "Exit full screen" : "Full screen view"}
+        className="hide-mobile"
+        onClick={toggleFullscreen}
       >
-        <span
-          className="block transition-all duration-200"
-          style={{
-            transform: isFullScreen
-              ? "rotate(180deg) scale(1)"
-              : "rotate(0deg) scale(1)",
-          }}
-        >
-          {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-        </span>
-      </Button>
+        {isFullscreen ? <Minimize size={17} /> : <Maximize size={17} />}
+      </HeaderIconButton>
 
       {/* Notifications */}
-      <div data-header-popover className="relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          onClick={(e) => {
-            e.stopPropagation();
-            setNotifOpen((v) => !v);
-          }}
+      <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+        <PopoverTrigger asChild>
+          <HeaderIconButton label="Notifications" badgeCount={unread}>
+            <Bell size={18} />
+          </HeaderIconButton>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          sideOffset={10}
+          className="w-[360px] gap-0 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] p-0"
         >
-          <Bell size={18} />
-          {unread > 0 && (
-            <span className="absolute -top-1 right-0 min-w-4 h-4 px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-semibold border-2 border-[var(--surface)] inline-flex items-center justify-center">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          )}
-        </Button>
-        {notifOpen && (
           <NotificationsPanel onClose={() => setNotifOpen(false)} />
-        )}
-      </div>
+        </PopoverContent>
+      </Popover>
 
       <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>

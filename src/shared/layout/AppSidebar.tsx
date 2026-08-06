@@ -5,75 +5,21 @@ import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useLeadsCount } from "@/features/leads/hooks/useLeads";
 import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
-import type { BusinessVertical } from "@/lib/business-verticals";
+import { hasCapability } from "@/lib/business-verticals";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
-import {
-  ChevronDown,
-  Inbox,
-  LayoutDashboard,
-  Moon,
-  Package,
-  PlayCircle,
-  Settings,
-  ShoppingCart,
-  Sun,
-  UtensilsCrossed,
-  Users,
-  Wifi,
-} from "lucide-react";
+import { ChevronDown, Moon, Sun } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { NAV_ITEMS, type NavItem } from "./navItems";
 import { ProfileMenu } from "./ProfileMenu";
+import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarOfferCard } from "./SidebarOfferCard";
-import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
-
-const NAV_ITEMS: {
-  href: string;
-  label: string;
-  Icon: typeof Inbox;
-  perm?: string;
-  /** Restricts this item to specific business verticals; omit to show for all. */
-  verticals?: BusinessVertical[];
-}[] = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    Icon: LayoutDashboard,
-    perm: "reports:view",
-  },
-  { href: "/inbox", label: "Inbox", Icon: Inbox, perm: "conversations:view" },
-  { href: "/leads", label: "Leads", Icon: Users, perm: "leads:view" },
-  { href: "/orders", label: "Orders", Icon: ShoppingCart, perm: "orders:view" },
-  {
-    href: "/inventory",
-    label: "Inventory",
-    Icon: Package,
-    perm: "inventory:view",
-    verticals: ["ECOMMERCE"],
-  },
-  {
-    href: "/menu",
-    label: "Menu",
-    Icon: UtensilsCrossed,
-    perm: "inventory:view",
-    verticals: ["RESTAURANT"],
-  },
-  { href: "/channels", label: "Channels", Icon: Wifi, perm: "channels:view" },
-  // { href: '/admin',     label: 'Team & Access', Icon: Shield,       perm: 'members:view' },
-  // Settings is auth-only — every user can reach their Profile & Notifications;
-  // the inner tabs gate themselves by permission.
-  {
-    href: "/settings",
-    label: "Settings",
-    Icon: Settings,
-  },
-  { href: "/demo", label: "Demo", Icon: PlayCircle },
-];
+import { WorkspaceSwitcherV2 } from "./WorkspaceSwitcherV2";
 
 interface AppSidebarProps {
   mobileOpen: boolean;
@@ -82,6 +28,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
+  const activeSection = useSearchParams().get("section");
   const { sidebarCollapsed, toggleSidebar, theme, toggleTheme } = useAppStore();
   const { user } = useMe();
   const { can, isLoading: permsLoading } = usePermissions();
@@ -89,7 +36,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const navItems = NAV_ITEMS.filter(
     (item) =>
       (permsLoading || !item.perm || can(item.perm)) &&
-      (!item.verticals || !tenant || item.verticals.includes(tenant.businessVertical)),
+      (!item.capability || hasCapability(tenant?.businessVertical, item.capability)),
   );
   const { data: inboxUnread } = useInboxUnreadCount();
   const { data: leadsCount } = useLeadsCount();
@@ -102,6 +49,25 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   };
   const [profileOpen, setProfileOpen] = useState(false);
   const collapsed = sidebarCollapsed;
+
+  // Sections open themselves when you're inside them; this only records the ones you've
+  // since clicked open or shut, so a manual choice isn't undone on the next render.
+  const [sectionOverrides, setSectionOverrides] = useState<Record<string, boolean>>({});
+  const toggleSection = (href: string) =>
+    setSectionOverrides((current) => ({
+      ...current,
+      [href]: !(current[href] ?? isPathnameUnder(href)),
+    }));
+
+  function isPathnameUnder(href: string) {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  function isSectionExpanded(item: NavItem) {
+    return sectionOverrides[item.href] ?? isPathnameUnder(item.href);
+  }
+
+  const canAccess = (perm?: string) => permsLoading || !perm || can(perm);
 
   // Inbox wants maximum chat space — collapse the sidebar once on entry, while
 
@@ -172,7 +138,8 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
           </Link>
         </div>
 
-        <WorkspaceSwitcher collapsed={collapsed} />
+        {/* Hand-rolled variant kept at ./WorkspaceSwitcher for a quick revert. */}
+        <WorkspaceSwitcherV2 collapsed={collapsed} />
 
         {/* Nav items */}
         <nav
@@ -186,45 +153,20 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               Workspace
             </div>
           )}
-          {navItems.map((item) => {
-            const active = pathname.startsWith(item.href);
-            const badge = badgeFor(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onCloseMobile}
-                className={cn(
-                  "nav-item no-underline",
-                  collapsed
-                    ? "justify-center p-[10px]"
-                    : "justify-start px-3 py-2",
-                  active ? "active" : "",
-                )}
-              >
-                <item.Icon
-                  size={17}
-                  className={cn(
-                    "nav-ic flex-shrink-0",
-                    active ? "text-[var(--accent)]" : "text-[var(--ink-mute)]",
-                  )}
-                />
-                {!collapsed && <span className="flex-1">{item.label}</span>}
-                {!collapsed && !!badge && (
-                  <span
-                    className={cn(
-                      "badge font-medium py-[1px] px-[7px] min-w-5 justify-center",
-                      active
-                        ? "bg-[var(--accent)] text-white border-none"
-                        : "bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]",
-                    )}
-                  >
-                    {badge > 99 ? "99+" : badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+          {navItems.map((item) => (
+            <SidebarNavItem
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              activeSection={activeSection}
+              collapsed={collapsed}
+              badge={badgeFor(item.href)}
+              expanded={isSectionExpanded(item)}
+              onToggleExpanded={() => toggleSection(item.href)}
+              onNavigate={onCloseMobile}
+              canAccess={canAccess}
+            />
+          ))}
         </nav>
 
         {/* Footer */}

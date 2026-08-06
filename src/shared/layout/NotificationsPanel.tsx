@@ -85,7 +85,7 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
   const items = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   return (
-    <div className="card-2 fade-up absolute right-0 top-[calc(100%+8px)] w-[360px] z-[80] bg-[var(--surface)] overflow-hidden">
+    <div className="w-full overflow-hidden bg-[var(--surface)]">
       <PendingInvites />
       <div className="px-4 py-3 border-b border-[var(--line)] flex items-center justify-between">
         <div className="flex items-center gap-2">

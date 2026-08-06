@@ -1,4 +1,4 @@
-import type { BusinessVertical } from "@/lib/business-verticals";
+import type { VerticalCapability } from "@/lib/business-verticals";
 
 // Canonical map of route prefix → required permission. Mirrors the server-side
 // guards so a user who lacks a permission cannot reach the page by typing the
@@ -10,6 +10,11 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   { prefix: "/leads", permission: "leads:view" },
   { prefix: "/orders", permission: "orders:view" },
   { prefix: "/inventory", permission: "inventory:view" },
+  { prefix: "/menu", permission: "inventory:view" },
+  { prefix: "/services", permission: "inventory:view" },
+  { prefix: "/qualification", permission: "qualification:view" },
+  { prefix: "/bookings", permission: "bookings:view" },
+  { prefix: "/resources", permission: "resources:view" },
   { prefix: "/dashboard", permission: "reports:view" },
   { prefix: "/channels", permission: "channels:view" },
   // /settings itself is auth-only — Profile & Notifications are every user's
@@ -20,13 +25,17 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
 ];
 
 /**
- * Route prefix → business verticals it's available for. Mirrors AppSidebar's
- * NAV_ITEMS.verticals — the sidebar only hides the link, it doesn't stop the
- * route rendering for a workspace of the wrong vertical after switching.
+ * Route prefix → the capability a workspace needs to reach it. Mirrors
+ * AppSidebar's NAV_ITEMS.capability — the sidebar only hides the link, it
+ * doesn't stop the route rendering for the wrong vertical after switching.
  */
-const ROUTE_VERTICALS: { prefix: string; verticals: BusinessVertical[] }[] = [
-  { prefix: "/inventory", verticals: ["ECOMMERCE"] },
-  { prefix: "/menu", verticals: ["RESTAURANT"] },
+const ROUTE_CAPABILITIES: { prefix: string; capability: VerticalCapability }[] = [
+  { prefix: "/inventory", capability: "CATALOG_PRODUCTS" },
+  { prefix: "/menu", capability: "CATALOG_MENU" },
+  { prefix: "/services", capability: "CATALOG_SERVICES" },
+  { prefix: "/qualification", capability: "QUALIFICATION" },
+  { prefix: "/bookings", capability: "BOOKINGS" },
+  { prefix: "/resources", capability: "RESOURCES" },
 ];
 
 /**
@@ -42,13 +51,13 @@ export function getRequiredPermission(pathname: string): string | null {
   return match?.permission ?? null;
 }
 
-/** Returns the business verticals a pathname is restricted to, or null when unrestricted. */
-export function getRequiredVerticals(
+/** Returns the capability a pathname requires, or null when unrestricted. */
+export function getRequiredCapability(
   pathname: string,
-): BusinessVertical[] | null {
-  const match = ROUTE_VERTICALS.filter(
+): VerticalCapability | null {
+  const match = ROUTE_CAPABILITIES.filter(
     (r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`),
   ).sort((a, b) => b.prefix.length - a.prefix.length)[0];
 
-  return match?.verticals ?? null;
+  return match?.capability ?? null;
 }
