@@ -21,6 +21,7 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   // own context. Individual tabs gate themselves; the Workspaces sub-route is
   // owner/admin territory.
   { prefix: "/settings/workspaces", permission: "settings:edit" },
+  { prefix: "/settings/billing", permission: "billing:view" },
   { prefix: "/admin", permission: "members:view" },
 ];
 
