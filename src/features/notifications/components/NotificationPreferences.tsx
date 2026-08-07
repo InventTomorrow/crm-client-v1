@@ -1,11 +1,13 @@
 'use client';
 import { cn } from '@/lib/utils';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, MessageCircle } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreference } from '../hooks/useNotifications';
 import { NOTIFICATION_PREFERENCE_META, NOTIFICATION_TYPES } from '../lib/preferenceMeta';
 import type { NotificationType } from '../types';
 
-const ROW_GRID = 'grid grid-cols-[1fr_56px_56px] gap-2 items-center';
+const ROW_GRID = 'grid grid-cols-[1fr_56px_56px_72px] gap-2 items-center';
+
+type PreferenceChannel = 'inApp' | 'email' | 'whatsapp';
 
 function Toggle({
   on,
@@ -47,7 +49,7 @@ export function NotificationPreferences() {
 
   // Only the toggle actually being changed shows a loader/disables — not every
   // row — since the mutation is a single shared instance across the grid.
-  const isSaving = (type: NotificationType, channel: 'inApp' | 'email') =>
+  const isSaving = (type: NotificationType, channel: PreferenceChannel) =>
     update.isPending && update.variables?.type === type && update.variables?.[channel] !== undefined;
 
   return (
@@ -68,6 +70,7 @@ export function NotificationPreferences() {
         <span>Event</span>
         <span className="text-center">In-app</span>
         <span className="text-center">Email</span>
+        <span className="text-center">WhatsApp</span>
       </div>
 
       {NOTIFICATION_TYPES.map((type, index) => {
@@ -75,8 +78,10 @@ export function NotificationPreferences() {
         const saved = preferences?.find((preference) => preference.type === type);
         const inApp = saved?.inApp ?? meta.inAppDefault;
         const email = saved?.email ?? meta.emailDefault;
+        const whatsapp = saved?.whatsapp ?? meta.whatsappDefault;
         const inAppSaving = isSaving(type, 'inApp');
         const emailSaving = isSaving(type, 'email');
+        const whatsappSaving = isSaving(type, 'whatsapp');
         return (
           <div
             key={type}
@@ -106,12 +111,26 @@ export function NotificationPreferences() {
                 onClick={() => update.mutate({ type, email: !email })}
               />
             </div>
+            <div className="flex justify-center">
+              <Toggle
+                on={whatsapp}
+                loading={whatsappSaving}
+                disabled={whatsappSaving}
+                onClick={() => update.mutate({ type, whatsapp: !whatsapp })}
+              />
+            </div>
           </div>
         );
       })}
 
-      <div className="flex items-center gap-1.5 px-4 py-3 border-t border-[var(--line)] text-[11.5px] text-[var(--ink-mute)]">
-        <Check size={12} className="text-[#15803D]" /> Preferences save automatically
+      <div className="flex flex-col gap-1.5 px-4 py-3 border-t border-[var(--line)] text-[11.5px] text-[var(--ink-mute)]">
+        <span className="flex items-center gap-1.5">
+          <Check size={12} className="text-[#15803D]" /> Preferences save automatically
+        </span>
+        <span className="flex items-center gap-1.5">
+          <MessageCircle size={12} /> WhatsApp alerts go to your number on file, or the
+          workspace support number.
+        </span>
       </div>
     </section>
   );

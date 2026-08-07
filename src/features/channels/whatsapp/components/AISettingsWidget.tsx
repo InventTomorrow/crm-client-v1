@@ -1,7 +1,9 @@
 "use client";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { hasCapability, type VerticalCapability } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/shared/ui/Switch";
-import { Ban, Clock, MessageSquareReply, Zap } from "lucide-react";
+import { Ban, CalendarClock, Clock, MessageSquareReply, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useUpdateWAConfig, useWAConfig } from "../hooks/useWhatsApp";
 import type { WAConfig } from "../types";
@@ -14,6 +16,8 @@ const ASSISTANT_SETTINGS: {
   iconClassName: string;
   title: string;
   description: string;
+  /** Only rendered when the workspace's vertical unlocks this. Omitted = always shown. */
+  capability?: VerticalCapability;
 }[] = [
   {
     key: "aiEnabled",
@@ -35,13 +39,28 @@ const ASSISTANT_SETTINGS: {
     iconClassName: "bg-[rgba(239,68,68,0.08)] text-[#EF4444]",
     title: "Allow Order Cancellation",
     description: "Let customers cancel their own orders via chat.",
+    capability: "ORDERS",
+  },
+  {
+    key: "allowReschedule",
+    Icon: CalendarClock,
+    iconClassName: "bg-[rgba(14,165,233,0.1)] text-[#0369A1]",
+    title: "Allow Rescheduling",
+    description: "Let customers move a booked appointment via chat.",
+    capability: "BOOKINGS",
   },
 ];
 
 export function AISettingsWidget() {
   const { data: config, isLoading } = useWAConfig();
+  const { tenant } = useCurrentTenant();
   const updateConfigMut = useUpdateWAConfig();
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const visibleSettings = ASSISTANT_SETTINGS.filter(
+    (setting) =>
+      !setting.capability || hasCapability(tenant?.businessVertical, setting.capability),
+  );
 
   const aiEnabled = config?.aiEnabled ?? false;
 
@@ -100,7 +119,7 @@ export function AISettingsWidget() {
 
       {/* Toggles */}
       <div className="mt-4 flex flex-col gap-2.5">
-        {ASSISTANT_SETTINGS.map((setting) => (
+        {visibleSettings.map((setting) => (
           <div
             key={setting.key}
             className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3.5 py-3"

@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/apiClient";
 import type { BusinessVertical } from "@/lib/business-verticals";
-import type { CreateTenantPayload, Tenant } from "../types";
+import type { CreateTenantPayload, Tenant, WorkspaceStats } from "../types";
 
 export async function createTenant(data: CreateTenantPayload): Promise<Tenant> {
   const res = await apiClient.post<{ success: true; data: Tenant }>(
@@ -35,6 +35,13 @@ export async function restoreTenant(id: string): Promise<void> {
 export async function getTenants(): Promise<Tenant[]> {
   const res = await apiClient.get<{ success: true; data: Tenant[] }>(
     "/tenants",
+  );
+  return res.data.data;
+}
+
+export async function getMyWorkspaceStats(): Promise<WorkspaceStats[]> {
+  const res = await apiClient.get<{ success: true; data: WorkspaceStats[] }>(
+    "/tenants/me/workspace-stats",
   );
   return res.data.data;
 }

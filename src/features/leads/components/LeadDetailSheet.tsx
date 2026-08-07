@@ -1,6 +1,7 @@
 "use client";
 import { useGenerateCheckout, useSendReceipt } from "@/features/checkout/hooks";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
+import { formatDateTime } from "@/lib/date";
 import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -216,16 +217,29 @@ export default function LeadDetailSheet({
           {/* Stats */}
           <div className="grid grid-cols-2 gap-2">
             {[
-              { l: "Lifetime Value", v: pkr(lead.value || 0) },
-              { l: "Last Active", v: `${lead.time} ago` },
-              { l: "Channel", v: lead.channel.toUpperCase() },
-            ].map((k, i) => (
-              <div key={i} className="card p-[11px]">
+              { label: "Lifetime Value", value: pkr(lead.value || 0) },
+              { label: "Channel", value: lead.channel.toUpperCase() },
+              {
+                label: "Joined",
+                value: formatDateTime(lead.createdAt),
+                compact: true,
+              },
+              {
+                label: "Last Activity",
+                value: formatDateTime(lead.lastContactedAt, "Never contacted"),
+                compact: true,
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="card p-[11px]">
                 <div className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-                  {k.l}
+                  {stat.label}
                 </div>
-                <div className="font-semibold text-[17px] mt-1 text-[var(--ink)] font-[var(--font-head)]">
-                  {k.v}
+                <div
+                  className={`font-semibold mt-1 text-[var(--ink)] font-[var(--font-head)] ${
+                    stat.compact ? "text-[13px]" : "text-[17px]"
+                  }`}
+                >
+                  {stat.value}
                 </div>
               </div>
             ))}

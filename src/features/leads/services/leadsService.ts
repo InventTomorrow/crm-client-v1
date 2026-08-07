@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
+import { formatActivityDate } from '@/lib/date';
 import type { Channel } from '@/lib/mockData';
 import type { Lead, LeadStatus } from '../types';
 
@@ -17,7 +18,9 @@ const toLead = (data: any): Lead => ({
   email: data.email || undefined,
   conversationId: data.conversations?.[0]?.id ?? undefined,
   lastMsg: data.conversations?.[0]?.messages?.[0]?.content || '',
-  time: data.lastContactedAt ? new Date(data.lastContactedAt).toLocaleDateString() : 'New',
+  createdAt: data.createdAt ?? undefined,
+  lastContactedAt: data.lastContactedAt ?? undefined,
+  time: formatActivityDate(data.lastContactedAt, 'Never contacted'),
   unread: 0,
   // Pipeline value = sum of the lead's realised (non-cancelled) order totals.
   value: Array.isArray(data.orders)

@@ -1,3 +1,4 @@
+import type { BusinessVertical } from '@/lib/business-verticals';
 import { z } from 'zod';
 
 const passwordSchema = z
@@ -87,7 +88,7 @@ export interface UserResponse {
   memberships: Array<{
     id: string;
     role: { id: string; name: string };
-    tenant: { id: string; name: string; type: string; businessVertical: 'ECOMMERCE' | 'RESTAURANT'; deletedAt?: string | null };
+    tenant: { id: string; name: string; type: string; businessVertical: BusinessVertical; deletedAt?: string | null };
     isActive?: boolean;
   }>;
   // Active-membership convenience fields (resolved server-side from the JWT tenant)

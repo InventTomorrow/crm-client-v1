@@ -6,6 +6,7 @@ import {
 } from '@/shared/ui/Collapsible';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import type { VerticalCapability } from '@/lib/business-verticals';
 import { findActiveChildHref, type NavItem } from './navItems';
 
 interface SidebarNavItemProps {
@@ -19,6 +20,7 @@ interface SidebarNavItemProps {
   onToggleExpanded: () => void;
   onNavigate: () => void;
   canAccess: (perm?: string) => boolean;
+  canUseCapability: (capability?: VerticalCapability) => boolean;
 }
 
 export function SidebarNavItem({
@@ -31,9 +33,12 @@ export function SidebarNavItem({
   onToggleExpanded,
   onNavigate,
   canAccess,
+  canUseCapability,
 }: SidebarNavItemProps) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-  const visibleChildren = (item.children ?? []).filter((child) => canAccess(child.perm));
+  const visibleChildren = (item.children ?? []).filter(
+    (child) => canAccess(child.perm) && canUseCapability(child.capability),
+  );
 
   // Collapsed rail has no room for a submenu — the parent link still reaches the section.
   const showChildren = !collapsed && visibleChildren.length > 0;

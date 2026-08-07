@@ -6,13 +6,19 @@ import {
   useDeleteTenant,
   useLeaveWorkspace,
   useLeftMembers,
+  useMyWorkspaceStats,
   useRestoreTenant,
   useSwitchWorkspace,
 } from "@/features/tenant/hooks/useTenant";
+import type { WorkspaceStats } from "@/features/tenant/types";
 import { useAppStore } from "@/lib/appStore";
 import { BUSINESS_VERTICALS, type BusinessVertical } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
 import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
+import {
+  buildWorkspaceCardTiles,
+  getBusinessCategoryBadge,
+} from "../utils/workspaceCardStats";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +38,6 @@ import {
   Shield,
   Trash2,
   UserMinus,
-  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/shared/ui/Button";
@@ -321,6 +326,7 @@ function LeaveConfirmDialog({
 // ─────────────────────────────────────────────────────────────
 function WorkspaceCard({
   membership,
+  stats,
   index,
   isActive,
   onSwitch,
@@ -336,10 +342,12 @@ function WorkspaceCard({
       id: string;
       name: string;
       type: string;
+      businessVertical: BusinessVertical;
       deletedAt?: string | null;
     };
     isActive?: boolean;
   };
+  stats: WorkspaceStats | undefined;
   index: number;
   isActive: boolean;
   onSwitch: () => void;
@@ -351,8 +359,8 @@ function WorkspaceCard({
   const color = PALETTE[index % PALETTE.length];
   const short = membership.tenant.name.substring(0, 2).toUpperCase();
   const isOwner = membership.role.name.toLowerCase() === "owner";
-  const plan =
-    membership.tenant.type === "INDIVIDUAL" ? "Individual" : "Organization";
+  const category = getBusinessCategoryBadge(membership.tenant.businessVertical);
+  const tiles = buildWorkspaceCardTiles(membership.tenant.businessVertical, stats);
 
   // Pending deletion: compute days left in the 60-day grace window.
   const pendingDelete = !!membership.tenant.deletedAt;
@@ -413,22 +421,22 @@ function WorkspaceCard({
               <Shield size={11} className="text-[var(--accent)]" />
             )}
             <span>{membership.role.name}</span>
-            <span>·</span>
-            <span>{plan}</span>
           </div>
         </div>
       </div>
+
+      {/* Business category */}
+      <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--accent)]">
+        <category.Icon size={12} />
+        {category.label}
+      </span>
 
       {/* Divider */}
       <div className="h-px bg-[var(--line)]" />
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { icon: Users, label: "Members", value: "—" },
-          { icon: Building2, label: "Type", value: plan },
-          { icon: Shield, label: "Role", value: membership.role.name },
-        ].map(({ icon: Icon, label, value }) => (
+        {tiles.map(({ Icon, label, value }) => (
           <div
             key={label}
             className="rounded-lg bg-[var(--surface-2)] p-2.5 text-center"
@@ -521,6 +529,11 @@ export function WorkspacesManagementView() {
     useRestoreTenant();
   const { mutate: leaveWorkspace, isPending: isLeaving } = useLeaveWorkspace();
   const { data: leftMembers } = useLeftMembers();
+  const { data: workspaceStats } = useMyWorkspaceStats();
+
+  const statsByTenantId = new Map(
+    (workspaceStats ?? []).map((entry) => [entry.tenantId, entry]),
+  );
 
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -622,6 +635,7 @@ export function WorkspacesManagementView() {
             <WorkspaceCard
               key={m.tenant.id}
               membership={m}
+              stats={statsByTenantId.get(m.tenant.id)}
               index={idx}
               isActive={m.tenant.id === currentWorkspaceId}
               onSwitch={() => {

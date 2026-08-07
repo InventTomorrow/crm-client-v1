@@ -1,3 +1,11 @@
+import {
+  CalendarCheck,
+  CalendarSync,
+  CalendarX2,
+  CheckCircle2,
+  Hourglass,
+  type LucideIcon,
+} from 'lucide-react';
 import type {
   Appointment,
   AppointmentStatus,
@@ -8,7 +16,7 @@ import type {
 } from '../types';
 import { minutesBetween, WEEKDAY_LABELS } from '../types';
 
-/** Badge tone per status — cancelled/no-show read as failures, completed as done. */
+/** Badge tone per status — cancelled reads as a failure, completed as done. */
 export const APPOINTMENT_STATUS_VARIANTS: Record<
   AppointmentStatus,
   'default' | 'secondary' | 'outline' | 'destructive'
@@ -16,20 +24,38 @@ export const APPOINTMENT_STATUS_VARIANTS: Record<
   PENDING: 'outline',
   CONFIRMED: 'default',
   COMPLETED: 'secondary',
-  NO_SHOW: 'destructive',
   CANCELLED: 'destructive',
   RESCHEDULED: 'outline',
 };
 
-/** Statuses a booking can still move to — terminal ones offer nothing further. */
+/** Icon per status, used on both the badge and the button that sets it. */
+export const APPOINTMENT_STATUS_ICONS: Record<AppointmentStatus, LucideIcon> = {
+  PENDING: Hourglass,
+  CONFIRMED: CalendarCheck,
+  COMPLETED: CheckCircle2,
+  CANCELLED: CalendarX2,
+  RESCHEDULED: CalendarSync,
+};
+
+/**
+ * Statuses a booking can still move to. Rescheduling is missing on purpose — it is
+ * not a status flip but a new time, so it opens the slot picker instead.
+ */
 export const NEXT_STATUSES: Record<AppointmentStatus, AppointmentStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['COMPLETED', 'NO_SHOW', 'CANCELLED'],
+  CONFIRMED: ['COMPLETED', 'CANCELLED'],
   COMPLETED: [],
-  NO_SHOW: ['RESCHEDULED'],
-  CANCELLED: ['RESCHEDULED'],
+  CANCELLED: [],
   RESCHEDULED: ['CONFIRMED', 'CANCELLED'],
 };
+
+/**
+ * A call that already happened cannot be moved; everything else can, including a
+ * cancelled one — putting it back on the calendar is how the owner un-cancels.
+ */
+export function isReschedulable(appointment: Appointment): boolean {
+  return appointment.status !== 'COMPLETED';
+}
 
 export const SLOT_UNAVAILABLE_LABELS: Record<SlotUnavailableReason, string> = {
   BOOKED: 'Already booked',

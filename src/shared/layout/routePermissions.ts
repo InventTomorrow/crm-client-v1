@@ -36,6 +36,7 @@ const ROUTE_CAPABILITIES: { prefix: string; capability: VerticalCapability }[] =
   { prefix: "/qualification", capability: "QUALIFICATION" },
   { prefix: "/bookings", capability: "BOOKINGS" },
   { prefix: "/resources", capability: "RESOURCES" },
+  { prefix: "/channels/order-api", capability: "ORDERS" },
 ];
 
 /**

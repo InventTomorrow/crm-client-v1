@@ -2,9 +2,10 @@
 import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import { Skeleton } from '@/shared/ui/Skeleton';
-import { CalendarX2, Phone, StickyNote, User } from 'lucide-react';
+import { CalendarX2, Clock, Phone, StickyNote } from 'lucide-react';
 import { APPOINTMENT_STATUS_LABELS, type Appointment } from '../types';
 import {
+  APPOINTMENT_STATUS_ICONS,
   APPOINTMENT_STATUS_VARIANTS,
   formatSlotTime,
   groupAppointmentsByDay,
@@ -63,7 +64,9 @@ export function AppointmentsList({
           </p>
 
           <div className="flex flex-col gap-2">
-            {group.appointments.map((appointment) => (
+            {group.appointments.map((appointment) => {
+              const StatusIcon = APPOINTMENT_STATUS_ICONS[appointment.status];
+              return (
               <article
                 key={appointment.id}
                 className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between"
@@ -80,8 +83,9 @@ export function AppointmentsList({
                       </p>
                       <Badge
                         variant={APPOINTMENT_STATUS_VARIANTS[appointment.status]}
-                        className="text-[10px]"
+                        className="gap-1 text-[10px]"
                       >
+                        <StatusIcon size={10} />
                         {APPOINTMENT_STATUS_LABELS[appointment.status]}
                       </Badge>
                     </div>
@@ -92,7 +96,7 @@ export function AppointmentsList({
                         {appointment.customerPhone}
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <User size={11} />
+                        <Clock size={11} />
                         {appointment.durationMinutes} min
                       </span>
                     </div>
@@ -105,8 +109,9 @@ export function AppointmentsList({
                     )}
 
                     {appointment.cancelReason && (
-                      <p className="mt-1.5 text-[11.5px] text-destructive">
-                        {appointment.cancelReason}
+                      <p className="mt-1.5 flex items-start gap-1.5 text-[11.5px] text-destructive">
+                        <CalendarX2 size={11} className="mt-0.5 shrink-0" />
+                        <span className="min-w-0">{appointment.cancelReason}</span>
                       </p>
                     )}
                   </div>
@@ -116,7 +121,8 @@ export function AppointmentsList({
                   <AppointmentStatusActions appointment={appointment} />
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}

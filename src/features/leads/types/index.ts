@@ -6,6 +6,9 @@ export interface Lead extends BaseLead {
   phone?: string;
   email?: string;
   conversationId?: string;
+  /** Raw ISO timestamps from the API — `time` is only their display form. */
+  createdAt?: string;
+  lastContactedAt?: string;
 }
 
 export type LeadsView = 'kanban' | 'list' | 'table';

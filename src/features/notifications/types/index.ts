@@ -14,6 +14,9 @@ export const notificationTypeSchema = z.enum([
   'NEW_LOGIN',
   'BILLING',
   'SUPPORT_CONTACT_CHANGED',
+  'APPOINTMENT_BOOKED',
+  'APPOINTMENT_RESCHEDULED',
+  'APPOINTMENT_CANCELLED',
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
@@ -37,6 +40,7 @@ export const notificationPreferenceSchema = z.object({
   type: notificationTypeSchema,
   inApp: z.boolean(),
   email: z.boolean(),
+  whatsapp: z.boolean(),
 });
 export type NotificationPreference = z.infer<typeof notificationPreferenceSchema>;
 

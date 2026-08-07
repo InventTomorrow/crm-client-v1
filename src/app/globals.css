@@ -19,6 +19,7 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-ink-mute: var(--ink-mute);
+  --color-ink-field: var(--ink-field);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
 
@@ -120,6 +121,7 @@
   --ink:      oklch(0.176 0.018 243);       /* #111B21 */
   --ink-soft: oklch(0.356 0.022 236);       /* #3B4A54 */
   --ink-mute: oklch(0.618 0.018 229);       /* #8696A0 */
+  --ink-field:oklch(0.478 0.021 233);       /* #5A6B76 — typed values, softer than labels */
   --line:     oklch(0.949 0.009 234);       /* #E9EDEF */
   --line-soft:oklch(0.964 0.006 248);       /* #F0F2F5 */
 
@@ -182,6 +184,7 @@ html.dark {
   --ink:      #E9EDEF;   /* primary text */
   --ink-soft: #D1D7DB;   /* secondary text */
   --ink-mute: #8696A0;   /* muted text / icons */
+  --ink-field:#AEBAC1;   /* typed values, softer than labels */
   --line:     #2F3B44;   /* borders */
   --line-soft:#222D34;   /* subtle dividers */
   --shadow-1: 0 1px 2px oklch(0 0 0 / 0.40);

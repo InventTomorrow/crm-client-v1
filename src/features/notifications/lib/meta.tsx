@@ -1,5 +1,8 @@
 import {
   Bell,
+  CalendarCheck,
+  CalendarSync,
+  CalendarX2,
   Flame,
   Inbox,
   LogIn,
@@ -33,6 +36,21 @@ export function notificationMeta(type: NotificationType): Meta {
     NEW_LOGIN: { Icon: LogIn, bg: 'var(--surface-2)', color: 'var(--ink-soft)' },
     BILLING: { Icon: CreditCard, bg: 'var(--surface-2)', color: 'var(--ink-soft)' },
     SUPPORT_CONTACT_CHANGED: { Icon: Phone, bg: 'var(--surface-2)', color: 'var(--ink-soft)' },
+    APPOINTMENT_BOOKED: {
+      Icon: CalendarCheck,
+      bg: 'var(--accent-soft)',
+      color: 'var(--accent)',
+    },
+    APPOINTMENT_RESCHEDULED: {
+      Icon: CalendarSync,
+      bg: 'rgba(245,158,11,0.14)',
+      color: '#B45309',
+    },
+    APPOINTMENT_CANCELLED: {
+      Icon: CalendarX2,
+      bg: 'rgba(239,68,68,0.12)',
+      color: '#DC2626',
+    },
   };
   return map[type] ?? { Icon: Bell, bg: 'var(--surface-2)', color: 'var(--ink-soft)' };
 }
@@ -57,6 +75,10 @@ export function notificationHref(n: Notification): string {
     case 'BILLING':
     case 'SUPPORT_CONTACT_CHANGED':
       return '/settings';
+    case 'APPOINTMENT_BOOKED':
+    case 'APPOINTMENT_RESCHEDULED':
+    case 'APPOINTMENT_CANCELLED':
+      return '/bookings';
     default:
       return '/notifications';
   }

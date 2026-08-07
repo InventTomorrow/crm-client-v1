@@ -63,7 +63,7 @@ export default function ListView({
                   {l.city}
                 </span>
                 <span>·</span>
-                <span>{l.time} ago</span>
+                <span>{l.time}</span>
                 {l.value > 0 && (
                   <>
                     <span>·</span>

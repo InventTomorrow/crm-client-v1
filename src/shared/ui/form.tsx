@@ -55,7 +55,11 @@ function FormLabel({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelE
   return (
     <label
       htmlFor={id}
-      className={cn('text-[12px] font-medium', error ? 'text-[#DC2626]' : 'text-[var(--ink-soft)]', className)}
+      className={cn(
+        'text-sm font-medium leading-none',
+        error ? 'text-[#DC2626]' : 'text-[var(--ink)]',
+        className,
+      )}
       {...props}
     />
   );

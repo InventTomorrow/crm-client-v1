@@ -1,8 +1,17 @@
+"use client";
+import { hasCapability } from "@/lib/business-verticals";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { Button } from "@/shared/ui/Button";
 import { Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 
 export function OrderApiCard() {
+  const { tenant } = useCurrentTenant();
+
+  // Gated here rather than at each call site — the channels grid and the
+  // settings channels tab both render it.
+  if (!hasCapability(tenant?.businessVertical, "ORDERS")) return null;
+
   return (
     <div className="card hover-shimmer p-5 transition-colors hover:bg-[var(--surface-2)]">
       <div className="flex items-center gap-3">

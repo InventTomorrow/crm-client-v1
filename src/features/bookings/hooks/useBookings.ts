@@ -191,7 +191,9 @@ export function useBookingConfigForm(options?: { onSaved?: () => void }) {
     form.reset({
       label: savedConfig.label,
       description: savedConfig.description ?? '',
-      meetingType: savedConfig.meetingType,
+      // Configs written before meetingType existed come back without it — fall
+      // back so the select shows a real value instead of an empty box.
+      meetingType: savedConfig.meetingType ?? 'PHONE',
       durationMinutes: savedConfig.durationMinutes,
       bufferMinutes: savedConfig.bufferMinutes,
       maxPerDay: savedConfig.maxPerDay,

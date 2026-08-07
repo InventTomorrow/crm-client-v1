@@ -27,7 +27,6 @@ export const APPOINTMENT_STATUSES = [
   'PENDING',
   'CONFIRMED',
   'COMPLETED',
-  'NO_SHOW',
   'CANCELLED',
   'RESCHEDULED',
 ] as const;
@@ -37,7 +36,6 @@ export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   PENDING: 'Pending',
   CONFIRMED: 'Confirmed',
   COMPLETED: 'Completed',
-  NO_SHOW: 'No-show',
   CANCELLED: 'Cancelled',
   RESCHEDULED: 'Rescheduled',
 };

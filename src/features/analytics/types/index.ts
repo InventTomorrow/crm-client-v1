@@ -13,13 +13,32 @@ export const kpiCardSchema = z.object({
   value: z.number(),
   delta: z.number().nullable(),
   up: z.boolean(),
+  lowerIsBetter: z.boolean().default(false),
 });
+
+/** Mirrors the server's DailyMetric — which of these the graph plots is decided
+ * per vertical and sent back in `chart.metrics`. */
+export const dailyMetricSchema = z.enum([
+  'leads',
+  'orders',
+  'completedOrders',
+  'appointments',
+  'completedAppointments',
+]);
 
 export const dailyPointSchema = z.object({
   date: z.string(),
   leads: z.number(),
   orders: z.number(),
-  completed: z.number(),
+  completedOrders: z.number(),
+  appointments: z.number(),
+  completedAppointments: z.number(),
+});
+
+export const analyticsChartSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+  metrics: z.array(dailyMetricSchema),
 });
 
 export const funnelStageSchema = z.object({
@@ -37,13 +56,16 @@ export const aiHandoffSchema = z.object({
 export const analyticsOverviewSchema = z.object({
   window: z.object({ from: z.string(), to: z.string() }),
   kpis: z.array(kpiCardSchema),
+  chart: analyticsChartSchema,
   series: z.array(dailyPointSchema),
   funnel: z.array(funnelStageSchema),
   aiHandoff: aiHandoffSchema,
 });
 
 export type KpiCard = z.infer<typeof kpiCardSchema>;
+export type DailyMetric = z.infer<typeof dailyMetricSchema>;
 export type DailyPoint = z.infer<typeof dailyPointSchema>;
+export type AnalyticsChart = z.infer<typeof analyticsChartSchema>;
 export type FunnelStage = z.infer<typeof funnelStageSchema>;
 export type AiHandoff = z.infer<typeof aiHandoffSchema>;
 export type AnalyticsOverview = z.infer<typeof analyticsOverviewSchema>;

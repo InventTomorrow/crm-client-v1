@@ -1,7 +1,6 @@
 "use client";
 import { useMe, useUpdateMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import { usePresignedUpload } from "@/features/inventory/hooks/useProducts";
 import { NotificationPreferences } from "@/features/notifications/components/NotificationPreferences";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
@@ -30,12 +29,11 @@ import {
   Shield,
   Star,
   Store,
-  Upload,
   User,
   Zap,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { SettingsSection } from "../types";
@@ -93,9 +91,6 @@ function Metric({ label, v, pct }: { label: string; v: string; pct: number }) {
 function ProfileSection() {
   const { user, isLoading } = useMe();
   const { mutate: saveProfile, isPending: isSaving } = useUpdateMe();
-  const { upload: uploadImage, isPending: isUploading } =
-    usePresignedUpload("avatars");
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState(false);
 
   const form = useForm<ProfileFormValues>({
@@ -122,18 +117,6 @@ function ProfileSection() {
   const currentMembership = user?.memberships?.[0];
   const workspaceName = currentMembership?.tenant?.name ?? "";
   const roleName = currentMembership?.role?.name ?? "";
-
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    try {
-      const url = await uploadImage(file);
-      form.setValue("avatarUrl", url, { shouldDirty: true });
-    } catch {
-      // error toast already shown by usePresignedUpload's onError
-    }
-  };
 
   const handleSave = (data: ProfileFormValues) => {
     saveProfile(
@@ -173,30 +156,6 @@ function ProfileSection() {
               {workspaceName && roleName ? " · " : ""}
               {roleName}
             </div>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoChange}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => photoInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 size={12} className="animate-spin" /> Uploading…
-                </>
-              ) : (
-                <>
-                  <Upload size={12} /> Upload photo
-                </>
-              )}
-            </Button>
           </div>
         </div>
 

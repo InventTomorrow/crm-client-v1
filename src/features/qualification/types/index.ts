@@ -28,11 +28,15 @@ export type LeadFieldMapping = (typeof LEAD_FIELD_MAPPINGS)[number];
  * QUICK_REPLY, which the form enforces rather than the schema. */
 export const qualificationQuestionFormSchema = z.object({
   order: z.number().int().nonnegative(),
+  // Derived from the question text rather than typed — see utils/fieldName.
   fieldName: z
     .string()
     .min(1, 'Field name is required')
     .max(MAX_FIELD_NAME_LENGTH, `Keep it under ${MAX_FIELD_NAME_LENGTH} characters`)
-    .regex(/^[a-zA-Z0-9_]+$/, 'Use letters, numbers and underscores only'),
+    .regex(
+      /^[a-zA-Z_][a-zA-Z0-9_]*$/,
+      'Use letters, numbers and underscores, starting with a letter',
+    ),
   questionText: z.string().min(1, 'Question text is required'),
   inputType: z.enum(QUESTION_INPUT_TYPES),
   options: z.array(z.string()).default([]),

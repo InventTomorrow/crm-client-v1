@@ -25,7 +25,7 @@ import {
   qualificationFormSchema,
   type QualificationFormData,
 } from '../types';
-import { MAX_FIELD_NAME_LENGTH, fallbackFieldName, toFieldName } from '../utils/fieldName';
+import { deriveUniqueFieldName } from '../utils/fieldName';
 
 type QualificationFormInput = z.input<typeof qualificationFormSchema>;
 
@@ -75,19 +75,22 @@ export function QuestionBuilder({
   }
 
   /**
-   * Keeps an unsaved question's field name following its text. It stops on two signals,
-   * both of which mean the key is now owned by someone else:
-   *  - the key has been saved, so answers and scoring rules already reference it;
-   *  - the key no longer matches what this question's text derives, i.e. it was hand-edited.
+   * Keeps an unsaved question's storage key following its text. A saved key is left
+   * alone — answers and scoring rules already reference it, so rewriting it would
+   * orphan them. Keys in use elsewhere in the form are passed in so a duplicate
+   * question gets a numbered key instead of an error nobody can act on.
    */
-  function handleQuestionTextChange(index: number, previousText: string, nextText: string) {
+  function handleQuestionTextChange(index: number, nextText: string) {
     const currentFieldName = form.getValues(`questions.${index}.fieldName`) ?? '';
     if (savedFieldNames.has(currentFieldName)) return;
-    if (currentFieldName && currentFieldName !== toFieldName(previousText)) return;
+
+    const keysInUse = (form.getValues('questions') ?? [])
+      .map((question, questionIndex) => (questionIndex === index ? '' : question.fieldName))
+      .filter(Boolean);
 
     form.setValue(
       `questions.${index}.fieldName`,
-      toFieldName(nextText) || fallbackFieldName(index),
+      deriveUniqueFieldName(nextText, index, keysInUse),
       { shouldValidate: true, shouldDirty: true },
     );
   }
@@ -183,11 +186,7 @@ export function QuestionBuilder({
                             disabled={disabled}
                             {...questionTextField}
                             onChange={(event) => {
-                              handleQuestionTextChange(
-                                index,
-                                questionTextField.value,
-                                event.target.value,
-                              );
+                              handleQuestionTextChange(index, event.target.value);
                               questionTextField.onChange(event);
                             }}
                           />
@@ -216,33 +215,6 @@ export function QuestionBuilder({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name={`questions.${index}.fieldName`}
-                  render={({ field: fieldNameField }) => {
-                    const isCommittedKey = savedFieldNames.has(fieldNameField.value);
-                    return (
-                      <FormItem>
-                        <FormLabel>Field name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="monthlyBudget"
-                            maxLength={MAX_FIELD_NAME_LENGTH}
-                            disabled={disabled}
-                            {...fieldNameField}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {isCommittedKey
-                            ? 'Saved answers use this key — renaming it unlinks them.'
-                            : 'Filled in from the question. Edit it to set your own.'}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-
-                <FormField
-                  control={form.control}
                   name={`questions.${index}.inputType`}
                   render={({ field: inputTypeField }) => (
                     <FormItem>
@@ -252,6 +224,32 @@ export function QuestionBuilder({
                           {QUESTION_INPUT_TYPES.map((type) => (
                             <option key={type} value={type}>
                               {QUESTION_INPUT_TYPE_LABELS[type]}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`questions.${index}.mapsToLeadField`}
+                  render={({ field: mapsToField }) => (
+                    <FormItem>
+                      <FormLabel>Save to lead field</FormLabel>
+                      <FormControl>
+                        <NativeSelect
+                          size="lg"
+                          disabled={disabled}
+                          value={mapsToField.value ?? ''}
+                          onChange={(e) => mapsToField.onChange(e.target.value || null)}
+                        >
+                          <option value="">Don&apos;t save</option>
+                          {LEAD_FIELD_MAPPINGS.map((leadField) => (
+                            <option key={leadField} value={leadField}>
+                              {leadField}
                             </option>
                           ))}
                         </NativeSelect>
@@ -286,52 +284,39 @@ export function QuestionBuilder({
                 />
               )}
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.mapsToLeadField`}
-                  render={({ field: mapsToField }) => (
-                    <FormItem>
-                      <FormLabel>Save to lead field</FormLabel>
-                      <FormControl>
-                        <NativeSelect
-                          size="lg"
-                          disabled={disabled}
-                          value={mapsToField.value ?? ''}
-                          onChange={(e) => mapsToField.onChange(e.target.value || null)}
-                        >
-                          <option value="">Don&apos;t save</option>
-                          {LEAD_FIELD_MAPPINGS.map((leadField) => (
-                            <option key={leadField} value={leadField}>
-                              {leadField}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                 <FormField
                   control={form.control}
                   name={`questions.${index}.isRequired`}
                   render={({ field: isRequiredField }) => (
-                    <FormItem>
-                      <FormLabel>Required</FormLabel>
+                    <FormItem className="flex flex-row items-center gap-3 space-y-0">
                       <FormControl>
-                        <div className="flex h-10 items-center">
-                          <Switch
-                            checked={isRequiredField.value}
-                            disabled={disabled}
-                            onCheckedChange={isRequiredField.onChange}
-                          />
-                        </div>
+                        <Switch
+                          checked={isRequiredField.value}
+                          disabled={disabled}
+                          onCheckedChange={isRequiredField.onChange}
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <div>
+                        <FormLabel className="cursor-pointer">Required</FormLabel>
+                        <FormDescription>
+                          The bot waits here until it gets an answer.
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />
+
+                {/* The storage key is derived, not typed — but once answers reference it,
+                    it stops moving, and that is worth saying out loud. */}
+                {savedFieldNames.has(questions?.[index]?.fieldName ?? '') && (
+                  <p className="text-[11px] text-[var(--ink-mute)]">
+                    Answers saved under{' '}
+                    <code className="rounded border border-[var(--line)] bg-[var(--surface)] px-1 py-0.5 font-mono text-[10.5px] text-[var(--ink-soft)]">
+                      {questions?.[index]?.fieldName}
+                    </code>
+                  </p>
+                )}
               </div>
             </article>
           );

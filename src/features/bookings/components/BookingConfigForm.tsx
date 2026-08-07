@@ -1,6 +1,5 @@
-'use client';
-import { Button } from '@/shared/ui/Button';
-import { FormSection } from '@/shared/ui/FormSection';
+"use client";
+import { Button } from "@/shared/ui/Button";
 import {
   Form,
   FormControl,
@@ -9,32 +8,38 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/shared/ui/form';
-import { Input } from '@/shared/ui/Input';
+} from "@/shared/ui/form";
+import { FormSection } from "@/shared/ui/FormSection";
+import { Input } from "@/shared/ui/Input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/shared/ui/Select';
-import { Skeleton } from '@/shared/ui/Skeleton';
-import { Switch } from '@/shared/ui/Switch';
-import { Textarea } from '@/shared/ui/Textarea';
-import { CalendarClock, Clock, MessageSquare, SlidersHorizontal } from 'lucide-react';
-import { useWatch } from 'react-hook-form';
-import { useBookingConfigForm } from '../hooks/useBookings';
-import { MEETING_TYPES, MEETING_TYPE_LABELS } from '../types';
-import { WeekdayPicker } from './WeekdayPicker';
-import { WorkingHoursField } from './WorkingHoursField';
+} from "@/shared/ui/Select";
+import { Skeleton } from "@/shared/ui/Skeleton";
+import { Switch } from "@/shared/ui/Switch";
+import { Textarea } from "@/shared/ui/Textarea";
+import {
+  CalendarClock,
+  Clock,
+  MessageSquare,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useWatch } from "react-hook-form";
+import { useBookingConfigForm } from "../hooks/useBookings";
+import { MEETING_TYPES, MEETING_TYPE_LABELS } from "../types";
+import { WeekdayPicker } from "./WeekdayPicker";
+import { WorkingHoursField } from "./WorkingHoursField";
 
 const COMMON_TIMEZONES = [
-  'Asia/Karachi',
-  'Asia/Dubai',
-  'Asia/Kolkata',
-  'Europe/London',
-  'America/New_York',
-  'America/Los_Angeles',
+  "Asia/Karachi",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Europe/London",
+  "America/New_York",
+  "America/Los_Angeles",
 ];
 
 /** Editor for the single BookingConfig per workspace — what the bot is allowed to offer. */
@@ -45,8 +50,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
 
   // The hours editor previews how many slots each window yields, which depends
   // on these two — so it has to re-render as they're typed.
-  const durationMinutes = useWatch({ control: form.control, name: 'durationMinutes' });
-  const bufferMinutes = useWatch({ control: form.control, name: 'bufferMinutes' });
+  const durationMinutes = useWatch({
+    control: form.control,
+    name: "durationMinutes",
+  });
+  const bufferMinutes = useWatch({
+    control: form.control,
+    name: "bufferMinutes",
+  });
 
   if (isLoading) {
     return (
@@ -65,20 +76,65 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
           description="What leads are booking, and how it happens."
           Icon={CalendarClock}
         >
-          <FormField
-            control={form.control}
-            name="label"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Booking name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Free Strategy Session" disabled={isSaving} {...field} />
-                </FormControl>
-                <FormDescription>What the bot calls it when offering a slot.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="label"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Booking name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Free Strategy Session"
+                      disabled={isSaving}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    What the bot calls it when offering a slot.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="meetingType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Meeting type</FormLabel>
+                  <Select
+                    value={field.value ?? undefined}
+                    onValueChange={field.onChange}
+                    disabled={isSaving}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-10 w-full">
+                        <SelectValue placeholder="Pick how the call happens">
+                          {field.value
+                            ? MEETING_TYPE_LABELS[field.value]
+                            : undefined}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {MEETING_TYPES.map((meetingType) => (
+                        <SelectItem key={meetingType} value={meetingType}>
+                          {MEETING_TYPE_LABELS[meetingType]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    How the meeting is held — the bot tells the lead this when
+                    confirming.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}
@@ -97,7 +153,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                     placeholder="A 30-minute call to understand your goals and map out a plan."
                     disabled={isSaving}
                     {...field}
-                    value={field.value ?? ''}
+                    value={field.value ?? ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -107,42 +163,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
 
           <FormField
             control={form.control}
-            name="meetingType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Meeting type</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={isSaving}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {MEETING_TYPES.map((meetingType) => (
-                      <SelectItem key={meetingType} value={meetingType}>
-                        {MEETING_TYPE_LABELS[meetingType]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="isActive"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
+              <FormItem className="flex-row items-center justify-between gap-4 border-t border-[var(--line)] pt-5">
+                <div className="min-w-0 flex flex-col gap-1">
                   <FormLabel>Accepting bookings</FormLabel>
                   <FormDescription>
-                    Turn off to stop the bot offering slots without losing this setup.
+                    Turn off to stop the bot offering slots without losing this
+                    setup.
                   </FormDescription>
                 </div>
                 <FormControl>
@@ -168,22 +196,29 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange} disabled={isSaving}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={isSaving}
+                >
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger className="h-10 w-full">
+                      <SelectValue placeholder="Pick a timezone">
+                        {field.value ? field.value.replace("_", " ") : undefined}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {COMMON_TIMEZONES.map((timezone) => (
                       <SelectItem key={timezone} value={timezone}>
-                        {timezone.replace('_', ' ')}
+                        {timezone.replace("_", " ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  The times below are read in this zone. Leads see their own local time.
+                  The times below are read in this zone. Leads see their own
+                  local time.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -224,8 +259,9 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                   />
                 </FormControl>
                 <FormDescription>
-                  Slots are generated inside these hours from the duration below, and offered on
-                  every available day. Add a second window to close over lunch.
+                  Slots are generated inside these hours from the duration
+                  below, and offered on every available day. Add a second window
+                  to close over lunch.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -251,9 +287,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       min={5}
                       disabled={isSaving}
                       {...field}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                     />
                   </FormControl>
+                  <FormDescription>
+                    How long one meeting runs. Every offered slot is this long.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -271,9 +312,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       min={0}
                       disabled={isSaving}
                       {...field}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                     />
                   </FormControl>
+                  <FormDescription>
+                    Breathing room after each call before the next slot opens.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -291,9 +337,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       min={1}
                       disabled={isSaving}
                       {...field}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                     />
                   </FormControl>
+                  <FormDescription>
+                    Once this many are booked, the rest of that day is closed.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -311,10 +362,15 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       min={0}
                       disabled={isSaving}
                       {...field}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                     />
                   </FormControl>
-                  <FormDescription>Slots sooner than this are never offered.</FormDescription>
+                  <FormDescription>
+                    Slots sooner than this are never offered, so you always get
+                    time to prepare.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -332,9 +388,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       min={1}
                       disabled={isSaving}
                       {...field}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                     />
                   </FormControl>
+                  <FormDescription>
+                    How far into the future the calendar stays open to leads.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -361,7 +422,9 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Sent the moment a slot is taken.</FormDescription>
+                <FormDescription>
+                  Sent the moment a slot is taken.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -381,6 +444,9 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                     {...field}
                   />
                 </FormControl>
+                <FormDescription>
+                  Sent shortly before the call to cut no-shows.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -398,12 +464,14 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                     min={0}
                     disabled={isSaving}
                     {...field}
-                    onChange={(event) => field.onChange(Number(event.target.value))}
+                    onChange={(event) =>
+                      field.onChange(Number(event.target.value))
+                    }
                   />
                 </FormControl>
                 <FormDescription>
-                  Reminders are stored with the booking. Automatic delivery ships with the message
-                  scheduler.
+                  Reminders are stored with the booking. Automatic delivery
+                  ships with the message scheduler.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -413,7 +481,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving…' : 'Save booking settings'}
+            {isSaving ? "Saving…" : "Save booking settings"}
           </Button>
         </div>
       </form>

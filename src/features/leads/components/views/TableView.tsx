@@ -96,11 +96,11 @@ export default function TableView({
       },
       {
         id: "time",
-        accessorFn: (l) => l.time,
+        accessorFn: (l) => l.lastContactedAt ?? "",
         header: "Last activity",
         enableSorting: true,
         cell: ({ row }) => (
-          <span className="text-[var(--ink-mute)] text-[12px]">{row.original.time} ago</span>
+          <span className="text-[var(--ink-mute)] text-[12px]">{row.original.time}</span>
         ),
       },
       {

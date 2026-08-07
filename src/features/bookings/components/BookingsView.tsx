@@ -10,7 +10,14 @@ import {
 } from '@/shared/ui/Select';
 import { Skeleton } from '@/shared/ui/Skeleton';
 import { StatCard } from '@/shared/ui/StatCard';
-import { CalendarCheck, CalendarClock, CalendarX2, Plus, Settings2 } from 'lucide-react';
+import {
+  CalendarCheck,
+  CalendarClock,
+  CalendarX2,
+  ListFilter,
+  Plus,
+  Settings2,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import {
@@ -23,7 +30,11 @@ import {
   APPOINTMENT_STATUS_LABELS,
   type AppointmentStatus,
 } from '../types';
-import { countWeeklySlots, isBookingConfigured } from '../utils/appointmentFormat';
+import {
+  APPOINTMENT_STATUS_ICONS,
+  countWeeklySlots,
+  isBookingConfigured,
+} from '../utils/appointmentFormat';
 import { AppointmentsList } from './AppointmentsList';
 import { BookAppointmentSheet } from './BookAppointmentSheet';
 import { BookingsEmptyState } from './BookingsEmptyState';
@@ -126,12 +137,13 @@ export function BookingsView() {
         <StatCard
           label="Completed"
           value={statusCounts?.COMPLETED ?? 0}
+          hint="Slot freed"
           Icon={CalendarCheck}
         />
         <StatCard
-          label="No-shows"
-          value={statusCounts?.NO_SHOW ?? 0}
-          hint={statusCounts?.NO_SHOW ? 'Worth a follow-up' : undefined}
+          label="Cancelled"
+          value={statusCounts?.CANCELLED ?? 0}
+          hint={statusCounts?.CANCELLED ? 'Reschedule to win them back' : undefined}
           Icon={CalendarX2}
         />
         <StatCard
@@ -154,12 +166,19 @@ export function BookingsView() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_STATUSES}>All statuses</SelectItem>
-            {APPOINTMENT_STATUSES.map((status) => (
-              <SelectItem key={status} value={status}>
-                {APPOINTMENT_STATUS_LABELS[status]}
-              </SelectItem>
-            ))}
+            <SelectItem value={ALL_STATUSES}>
+              <ListFilter size={13} className="mr-1.5 text-[var(--ink-mute)]" />
+              All statuses
+            </SelectItem>
+            {APPOINTMENT_STATUSES.map((status) => {
+              const StatusIcon = APPOINTMENT_STATUS_ICONS[status];
+              return (
+                <SelectItem key={status} value={status}>
+                  <StatusIcon size={13} className="mr-1.5 text-[var(--ink-mute)]" />
+                  {APPOINTMENT_STATUS_LABELS[status]}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

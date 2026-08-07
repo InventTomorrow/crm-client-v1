@@ -26,6 +26,8 @@ export interface NavChild {
   href: string;
   label: string;
   perm?: string;
+  /** Restricts this child to workspaces whose vertical has this capability; omit to show for all. */
+  capability?: VerticalCapability;
   /** Optional leading icon — sections without one render label-only children. */
   Icon?: typeof Inbox;
   /** Settings tabs live behind `?section=` on one route — matched on the query, not the path. */
@@ -123,7 +125,8 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { href: "/channels", label: "Overview" },
       { href: "/channels/whatsapp", label: "WhatsApp" },
-      { href: "/channels/order-api", label: "Order API" },
+      // Ingests website orders — nothing to ingest in a vertical without ORDERS.
+      { href: "/channels/order-api", label: "Order API", capability: "ORDERS" },
     ],
   },
   // Auth-only — a user's own notification feed. Delivery preferences live under Settings.

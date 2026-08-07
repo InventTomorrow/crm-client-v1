@@ -1,5 +1,4 @@
 "use client";
-import { checkWhatsAppNumber } from "@/features/channels/whatsapp/services/whatsapp.service";
 import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
 import { useUrlState } from "@/shared/hooks/useUrlState";
@@ -35,8 +34,8 @@ import {
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
 import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
-import LeadDetailSheet from "./LeadDetailSheet";
 import type { LeadFormData } from "../validations.lead";
+import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
 import KanbanView from "./views/KanbanView";

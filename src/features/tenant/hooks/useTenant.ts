@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import {
   createTenant,
   deleteTenant,
+  getMyWorkspaceStats,
   getTenants,
   restoreTenant,
   updateTenant,
@@ -24,6 +25,15 @@ export function useTenants() {
   return useQuery({
     queryKey: ["tenants"],
     queryFn: getTenants,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/** Headline counters (leads, members, revenue, appointments) per workspace the user belongs to */
+export function useMyWorkspaceStats() {
+  return useQuery({
+    queryKey: ["workspace-stats"],
+    queryFn: getMyWorkspaceStats,
     staleTime: 2 * 60 * 1000,
   });
 }

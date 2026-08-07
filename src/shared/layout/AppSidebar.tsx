@@ -5,7 +5,7 @@ import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useLeadsCount } from "@/features/leads/hooks/useLeads";
 import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
-import { hasCapability } from "@/lib/business-verticals";
+import { hasCapability, type VerticalCapability } from "@/lib/business-verticals";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
@@ -68,6 +68,8 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   }
 
   const canAccess = (perm?: string) => permsLoading || !perm || can(perm);
+  const canUseCapability = (capability?: VerticalCapability) =>
+    !capability || hasCapability(tenant?.businessVertical, capability);
 
   // Inbox wants maximum chat space — collapse the sidebar once on entry, while
 
@@ -165,6 +167,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               onToggleExpanded={() => toggleSection(item.href)}
               onNavigate={onCloseMobile}
               canAccess={canAccess}
+              canUseCapability={canUseCapability}
             />
           ))}
         </nav>
