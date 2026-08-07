@@ -12,7 +12,6 @@ const FOOTER_LINKS = [
   { href: "/privacy-policy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms of Service" },
   { href: "/data-deletion", label: "Data Deletion" },
-  { href: "/auth/login", label: "Login" },
 ];
 
 export default function Footer() {
