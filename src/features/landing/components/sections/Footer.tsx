@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { Mail } from "lucide-react";
 import Container from "../Container";
 import Logo from "../Logo";
+
+const SUPPORT_EMAIL = "support@asaanrabta.com";
 
 const FOOTER_LINKS = [
   { href: "#features", label: "Features" },
@@ -29,6 +32,15 @@ export default function Footer() {
               </Link>
             ))}
           </nav>
+        </div>
+        <div className="mt-8 flex justify-center">
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="inline-flex items-center gap-2 text-[14px] text-brand-text transition-colors hover:text-brand-green"
+          >
+            <Mail className="size-4" aria-hidden="true" />
+            {SUPPORT_EMAIL}
+          </a>
         </div>
         <p className="mt-8 text-center text-brand-text text-[14px]">
           © 2026 AsaanRabta. WhatsApp sales, simplified.
