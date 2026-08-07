@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/apiClient';
 import { formatActivityDate } from '@/lib/date';
 import type { Channel } from '@/lib/mockData';
-import type { Lead, LeadStatus } from '../types';
+import type { BulkImportResult, DuplicatePhoneMatch, Lead, LeadStatus } from '../types';
 
 const CHANNEL_TO_FE: Record<string, Channel> = {
   WHATSAPP: 'wa', INSTAGRAM: 'ig', MESSENGER: 'fb',
@@ -152,8 +152,14 @@ export const parseImportCsv = async (csvContent: string): Promise<any[]> => {
   return response.data.data;
 };
 
-export const bulkCreateLeads = async (leads: any[]): Promise<{ total: number; successful: number; failed: number }> => {
+export const bulkCreateLeads = async (leads: any[]): Promise<BulkImportResult> => {
   const response = await apiClient.post('/leads/import/commit', { leads });
   return response.data.data;
+};
+
+/** Checks phones against every lead in the tenant, not just the loaded page. */
+export const checkDuplicatePhones = async (phones: string[]): Promise<DuplicatePhoneMatch[]> => {
+  const response = await apiClient.post('/leads/check-duplicates', { phones });
+  return response.data.data.duplicates;
 };
 

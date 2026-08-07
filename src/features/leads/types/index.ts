@@ -19,6 +19,23 @@ export interface LeadsFilter {
   search: string;
 }
 
+/** A phone that already belongs to a lead. Mirrors the server's DuplicatePhoneMatch. */
+export interface DuplicatePhoneMatch {
+  /** Echoes the exact string that was checked, so callers can key errors by it. */
+  phone: string;
+  leadId: string;
+  name: string | null;
+  /** Archived matches are restored by an import rather than blocking it. */
+  archived: boolean;
+}
+
+export interface BulkImportResult {
+  total: number;
+  successful: number;
+  skipped: number;
+  failed: number;
+}
+
 export const STATUS_META: Record<string, { label: string; color: string; tint: string }> = {
   prospect: { label: 'Prospect', color: '#94A3B8', tint: 'rgba(148,163,184,0.10)' },
   cold:     { label: 'Cold',     color: '#38BDF8', tint: 'rgba(56,189,248,0.10)' },
