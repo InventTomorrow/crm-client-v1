@@ -14,7 +14,6 @@ import {
   Package,
   PlayCircle,
   Settings,
-  ShieldCheck,
   ShoppingCart,
   User,
   Users,
@@ -181,12 +180,12 @@ export const NAV_ITEMS: NavItem[] = [
       },
     ],
   },
-  {
-    href: "/admin",
-    label: "Team & Access",
-    Icon: ShieldCheck,
-    perm: "members:view",
-  },
+  // {
+  //   href: "/admin",
+  //   label: "Team & Access",
+  //   Icon: ShieldCheck,
+  //   perm: "members:view",
+  // },
   { href: "/demo", label: "Demo", Icon: PlayCircle },
 ];
 
