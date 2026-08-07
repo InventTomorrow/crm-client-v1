@@ -1,10 +1,14 @@
 "use client";
+import { checkWhatsAppNumber } from "@/features/channels/whatsapp/services/whatsapp.service";
 import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
-import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { StatCard } from "@/shared/ui/StatCard";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
   Download,
@@ -17,10 +21,8 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { StatCard } from "@/shared/ui/StatCard";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   useAddLead,
   useArchiveLead,
@@ -33,9 +35,9 @@ import {
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
 import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
-import { ExportDialog } from "@/shared/ui/ExportDialog";
 import LeadDetailSheet from "./LeadDetailSheet";
-import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
+import type { LeadFormData } from "../validations.lead";
+import LeadFormDialog from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
 import KanbanView from "./views/KanbanView";
 import ListView from "./views/ListView";
@@ -45,13 +47,8 @@ import TableView from "./views/TableView";
 export function LeadsView() {
   const router = useRouter();
   const [archived, setArchived] = useState(false);
-  const {
-    data,
-    isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteLeads(archived);
+  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteLeads(archived);
   const leads = useMemo(() => data?.pages.flat() ?? [], [data]);
   const addLead = useAddLead();
   const updateLead = useUpdateLead();
@@ -190,10 +187,7 @@ export function LeadsView() {
             </Button>
           </PermissionGuard>
           <PermissionGuard permission="leads:create">
-            <Button
-              variant="outline"
-              onClick={() => setImportOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Layers size={13} /> Import
             </Button>
             <Button onClick={() => openCreate()}>
@@ -206,12 +200,7 @@ export function LeadsView() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="Total leads" value={leads.length} Icon={Users} />
-        <StatCard
-          label="Hot leads"
-          value={hot}
-          Icon={Flame}
-          accent="#EF4444"
-        />
+        <StatCard label="Hot leads" value={hot} Icon={Flame} accent="#EF4444" />
         <StatCard
           label="Projected value"
           value={pkr(totalValue)}
@@ -242,7 +231,11 @@ export function LeadsView() {
           spacing={0}
           value={filter.channel}
           onValueChange={(v) => {
-            if (v) setFilter((f) => ({ ...f, channel: v as LeadsFilter["channel"] }));
+            if (v)
+              setFilter((f) => ({
+                ...f,
+                channel: v as LeadsFilter["channel"],
+              }));
           }}
         >
           {CHANNEL_TABS.map((c) => (
