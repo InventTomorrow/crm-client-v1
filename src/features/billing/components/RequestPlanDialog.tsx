@@ -1,9 +1,15 @@
-'use client';
-import { Mail, MessageCircle, Phone } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/Dialog';
-import { useSupportContact } from '../hooks/useBilling';
-import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
-import type { Plan } from '../types';
+"use client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/Dialog";
+import { Mail, MessageCircle, Phone } from "lucide-react";
+import { useSupportContact } from "../hooks/useBilling";
+import type { Plan } from "../types";
+import { formatPlanPeriod, formatPlanPrice } from "../utils/planFormat";
 
 interface RequestPlanDialogProps {
   plan: Plan | null;
@@ -11,42 +17,50 @@ interface RequestPlanDialogProps {
   onClose: () => void;
 }
 
-/**
- * MANUAL-mode CTA target for "Request this plan" — shows how to reach the
- * admin so they can confirm payment and activate the plan (workflow 2: admin
- * sends a checkout link, or the customer contacts support directly).
- */
-export function RequestPlanDialog({ plan, open, onClose }: RequestPlanDialogProps) {
+export function RequestPlanDialog({
+  plan,
+  open,
+  onClose,
+}: RequestPlanDialogProps) {
   const { data: contact, isLoading } = useSupportContact();
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Request {plan?.name ?? 'this plan'}</DialogTitle>
+          <DialogTitle>Request {plan?.name ?? "this plan"}</DialogTitle>
           <DialogDescription>
             {plan && (
               <>
-                {formatPlanPrice(plan)} {formatPlanPeriod(plan.duration, plan.customDurationDays)} — contact us to
-                get set up. We&apos;ll send a secure payment link or confirm your transfer.
+                {formatPlanPrice(plan)}{" "}
+                {formatPlanPeriod(plan.duration, plan.customDurationDays)} —
+                contact us to get set up. We&apos;ll send a secure payment link
+                or confirm your transfer.
               </>
             )}
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="text-[13px] text-[var(--ink-soft)]">Loading contact details…</div>
+          <div className="text-[13px] text-[var(--ink-soft)]">
+            Loading contact details…
+          </div>
         ) : (
           <div className="space-y-3 text-[13px]">
-            {contact?.supportName && <div className="font-medium">{contact.supportName}</div>}
+            {contact?.supportName && (
+              <div className="font-medium">{contact.supportName}</div>
+            )}
             {contact?.supportPhone && (
-              <a href={`tel:${contact.supportPhone}`} className="flex items-center gap-2 text-[var(--ink-soft)] hover:text-[var(--ink)]">
+              <a
+                href={`tel:${contact.supportPhone}`}
+                className="flex items-center gap-2 text-[var(--ink-soft)] hover:text-[var(--ink)]"
+              >
                 <Phone size={14} /> {contact.supportPhone}
               </a>
             )}
             {contact?.supportWhatsapp && (
               <a
-                href={`https://wa.me/${contact.supportWhatsapp.replace(/\D/g, '')}`}
+                href={`https://wa.me/${contact.supportWhatsapp.replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-[var(--ink-soft)] hover:text-[var(--ink)]"
@@ -55,7 +69,10 @@ export function RequestPlanDialog({ plan, open, onClose }: RequestPlanDialogProp
               </a>
             )}
             {contact?.supportEmail && (
-              <a href={`mailto:${contact.supportEmail}`} className="flex items-center gap-2 text-[var(--ink-soft)] hover:text-[var(--ink)]">
+              <a
+                href={`mailto:${contact.supportEmail}`}
+                className="flex items-center gap-2 text-[var(--ink-soft)] hover:text-[var(--ink)]"
+              >
                 <Mail size={14} /> {contact.supportEmail}
               </a>
             )}
@@ -64,9 +81,13 @@ export function RequestPlanDialog({ plan, open, onClose }: RequestPlanDialogProp
                 {contact.paymentInstructions}
               </div>
             )}
-            {!contact?.supportPhone && !contact?.supportWhatsapp && !contact?.supportEmail && (
-              <div className="text-[var(--ink-soft)]">Contact details will be shared with you shortly.</div>
-            )}
+            {!contact?.supportPhone &&
+              !contact?.supportWhatsapp &&
+              !contact?.supportEmail && (
+                <div className="text-[var(--ink-soft)]">
+                  Contact details will be shared with you shortly.
+                </div>
+              )}
           </div>
         )}
       </DialogContent>
