@@ -369,7 +369,7 @@ function InviteMemberDialog({
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="ali@saleflow.pk"
+                        placeholder="ali@asaanrabta.pk"
                         autoFocus
                         {...field}
                       />

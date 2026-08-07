@@ -31,7 +31,7 @@ export function WorkspaceSwitchingOverlay() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 bg-[var(--bg)]/92 backdrop-blur-xl transition-opacity duration-400 ease-out"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 bg-[var(--bg)]/50 backdrop-blur-2xl backdrop-saturate-150 transition-opacity duration-400 ease-out"
       style={{ opacity: isSwitchingWorkspace ? 1 : 0 }}
     >
       {/* Logo — soft accent glow breathing behind the mark */}
