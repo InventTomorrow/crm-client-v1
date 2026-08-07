@@ -1,9 +1,5 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Loader2, Plus, X } from "lucide-react";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
-import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import {
   Select,
@@ -28,20 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Loader2, Plus, X } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import type { Lead } from "../types";
 import { STATUS_META } from "../types";
-
-
-
-const leadFormSchema = z.object({
-  name: z.string().min(1, "Name required"),
-  phone: z.string().optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-  city: z.string().optional(),
-  channel: z.enum(["wa"]),
-  status: z.enum(["prospect", "cold", "warm", "hot", "closed"]),
-});
-export type LeadFormData = z.infer<typeof leadFormSchema>;
+import { leadFormSchema, type LeadFormData } from "../validations.lead";
 
 export default function LeadFormDialog({
   open,
@@ -114,7 +102,7 @@ export default function LeadFormDialog({
             variant="ghost"
             size="icon-sm"
             onClick={onClose}
-            className="flex-shrink-0"
+            className="shrink-0"
           >
             <X size={18} />
           </Button>
@@ -150,6 +138,7 @@ export default function LeadFormDialog({
                       <FormControl>
                         <Input placeholder="+92 321 ..." {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -178,6 +167,7 @@ export default function LeadFormDialog({
                       <FormControl>
                         <Input placeholder="e.g. Lahore" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -200,6 +190,7 @@ export default function LeadFormDialog({
                           <SelectItem value="wa">WhatsApp</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -220,10 +211,8 @@ export default function LeadFormDialog({
                             onClick={() => field.onChange(k)}
                             className="badge flex items-center gap-1.5 cursor-pointer font-medium py-[5px] px-3"
                             style={{
-                              background:
-                                field.value === k ? v.color : v.tint,
-                              color:
-                                field.value === k ? "white" : v.color,
+                              background: field.value === k ? v.color : v.tint,
+                              color: field.value === k ? "white" : v.color,
                               border: `1px solid ${field.value === k ? v.color : "transparent"}`,
                             }}
                           >
@@ -239,6 +228,7 @@ export default function LeadFormDialog({
                         ))}
                       </div>
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

@@ -66,7 +66,7 @@ export default function LeadDetailSheet({
   onArchive: (lead: Lead) => void;
   onRestore: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
-  onOpenChat: (lead: Lead) => void;
+  onOpenChat: (lead: Lead) => void | Promise<void>;
   isDeleting?: boolean;
 }) {
   // All hooks must run before the early return below — call them unconditionally.
@@ -322,9 +322,13 @@ export default function LeadDetailSheet({
               variant="outline"
               className="flex-1 justify-center"
               disabled={opening}
-              onClick={() => {
+              onClick={async () => {
                 setOpening(true);
-                onOpenChat(lead);
+                try {
+                  await onOpenChat(lead);
+                } finally {
+                  setOpening(false);
+                }
               }}
             >
               {opening ? (
