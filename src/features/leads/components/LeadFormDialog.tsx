@@ -30,6 +30,10 @@ import { useForm } from "react-hook-form";
 import type { Lead } from "../types";
 import { STATUS_META } from "../types";
 import { leadFormSchema, type LeadFormData } from "../validations.lead";
+import {
+  describeConflict,
+  useLeadPhoneConflicts,
+} from "../hooks/useLeadPhoneConflicts";
 
 export default function LeadFormDialog({
   open,
@@ -76,6 +80,35 @@ export default function LeadFormDialog({
     });
   }, [open, initial, defaultStatus, form]);
 
+  const { findMatch, resetConflicts, isVerifying } = useLeadPhoneConflicts();
+
+  useEffect(() => {
+    if (open) resetConflicts();
+  }, [open, resetConflicts]);
+
+  /**
+   * Flags a phone that already belongs to another lead. Returns true when the phone
+   * is free to use — a match on the lead being edited is its own number, not a clash.
+   */
+  const isPhoneAvailable = async (phone: string): Promise<boolean> => {
+    if (!phone.trim()) return true;
+
+    const match = await findMatch(phone);
+    if (!match || match.leadId === initial?.id) {
+      form.clearErrors("phone");
+      return true;
+    }
+
+    const conflict = describeConflict(match);
+    form.setError("phone", { type: "duplicate", message: conflict.message });
+    return !conflict.blocking;
+  };
+
+  const handleValidSubmit = async (data: LeadFormData) => {
+    if (!(await isPhoneAvailable(data.phone ?? ""))) return;
+    onSubmit(data);
+  };
+
   return (
     <Dialog
       open={open}
@@ -110,7 +143,7 @@ export default function LeadFormDialog({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(handleValidSubmit)}
             className="overflow-y-auto flex-1"
           >
             <div className="p-5 flex flex-col gap-3">
@@ -136,7 +169,14 @@ export default function LeadFormDialog({
                     <FormItem>
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="+92 321 ..." {...field} />
+                        <Input
+                          placeholder="+92 321 ..."
+                          {...field}
+                          onBlur={(event) => {
+                            field.onBlur();
+                            void isPhoneAvailable(event.target.value);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -243,7 +283,7 @@ export default function LeadFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving}>
+              <Button type="submit" disabled={isSaving || isVerifying}>
                 {isSaving ? (
                   <>
                     <Loader2 size={13} className="animate-spin" />{" "}

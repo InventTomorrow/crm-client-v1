@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import { extractErrorMessage } from '@/lib/utils';
 import { useParseCsv, useBulkCreateLeads } from '../hooks/useLeads';
+import { useLeadPhoneConflicts, type PhoneConflict } from '../hooks/useLeadPhoneConflicts';
 import { Button } from '@/shared/ui/Button';
 
 // Backend enum values (sent as-is to /leads/import/commit)
@@ -50,8 +51,8 @@ const fieldLabel = 'text-[11.5px] font-medium text-[var(--ink-soft)]';
 const fieldInput = 'input text-[12.5px] py-1.5';
 
 function EditPanel({
-  item, onSave, onDelete,
-}: { item: LeadItem; onSave: (l: LeadItem) => void; onDelete: () => void }) {
+  item, conflict, onSave, onDelete,
+}: { item: LeadItem; conflict: PhoneConflict | null; onSave: (l: LeadItem) => void; onDelete: () => void }) {
   const [draft, setDraft] = useState<LeadItem>(item);
   useEffect(() => { setDraft(item); }, [item]);
 
@@ -75,6 +76,11 @@ function EditPanel({
       <div className="flex flex-col gap-1.5">
         <label className={fieldLabel}>Phone</label>
         <input className={fieldInput} placeholder="+92 3XX XXXXXXX" value={draft.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
+        {conflict && draft.phone === item.phone && (
+          <p className={`text-[11.5px] ${conflict.blocking ? 'text-[#DC2626]' : 'text-[#B45309]'}`}>
+            {conflict.message}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -127,9 +133,9 @@ function EditPanel({
 
 // ── Lead mini-card ─────────────────────────────────────────
 function BulkCard({
-  item, index, active, onClick, onRemove,
-}: { item: LeadItem; index: number; active: boolean; onClick: () => void; onRemove: () => void }) {
-  const bad = !hasContact(item);
+  item, index, active, conflict, onClick, onRemove,
+}: { item: LeadItem; index: number; active: boolean; conflict: PhoneConflict | null; onClick: () => void; onRemove: () => void }) {
+  const bad = !hasContact(item) || Boolean(conflict?.blocking);
   const display = item.name?.trim() || item.phone?.trim() || item.email?.trim() || `Lead ${index + 1}`;
   const st = STATUS_TINT[item.status] ?? STATUS_TINT.PROSPECT;
   return (
@@ -141,8 +147,8 @@ function BulkCard({
       <CRMAvatar name={display} size={32} />
       <div className="flex-1 min-w-0">
         <div className="text-[12.5px] font-medium truncate">{display}</div>
-        <div className="text-[11px] text-[var(--ink-mute)] truncate">
-          {item.phone || item.email || item.city || '—'}
+        <div className={`text-[11px] truncate ${conflict ? (conflict.blocking ? 'text-[#DC2626]' : 'text-[#B45309]') : 'text-[var(--ink-mute)]'}`}>
+          {conflict?.message || item.phone || item.email || item.city || '—'}
         </div>
       </div>
       <span className="badge py-px px-1.5 font-medium text-[10px]" style={{ background: st.tint, color: st.color }}>
@@ -171,8 +177,12 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
 
   const parseCsv = useParseCsv();
   const bulkCreate = useBulkCreateLeads();
+  const { verifyPhones, conflictsByIndex, resetConflicts, isVerifying } = useLeadPhoneConflicts();
 
-  useEffect(() => { if (open) { setItems([]); setSelectedIdx(null); } }, [open]);
+  useEffect(() => { if (open) { setItems([]); setSelectedIdx(null); resetConflicts(); } }, [open, resetConflicts]);
+
+  const conflicts = conflictsByIndex(items.map((item) => item.phone));
+  const hasBlockingConflict = Object.values(conflicts).some((conflict) => conflict.blocking);
 
   const addItems = (newItems: LeadItem[]) => {
     setItems((prev) => {
@@ -201,6 +211,8 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
         }));
         addItems(mapped);
         toast.success(`${mapped.length} lead${mapped.length !== 1 ? 's' : ''} imported`);
+        // Flag rows whose phone already belongs to a lead before the user hits save.
+        await verifyPhones(mapped.flatMap((lead) => (lead.phone ? [lead.phone] : [])));
       } catch (err) {
         toast.error(extractErrorMessage(err) || 'Failed to parse CSV');
       }
@@ -225,12 +237,18 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
     setSelectedIdx(idx);
   };
 
-  const valid = items.length > 0 && items.every(hasContact);
+  const valid = items.length > 0 && items.every(hasContact) && !hasBlockingConflict;
   const selectedItem = selectedIdx !== null ? items[selectedIdx] : null;
 
   const handleSaveAll = async () => {
     if (!valid) return;
     try {
+      // Re-check: rows edited since the last verification may have picked up a conflict.
+      const clear = await verifyPhones(items.flatMap((item) => (item.phone ? [item.phone] : [])));
+      if (!clear) {
+        toast.error('Some leads already exist — fix the highlighted rows.');
+        return;
+      }
       await bulkCreate.mutateAsync(items);
       onClose();
     } catch { /* toast handled by hook */ }
@@ -291,6 +309,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                 <BulkCard
                   key={i} item={item} index={i}
                   active={selectedIdx === i}
+                  conflict={conflicts[i] ?? null}
                   onClick={() => setSelectedIdx(i)}
                   onRemove={() => removeItem(i)}
                 />
@@ -314,6 +333,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                 <EditPanel
                   key={selectedIdx}
                   item={selectedItem}
+                  conflict={conflicts[selectedIdx] ?? null}
                   onSave={(data) => updateItem(selectedIdx, data)}
                   onDelete={() => removeItem(selectedIdx)}
                 />
@@ -332,15 +352,19 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
           <span className={`text-[12px] flex items-center gap-1.5 ${valid ? 'text-[var(--ink-soft)]' : 'text-[#B45309]'}`}>
             {bulkCreate.isPending
               ? <><Loader2 size={12} className="animate-spin text-[var(--accent)]" /> Saving {items.length} lead{items.length === 1 ? '' : 's'}…</>
-              : items.length > 0
-                ? valid
-                  ? <><Check size={12} className="text-[#15803D]" /> All {items.length} ready to save</>
-                  : 'Some leads need a name, phone, or email — click a card to edit'
-                : 'Drop a CSV or click "Add lead" to begin'}
+              : isVerifying
+                ? <><Loader2 size={12} className="animate-spin text-[var(--accent)]" /> Checking for existing leads…</>
+                : items.length > 0
+                  ? valid
+                    ? <><Check size={12} className="text-[#15803D]" /> All {items.length} ready to save</>
+                    : hasBlockingConflict
+                      ? 'Some leads already exist — fix the highlighted cards'
+                      : 'Some leads need a name, phone, or email — click a card to edit'
+                  : 'Drop a CSV or click "Add lead" to begin'}
           </span>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} disabled={bulkCreate.isPending}>Cancel</Button>
-            <Button disabled={!valid || bulkCreate.isPending} onClick={handleSaveAll}>
+            <Button disabled={!valid || bulkCreate.isPending || isVerifying} onClick={handleSaveAll}>
               {bulkCreate.isPending
                 ? <><Loader2 size={13} className="animate-spin" /> Saving…</>
                 : <><Check size={13} /> Save {items.length || ''} lead{items.length === 1 ? '' : 's'}</>}
