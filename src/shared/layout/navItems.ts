@@ -5,6 +5,7 @@ import {
   CalendarClock,
   ClipboardList,
   CreditCard,
+  Crown,
   FolderOpen,
   Inbox,
   KeyRound,
@@ -30,8 +31,6 @@ export interface NavChild {
   capability?: VerticalCapability;
   /** Optional leading icon — sections without one render label-only children. */
   Icon?: typeof Inbox;
-  /** Settings tabs live behind `?section=` on one route — matched on the query, not the path. */
-  section?: string;
 }
 
 export interface NavItem {
@@ -139,44 +138,44 @@ export const NAV_ITEMS: NavItem[] = [
     Icon: Settings,
     children: [
       {
-        href: "/settings?section=profile",
+        href: "/settings/profile",
         label: "Profile",
-        section: "profile",
         Icon: User,
       },
       {
-        href: "/settings?section=chatbot",
+        href: "/settings/chatbot",
         label: "Chatbot",
-        section: "chatbot",
         perm: "chatbot:view",
         Icon: MessageSquare,
       },
       {
-        href: "/settings?section=business",
+        href: "/settings/business",
         label: "Business",
-        section: "business",
         perm: "settings:view",
         Icon: Building2,
       },
       // Channels tab hidden — the WhatsApp channel page owns connect/disconnect now.
-      // { href: '/settings?section=channels', label: 'Channels', section: 'channels', perm: 'channels:view', Icon: Wifi },
+      // { href: '/settings/channels', label: 'Channels', perm: 'channels:view', Icon: Wifi },
       {
-        href: "/settings?section=notifications",
+        href: "/settings/notifications",
         label: "Notifications",
-        section: "notifications",
         Icon: Bell,
       },
       {
-        href: "/settings?section=billing",
+        href: "/settings/billing",
         label: "Billing & Plan",
-        section: "billing",
         perm: "billing:view",
         Icon: CreditCard,
       },
       {
-        href: "/settings?section=access",
+        href: "/settings/usage",
+        label: "Usage",
+        perm: "billing:view",
+        Icon: Crown,
+      },
+      {
+        href: "/settings/access",
         label: "Access Control",
-        section: "access",
         perm: "members:view",
         Icon: KeyRound,
       },

@@ -8,14 +8,17 @@ import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
 import {
   useCancelSubscription,
   useCreateCheckout,
+  usePlanRequest,
   usePlans,
   useRequestPlan,
   useSubscription,
+  useWorkspaceAllowance,
 } from '../hooks/useBilling';
 import type { Plan } from '../types';
 import { BillingHistory } from './BillingHistory';
 import { CurrentSubscriptionCard } from './CurrentSubscriptionCard';
 import { PlanGrid } from './PlanGrid';
+import { PlanRequestCard } from './PlanRequestCard';
 import { PlanUsageCard } from './PlanUsageCard';
 
 // SafePay is wired but disabled — the manual/customer-initiated flow is the
@@ -32,6 +35,8 @@ function BillingViewInner() {
   const polling = returnStatus === 'success';
   const { data: subscription, isLoading: subLoading } = useSubscription(polling);
   const { data: plans, isLoading: plansLoading } = usePlans();
+  const { data: latestPlanRequest } = usePlanRequest();
+  const { data: workspaceAllowance } = useWorkspaceAllowance();
 
   const checkout = useCreateCheckout();
   const requestPlan = useRequestPlan();
@@ -71,6 +76,16 @@ function BillingViewInner() {
       ? subscription.planId
       : null;
 
+  // Approved requests already surface as the subscription; expired ones were
+  // superseded — only pending/rejected ones are worth showing.
+  const visiblePlanRequest =
+    latestPlanRequest &&
+    (latestPlanRequest.status === 'PENDING_APPROVAL' || latestPlanRequest.status === 'REJECTED')
+      ? latestPlanRequest
+      : null;
+  const requestedPlanId =
+    latestPlanRequest?.status === 'PENDING_APPROVAL' ? latestPlanRequest.planId : null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -94,6 +109,8 @@ function BillingViewInner() {
         </div>
       )}
 
+      {visiblePlanRequest && <PlanRequestCard request={visiblePlanRequest} />}
+
       {subscription?.plan && (
         <PlanUsageCard subscription={subscription} tenantVertical={tenant?.businessVertical} />
       )}
@@ -108,8 +125,10 @@ function BillingViewInner() {
           <PlanGrid
             plans={plans ?? []}
             activePlanId={activePlanId}
+            requestedPlanId={requestedPlanId}
             pendingPlanId={pendingPlanId}
             isMutating={CHECKOUT_MODE === 'manual' ? requestPlan.isPending : checkout.isPending}
+            workspacesInUse={workspaceAllowance?.used ?? 0}
             tenantVertical={tenant?.businessVertical}
             checkoutMode={CHECKOUT_MODE}
             onSelect={handleSelect}

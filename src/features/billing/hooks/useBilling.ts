@@ -6,10 +6,14 @@ import {
   cancelSubscription,
   createCheckout,
   createSelfServeCheckoutLink,
+  getEntitlementStatus,
   getPayments,
+  getMyPlanRequest,
   getPlans,
   getSubscription,
+  getUsage,
   getSupportContact,
+  getWorkspaceAllowance,
 } from '../services/billingService';
 import type { Subscription } from '../types';
 
@@ -18,7 +22,11 @@ const keys = {
   plans: ['billing', 'plans'] as const,
   supportContact: ['billing', 'support-contact'] as const,
   subscription: ['billing', 'subscription'] as const,
+  planRequest: ['billing', 'plan-request'] as const,
   payments: ['billing', 'payments'] as const,
+  usage: ['billing', 'usage'] as const,
+  workspaceAllowance: ['billing', 'workspace-allowance'] as const,
+  entitlement: ['billing', 'entitlement'] as const,
 };
 
 export function usePlans() {
@@ -45,6 +53,33 @@ export function useSubscription(pollUntilActive = false) {
           return data?.status === 'ACTIVE' ? false : 4000;
         }
       : false,
+  });
+}
+
+/** Latest manual plan request — powers the "Requested" state on the plan grid. */
+export function usePlanRequest() {
+  return useQuery({ queryKey: keys.planRequest, queryFn: getMyPlanRequest });
+}
+
+/** Consumption vs plan limits for the current period. */
+export function useUsage() {
+  return useQuery({ queryKey: keys.usage, queryFn: getUsage, staleTime: 60 * 1000 });
+}
+
+export function useWorkspaceAllowance() {
+  return useQuery({
+    queryKey: keys.workspaceAllowance,
+    queryFn: getWorkspaceAllowance,
+    staleTime: 60 * 1000,
+  });
+}
+
+/** Whether the workspace is usable at all — powers the expiry lock screen. */
+export function useEntitlementStatus() {
+  return useQuery({
+    queryKey: keys.entitlement,
+    queryFn: getEntitlementStatus,
+    staleTime: 60 * 1000,
   });
 }
 

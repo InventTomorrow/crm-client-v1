@@ -22,6 +22,11 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   // owner/admin territory.
   { prefix: "/settings/workspaces", permission: "settings:edit" },
   { prefix: "/settings/billing", permission: "billing:view" },
+  { prefix: "/settings/chatbot", permission: "chatbot:view" },
+  { prefix: "/settings/business", permission: "settings:view" },
+  { prefix: "/settings/usage", permission: "billing:view" },
+  { prefix: "/settings/access", permission: "members:view" },
+  { prefix: "/settings/system", permission: "settings:edit" },
   { prefix: "/admin", permission: "members:view" },
 ];
 

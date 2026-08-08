@@ -13,7 +13,7 @@ import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChevronDown, Moon, Sun } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NAV_ITEMS, type NavItem } from "./navItems";
 import { ProfileMenu } from "./ProfileMenu";
@@ -28,7 +28,6 @@ interface AppSidebarProps {
 
 export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
-  const activeSection = useSearchParams().get("section");
   const { sidebarCollapsed, toggleSidebar, theme, toggleTheme } = useAppStore();
   const { user } = useMe();
   const { can, isLoading: permsLoading } = usePermissions();
@@ -160,7 +159,6 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               key={item.href}
               item={item}
               pathname={pathname}
-              activeSection={activeSection}
               collapsed={collapsed}
               badge={badgeFor(item.href)}
               expanded={isSectionExpanded(item)}

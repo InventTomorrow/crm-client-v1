@@ -1,4 +1,5 @@
 "use client";
+import { useWorkspaceAllowance } from "@/features/billing/hooks/useBilling";
 import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import { useCreateTenant } from "@/features/tenant/hooks/useTenant";
 import {
@@ -15,7 +16,8 @@ import {
 } from "@/shared/ui/Dialog";
 import { Input } from "@/shared/ui/Input";
 import { Label } from "@/shared/ui/Label";
-import { Loader2, Plus } from "lucide-react";
+import { Crown, Loader2, Plus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 /** Inline create-workspace flow shared by both sidebar workspace switchers. */
@@ -24,8 +26,13 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [businessVertical, setBusinessVertical] =
     useState<BusinessVertical | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
+  // Mirrors the server-side cap on POST /tenants so the limit is visible
+  // before submitting, not as a 403 after.
+  const { data: workspaceAllowance } = useWorkspaceAllowance();
+  const workspaceLimitReached = workspaceAllowance?.canCreate === false;
 
-  const canCreate = !!name.trim() && !!businessVertical;
+  const canCreate =
+    !!name.trim() && !!businessVertical && !workspaceLimitReached;
 
   const handleCreate = () => {
     if (!canCreate || !businessVertical) return;
@@ -56,6 +63,27 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
         </DialogHeader>
 
         <div className="p-5 flex flex-col gap-3.5">
+          {workspaceLimitReached && (
+            <div className="flex items-start gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] px-3.5 py-3">
+              <Crown
+                size={15}
+                className="mt-0.5 flex-shrink-0 text-[var(--ink-mute)]"
+              />
+              <p className="text-[12px] leading-relaxed text-[var(--ink-soft)]">
+                Your plan includes {workspaceAllowance?.limit} workspace
+                {workspaceAllowance?.limit === 1 ? "" : "s"} and you&apos;re
+                already using {workspaceAllowance?.used}.{" "}
+                <Link
+                  href="/settings/billing"
+                  className="font-medium text-[var(--accent)]"
+                  onClick={onClose}
+                >
+                  Upgrade your plan
+                </Link>{" "}
+                to add more.
+              </p>
+            </div>
+          )}
           <div>
             <Label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
               Workspace name

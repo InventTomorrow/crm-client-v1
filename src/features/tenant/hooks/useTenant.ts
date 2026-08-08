@@ -7,8 +7,9 @@ import {
 } from "@/features/auth/services/authService";
 import { useAppStore } from "@/lib/appStore";
 import type { BusinessVertical } from "@/lib/business-verticals";
-import { extractErrorMessage } from "@/lib/utils";
+import { extractApiErrorCode, extractErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   createTenant,
@@ -41,6 +42,7 @@ export function useMyWorkspaceStats() {
 /** Create a new workspace, then immediately switch into it */
 export function useCreateTenant() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
 
   return useMutation({
@@ -68,7 +70,13 @@ export function useCreateTenant() {
         setWorkspaceSwitching(false);
       }
     },
-    onError: (error) => toast.error(extractErrorMessage(error)),
+    onError: (error) => {
+      toast.error(extractErrorMessage(error));
+      // Out of workspace slots — take the user straight to the upgrade options.
+      if (extractApiErrorCode(error) === "billing/plan_limit_reached") {
+        router.push("/settings/billing");
+      }
+    },
   });
 }
 

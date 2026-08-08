@@ -87,6 +87,21 @@ apiClient.interceptors.response.use(
       }
     }
 
+    // A dead plan locks feature APIs — send the user to billing to renew,
+    // unless they're already somewhere under settings choosing one.
+    const apiErrorCode = error.response?.data?.error?.code;
+    if (
+      error.response?.status === 403 &&
+      (apiErrorCode === "billing/subscription_expired" ||
+        apiErrorCode === "billing/no_active_subscription") &&
+      typeof window !== "undefined" &&
+      !isLoggingOut &&
+      !onPublicRoute() &&
+      !window.location.pathname.startsWith("/settings")
+    ) {
+      window.location.href = "/settings/billing";
+    }
+
     // If it's a 401 error but NOT a token expiration issue, or if the refresh attempt itself failed
     if (error.response?.status === 401) {
       const url = originalRequest.url ?? "";

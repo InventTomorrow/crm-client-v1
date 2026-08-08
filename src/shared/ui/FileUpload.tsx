@@ -15,7 +15,7 @@ import {
   UploadIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "./Alert";
 import { Button } from "./Button";
 
@@ -105,8 +105,14 @@ export function FileUpload({
   const isCompact = compact || thumbnail;
   const sizeClassName = isCompact ? compactHeight : aspectRatio;
 
+  const lastUploadedUrlRef = useRef<string | null>(null);
+
   // Keep in sync when the parent resets/changes `value` externally (e.g. switching records in edit mode).
   useEffect(() => {
+    // The just-uploaded file already shows its local preview — swapping it for
+    // the remote URL would refetch it, which 403s on unauthenticated pages
+    // (the public /subscribe receipt) where the image proxy needs a session.
+    if (value && value === lastUploadedUrlRef.current) return;
     setPreview(toInitialPreview(value, accept));
   }, [value, accept]);
 
@@ -140,7 +146,10 @@ export function FileUpload({
       if (onUpload) {
         setIsUploading(true);
         onUpload(file)
-          .then((url) => onChange?.(url))
+          .then((url) => {
+            lastUploadedUrlRef.current = url;
+            onChange?.(url);
+          })
           .catch(() => setUploadError("Upload failed. Please try again."))
           .finally(() => setIsUploading(false));
       } else {

@@ -1,5 +1,5 @@
 'use client';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Lock } from 'lucide-react';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Plan } from '../types';
@@ -8,8 +8,12 @@ import { PlanLimitsList } from './PlanLimitsList';
 interface PlanCardProps {
   plan: Plan;
   isCurrent: boolean;
+  /** This plan already has a pending approval request — lock its CTA. */
+  isRequested: boolean;
   isLoading: boolean;
   disabled: boolean;
+  /** Why this plan can't be chosen (e.g. fewer workspaces than the account uses), or null. */
+  lockedReason: string | null;
   tenantVertical: BusinessVertical | undefined;
   /**
    * 'manual' — the live path today (SafePay disabled): CTA opens a request
@@ -20,8 +24,9 @@ interface PlanCardProps {
   onSelect: (plan: Plan) => void;
 }
 
-export function PlanCard({ plan, isCurrent, isLoading, disabled, tenantVertical, checkoutMode, onSelect }: PlanCardProps) {
+export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, lockedReason, tenantVertical, checkoutMode, onSelect }: PlanCardProps) {
   const unavailable = checkoutMode === 'gateway' && !plan.providerPlanId;
+  const locked = lockedReason !== null;
   const badges = [
     ...(plan.canResell ? ['Reseller access'] : []),
     ...(plan.canWhitelabel ? ['White-label branding'] : []),
@@ -38,7 +43,10 @@ export function PlanCard({ plan, isCurrent, isLoading, disabled, tenantVertical,
         {isCurrent && (
           <span className="badge font-medium text-white bg-[var(--accent)]">Current</span>
         )}
-        {plan.isTrial && !isCurrent && (
+        {isRequested && !isCurrent && (
+          <span className="badge font-medium text-info-foreground bg-info-soft">Requested</span>
+        )}
+        {plan.isTrial && !isCurrent && !isRequested && (
           <span className="badge font-medium text-info-foreground bg-info-soft">Trial</span>
         )}
       </div>
@@ -63,8 +71,8 @@ export function PlanCard({ plan, isCurrent, isLoading, disabled, tenantVertical,
 
       <button
         type="button"
-        className={`btn ${isCurrent ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center gap-2`}
-        disabled={disabled || isCurrent || isLoading || unavailable}
+        className={`btn ${isCurrent || locked ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center gap-2`}
+        disabled={disabled || isCurrent || isRequested || isLoading || unavailable || locked}
         onClick={() => onSelect(plan)}
       >
         {isLoading ? (
@@ -76,6 +84,13 @@ export function PlanCard({ plan, isCurrent, isLoading, disabled, tenantVertical,
           </>
         ) : isCurrent ? (
           'Current plan'
+        ) : isRequested ? (
+          'Request pending approval'
+        ) : locked ? (
+          <>
+            <Lock size={14} />
+            Too small for your account
+          </>
         ) : unavailable ? (
           'Unavailable'
         ) : checkoutMode === 'manual' ? (
@@ -87,6 +102,9 @@ export function PlanCard({ plan, isCurrent, isLoading, disabled, tenantVertical,
           'Choose plan'
         )}
       </button>
+      {locked && (
+        <p className="mt-2 text-[11.5px] text-[var(--ink-mute)]">{lockedReason}</p>
+      )}
     </div>
   );
 }

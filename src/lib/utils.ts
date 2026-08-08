@@ -93,6 +93,17 @@ export function extractErrorMessage(
   return fallback;
 }
 
+// The backend's machine-readable error code ("billing/plan_limit_reached"),
+// for call sites that branch on WHY a request failed, not just the copy.
+export function extractApiErrorCode(error: unknown): string | null {
+  const response = (error as Record<string, unknown> | null)?.response as
+    | Record<string, unknown>
+    | undefined;
+  const responseData = response?.data as Record<string, unknown> | undefined;
+  const apiError = responseData?.error as Record<string, unknown> | undefined;
+  return typeof apiError?.code === 'string' ? apiError.code : null;
+}
+
 // Hits the API origin directly rather than the Next.js rewrite proxy — the
 // accessToken cookie is host-only (COOKIE_DOMAIN unset), scoped to the API
 // origin because apiClient authenticates against it directly. A relative

@@ -2,28 +2,14 @@ import { z } from 'zod';
 
 export type { UserProfile, NotifSettings } from '@/lib/mockData';
 
-export type SettingsSection =
-  | 'profile'
-  | 'chatbot'
-  | 'business'
-  | 'channels'
-  | 'notifications'
-  | 'billing'
-  | 'access'
-  | 'system'
-  | 'workspaces';
-
-export const SECTION_NAV: Array<{ id: SettingsSection; label: string }> = [
-  { id: 'profile',    label: 'Profile' },
-  { id: 'chatbot',    label: 'Chatbot' },
-  { id: 'business',   label: 'Business' },
-  // { id: 'channels',   label: 'Channels' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'billing',    label: 'Billing' },
-  { id: 'access',     label: 'Access Control' },
-  { id: 'workspaces', label: 'Workspaces' },
-  { id: 'system',     label: 'System Status' },
-];
+// ──────────────────── Profile form ────────────────────
+export const profileSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+export type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Chatbot config (mirrors server chatbot.dto) ────────────────────
 export const chatbotConfigSchema = z.object({

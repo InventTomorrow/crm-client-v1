@@ -52,7 +52,7 @@ export function AssistantSettingsCard() {
           from Settings.
         </p>
         <Button asChild variant="outline" size="sm" className="shrink-0">
-          <Link href={`/settings?section=chatbot#${ASSISTANT_SETTINGS_ANCHOR}`}>
+          <Link href={`/settings/chatbot#${ASSISTANT_SETTINGS_ANCHOR}`}>
             Manage <ArrowRight size={14} />
           </Link>
         </Button>

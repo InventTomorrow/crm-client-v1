@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 
 export default function BillingPage() {
   return (
-    <div className="p-4 md:p-8">
+    // .app-content is overflow:hidden, so each route owns its own scroll
+    // container — without this the plan list is simply clipped.
+    <div className="h-full overflow-y-auto p-4 md:p-8">
       <Suspense fallback={null}>
         <BillingView />
       </Suspense>

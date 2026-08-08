@@ -1,6 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Sparkle } from "lucide-react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -75,6 +76,11 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
           <p className="mt-1 text-[13px] text-[var(--ink-mute)]">
             Please ask for a new link, or get in touch with us directly.
           </p>
+          {/* A used link usually means the subscription is already in — send
+              the customer to their workspace instead of a dead end. */}
+          <Button asChild className="mt-4">
+            <Link href="/dashboard">Go to dashboard</Link>
+          </Button>
         </div>
       </Centered>
     );

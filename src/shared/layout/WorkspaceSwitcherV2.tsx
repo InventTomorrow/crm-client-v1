@@ -1,6 +1,7 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { useWorkspaceAllowance } from "@/features/billing/hooks/useBilling";
 import { useSwitchWorkspace } from "@/features/tenant/hooks/useTenant";
 import { useAppStore } from "@/lib/appStore";
 import {
@@ -16,7 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
-import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
+import { Check, ChevronDown, Crown, Loader2, Plus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
 
@@ -52,6 +54,11 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
   const { mutate: switchWorkspace, isPending: isSwitching } =
     useSwitchWorkspace();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // UI guard only — the server re-checks the cap on POST /tenants. Fail open
+  // while loading/errored so a hiccup never hides the action for under-limit
+  // owners.
+  const { data: workspaceAllowance } = useWorkspaceAllowance();
+  const workspaceLimitReached = workspaceAllowance?.canCreate === false;
 
   const memberships: Membership[] = user?.memberships ?? [];
   const currentMembership =
@@ -211,15 +218,37 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
           {isOwner && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => setIsCreateOpen(true)}
-                className="gap-2.5 px-[10px] py-2 text-[var(--accent)] text-[13px] font-medium"
-              >
-                <span className="w-[30px] h-[30px] rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center border border-dashed border-[var(--accent)]">
-                  <Plus size={14} />
-                </span>
-                Create new workspace
-              </DropdownMenuItem>
+              {workspaceLimitReached ? (
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/settings/billing"
+                    className="gap-2.5 px-[10px] py-2 text-[13px] no-underline"
+                  >
+                    <span className="w-[30px] h-[30px] rounded-lg bg-[var(--surface-2)] text-[var(--ink-mute)] flex items-center justify-center border border-dashed border-[var(--line)]">
+                      <Crown size={14} />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-medium text-[var(--ink)]">
+                        Workspace limit reached
+                      </span>
+                      <span className="block text-[11px] text-[var(--ink-mute)]">
+                        Your plan includes {workspaceAllowance?.limit} — upgrade
+                        to add more
+                      </span>
+                    </span>
+                  </Link>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onSelect={() => setIsCreateOpen(true)}
+                  className="gap-2.5 px-[10px] py-2 text-[var(--accent)] text-[13px] font-medium"
+                >
+                  <span className="w-[30px] h-[30px] rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center border border-dashed border-[var(--accent)]">
+                    <Plus size={14} />
+                  </span>
+                  Create new workspace
+                </DropdownMenuItem>
+              )}
             </>
           )}
         </DropdownMenuContent>

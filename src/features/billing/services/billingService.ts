@@ -1,11 +1,15 @@
 import { apiClient } from '@/lib/apiClient';
 import type {
   CheckoutResponse,
+  EntitlementStatus,
   Payment,
   PaymentMethod,
   Plan,
+  PlanRequest,
+  PlanUsage,
   Subscription,
   SupportContact,
+  WorkspaceAllowance,
 } from '../types';
 
 export async function getPlans() {
@@ -18,9 +22,35 @@ export async function getSupportContact() {
   return res.data.data;
 }
 
+export async function getUsage() {
+  const res = await apiClient.get<{ success: true; data: PlanUsage | null }>('/billing/usage');
+  return res.data.data;
+}
+
+export async function getWorkspaceAllowance() {
+  const res = await apiClient.get<{ success: true; data: WorkspaceAllowance }>(
+    '/billing/workspace-allowance',
+  );
+  return res.data.data;
+}
+
+export async function getEntitlementStatus() {
+  const res = await apiClient.get<{ success: true; data: EntitlementStatus }>(
+    '/billing/entitlement',
+  );
+  return res.data.data;
+}
+
 export async function getSubscription() {
   const res = await apiClient.get<{ success: true; data: Subscription | null }>(
     '/billing/subscription',
+  );
+  return res.data.data;
+}
+
+export async function getMyPlanRequest() {
+  const res = await apiClient.get<{ success: true; data: PlanRequest | null }>(
+    '/billing/plan-request',
   );
   return res.data.data;
 }

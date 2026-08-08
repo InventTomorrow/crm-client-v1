@@ -48,7 +48,10 @@ export function CurrentSubscriptionCard({ subscription, onCancel, isCancelling }
           <div className="flex items-center gap-2">
             <h3 className="text-[17px] font-semibold">{plan?.name ?? 'No plan'}</h3>
             <span className={`badge font-medium ${STATUS_STYLES[subscription.status]}`}>
-              {STATUS_LABEL[subscription.status]}
+              {/* TRIALING on an actual trial plan is the trial itself, not a checkout in flight. */}
+              {subscription.status === 'TRIALING' && plan?.isTrial
+                ? 'Trial'
+                : STATUS_LABEL[subscription.status]}
             </span>
           </div>
           {plan && (

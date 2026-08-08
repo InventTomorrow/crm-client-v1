@@ -8,8 +8,12 @@ import { PlanCard } from './PlanCard';
 interface PlanGridProps {
   plans: Plan[];
   activePlanId: string | null;
+  /** Plan with a pending approval request — its card shows "Requested". */
+  requestedPlanId: string | null;
   pendingPlanId: string | null;
   isMutating: boolean;
+  /** Workspaces the account already runs — plans whose cap is below this are locked. */
+  workspacesInUse: number;
   tenantVertical: BusinessVertical | undefined;
   checkoutMode: 'manual' | 'gateway';
   onSelect: (plan: Plan) => void;
@@ -19,7 +23,7 @@ const TRIALS_TAB = 'TRIALS' as const;
 type Tab = PlanDuration | typeof TRIALS_TAB;
 
 /** Duration toggle (Monthly / Quarterly / Annual / Trials, data-driven from what's actually offered) + the plan cards for the selected tab. */
-export function PlanGrid({ plans, activePlanId, pendingPlanId, isMutating, tenantVertical, checkoutMode, onSelect }: PlanGridProps) {
+export function PlanGrid({ plans, activePlanId, requestedPlanId, pendingPlanId, isMutating, workspacesInUse, tenantVertical, checkoutMode, onSelect }: PlanGridProps) {
   const { tabs, plansByTab } = useMemo(() => {
     const byTab = new Map<Tab, Plan[]>();
     for (const plan of plans) {
@@ -78,8 +82,14 @@ export function PlanGrid({ plans, activePlanId, pendingPlanId, isMutating, tenan
             key={plan.id}
             plan={plan}
             isCurrent={plan.id === activePlanId}
+            isRequested={plan.id === requestedPlanId}
             isLoading={isMutating && pendingPlanId === plan.id}
             disabled={isMutating}
+            lockedReason={
+              plan.id !== activePlanId && workspacesInUse > plan.maxWorkspaces
+                ? `Your account uses ${workspacesInUse} workspaces — this plan allows ${plan.maxWorkspaces}.`
+                : null
+            }
             tenantVertical={tenantVertical}
             checkoutMode={checkoutMode}
             onSelect={onSelect}

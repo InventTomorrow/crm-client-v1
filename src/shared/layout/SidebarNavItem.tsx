@@ -12,8 +12,6 @@ import { findActiveChildHref, type NavItem } from './navItems';
 interface SidebarNavItemProps {
   item: NavItem;
   pathname: string;
-  /** Current `?section=` value, for children that are tabs on a single route. */
-  activeSection: string | null;
   collapsed: boolean;
   badge?: number;
   expanded: boolean;
@@ -26,7 +24,6 @@ interface SidebarNavItemProps {
 export function SidebarNavItem({
   item,
   pathname,
-  activeSection,
   collapsed,
   badge,
   expanded,
@@ -42,18 +39,12 @@ export function SidebarNavItem({
 
   // Collapsed rail has no room for a submenu — the parent link still reaches the section.
   const showChildren = !collapsed && visibleChildren.length > 0;
-  const pathChildren = visibleChildren.filter((child) => !child.section);
   const activeChildHref = showChildren
-    ? findActiveChildHref(pathChildren, pathname)
+    ? findActiveChildHref(visibleChildren, pathname)
     : undefined;
 
-  // Tab children share one route, so the query decides which is lit. No query
-  // means the page opened on its default tab — the first one listed.
-  const isChildActive = (child: (typeof visibleChildren)[number]) => {
-    if (!child.section) return child.href === activeChildHref;
-    if (pathname !== item.href) return false;
-    return (activeSection ?? visibleChildren[0]?.section) === child.section;
-  };
+  const isChildActive = (child: (typeof visibleChildren)[number]) =>
+    child.href === activeChildHref;
 
   return (
     <Collapsible

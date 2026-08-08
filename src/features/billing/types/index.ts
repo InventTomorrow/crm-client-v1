@@ -94,7 +94,51 @@ export interface SupportContact {
   paymentInstructions: string | null;
 }
 
+export type PlanRequestStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+
+/** GET /billing/plan-request — latest manual plan request this account submitted. */
+export interface PlanRequest {
+  id: string;
+  planId: string;
+  status: PlanRequestStatus;
+  paymentAmount: number;
+  currency: string;
+  createdAt: string;
+  reviewedAt: string | null;
+  plan: { id: string; name: string };
+}
+
 export interface CheckoutResponse {
   url: string;
   subscriptionId: string;
+}
+
+/** GET /billing/usage — consumption vs the plan's limits for this period. */
+export interface UsageMetric {
+  key: string;
+  label: string;
+  used: number;
+  limit: number;
+}
+
+export interface PlanUsage {
+  periodStart: string;
+  periodEnd: string | null;
+  plan: { id: string; name: string; isTrial: boolean };
+  metrics: UsageMetric[];
+}
+
+/** GET /billing/workspace-allowance — slots used vs the plan's workspace cap. */
+export interface WorkspaceAllowance {
+  used: number;
+  limit: number | null;
+  canCreate: boolean;
+}
+
+/** GET /billing/entitlement — whether this workspace is usable at all. */
+export interface EntitlementStatus {
+  live: boolean;
+  reason: 'ok' | 'expired' | 'none';
+  planName: string | null;
+  currentPeriodEnd: string | null;
 }
