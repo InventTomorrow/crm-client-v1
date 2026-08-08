@@ -7,7 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
@@ -99,6 +99,31 @@ export function useAppointmentsQuery(filters: AppointmentFilters) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
+}
+
+export function useAppointmentsList(filters: AppointmentFilters) {
+  const query = useAppointmentsQuery(filters);
+
+  useEffect(() => {
+    if (query.hasNextPage && !query.isFetchingNextPage) {
+      query.fetchNextPage();
+    }
+  }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
+
+  const appointments = useMemo(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  );
+
+  return {
+    appointments,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+    refetch: query.refetch,
+  };
 }
 
 function useInvalidateBookings() {

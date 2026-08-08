@@ -5,6 +5,7 @@ import { extractErrorMessage } from '@/lib/utils';
 import {
   cancelSubscription,
   createCheckout,
+  createSelfServeCheckoutLink,
   getPayments,
   getPlans,
   getSubscription,
@@ -49,6 +50,20 @@ export function useSubscription(pollUntilActive = false) {
 
 export function usePayments() {
   return useQuery({ queryKey: keys.payments, queryFn: getPayments });
+}
+
+/**
+ * Self-serve workflow 2 — sends the customer to their own tokenized
+ * /subscribe/:token page to enter details and upload a payment receipt.
+ */
+export function useRequestPlan() {
+  return useMutation({
+    mutationFn: (planId: string) => createSelfServeCheckoutLink(planId),
+    onSuccess: ({ checkoutUrl }) => {
+      window.location.assign(checkoutUrl);
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, 'Could not start your request')),
+  });
 }
 
 export function useCreateCheckout() {

@@ -30,8 +30,12 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
   const { data, isLoading, isError, error } = usePublicSubscriptionLink(token);
   const submit = useSubmitSubscription(token);
 
+  // The plan arrives async, so the resolver has to react to it — a free plan
+  // must not require a receipt.
+  const requiresPayment = (data?.plan.price ?? 0) > 0;
+
   const form = useForm<SubscriptionCheckoutFormInput>({
-    resolver: zodResolver(subscriptionCheckoutSchema),
+    resolver: zodResolver(subscriptionCheckoutSchema(requiresPayment)),
     values: {
       customerName: data?.prefill.customerName ?? "",
       customerEmail: data?.prefill.customerEmail ?? "",
@@ -78,6 +82,10 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
 
   const { plan, supportContact } = data;
   const submitted = submit.isSuccess;
+  // The link carries the account's email; keep it fixed so the request can't
+  // be filed under a different address than the workspace being activated.
+  // readOnly (not disabled) — RHF omits disabled fields from submitted values.
+  const emailLocked = Boolean(data.prefill.customerEmail);
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-[480px] px-4 py-8">
@@ -110,7 +118,7 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
                   paymentReference: values.paymentReference || undefined,
                   paymentAmount: Number(values.paymentAmount),
                   currency: plan.currency,
-                  receiptUrl: values.receiptUrl,
+                  receiptUrl: values.receiptUrl || undefined,
                   customerNote: values.customerNote || undefined,
                 }),
               )}
@@ -142,8 +150,22 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
                     <FormItem>
                       <FormLabel>Email *</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@email.com" {...field} />
+                        {/* Locked when the link already carries the account's
+                            email — this is who the subscription gets tied to,
+                            so it must match the workspace we're activating. */}
+                        <Input
+                          placeholder="you@email.com"
+                          {...field}
+                          readOnly={emailLocked}
+                          aria-readonly={emailLocked}
+                          className={emailLocked ? 'cursor-not-allowed opacity-70' : undefined}
+                        />
                       </FormControl>
+                      {emailLocked ? (
+                        <p className="text-[11.5px] text-[var(--ink-mute)]">
+                          Linked to your account — contact us to change it.
+                        </p>
+                      ) : null}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -177,6 +199,8 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
                 )}
               />
 
+              {requiresPayment ? (
+                <>
               <p className="mt-2 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
                 Payment
               </p>
@@ -260,6 +284,13 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
                   </FormItem>
                 )}
               />
+                </>
+              ) : (
+                <p className="mt-2 rounded-lg bg-[var(--surface-2)] p-3 text-[12.5px] text-[var(--ink-soft)]">
+                  This plan is free — no payment needed. Submit and we&apos;ll
+                  activate your workspace.
+                </p>
+              )}
 
               <FormField
                 control={form.control}

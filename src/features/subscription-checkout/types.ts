@@ -44,7 +44,8 @@ export interface SubmitSubscriptionPayload {
   paymentReference?: string;
   paymentAmount: number;
   currency: string;
-  receiptUrl: string;
+  /** Omitted for free/trial plans — the server enforces it for paid ones. */
+  receiptUrl?: string;
   customerNote?: string;
 }
 

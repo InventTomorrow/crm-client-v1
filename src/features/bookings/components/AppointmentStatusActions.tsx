@@ -1,10 +1,14 @@
 'use client';
-import { Button } from '@/shared/ui/Button';
+import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { CalendarSync, CalendarX2 } from 'lucide-react';
 import { useState } from 'react';
 import { useUpdateAppointmentStatus } from '../hooks/useBookings';
-import { APPOINTMENT_STATUS_LABELS, type Appointment, type AppointmentStatus } from '../types';
+import {
+  APPOINTMENT_STATUS_LABELS,
+  type Appointment,
+  type AppointmentStatus,
+} from '../types';
 import {
   APPOINTMENT_STATUS_ICONS,
   isReschedulable,
@@ -13,70 +17,138 @@ import {
 import { CancelAppointmentDialog } from './CancelAppointmentDialog';
 import { RescheduleAppointmentDialog } from './RescheduleAppointmentDialog';
 
-/** Statuses worth a confirmation step. Cancelling has its own dialog — it collects a reason. */
+/** Statuses worth a confirmation step. */
 const CONFIRMED_TRANSITIONS: Partial<Record<AppointmentStatus, string>> = {
   COMPLETED: 'Marks the call as done and frees the slot for another lead.',
 };
 
-export function AppointmentStatusActions({ appointment }: { appointment: Appointment }) {
+/**
+ * Fixed-size icon button. The label floats *above* via position:absolute so
+ * it never changes the button's own dimensions → zero table-column reflow.
+ *
+ * `variant` controls hover colour:
+ *   - default  → subtle ink tint
+ *   - danger   → destructive tint
+ */
+function ActionIconBtn({
+  label,
+  icon: Icon,
+  disabled,
+  onClick,
+  variant = 'default',
+}: {
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  disabled?: boolean;
+  onClick: () => void;
+  variant?: 'default' | 'danger';
+}) {
+  return (
+    // `relative` is on the outer span so the absolute label doesn't escape
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        aria-label={label}
+        className={cn(
+          'peer', // lets the label react to button:hover via CSS sibling
+          // Fixed shape — matches HeaderIconButton language
+          'inline-flex items-center justify-center',
+          'size-[28px] rounded-md',
+          'bg-[var(--surface-2)] text-[var(--ink-mute)]',
+          // Colour-only transition — never layout
+          'transition-colors duration-150',
+          variant === 'danger'
+            ? 'hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400'
+            : 'hover:bg-[var(--surface-2)] hover:text-[var(--ink)] hover:ring-1 hover:ring-[var(--line)]',
+          'disabled:pointer-events-none disabled:opacity-35',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1',
+        )}
+      >
+        <Icon size={13} />
+      </button>
+
+      {/*
+        Floating label — absolutely positioned above, opacity transition only.
+        Uses `peer-hover:opacity-100` so it responds to the button's hover
+        without wrapping the button inside itself (avoids z-index stacking).
+      */}
+      <span
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute bottom-[calc(100%+5px)] left-1/2 -translate-x-1/2',
+          'whitespace-nowrap rounded border border-[var(--line)]',
+          'bg-[var(--bg)] px-1.5 py-0.5',
+          'text-[10px] font-medium text-[var(--ink-soft)]',
+          'opacity-0 transition-opacity duration-150',
+          'peer-hover:opacity-100',
+        )}
+      >
+        {label}
+      </span>
+    </span>
+  );
+}
+
+export function AppointmentStatusActions({
+  appointment,
+  wrap = false,
+}: {
+  appointment: Appointment;
+  /** Allow wrapping (e.g. in the detail sheet footer). Default false keeps table column tight. */
+  wrap?: boolean;
+}) {
   const [pendingStatus, setPendingStatus] = useState<AppointmentStatus | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const updateStatus = useUpdateAppointmentStatus();
 
-  // Cancelling is a status change like any other, but it owns a dialog rather than a
-  // plain button, so it is pulled out of the row here.
   const statusButtons = NEXT_STATUSES[appointment.status].filter(
-    (status) => status !== 'CANCELLED',
+    (s) => s !== 'CANCELLED',
   );
-  const canCancel = NEXT_STATUSES[appointment.status].includes('CANCELLED');
+  const canCancel     = NEXT_STATUSES[appointment.status].includes('CANCELLED');
   const canReschedule = isReschedulable(appointment);
 
   if (statusButtons.length === 0 && !canCancel && !canReschedule) return null;
 
   return (
     <>
-      <div className="flex flex-wrap gap-1.5">
+      <div className={cn('flex items-center gap-1', wrap && 'flex-wrap')}>
         {statusButtons.map((status) => {
           const StatusIcon = APPOINTMENT_STATUS_ICONS[status];
           return (
-            <Button
+            <ActionIconBtn
               key={status}
-              size="sm"
+              label={APPOINTMENT_STATUS_LABELS[status]}
+              icon={StatusIcon}
               disabled={updateStatus.isPending}
               onClick={() =>
                 CONFIRMED_TRANSITIONS[status]
                   ? setPendingStatus(status)
                   : updateStatus.mutate({ appointmentId: appointment.id, status })
               }
-            >
-              <StatusIcon size={13} className="mr-1.5" />
-              {APPOINTMENT_STATUS_LABELS[status]}
-            </Button>
+            />
           );
         })}
 
         {canReschedule && (
-          <Button
-            size="sm"
-            variant="outline"
+          <ActionIconBtn
+            label="Reschedule"
+            icon={CalendarSync}
             disabled={updateStatus.isPending}
             onClick={() => setIsRescheduleOpen(true)}
-          >
-            <CalendarSync size={13} className="mr-1.5" /> Reschedule
-          </Button>
+          />
         )}
 
         {canCancel && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          <ActionIconBtn
+            label="Cancel"
+            icon={CalendarX2}
+            variant="danger"
             disabled={updateStatus.isPending}
             onClick={() => setIsCancelOpen(true)}
-          >
-            <CalendarX2 size={13} className="mr-1.5" /> Cancel
-          </Button>
+          />
         )}
       </div>
 
@@ -101,7 +173,6 @@ export function AppointmentStatusActions({ appointment }: { appointment: Appoint
         }}
       />
 
-      {/* Mounted on demand so each dialog opens with fresh state rather than the last pick. */}
       {isRescheduleOpen && (
         <RescheduleAppointmentDialog
           appointment={appointment}

@@ -1,5 +1,6 @@
 'use client';
 import { Suspense, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
@@ -8,13 +9,13 @@ import {
   useCancelSubscription,
   useCreateCheckout,
   usePlans,
+  useRequestPlan,
   useSubscription,
 } from '../hooks/useBilling';
 import type { Plan } from '../types';
 import { BillingHistory } from './BillingHistory';
 import { CurrentSubscriptionCard } from './CurrentSubscriptionCard';
 import { PlanGrid } from './PlanGrid';
-import { RequestPlanDialog } from './RequestPlanDialog';
 
 // SafePay is wired but disabled — the manual/customer-initiated flow is the
 // live path today. Flip to 'gateway' once plans carry a provisioned
@@ -32,11 +33,11 @@ function BillingViewInner() {
   const { data: plans, isLoading: plansLoading } = usePlans();
 
   const checkout = useCreateCheckout();
+  const requestPlan = useRequestPlan();
   const cancel = useCancelSubscription();
 
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
-  const [requestPlan, setRequestPlan] = useState<Plan | null>(null);
 
   // One-time toast for the redirect outcome.
   useEffect(() => {
@@ -48,11 +49,15 @@ function BillingViewInner() {
   }, [returnStatus]);
 
   const handleSelect = (plan: Plan) => {
+    setPendingPlanId(plan.id);
     if (CHECKOUT_MODE === 'manual') {
-      setRequestPlan(plan);
+      // Sends the customer to their own /subscribe/:token page to enter
+      // details and upload a payment receipt; the admin then approves it.
+      // Deliberately no onSettled reset — the hook navigates away on success,
+      // and clearing the spinner first would flash the button back to idle.
+      requestPlan.mutate(plan.id, { onError: () => setPendingPlanId(null) });
       return;
     }
-    setPendingPlanId(plan.id);
     checkout.mutate(plan.id, { onSettled: () => setPendingPlanId(null) });
   };
 
@@ -97,7 +102,7 @@ function BillingViewInner() {
             plans={plans ?? []}
             activePlanId={activePlanId}
             pendingPlanId={pendingPlanId}
-            isMutating={CHECKOUT_MODE === 'gateway' && checkout.isPending}
+            isMutating={CHECKOUT_MODE === 'manual' ? requestPlan.isPending : checkout.isPending}
             tenantVertical={tenant?.businessVertical}
             checkoutMode={CHECKOUT_MODE}
             onSelect={handleSelect}
@@ -106,6 +111,21 @@ function BillingViewInner() {
       </div>
 
       <BillingHistory />
+
+      {/* Full-screen hold while the browser navigates to /subscribe/<token>.
+          window.location.assign isn't instant, and without this the page sits
+          looking idle after the click. */}
+      {requestPlan.isPending && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-[var(--bg)]/80 backdrop-blur-sm">
+          <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
+          <p className="text-[14px] font-medium text-[var(--ink)]">
+            Taking you to checkout…
+          </p>
+          <p className="text-[12.5px] text-[var(--ink-mute)]">
+            You&apos;ll confirm your details and upload your payment receipt.
+          </p>
+        </div>
+      )}
 
       <ConfirmDialog
         open={confirmCancel}
@@ -120,7 +140,6 @@ function BillingViewInner() {
         loading={cancel.isPending}
       />
 
-      <RequestPlanDialog plan={requestPlan} open={requestPlan !== null} onClose={() => setRequestPlan(null)} />
     </div>
   );
 }

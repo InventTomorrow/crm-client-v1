@@ -13,8 +13,16 @@ export default async function SubscribePage({
 }) {
   const { token } = await params;
   return (
-    <div className="min-h-screen bg-[var(--bg)]">
-      <SubscriptionCheckoutView token={token} />
+    <div className="relative min-h-screen bg-[var(--bg)]">
+      {/* Soft brand wash behind the card so the page doesn't read as a bare
+          form on a flat grey field. Purely decorative. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,var(--accent-soft)_0%,transparent_65%)]"
+      />
+      <div className="relative">
+        <SubscriptionCheckoutView token={token} />
+      </div>
     </div>
   );
 }

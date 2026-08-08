@@ -1,5 +1,5 @@
 'use client';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Plan } from '../types';
@@ -63,18 +63,26 @@ export function PlanCard({ plan, isCurrent, isLoading, disabled, tenantVertical,
 
       <button
         type="button"
-        className={`btn ${isCurrent ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center`}
+        className={`btn ${isCurrent ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center gap-2`}
         disabled={disabled || isCurrent || isLoading || unavailable}
         onClick={() => onSelect(plan)}
       >
         {isLoading ? (
-          <Loader2 size={14} className="animate-spin" />
+          // Stays visible until the browser navigates to /subscribe/<token>,
+          // so the click never looks like it did nothing.
+          <>
+            <Loader2 size={14} className="animate-spin" />
+            Taking you to checkout…
+          </>
         ) : isCurrent ? (
           'Current plan'
         ) : unavailable ? (
           'Unavailable'
         ) : checkoutMode === 'manual' ? (
-          'Request this plan'
+          <>
+            Continue to checkout
+            <ArrowRight size={14} />
+          </>
         ) : (
           'Choose plan'
         )}

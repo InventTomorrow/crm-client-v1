@@ -26,7 +26,11 @@ export async function uploadSubscriptionReceipt(token: string, file: File) {
   const res = await apiClient.post<{ success: true; data: { receiptUrl: string } }>(
     `/subscribe/${token}/receipt`,
     formData,
-    { headers: { "Content-Type": "multipart/form-data" } },
+    // apiClient defaults every request to application/json. Setting the header
+    // to undefined makes axios drop it and emit its own
+    // `multipart/form-data; boundary=…` — writing that value by hand omits the
+    // boundary, and multer then can't parse the body at all.
+    { headers: { "Content-Type": undefined } },
   );
   return res.data.data.receiptUrl;
 }

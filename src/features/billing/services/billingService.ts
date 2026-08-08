@@ -25,6 +25,18 @@ export async function getSubscription() {
   return res.data.data;
 }
 
+/**
+ * Self-serve workflow 2: mints this workspace's own /subscribe/:token link so
+ * the customer can fill their details and upload a payment receipt.
+ */
+export async function createSelfServeCheckoutLink(planId: string) {
+  const res = await apiClient.post<{ success: true; data: { checkoutUrl: string; token: string } }>(
+    '/billing/checkout-link',
+    { planId },
+  );
+  return res.data.data;
+}
+
 export async function createCheckout(planId: string) {
   const res = await apiClient.post<{ success: true; data: CheckoutResponse }>(
     '/billing/checkout',

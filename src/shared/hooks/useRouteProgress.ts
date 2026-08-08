@@ -117,7 +117,9 @@ export function useRouteProgress() {
       const [, , nextUrl] = args;
       if (nextUrl) {
         const destination = new URL(String(nextUrl), window.location.href);
-        if (destination.pathname !== window.location.pathname) start();
+        // Next pushes history from inside React's commit phase, so starting the
+        // bar synchronously would schedule state from an insertion effect.
+        if (destination.pathname !== window.location.pathname) queueMicrotask(start);
       }
       return originalPushState.apply(this, args);
     };
