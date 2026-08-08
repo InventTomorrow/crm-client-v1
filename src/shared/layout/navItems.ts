@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarClock,
   ClipboardList,
+  CreditCard,
   FolderOpen,
   Inbox,
   KeyRound,
@@ -164,6 +165,13 @@ export const NAV_ITEMS: NavItem[] = [
         label: "Notifications",
         section: "notifications",
         Icon: Bell,
+      },
+      {
+        href: "/settings?section=billing",
+        label: "Billing & Plan",
+        section: "billing",
+        perm: "billing:view",
+        Icon: CreditCard,
       },
       {
         href: "/settings?section=access",

@@ -16,6 +16,7 @@ import type { Plan } from '../types';
 import { BillingHistory } from './BillingHistory';
 import { CurrentSubscriptionCard } from './CurrentSubscriptionCard';
 import { PlanGrid } from './PlanGrid';
+import { PlanUsageCard } from './PlanUsageCard';
 
 // SafePay is wired but disabled — the manual/customer-initiated flow is the
 // live path today. Flip to 'gateway' once plans carry a provisioned
@@ -93,8 +94,14 @@ function BillingViewInner() {
         </div>
       )}
 
+      {subscription?.plan && (
+        <PlanUsageCard subscription={subscription} tenantVertical={tenant?.businessVertical} />
+      )}
+
       <div>
-        <h3 className="text-[15px] font-semibold mb-3">Plans</h3>
+        <h3 className="text-[15px] font-semibold mb-3">
+          {subscription ? 'Change plan' : 'Plans'}
+        </h3>
         {plansLoading ? (
           <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">Loading plans…</div>
         ) : (

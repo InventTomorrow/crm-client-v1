@@ -20,6 +20,26 @@ export function formatPlanPeriod(duration: PlanDuration, customDurationDays: num
   return `/ ${DURATION_LABEL[duration]}`;
 }
 
+const DURATION_TAB_LABEL: Record<PlanDuration, string> = {
+  DAYS_3: '3 days',
+  DAYS_7: '7 days',
+  DAYS_14: '14 days',
+  MONTHLY: 'Monthly',
+  QUARTERLY: 'Quarterly',
+  SEMI_ANNUAL: '6 months',
+  ANNUAL: 'Yearly',
+  CUSTOM_DAYS: 'Custom',
+};
+
+/**
+ * Standalone label for the duration filter chips. Distinct from
+ * formatPlanPeriod, which reads as a price suffix ("/ month") and looks wrong
+ * on its own once the slash is stripped.
+ */
+export function formatDurationLabel(duration: PlanDuration): string {
+  return DURATION_TAB_LABEL[duration];
+}
+
 /** pkr() for the PKR default; Intl.NumberFormat fallback for any other currency. */
 export function formatPlanPrice(plan: Pick<Plan, 'price' | 'currency'>): string {
   if (plan.currency === 'PKR') return pkr(plan.price);

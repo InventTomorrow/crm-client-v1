@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import type { BusinessVertical } from '@/lib/business-verticals';
-import { formatPlanPeriod } from '../utils/planFormat';
+import { formatDurationLabel } from '../utils/planFormat';
 import type { Plan, PlanDuration } from '../types';
 import { PlanCard } from './PlanCard';
 
@@ -42,21 +42,33 @@ export function PlanGrid({ plans, activePlanId, pendingPlanId, isMutating, tenan
   return (
     <div className="space-y-4">
       {tabs.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`badge font-medium transition-colors ${
-                tab === selectedTab
-                  ? 'text-white bg-[var(--accent)]'
-                  : 'text-[var(--ink-soft)] bg-[var(--line-soft)] hover:bg-[var(--line)]'
-              }`}
-            >
-              {tab === TRIALS_TAB ? 'Trials' : formatPlanPeriod(tab, null).replace('/ ', '')}
-            </button>
-          ))}
+        <div
+          role="tablist"
+          aria-label="Filter plans by billing period"
+          className="inline-flex flex-wrap gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] p-1"
+        >
+          {tabs.map((tab) => {
+            const isSelected = tab === selectedTab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-[7px] px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-[var(--surface)] text-[var(--ink)] shadow-[var(--shadow-1)]'
+                    : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
+                }`}
+              >
+                {tab === TRIALS_TAB ? 'Free trials' : formatDurationLabel(tab)}
+                <span className="ml-1.5 text-[11px] text-[var(--ink-mute)]">
+                  {plansByTab.get(tab)?.length ?? 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
