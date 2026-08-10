@@ -108,12 +108,12 @@
   --wa-dark-sent:    oklch(0.345 0.083 186); /* #005C4B */
   --wa-dark-ink:     oklch(0.949 0.009 234); /* #E9EDEF */
 
-  /* ── Accent remapped to WhatsApp teal ─────────────────────────────────── */
-  --accent:      oklch(0.628 0.103 188);    /* #00A884 */
+  /* ── Accent remapped to AsaanRabta brand green (matches admin2) ───────── */
+  --accent:      oklch(0.651 0.157 154);    /* #1DAA61 */
   --accent-2:    oklch(0.782 0.164 154);    /* #25D366 */
-  --accent-soft: oklch(0.628 0.103 188 / 0.10);
-  --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.369 0.082 188) 100%);
-  --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.369 0.082 188) 100%);
+  --accent-soft: oklch(0.651 0.157 154 / 0.10);
+  --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.651 0.157 154) 100%);
+  --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.651 0.157 154) 100%);
 
   --bg:       oklch(0.964 0.006 248);       /* #F0F2F5 */
   --surface:  oklch(1 0 0);                 /* #FFFFFF */
@@ -143,7 +143,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.628 0.103 188);        /* brand teal #00A884 */
+  --primary: oklch(0.651 0.157 154);        /* brand green #1DAA61 */
   --primary-foreground: oklch(1 0 0);       /* white */
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -164,7 +164,7 @@
   --warning-soft: color-mix(in oklab, var(--warning) 14%, transparent);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.628 0.103 188);           /* brand teal #00A884 */
+  --ring: oklch(0.651 0.157 154);           /* brand green #1DAA61 */
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -173,21 +173,21 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.628 0.103 188);        /* brand teal #00A884 */
+  --sidebar-primary: oklch(0.651 0.157 154);        /* brand green #1DAA61 */
   --sidebar-primary-foreground: oklch(1 0 0);       /* white */
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.628 0.103 188);           /* brand teal #00A884 */           --destructive-foreground: var(--color-red-800);           --success: var(--color-emerald-500);           --success-foreground: var(--color-emerald-900);           --info: var(--color-violet-500);           --info-foreground: var(--color-violet-900);           --warning: var(--color-yellow-500);           --warning-foreground: var(--color-yellow-900);           --invert: var(--color-zinc-900);           --invert-foreground: var(--color-zinc-50);
+  --sidebar-ring: oklch(0.651 0.157 154);           /* brand green #1DAA61 */           --destructive-foreground: var(--color-red-800);           --success: var(--color-emerald-500);           --success-foreground: var(--color-emerald-900);           --info: var(--color-violet-500);           --info-foreground: var(--color-violet-900);           --warning: var(--color-yellow-500);           --warning-foreground: var(--color-yellow-900);           --invert: var(--color-zinc-900);           --invert-foreground: var(--color-zinc-50);
 }
 
 /* Dark Mode Overrides — WhatsApp dark palette */
 html.dark {
-  --accent:      oklch(0.628 0.103 188);    /* #00A884 */
+  --accent:      oklch(0.651 0.157 154);    /* #1DAA61 */
   --accent-2:    oklch(0.782 0.164 154);    /* #25D366 */
-  --accent-soft: oklch(0.628 0.103 188 / 0.18);
-  --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.628 0.103 188) 100%);
-  --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.628 0.103 188) 100%);
+  --accent-soft: oklch(0.651 0.157 154 / 0.18);
+  --grad-h: linear-gradient(90deg, oklch(0.782 0.164 154) 0%, oklch(0.651 0.157 154) 100%);
+  --grad-v: linear-gradient(180deg, oklch(0.782 0.164 154) 0%, oklch(0.651 0.157 154) 100%);
 
   --bg:       #111B21;   /* app frame — WhatsApp dark base */
   --surface:  #202C33;   /* panels, cards, headers */
@@ -309,8 +309,8 @@ button:disabled,
   color: white;
   border: 1px solid var(--accent);
 }
-.btn-grad:hover { background: var(--wa-teal-dark); border-color: var(--wa-teal-dark); }
-html.dark .btn-grad:hover { background: oklch(0.495 0.095 186); border-color: oklch(0.495 0.095 186); }
+.btn-grad:hover { background: oklch(0.559 0.133 154); border-color: oklch(0.559 0.133 154); } /* #178A4F */
+html.dark .btn-grad:hover { background: oklch(0.559 0.133 154); border-color: oklch(0.559 0.133 154); }
 
 .btn-outline {
   background: var(--surface);
@@ -338,8 +338,8 @@ html.dark .btn-outline:hover { background: #1A2031; border-color: #2A3146; }
     transition: border 150ms, box-shadow 150ms;
     font-weight: 400;
   }
-  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px oklch(0.572 0.092 188 / 0.15); }
-  html.dark .input:focus { box-shadow: 0 0 0 3px oklch(0.628 0.103 188 / 0.20); }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px oklch(0.651 0.157 154 / 0.15); }
+  html.dark .input:focus { box-shadow: 0 0 0 3px oklch(0.651 0.157 154 / 0.20); }
 }
 
 .badge {
@@ -931,7 +931,7 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   --card-foreground: #E9EDEF;
   --popover: #202C33;
   --popover-foreground: #E9EDEF;
-  --primary: #00A884;
+  --primary: #1DAA61;
   --primary-foreground: #0B141A;
   --secondary: #2A3942;
   --secondary-foreground: #E9EDEF;
@@ -941,7 +941,7 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   --destructive: oklch(0.704 0.191 22.216);
   --border: #2F3B44;
   --input: #2A3942;
-  --ring: #00A884;
+  --ring: #1DAA61;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -949,12 +949,12 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   --chart-5: oklch(0.269 0 0);
   --sidebar: #111B21;
   --sidebar-foreground: #E9EDEF;
-  --sidebar-primary: #00A884;
+  --sidebar-primary: #1DAA61;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #2A3942;
   --sidebar-accent-foreground: #E9EDEF;
   --sidebar-border: #2F3B44;
-  --sidebar-ring: #00A884;
+  --sidebar-ring: #1DAA61;
   --destructive-foreground: var(--color-red-600);
   --destructive-soft: color-mix(in oklab, var(--destructive) 18%, transparent);
   --success: var(--color-emerald-500);
