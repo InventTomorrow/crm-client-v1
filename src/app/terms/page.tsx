@@ -1,27 +1,48 @@
-import type { Metadata } from "next";
 import LegalLayout from "@/features/legal/components/LegalLayout";
+import {
+  LEGAL_LAST_UPDATED_ISO,
+  LEGAL_LAST_UPDATED_LABEL,
+  LEGAL_ROUTES,
+} from "@/features/legal/constants";
 import { TERMS_SECTIONS } from "@/features/legal/data/termsContent";
+import { JsonLd, breadcrumbSchema, webPageSchema } from "@/shared/seo/jsonLd";
+import { buildPageMetadata } from "@/shared/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Terms of Service · AsaanRabta",
-  description:
-    "Read the Terms of Service governing the use of AsaanRabta WhatsApp CRM, AI agents, multi-inbox capabilities, and connection policies.",
-  openGraph: {
-    title: "Terms of Service · AsaanRabta",
-    description:
-      "Read the Terms of Service governing the use of AsaanRabta WhatsApp CRM, AI agents, multi-inbox capabilities, and connection policies.",
-    url: "https://asaanrabta.com/terms",
-  },
-};
+const ROUTE = LEGAL_ROUTES[1];
+
+export const metadata = buildPageMetadata({
+  title: ROUTE.title,
+  description: ROUTE.description,
+  path: ROUTE.path,
+  isPublic: true,
+  ogType: "article",
+  modifiedTime: LEGAL_LAST_UPDATED_ISO,
+});
 
 export default function TermsOfServicePage() {
   return (
-    <LegalLayout
-      title="Terms of Service"
-      subtitle="Terms and conditions governing your subscription, platform access, AI agent usage, and WhatsApp connection protocols."
-      badge="Legal Agreement"
-      lastUpdated="July 29, 2026"
-      sections={TERMS_SECTIONS}
-    />
+    <>
+      <JsonLd
+        nodes={[
+          webPageSchema({
+            name: ROUTE.title,
+            description: ROUTE.description,
+            path: ROUTE.path,
+            dateModified: LEGAL_LAST_UPDATED_ISO,
+          }),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: ROUTE.title, path: ROUTE.path },
+          ]),
+        ]}
+      />
+      <LegalLayout
+        title="Terms of Service"
+        subtitle="Terms and conditions governing your subscription, platform access, AI agent usage, and WhatsApp connection protocols."
+        badge="Legal Agreement"
+        lastUpdated={LEGAL_LAST_UPDATED_LABEL}
+        sections={TERMS_SECTIONS}
+      />
+    </>
   );
 }

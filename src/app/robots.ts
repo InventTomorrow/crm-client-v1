@@ -1,27 +1,37 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
+import { absoluteUrl } from "@/shared/lib/site";
+
+// Every private surface: auth, onboarding, tokenized flows, and all (app) CRM routes.
+const PRIVATE_PATHS = [
+  "/admin",
+  "/api/",
+  "/auth/",
+  "/bookings",
+  "/channels",
+  "/checkout/",
+  "/dashboard",
+  "/demo",
+  "/inbox",
+  "/inventory",
+  "/leads",
+  "/menu",
+  "/notifications",
+  "/onboarding/",
+  "/orders",
+  "/qualification",
+  "/resources",
+  "/services",
+  "/settings",
+  "/subscribe/",
+];
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://asaanrabta.com";
-
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: [
-        "/api/",
-        "/auth/",
-        "/onboarding/",
-        "/inbox/",
-        "/settings/",
-        "/leads/",
-        "/orders/",
-        "/channels/",
-        "/dashboard/",
-        "/inventory/",
-        "/admin/",
-        "/notifications/",
-      ], // Protect internal CRM routes from being indexed
+      disallow: PRIVATE_PATHS,
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

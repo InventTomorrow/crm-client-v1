@@ -1,32 +1,25 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
+import {
+  LEGAL_LAST_UPDATED_ISO,
+  LEGAL_ROUTES,
+} from "@/features/legal/constants";
+import { SITE_URL, absoluteUrl } from "@/shared/lib/site";
 
+// Only the indexable surface belongs here: the landing page + legal docs.
+// Auth, onboarding, and all (app) CRM routes are noindexed and robots-disallowed.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://asaanrabta.com";
-
   return [
     {
-      url: baseUrl,
+      url: SITE_URL,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
-    {
-      url: `${baseUrl}/privacy-policy`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/data-deletion`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
+    ...LEGAL_ROUTES.map((legalRoute) => ({
+      url: absoluteUrl(legalRoute.path),
+      lastModified: new Date(LEGAL_LAST_UPDATED_ISO),
+      changeFrequency: "yearly" as const,
+      priority: 0.5,
+    })),
   ];
 }

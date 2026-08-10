@@ -63,13 +63,13 @@ export default function Footer() {
               </h3>
               <ul className="mt-4 space-y-2">
                 <li>
-                  <a
+                  <Link
                     href="mailto:support@asaanrabta.com"
                     className="inline-flex items-center gap-2 text-brand-text text-[14px] transition-colors hover:text-brand-green"
                   >
                     <Mail className="size-4 text-brand-green" />
                     Contact Support
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </nav>
