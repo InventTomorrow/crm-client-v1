@@ -79,6 +79,8 @@ export interface BulkItem extends ProductFormData {
   imageUrl?: string;
   /** Full set of images (kept from imports that carry several URLs). */
   imageUrls?: string[];
+  /** Stable client-side identity for React keys — not sent to the API. */
+  _id?: string;
 }
 
 export const TIERS = [

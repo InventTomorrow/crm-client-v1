@@ -109,9 +109,19 @@ export function extractApiErrorCode(error: unknown): string | null {
 // origin because apiClient authenticates against it directly. A relative
 // path here would send the <img> request to the frontend origin instead,
 // which never had the cookie set on it, and 401 at the backend.
+const ALLOWED_IMG_PROTOCOLS = ['https:', 'http:'];
+
 export function getImageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  if (!url.includes('amazonaws.com')) return url;
-  const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? '';
-  return `${apiOrigin}/api/v1/upload/image?url=${encodeURIComponent(url)}`;
+  try {
+    const parsed = new URL(url);
+    if (!ALLOWED_IMG_PROTOCOLS.includes(parsed.protocol)) return undefined;
+    if (parsed.hostname.endsWith('amazonaws.com')) {
+      const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? '';
+      return `${apiOrigin}/api/v1/upload/image?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  } catch {
+    return undefined; // malformed URLs dropped silently
+  }
 }

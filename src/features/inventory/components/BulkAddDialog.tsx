@@ -45,6 +45,7 @@ import { SizeSelector } from "./SizeSelector";
 export type { BulkItem };
 
 const EMPTY_ITEM = (): BulkItem => ({
+  _id: crypto.randomUUID(),
   name: "",
   sku: "",
   price: 0,
@@ -303,12 +304,13 @@ function BulkCard({
   onClick: () => void;
   onRemove: () => void;
 }) {
-  const bad = !item.name || item.price <= 0 || item.stock < 0;
+  const bad = !item.name || item.price <= 0;
+  const zeroStock = item.stock === 0;
   return (
     <div
       onClick={onClick}
       className={`relative flex flex-col gap-1.5 rounded-[10px] border cursor-pointer p-[8px] transition-all
-        ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : bad ? "border-[#FCA5A5] bg-[var(--surface)]" : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]"}`}
+        ${active ? "border-[var(--accent)] bg-[var(--accent-soft)]" : bad ? "border-[#FCA5A5] bg-[var(--surface)]" : zeroStock ? "border-[#FCD34D] bg-[var(--surface)]" : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]"}` }
     >
       {/* Image */}
       <div className="w-full h-[72px] rounded-[7px] overflow-hidden bg-[var(--surface-2)] flex items-center justify-center">
@@ -339,6 +341,11 @@ function BulkCard({
       {bad && (
         <div className="absolute top-1.5 right-4 px-1 py-px rounded-full text-[9px] font-bold text-white bg-[#EF4444]">
           !
+        </div>
+      )}
+      {!bad && zeroStock && (
+        <div className="absolute top-1.5 right-4 px-1 py-px rounded-full text-[9px] font-bold text-white bg-[#F59E0B]">
+          0
         </div>
       )}
       <Button
@@ -391,13 +398,23 @@ export function BulkAddDialog({
 
   const addItems = (newItems: BulkItem[]) => {
     setItems((prev) => {
-      const next = [...prev, ...newItems];
-      if (prev.length === 0 && newItems.length > 0) setSelectedIdx(0);
+      const withIds = newItems.map((it) =>
+        it._id ? it : { ...it, _id: crypto.randomUUID() },
+      );
+      const next = [...prev, ...withIds];
+      if (prev.length === 0 && withIds.length > 0) setSelectedIdx(0);
       return next;
     });
   };
 
+const MAX_FILE_SIZE_MB = 5;
+const MAX_IMPORT_ROWS = 500;
+
   const parseFile = (file: File) => {
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      toast.error(`File too large — max ${MAX_FILE_SIZE_MB} MB`);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
@@ -405,6 +422,10 @@ export function BulkAddDialog({
         const parsed = file.name.endsWith(".json")
           ? parseProductsJson(text)
           : parseProductsCsv(text);
+        if (parsed.length > MAX_IMPORT_ROWS) {
+          toast.error(`Too many rows — max ${MAX_IMPORT_ROWS} per import`);
+          return;
+        }
         addItems(parsed);
         toast.success(
           `${parsed.length} product${parsed.length !== 1 ? "s" : ""} imported`,
@@ -556,7 +577,7 @@ export function BulkAddDialog({
               <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
                 {items.map((item, i) => (
                   <BulkCard
-                    key={i}
+                    key={item._id ?? i}
                     item={item}
                     index={i}
                     active={selectedIdx === i}
