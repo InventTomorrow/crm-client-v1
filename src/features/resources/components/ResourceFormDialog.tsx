@@ -30,6 +30,7 @@ import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import { useResourceForm } from "../hooks/useResourceForm";
 import {
+  MAX_RESOURCE_FILE_SIZE_BYTES,
   RESOURCE_TYPES,
   RESOURCE_TYPE_LABELS,
   type TenantResource,
@@ -43,8 +44,8 @@ interface ResourceFormDialogProps {
   editing: TenantResource | null;
 }
 
-// Images only for now — the bot shares resources as WhatsApp image messages.
-const ACCEPTED_TYPES = "image/*";
+// Images go out as WhatsApp image messages, PDFs as documents.
+const ACCEPTED_TYPES = "image/*,application/pdf";
 
 export function ResourceFormDialog({
   open,
@@ -91,7 +92,7 @@ export function ResourceFormDialog({
               name="fileUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image</FormLabel>
+                  <FormLabel>File</FormLabel>
                   <FormControl>
                     <FileUpload
                       compact
@@ -104,9 +105,9 @@ export function ResourceFormDialog({
                       progress={uploadProgress}
                       uploadPhase={uploadPhase}
                       accept={ACCEPTED_TYPES}
-                      maxSize={10 * 1024 * 1024}
+                      maxSize={MAX_RESOURCE_FILE_SIZE_BYTES}
                       description="Drop a brochure, portfolio or case study"
-                      hint="Image files only for now — up to 10 MB"
+                      hint="Image or PDF — up to 10 MB"
                       disabled={isSaving}
                     />
                   </FormControl>
