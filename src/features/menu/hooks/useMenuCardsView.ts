@@ -12,7 +12,8 @@ import {
 } from './useMenuCards';
 import type { MenuCard } from '../types';
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
 
 /** Owns all Menu Cards page state, uploads and mutation wiring so the view stays a thin render layer. */
 export function useMenuCardsView() {
@@ -33,16 +34,22 @@ export function useMenuCardsView() {
       try {
         // Sequential on purpose — upload order becomes card order in the carousel.
         for (const file of Array.from(files)) {
-          if (!file.type.startsWith('image/')) {
-            toast.error(`${file.name} is not an image`);
+          const isPdf = file.type === 'application/pdf';
+          if (!isPdf && !file.type.startsWith('image/')) {
+            toast.error(`${file.name} is not an image or PDF`);
             continue;
           }
-          if (file.size > MAX_FILE_SIZE_BYTES) {
-            toast.error(`${file.name} is over 5MB`);
+          const maxSizeBytes = isPdf ? MAX_PDF_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+          if (file.size > maxSizeBytes) {
+            toast.error(`${file.name} is over ${isPdf ? '10MB' : '5MB'}`);
             continue;
           }
           const publicUrl = await presignedUpload(file, 'menu');
-          await createMenuCard.mutateAsync({ imageUrl: publicUrl, isActive: true });
+          await createMenuCard.mutateAsync({
+            imageUrl: publicUrl,
+            mimeType: file.type,
+            isActive: true,
+          });
         }
         toast.success('Menu cards uploaded');
       } catch (error) {

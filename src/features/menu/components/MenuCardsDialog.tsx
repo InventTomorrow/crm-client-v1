@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn, getImageUrl } from '@/lib/utils';
+import { cn, getImageUrl, isPdfFile } from '@/lib/utils';
 import { Button } from '@/shared/ui/Button';
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/Dialog';
+import { PdfPreview } from '@/shared/ui/PdfPreview';
 import { ShimmerImage } from '@/shared/ui/ShimmerImage';
 import { useMenuCards } from '../hooks/useMenuCards';
 
@@ -89,12 +90,21 @@ export function MenuCardsDialog({
           {activeCard && (
             <>
               <div className="relative h-full w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
-                <ShimmerImage
-                  src={getImageUrl(activeCard.imageUrl)}
-                  alt={activeCard.title ?? `Menu card ${activeIndex + 1}`}
-                  wrapperClassName="absolute inset-0"
-                  className="size-full object-contain"
-                />
+                {isPdfFile(activeCard.mimeType, activeCard.imageUrl) ? (
+                  <PdfPreview
+                    src={getImageUrl(activeCard.imageUrl)}
+                    title={activeCard.title ?? `Menu card ${activeIndex + 1}`}
+                    interactive
+                    className="absolute inset-0"
+                  />
+                ) : (
+                  <ShimmerImage
+                    src={getImageUrl(activeCard.imageUrl)}
+                    alt={activeCard.title ?? `Menu card ${activeIndex + 1}`}
+                    wrapperClassName="absolute inset-0"
+                    className="size-full object-contain"
+                  />
+                )}
               </div>
 
               {totalCards > 1 && (
@@ -139,12 +149,20 @@ export function MenuCardsDialog({
                     : 'border-transparent opacity-60 hover:opacity-100',
                 )}
               >
-                <ShimmerImage
-                  src={getImageUrl(menuCard.imageUrl)}
-                  alt=""
-                  wrapperClassName="absolute inset-0"
-                  className="size-full object-cover"
-                />
+                {isPdfFile(menuCard.mimeType, menuCard.imageUrl) ? (
+                  <PdfPreview
+                    src={getImageUrl(menuCard.imageUrl)}
+                    title={menuCard.title ?? `Menu card ${index + 1}`}
+                    className="absolute inset-0"
+                  />
+                ) : (
+                  <ShimmerImage
+                    src={getImageUrl(menuCard.imageUrl)}
+                    alt=""
+                    wrapperClassName="absolute inset-0"
+                    className="size-full object-cover"
+                  />
+                )}
               </button>
             ))}
           </div>

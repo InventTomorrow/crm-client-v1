@@ -97,6 +97,7 @@ export async function getMenuCards() {
 
 export interface CreateMenuCardPayload {
   imageUrl: string;
+  mimeType?: string;
   title?: string;
   sortOrder?: number;
   isActive?: boolean;

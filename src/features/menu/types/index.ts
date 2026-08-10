@@ -29,6 +29,8 @@ export interface MenuCategory {
 export interface MenuCard {
   id: string;
   imageUrl: string;
+  /** Null means image — only PDF cards store their mime explicitly. */
+  mimeType?: string | null;
   title?: string | null;
   sortOrder: number;
   isActive: boolean;
@@ -36,7 +38,13 @@ export interface MenuCard {
 
 // Mirrors the server's createMenuCardSchema.
 export const menuCardFormSchema = z.object({
-  imageUrl: z.string().url('A menu card image is required'),
+  imageUrl: z.string().url('A menu card file is required'),
+  mimeType: z
+    .string()
+    .refine((mimeType) => /^(image\/[\w.+-]+|application\/pdf)$/i.test(mimeType), {
+      message: 'Menu cards must be image or PDF files',
+    })
+    .optional(),
   title: z.string().max(120).optional(),
   isActive: z.boolean().default(true),
 });

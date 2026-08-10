@@ -1,10 +1,11 @@
 'use client';
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Trash2, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { cn, getImageUrl } from '@/lib/utils';
+import { cn, getImageUrl, isPdfFile } from '@/lib/utils';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { Skeleton } from '@/shared/ui/Motion';
+import { PdfPreview } from '@/shared/ui/PdfPreview';
 import { ShimmerImage } from '@/shared/ui/ShimmerImage';
 import { useMenuCardsView } from '../hooks/useMenuCardsView';
 import { MenuCardsDialog } from './MenuCardsDialog';
@@ -62,7 +63,7 @@ export function MenuCardsView() {
               Upload cards
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 multiple
                 className="hidden"
                 disabled={isUploading}
@@ -109,15 +110,27 @@ export function MenuCardsView() {
           {menuCards.map((menuCard, index) => (
             <div key={menuCard.id} className="card group overflow-hidden p-0">
               <div className="relative aspect-3/4 bg-[var(--surface-2)]">
-                <ShimmerImage
-                  src={getImageUrl(menuCard.imageUrl)}
-                  alt={menuCard.title ?? `Menu card ${index + 1}`}
-                  wrapperClassName="absolute inset-0"
-                  className={cn(
-                    'size-full object-cover',
-                    !menuCard.isActive && 'opacity-50 grayscale',
-                  )}
-                />
+                {isPdfFile(menuCard.mimeType, menuCard.imageUrl) ? (
+                  <PdfPreview
+                    src={getImageUrl(menuCard.imageUrl)}
+                    title={menuCard.title ?? `Menu card ${index + 1}`}
+                    interactive
+                    className={cn(
+                      'absolute inset-0',
+                      !menuCard.isActive && 'opacity-50 grayscale',
+                    )}
+                  />
+                ) : (
+                  <ShimmerImage
+                    src={getImageUrl(menuCard.imageUrl)}
+                    alt={menuCard.title ?? `Menu card ${index + 1}`}
+                    wrapperClassName="absolute inset-0"
+                    className={cn(
+                      'size-full object-cover',
+                      !menuCard.isActive && 'opacity-50 grayscale',
+                    )}
+                  />
+                )}
 
                 <span className="absolute left-2 top-2 rounded-full bg-[var(--surface)]/90 px-2 py-0.5 text-[11px] font-semibold text-[var(--ink)] shadow-sm">
                   {index + 1}
