@@ -115,3 +115,13 @@ export function getImageUrl(url: string | null | undefined): string | undefined 
   const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? '';
   return `${apiOrigin}/api/v1/upload/image?url=${encodeURIComponent(url)}`;
 }
+
+// Falls back to the URL extension for records saved before mime types were stored.
+export function isPdfFile(
+  mimeType: string | null | undefined,
+  fileUrl?: string | null,
+): boolean {
+  if (mimeType?.toLowerCase() === 'application/pdf') return true;
+  if (!fileUrl) return false;
+  return fileUrl.split('?')[0].toLowerCase().endsWith('.pdf');
+}

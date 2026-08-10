@@ -27,20 +27,27 @@ export const resourceConditionsSchema = z.record(
 );
 export type ResourceConditions = z.infer<typeof resourceConditionsSchema>;
 
+/** Mirrors `MAX_RESOURCE_FILE_SIZE_BYTES` on the server. */
+export const MAX_RESOURCE_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
 /** Mirrors `createResourceSchema` on the server. */
 export const resourceFormSchema = z.object({
   label: z.string().min(1, 'Give this file a name'),
   description: z.string().nullable().optional(),
   resourceType: z.enum(RESOURCE_TYPES),
-  fileUrl: z.string().min(1, 'Upload an image first'),
-  // Images only for now — mirrors the server, which rejects anything else.
+  fileUrl: z.string().min(1, 'Upload a file first'),
+  // Images and PDFs — mirrors the server, which rejects anything else.
   mimeType: z
     .string()
     .min(1)
-    .refine((mimeType) => mimeType.toLowerCase().startsWith('image/'), {
-      message: 'Only image files are supported right now',
+    .refine((mimeType) => /^(image\/[\w.+-]+|application\/pdf)$/i.test(mimeType), {
+      message: 'Only image or PDF files are supported',
     }),
-  sizeBytes: z.number().int().min(0),
+  sizeBytes: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_RESOURCE_FILE_SIZE_BYTES, 'File must be 10 MB or smaller'),
   conditions: resourceConditionsSchema,
   isActive: z.boolean(),
 });

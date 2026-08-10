@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, getImageUrl } from "@/lib/utils";
+import { cn, getImageUrl, isPdfFile } from "@/lib/utils";
 import {
   useFileUpload,
   type FileMetadata,
@@ -18,6 +18,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "./Alert";
 import { Button } from "./Button";
+import { PdfPreview } from "./PdfPreview";
 
 export interface FileUploadProps {
   /** Controlled — the currently uploaded file's URL, like ImageUploader. */
@@ -62,7 +63,11 @@ function toInitialPreview(
     id: "current",
     name: value.split("/").pop() ?? "file",
     size: 0,
-    type: accept.startsWith("image/") ? "image/*" : "application/octet-stream",
+    type: isPdfFile(null, value)
+      ? "application/pdf"
+      : accept.startsWith("image/")
+        ? "image/*"
+        : "application/octet-stream",
     url: value,
   };
   return {
@@ -167,6 +172,7 @@ export function FileUpload({
 
   const currentFile = preview?.file;
   const isImage = !!currentFile && currentFile.type.startsWith("image/");
+  const isPdf = !!currentFile && currentFile.type === "application/pdf";
   const fileName = currentFile?.name ?? null;
 
   return (
@@ -202,6 +208,12 @@ export function FileUpload({
                   "absolute inset-0 h-full w-full",
                   isCompact ? "object-contain" : "object-cover",
                 )}
+              />
+            ) : isPdf && preview.preview ? (
+              <PdfPreview
+                src={preview.preview}
+                title={fileName ?? "Uploaded PDF"}
+                className="absolute inset-0"
               />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted">

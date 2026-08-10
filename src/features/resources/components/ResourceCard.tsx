@@ -1,4 +1,5 @@
 'use client';
+import { getImageUrl, isPdfFile } from '@/lib/utils';
 import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import {
@@ -7,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/ui/DropdownMenu';
+import { PdfPreview } from '@/shared/ui/PdfPreview';
+import { ShimmerImage } from '@/shared/ui/ShimmerImage';
 import { ExternalLink, FileText, MoreVertical, Pencil, Trash2, Users } from 'lucide-react';
 import { RESOURCE_TYPE_LABELS, type TenantResource } from '../types';
 import {
@@ -29,9 +32,28 @@ export function ResourceCard({ resource, onEdit, onDelete }: ResourceCardProps) 
     <article className="card flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--accent)]">
-            <FileText size={15} />
-          </span>
+          {isPdfFile(resource.mimeType, resource.fileUrl) ? (
+            <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-[var(--line)]">
+              <PdfPreview
+                src={getImageUrl(resource.fileUrl)}
+                title={resource.label}
+                className="absolute inset-0"
+              />
+            </span>
+          ) : resource.mimeType.startsWith('image/') ? (
+            <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-2)]">
+              <ShimmerImage
+                src={getImageUrl(resource.fileUrl)}
+                alt={resource.label}
+                wrapperClassName="absolute inset-0"
+                className="size-full object-cover"
+              />
+            </span>
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--accent)]">
+              <FileText size={15} />
+            </span>
+          )}
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
