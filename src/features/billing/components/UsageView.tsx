@@ -74,7 +74,7 @@ export function UsageView() {
     <>
       <h2 className="text-[20px] font-semibold">Usage</h2>
 
-      <div className="card p-[22px]">
+      <div className="card p-[22px] max-w-[500px]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-[15px] font-semibold">{usage.plan.name}</h3>
