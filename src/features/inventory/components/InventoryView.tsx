@@ -31,7 +31,6 @@ import { exportProductsCsv } from "../utils/exportProductsCsv";
 import { buildProductColumns } from "../utils/productColumns";
 import { AddMenuItem } from "./AddMenuItem";
 import { BulkAddDialog } from "./BulkAddDialog";
-import { ProductFormDialog } from "./ProductFormDialog";
 import { ProductGridCard } from "./ProductGridCard";
 import { ProductPreviewDialog } from "./ProductPreviewDialog";
 import { TierCard } from "./TierCard";
@@ -65,11 +64,9 @@ export function InventoryView() {
     toggleStock,
     addMenuOpen,
     setAddMenuOpen,
-    singleOpen,
     bulkOpen,
     importedItems,
     parsingImport,
-    editing,
     deleteTarget,
     setDeleteTarget,
     previewProduct,
@@ -82,17 +79,13 @@ export function InventoryView() {
     importRef,
     importType,
     addMenuRef,
-    isSaving,
-    isDeleting,
     stockCounts,
     filtered,
-    closeDialog,
-    openEditDialog,
-    openAddDialog,
+    goToAddProduct,
+    goToEditProduct,
     openBulkDialog,
     confirmDelete,
     confirmBulkDelete,
-    handleSave,
     handleImport,
     closeBulkDialog,
     saveBulkItems,
@@ -104,11 +97,11 @@ export function InventoryView() {
   const columns = useMemo(
     () =>
       buildProductColumns({
-        onEdit: openEditDialog,
+        onEdit: goToEditProduct,
         onDuplicate: duplicateProduct.mutate,
         onDelete: setDeleteTarget,
       }),
-    [openEditDialog, duplicateProduct.mutate, setDeleteTarget],
+    [goToEditProduct, duplicateProduct.mutate, setDeleteTarget],
   );
 
   return (
@@ -226,7 +219,7 @@ export function InventoryView() {
                         sub="Single item, manual entry"
                         onClick={() => {
                           setAddMenuOpen(false);
-                          openAddDialog();
+                          goToAddProduct();
                         }}
                       />
                       <AddMenuItem
@@ -351,13 +344,13 @@ export function InventoryView() {
                   product={p}
                   highlight={!!highlightId && p.id === highlightId}
                   onPreview={setPreviewProduct}
-                  onEdit={openEditDialog}
+                  onEdit={goToEditProduct}
                   onDelete={setDeleteTarget}
                   onDuplicate={duplicateProduct.mutate}
                 />
               ))}
               <button
-                onClick={openAddDialog}
+                onClick={goToAddProduct}
                 className="card flex flex-col items-center justify-center gap-2 cursor-pointer p-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[240px] text-[var(--ink-soft)]"
               >
                 <span className="w-10 h-10 rounded-full inline-flex items-center justify-center bg-[var(--accent-soft)] text-[var(--accent)]">
@@ -396,24 +389,12 @@ export function InventoryView() {
       {/* ── Tier 4: ERP ── */}
       {tier === 4 && <ErpPanel />}
 
-      <ProductFormDialog
-        open={singleOpen}
-        initial={editing}
-        title={editing ? "Edit product" : "Add product"}
-        categoryOptions={categoryOptions}
-        isSaving={isSaving}
-        isDeleting={isDeleting}
-        onClose={closeDialog}
-        onSave={handleSave}
-        onDelete={editing ? () => setDeleteTarget(editing) : undefined}
-      />
-
       <ProductPreviewDialog
         product={previewProduct}
         onClose={() => setPreviewProduct(null)}
         onEdit={(product) => {
           setPreviewProduct(null);
-          openEditDialog(product);
+          goToEditProduct(product);
         }}
       />
 

@@ -1,9 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import type { Product } from "../types";
-import { productSchema, type ProductFormData } from "../types";
+import { CATEGORIES, productSchema, type ProductFormData } from "../types";
+import {
+  useAddProduct,
+  useDeleteProduct,
+  useProducts,
+  useUpdateProduct,
+} from "./useProducts";
 
 const INITIAL_FORM_VALUES = {
   name: "",
@@ -18,11 +25,29 @@ const INITIAL_FORM_VALUES = {
   desc: "",
 } satisfies z.input<typeof productSchema>;
 
-/** Owns the product dialog's form state, image field, and the live
- * discounted-price preview. Reset whenever the dialog opens with a
- * different (or no) initial product. */
-export function useProductForm(open: boolean, initial?: Product | null) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+/** Owns the product form page's state: prefill from the cached product list,
+ * the image gallery, the live discounted-price preview, and save/delete
+ * wiring. Pass a productId to switch into edit mode. */
+export function useProductForm(productId?: string) {
+  const router = useRouter();
+  const { data: products = [], isLoading: isLoadingProducts } = useProducts();
+  const addProduct = useAddProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+
+  const isEditMode = !!productId;
+  const editingProduct = useMemo(
+    () =>
+      productId
+        ? products.find((p: Product) => p.id === productId)
+        : undefined,
+    [products, productId],
+  );
+  const notFound = isEditMode && !isLoadingProducts && !editingProduct;
+
+  // Full gallery — first entry is the cover image shown on cards and tables.
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const form = useForm<z.input<typeof productSchema>, unknown, ProductFormData>(
     {
@@ -32,26 +57,37 @@ export function useProductForm(open: boolean, initial?: Product | null) {
   );
 
   useEffect(() => {
-    if (!open) return;
-    setImageUrl(initial?.imageUrls?.[0] ?? null);
-    form.reset(
-      initial
-        ? {
-            name: initial.name ?? "",
-            sku: initial.sku ?? "",
-            price: initial.price ?? 0,
-            discountPercentage: initial.discountPercentage ?? undefined,
-            stock: initial.stock ?? 0,
-            cat: initial.cat ?? "Apparel",
-            sizes: initial.sizes ?? [],
-            gender: initial.gender ?? "",
-            color: initial.color ?? "",
-            desc: initial.desc ?? "",
-          }
-        : INITIAL_FORM_VALUES,
-    );
+    if (!editingProduct) return;
+    setImageUrls(editingProduct.imageUrls ?? []);
+    form.reset({
+      name: editingProduct.name ?? "",
+      sku: editingProduct.sku ?? "",
+      price: editingProduct.price ?? 0,
+      discountPercentage: editingProduct.discountPercentage ?? undefined,
+      stock: editingProduct.stock ?? 0,
+      cat: editingProduct.cat ?? "Apparel",
+      sizes: editingProduct.sizes ?? [],
+      gender: editingProduct.gender ?? "",
+      color: editingProduct.color ?? "",
+      desc: editingProduct.desc ?? "",
+    });
+    // Keyed on the id so a background refetch doesn't clobber in-progress edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initial]);
+  }, [editingProduct?.id]);
+
+  // Categories shown in the picker: the built-in set plus whatever existing
+  // products already use (so previously-created ones keep showing up).
+  const categoryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const c of [...CATEGORIES, ...products.map((p: Product) => p.cat)]) {
+      const key = c?.trim().toLowerCase();
+      if (!c || !key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(c);
+    }
+    return out;
+  }, [products]);
 
   const selectedCategory = useWatch({ control: form.control, name: "cat" });
   const watchedPrice = useWatch({ control: form.control, name: "price" });
@@ -67,11 +103,69 @@ export function useProductForm(open: boolean, initial?: Product | null) {
     return price - (price * discount) / 100;
   }, [watchedPrice, watchedDiscount]);
 
+  const isSaving = addProduct.isPending || updateProduct.isPending;
+  const isDeleting = deleteProduct.isPending;
+
+  const setCoverImage = useCallback((url: string | null) => {
+    setImageUrls((prev) => (url ? [url, ...prev.slice(1)] : prev.slice(1)));
+  }, []);
+
+  const addImage = useCallback((url: string) => {
+    setImageUrls((prev) => (prev.includes(url) ? prev : [...prev, url]));
+  }, []);
+
+  const removeImage = useCallback((url: string) => {
+    setImageUrls((prev) => prev.filter((existingUrl) => existingUrl !== url));
+  }, []);
+
+  const handleSubmit = form.handleSubmit((data: ProductFormData) => {
+    const payload = {
+      name: data.name,
+      sku: data.sku || undefined,
+      price: data.price,
+      discountPercentage: data.discountPercentage,
+      stock: data.stock,
+      description: data.desc || undefined,
+      category: data.cat || undefined,
+      sizes: data.sizes ?? [],
+      gender: data.gender || undefined,
+      color: data.color || undefined,
+      imageUrls,
+    };
+    const onSuccess = () => router.push("/inventory");
+    if (editingProduct?.id) {
+      updateProduct.mutate({ id: editingProduct.id, data: payload }, { onSuccess });
+    } else {
+      addProduct.mutate(payload, { onSuccess });
+    }
+  });
+
+  const confirmDelete = () => {
+    if (!editingProduct?.id) return;
+    setDeleteConfirmOpen(false);
+    deleteProduct.mutate(editingProduct.id, {
+      onSuccess: () => router.push("/inventory"),
+    });
+  };
+
   return {
     form,
-    imageUrl,
-    setImageUrl,
+    isEditMode,
+    isLoadingProducts,
+    notFound,
+    editingProduct,
+    imageUrls,
+    setCoverImage,
+    addImage,
+    removeImage,
+    categoryOptions,
     selectedCategory,
     discountedPrice,
+    isSaving,
+    isDeleting,
+    deleteConfirmOpen,
+    setDeleteConfirmOpen,
+    handleSubmit,
+    confirmDelete,
   };
 }

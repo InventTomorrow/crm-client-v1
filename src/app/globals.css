@@ -1143,6 +1143,11 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   border-color: var(--warning);
   color: var(--ink);
 }
+.bookings-calendar .fc-appointment--confirmed {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--ink);
+}
 .bookings-calendar .fc-appointment--completed {
   background: var(--surface-2);
   border-color: var(--line);

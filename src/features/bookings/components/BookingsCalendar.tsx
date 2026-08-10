@@ -9,9 +9,8 @@ import { cn } from '@/lib/utils';
 import { Spinner } from '@/shared/ui/Spinner';
 import { useState } from 'react';
 import { useBookingsCalendar } from '../hooks/useBookingsCalendar';
-import type { Appointment, BookingWindow } from '../types';
+import type { Appointment, AppointmentStatus, BookingWindow } from '../types';
 import { APPOINTMENT_STATUS_LABELS } from '../types';
-import { APPOINTMENT_STATUS_ICONS } from '../utils/appointmentFormat';
 import { deriveCalendarTimeBounds, toSlotDuration } from '../utils/calendarGrid';
 import { AppointmentDetailSheet } from './AppointmentDetailSheet';
 
@@ -23,27 +22,40 @@ interface BookingsCalendarProps {
   onCreateAtSlot: (startsAt: string) => void;
 }
 
+/** Dot colour per status — the same swatches the legend shows. Cancelled never reaches the grid. */
+const STATUS_DOT_CLASSES: Record<AppointmentStatus, string> = {
+  PENDING: 'bg-[var(--warning)]',
+  CONFIRMED: 'bg-[var(--accent)]',
+  COMPLETED: 'bg-[var(--ink-mute)]',
+  RESCHEDULED: 'bg-[var(--accent-2)]',
+  CANCELLED: 'bg-destructive',
+};
+
 /** What the colours on the grid mean — the calendar has no room to label them inline. */
 const LEGEND_ITEMS: { label: string; swatchClassName: string }[] = [
   { label: 'Open slot', swatchClassName: 'bg-[var(--accent-soft)] border border-[var(--accent)]' },
-  { label: APPOINTMENT_STATUS_LABELS.PENDING, swatchClassName: 'bg-[var(--warning)]' },
-  { label: APPOINTMENT_STATUS_LABELS.CONFIRMED, swatchClassName: 'bg-[var(--accent)]' },
-  { label: APPOINTMENT_STATUS_LABELS.COMPLETED, swatchClassName: 'bg-[var(--ink-mute)]' },
+  ...(['PENDING', 'CONFIRMED', 'RESCHEDULED', 'COMPLETED'] as const).map((status) => ({
+    label: APPOINTMENT_STATUS_LABELS[status],
+    swatchClassName: STATUS_DOT_CLASSES[status],
+  })),
 ];
 
 /**
- * Event body: status icon plus who the call is with, kept to one line in a slot.
+ * Event body: status dot plus who the call is with, kept to one line in a slot.
  * Deliberately not a component — FullCalendar *calls* the content generator rather
  * than mounting it, so anything hook-shaped (including the React Compiler's memo
  * cache) would run outside a renderer and throw.
  */
 function renderAppointmentEvent({ event, timeText }: EventContentArg) {
-  const appointment = event.extendedProps.appointment as Appointment;
-  const StatusIcon = APPOINTMENT_STATUS_ICONS[appointment.status];
+  const appointment = event.extendedProps.appointment as Appointment | undefined;
+  // Open-slot background and select-mirror events carry no appointment — let FullCalendar render them.
+  if (!appointment) return true;
 
   return (
-    <div className="flex min-w-0 items-center gap-1 px-1 py-0.5">
-      <StatusIcon size={10} className="shrink-0" />
+    <div className="flex min-w-0 items-center gap-1.5 px-1 py-0.5">
+      <span
+        className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT_CLASSES[appointment.status])}
+      />
       <span className="truncate text-[11px] font-medium">{event.title}</span>
       <span className="ml-auto hidden shrink-0 text-[10px] opacity-80 sm:inline">
         {timeText}

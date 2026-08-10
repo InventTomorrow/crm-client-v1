@@ -1,6 +1,7 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { useEntitlementStatus } from "@/features/billing/hooks/useBilling";
 import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useLeadsCount } from "@/features/leads/hooks/useLeads";
 import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
@@ -99,6 +100,8 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
     : "";
   const profileEmail = user?.email || "";
+  const { data: entitlement } = useEntitlementStatus();
+  const activePlanName = entitlement?.live ? entitlement.planName : null;
 
   return (
     <>
@@ -213,9 +216,14 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               {!collapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-[12.5px] font-medium text-[var(--ink)]">
+                    <div className="text-[12.5px] font-medium text-[var(--ink)] truncate">
                       {profileName}
                     </div>
+                    {activePlanName && (
+                      <div className="text-[10px] font-medium text-[var(--accent)] truncate">
+                        {activePlanName}
+                      </div>
+                    )}
                     <div className="text-[10.5px] text-[var(--ink-mute)] truncate">
                       {profileEmail}
                     </div>

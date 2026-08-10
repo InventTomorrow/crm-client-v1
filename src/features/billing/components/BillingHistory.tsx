@@ -1,6 +1,11 @@
 'use client';
+import { useState } from 'react';
+import { Download, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { pkr } from '@/lib/utils';
+import { useMe } from '@/features/auth/hooks/useAuth';
 import { usePayments } from '../hooks/useBilling';
+import { downloadReceiptPdf } from '../utils/receiptPdf';
 import type { Payment, PaymentStatus } from '../types';
 
 const STATUS_STYLES: Record<PaymentStatus, string> = {
@@ -25,6 +30,24 @@ function fmtAmount(payment: Pick<Payment, 'amount' | 'currency'>): string {
 
 export function BillingHistory() {
   const { data: payments, isLoading } = usePayments();
+  const { user } = useMe();
+  const [downloadingPaymentId, setDownloadingPaymentId] = useState<string | null>(null);
+
+  // Built and saved entirely in the browser — no receipt is stored anywhere.
+  const handleDownloadReceipt = async (payment: Payment) => {
+    setDownloadingPaymentId(payment.id);
+    try {
+      await downloadReceiptPdf(payment, {
+        accountName:
+          `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'Customer',
+        accountEmail: user?.email || '',
+      });
+    } catch {
+      toast.error('Could not generate the receipt');
+    } finally {
+      setDownloadingPaymentId(null);
+    }
+  };
 
   return (
     <div className="card overflow-hidden">
@@ -44,6 +67,7 @@ export function BillingHistory() {
               <th className="px-[22px] py-2.5 font-medium">Amount</th>
               <th className="px-[22px] py-2.5 font-medium">Method</th>
               <th className="px-[22px] py-2.5 font-medium">Status</th>
+              <th className="px-[22px] py-2.5 font-medium text-right">Receipt</th>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +80,22 @@ export function BillingHistory() {
                   <span className={`badge font-medium ${STATUS_STYLES[p.status]}`}>
                     {p.status.charAt(0) + p.status.slice(1).toLowerCase()}
                   </span>
+                </td>
+                <td className="px-[22px] py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReceipt(p)}
+                    disabled={downloadingPaymentId === p.id}
+                    aria-label="Download receipt"
+                    title="Download receipt"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--ink-soft)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)] disabled:opacity-60"
+                  >
+                    {downloadingPaymentId === p.id ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Download size={14} />
+                    )}
+                  </button>
                 </td>
               </tr>
             ))}

@@ -32,6 +32,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { UsageSummaryCard } from "@/features/billing/components/UsageSummaryCard";
 import { useAnalyticsOverview } from "../hooks/useAnalyticsOverview";
 import type { AiHandoff, FunnelStage, KpiCard, RangePreset } from "../types";
 
@@ -377,6 +378,11 @@ export function AnalyticsView() {
               <FunnelChart data={data.funnel} />
             </div>
             <AiHandoffCard data={data.aiHandoff} />
+          </div>
+
+          {/* Account plan consumption — full breakdown at Settings → Usage. */}
+          <div className="mt-3.5">
+            <UsageSummaryCard />
           </div>
         </>
       )}

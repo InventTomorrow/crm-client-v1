@@ -12,7 +12,7 @@ interface PlanGridProps {
   requestedPlanId: string | null;
   pendingPlanId: string | null;
   isMutating: boolean;
-  /** Workspaces the account already runs — plans whose cap is below this are locked. */
+  /** Workspaces the account already runs — plans whose cap is below this get a heads-up note. */
   workspacesInUse: number;
   tenantVertical: BusinessVertical | undefined;
   checkoutMode: 'manual' | 'gateway';
@@ -85,9 +85,9 @@ export function PlanGrid({ plans, activePlanId, requestedPlanId, pendingPlanId, 
             isRequested={plan.id === requestedPlanId}
             isLoading={isMutating && pendingPlanId === plan.id}
             disabled={isMutating}
-            lockedReason={
+            workspaceNotice={
               plan.id !== activePlanId && workspacesInUse > plan.maxWorkspaces
-                ? `Your account uses ${workspacesInUse} workspaces — this plan allows ${plan.maxWorkspaces}.`
+                ? `Covers ${plan.maxWorkspaces} workspace${plan.maxWorkspaces === 1 ? '' : 's'} — your account uses ${workspacesInUse}. Extra workspaces keep working, but you can't create new ones until you're within the limit.`
                 : null
             }
             tenantVertical={tenantVertical}

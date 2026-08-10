@@ -980,17 +980,32 @@ function MembersTab() {
 
   const toolbar = (
     <>
-      <div className="relative min-w-[200px] flex-[1_1_240px]">
+      <div className="relative min-w-[220px] flex-[1_1_280px]">
         <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
+          size={15}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
         />
         <Input
-          className="pl-9"
+          className="h-10 rounded-[10px] border-[var(--line)] bg-[var(--surface)] pl-10 pr-20 text-[13px] shadow-sm focus-visible:border-[var(--accent)]"
           placeholder="Search by name or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+            <span className="text-[11px] tabular-nums text-[var(--ink-mute)]">
+              {filtered.length} found
+            </span>
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearch("")}
+              className="flex size-5 items-center justify-center rounded-full text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
       </div>
       <div className="seg">
         <button
@@ -1334,10 +1349,14 @@ export function TeamSection() {
   const canViewRoles = can("roles:view");
   const [tab, setTab] = useState<TeamTab>("members");
 
+  // Same queries the tabs use — React Query dedupes, so the counts are free.
+  const { data: members = [] } = useMembers();
+  const { data: roles = [] } = useRoles();
+
   const tabs = (
     [
-      { id: "members", label: "Members", icon: Users },
-      { id: "permissions", label: "Roles & Permissions", icon: Shield },
+      { id: "members", label: "Members", icon: Users, count: members.length },
+      { id: "permissions", label: "Roles & Permissions", icon: Shield, count: roles.length },
     ] as const
   ).filter((t) => t.id !== "permissions" || canViewRoles);
 
@@ -1357,22 +1376,43 @@ export function TeamSection() {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex items-center gap-1 p-1 rounded-[12px] bg-[var(--surface-2)] w-fit">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all duration-150",
-              tab === id
-                ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm"
-                : "text-[var(--ink-mute)] hover:text-[var(--ink)]",
-            )}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
+      <div
+        role="tablist"
+        aria-label="Access control sections"
+        className="flex items-center gap-1 p-1 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line)] w-fit"
+      >
+        {tabs.map(({ id, label, icon: Icon, count }) => {
+          const isSelected = tab === id;
+          return (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => setTab(id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-150",
+                isSelected
+                  ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
+                  : "text-[var(--ink-mute)] hover:text-[var(--ink)] hover:bg-[var(--surface)]",
+              )}
+            >
+              <Icon size={14} />
+              {label}
+              {count > 0 && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums",
+                    isSelected
+                      ? "bg-[var(--bg)]/20 text-[var(--bg)]"
+                      : "bg-[var(--surface)] text-[var(--ink-soft)]",
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab content */}
