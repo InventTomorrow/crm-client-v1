@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { SubscriptionCheckoutView } from "@/features/subscription-checkout/SubscriptionCheckoutView";
+import { PRIVATE_PAGE_ROBOTS } from "@/shared/seo/metadata";
 
 export const metadata: Metadata = {
   title: "Complete your subscription",
   description: "Confirm your plan and upload your payment receipt.",
+  robots: PRIVATE_PAGE_ROBOTS,
 };
 
 export default async function SubscribePage({

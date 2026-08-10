@@ -17,7 +17,9 @@ function pct(used: number, limit: number): number {
 
 function fmtDate(value: string | null) {
   if (!value) return null;
-  return new Date(value).toLocaleDateString("en-PK", {
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-PK", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -123,8 +125,10 @@ export function UsageView() {
                           : "text-[var(--ink)]"
                     }`}
                   >
-                    {metric.used.toLocaleString("en-PK")} /{" "}
-                    {metric.limit.toLocaleString("en-PK")}
+                    {(metric.used ?? 0).toLocaleString("en-PK")} /{" "}
+                    {metric.limit != null
+                      ? metric.limit.toLocaleString("en-PK")
+                      : "—"}
                   </span>
                 </div>
                 <Progress

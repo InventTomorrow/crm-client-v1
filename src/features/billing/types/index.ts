@@ -128,6 +128,19 @@ export interface PlanUsage {
   metrics: UsageMetric[];
 }
 
+/** GET /billing/message-allowance — send quotas for the inbox composer. */
+export interface MessageAllowanceMetric {
+  used: number;
+  limit: number;
+  exhausted: boolean;
+}
+
+export interface MessageAllowance {
+  messages: MessageAllowanceMetric;
+  imageMessages: MessageAllowanceMetric;
+  voiceMessages: MessageAllowanceMetric;
+}
+
 /** GET /billing/workspace-allowance — slots used vs the plan's workspace cap. */
 export interface WorkspaceAllowance {
   used: number;

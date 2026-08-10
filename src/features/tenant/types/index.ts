@@ -40,4 +40,6 @@ export interface WorkspaceStats {
 export interface CreateTenantPayload {
   name: string;
   businessVertical: BusinessVertical;
+  /** At the workspace cap: this workspace is scheduled for deletion (60-day grace) to free the slot. */
+  replaceTenantId?: string;
 }

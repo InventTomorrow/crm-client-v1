@@ -1,5 +1,5 @@
 "use client";
-import { extractErrorMessage } from "@/lib/utils";
+import { extractApiErrorCode, extractErrorMessage } from "@/lib/utils";
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -38,6 +38,13 @@ import type {
   ConversationFilter,
   ConversationListItem,
 } from "../types";
+
+/** Refreshes the composer's quota banner after a send is rejected for quota. */
+function invalidateAllowanceOnPlanLimit(queryClient: QueryClient, error: unknown) {
+  if (extractApiErrorCode(error) === "billing/plan_limit_reached") {
+    queryClient.invalidateQueries({ queryKey: ["billing", "message-allowance"] });
+  }
+}
 
 // Polls are slow fallbacks only — the /events SSE stream invalidates these
 // caches the moment something changes (see applyConversationEvent).
@@ -141,8 +148,10 @@ export function useApproveDraft(conversationId: string) {
         queryKey: ["conversation", conversationId, "messages"],
       });
     },
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "Failed to send reply")),
+    onError: (error) => {
+      toast.error(extractErrorMessage(error, "Failed to send reply"));
+      invalidateAllowanceOnPlanLimit(queryClient, error);
+    },
   });
 }
 
@@ -182,6 +191,7 @@ export function useSendHumanReply(conversationId: string) {
     },
     onError: (error, _content, ctx) => {
       toast.error(extractErrorMessage(error, "Failed to send message"));
+      invalidateAllowanceOnPlanLimit(queryClient, error);
       if (ctx?.prev)
         queryClient.setQueryData(["conversation", conversationId], ctx.prev);
     },
@@ -232,8 +242,10 @@ export function useSendMedia(conversationId: string) {
         queryKey: ["conversation", conversationId, "messages"],
       });
     },
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "Failed to send media")),
+    onError: (error) => {
+      toast.error(extractErrorMessage(error, "Failed to send media"));
+      invalidateAllowanceOnPlanLimit(queryClient, error);
+    },
   });
 }
 

@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/apiClient';
 import type {
   CheckoutResponse,
   EntitlementStatus,
+  MessageAllowance,
   Payment,
   PaymentMethod,
   Plan,
@@ -24,6 +25,13 @@ export async function getSupportContact() {
 
 export async function getUsage() {
   const res = await apiClient.get<{ success: true; data: PlanUsage | null }>('/billing/usage');
+  return res.data.data;
+}
+
+export async function getMessageAllowance() {
+  const res = await apiClient.get<{ success: true; data: MessageAllowance | null }>(
+    '/billing/message-allowance',
+  );
   return res.data.data;
 }
 

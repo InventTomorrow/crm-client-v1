@@ -1,4 +1,5 @@
 "use client";
+import { useMe } from "@/features/auth/hooks/useAuth";
 import { useWorkspaceAllowance } from "@/features/billing/hooks/useBilling";
 import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import { useCreateTenant } from "@/features/tenant/hooks/useTenant";
@@ -6,6 +7,7 @@ import {
   BUSINESS_VERTICALS,
   type BusinessVertical,
 } from "@/lib/business-verticals";
+import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
@@ -16,28 +18,51 @@ import {
 } from "@/shared/ui/Dialog";
 import { Input } from "@/shared/ui/Input";
 import { Label } from "@/shared/ui/Label";
-import { Crown, Loader2, Plus } from "lucide-react";
+import { Check, Crown, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+
+type OwnedWorkspace = { id: string; name: string };
 
 /** Inline create-workspace flow shared by both sidebar workspace switchers. */
 export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [businessVertical, setBusinessVertical] =
     useState<BusinessVertical | null>(null);
+  // At the cap the owner picks which current workspace gives up its slot.
+  const [replaceTenantId, setReplaceTenantId] = useState<string | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
+  const { user } = useMe();
   // Mirrors the server-side cap on POST /tenants so the limit is visible
   // before submitting, not as a 403 after.
   const { data: workspaceAllowance } = useWorkspaceAllowance();
   const workspaceLimitReached = workspaceAllowance?.canCreate === false;
 
+  const ownedWorkspaces: OwnedWorkspace[] = (user?.memberships ?? [])
+    .filter(
+      (membership: { role: { name: string } }) =>
+        membership.role.name === "OWNER",
+    )
+    .map((membership: { tenant: { id: string; name: string } }) => ({
+      id: membership.tenant.id,
+      name: membership.tenant.name,
+    }));
+
   const canCreate =
-    !!name.trim() && !!businessVertical && !workspaceLimitReached;
+    !!name.trim() &&
+    !!businessVertical &&
+    (!workspaceLimitReached || !!replaceTenantId);
 
   const handleCreate = () => {
     if (!canCreate || !businessVertical) return;
     createTenant(
-      { name: name.trim(), businessVertical },
+      {
+        name: name.trim(),
+        businessVertical,
+        ...(workspaceLimitReached && replaceTenantId
+          ? { replaceTenantId }
+          : {}),
+      },
       { onSuccess: () => onClose() },
     );
   };
@@ -64,24 +89,52 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
 
         <div className="p-5 flex flex-col gap-3.5">
           {workspaceLimitReached && (
-            <div className="flex items-start gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] px-3.5 py-3">
-              <Crown
-                size={15}
-                className="mt-0.5 flex-shrink-0 text-[var(--ink-mute)]"
-              />
-              <p className="text-[12px] leading-relaxed text-[var(--ink-soft)]">
-                Your plan includes {workspaceAllowance?.limit} workspace
-                {workspaceAllowance?.limit === 1 ? "" : "s"} and you&apos;re
-                already using {workspaceAllowance?.used}.{" "}
-                <Link
-                  href="/settings/billing"
-                  className="font-medium text-[var(--accent)]"
-                  onClick={onClose}
-                >
-                  Upgrade your plan
-                </Link>{" "}
-                to add more.
-              </p>
+            <div className="flex flex-col gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] px-3.5 py-3">
+              <div className="flex items-start gap-2.5">
+                <Crown
+                  size={15}
+                  className="mt-0.5 flex-shrink-0 text-[var(--ink-mute)]"
+                />
+                <p className="text-[12px] leading-relaxed text-[var(--ink-soft)]">
+                  Your plan includes {workspaceAllowance?.limit} workspace
+                  {workspaceAllowance?.limit === 1 ? "" : "s"} and you&apos;re
+                  already using {workspaceAllowance?.used}.{" "}
+                  <Link
+                    href="/settings/billing"
+                    className="font-medium text-[var(--accent)]"
+                    onClick={onClose}
+                  >
+                    Upgrade your plan
+                  </Link>{" "}
+                  to add more — or pick a workspace below to replace. It will be
+                  scheduled for deletion and stays restorable for 60 days.
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {ownedWorkspaces.map((workspace) => (
+                  <button
+                    key={workspace.id}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() =>
+                      setReplaceTenantId((currentId) =>
+                        currentId === workspace.id ? null : workspace.id,
+                      )
+                    }
+                    className={cn(
+                      "flex items-center justify-between rounded-[8px] border px-3 py-2 text-left text-[12.5px] font-medium transition-colors",
+                      replaceTenantId === workspace.id
+                        ? "border-[var(--accent)] text-[var(--ink)]"
+                        : "border-[var(--line)] text-[var(--ink-soft)] hover:border-[var(--ink-mute)]",
+                    )}
+                  >
+                    {workspace.name}
+                    {replaceTenantId === workspace.id && (
+                      <Check size={14} className="text-[var(--accent)]" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <div>
@@ -134,6 +187,10 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
             {isPending ? (
               <>
                 <Loader2 size={13} className="animate-spin" /> Creating…
+              </>
+            ) : workspaceLimitReached && replaceTenantId ? (
+              <>
+                <Plus size={13} /> Replace &amp; create
               </>
             ) : (
               <>

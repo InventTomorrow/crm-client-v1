@@ -7,6 +7,7 @@ import {
   createCheckout,
   createSelfServeCheckoutLink,
   getEntitlementStatus,
+  getMessageAllowance,
   getPayments,
   getMyPlanRequest,
   getPlans,
@@ -26,6 +27,7 @@ const keys = {
   payments: ['billing', 'payments'] as const,
   usage: ['billing', 'usage'] as const,
   workspaceAllowance: ['billing', 'workspace-allowance'] as const,
+  messageAllowance: ['billing', 'message-allowance'] as const,
   entitlement: ['billing', 'entitlement'] as const,
 };
 
@@ -43,6 +45,9 @@ export function useSupportContact() {
  * the post-checkout return page — activation is confirmed by the webhook, not
  * the redirect, so the UI polls until the status flips to ACTIVE.
  */
+/** Maximum time to poll for subscription activation after checkout (ms). */
+const POLL_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes
+
 export function useSubscription(pollUntilActive = false) {
   return useQuery({
     queryKey: keys.subscription,
@@ -50,7 +55,11 @@ export function useSubscription(pollUntilActive = false) {
     refetchInterval: pollUntilActive
       ? (query) => {
           const data = query.state.data as Subscription | null | undefined;
-          return data?.status === 'ACTIVE' ? false : 4000;
+          if (data?.status === 'ACTIVE') return false;
+          // Stop polling if the query has been running longer than the timeout.
+          const elapsed = Date.now() - (query.state.dataUpdatedAt ?? 0);
+          if (query.state.dataUpdatedAt && elapsed > POLL_TIMEOUT_MS) return false;
+          return 4000;
         }
       : false,
   });
@@ -64,6 +73,15 @@ export function usePlanRequest() {
 /** Consumption vs plan limits for the current period. */
 export function useUsage() {
   return useQuery({ queryKey: keys.usage, queryFn: getUsage, staleTime: 60 * 1000 });
+}
+
+/** Send quotas (messages + image/voice sublimits) for the inbox composer. */
+export function useMessageAllowance() {
+  return useQuery({
+    queryKey: keys.messageAllowance,
+    queryFn: getMessageAllowance,
+    staleTime: 60 * 1000,
+  });
 }
 
 export function useWorkspaceAllowance() {
