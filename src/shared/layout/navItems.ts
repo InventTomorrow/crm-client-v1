@@ -121,15 +121,15 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Channels",
     Icon: Wifi,
     perm: "channels:view",
-    children: [
-      { href: "/channels", label: "Overview" },
-      { href: "/channels/whatsapp", label: "WhatsApp" },
-      // Ingests website orders — nothing to ingest in a vertical without ORDERS.
-      { href: "/channels/order-api", label: "Order API", capability: "ORDERS" },
-    ],
+    // children: [
+    //   { href: "/channels", label: "Overview" },
+    //   { href: "/channels/whatsapp", label: "WhatsApp" },
+    //   // Ingests website orders — nothing to ingest in a vertical without ORDERS.
+    //   { href: "/channels/order-api", label: "Order API", capability: "ORDERS" },
+    // ],
   },
   // Auth-only — a user's own notification feed. Delivery preferences live under Settings.
-  { href: "/notifications", label: "Notifications", Icon: Bell },
+  // { href: "/notifications", label: "Notifications", Icon: Bell },
   // Settings is auth-only — every user can reach their Profile; the inner tabs
   // gate themselves by permission.
   {
