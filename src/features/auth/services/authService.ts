@@ -2,9 +2,13 @@ import { apiClient, runExclusiveAuthOp } from '@/lib/apiClient';
 import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse } from '../types';
 
 export async function login(data: LoginData): Promise<LoginResponse> {
-  const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/login', data);
+  const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/login', {
+    email: data.email,
+    password: data.password,
+  });
   return res.data.data;
 }
+
 
 export async function register(data: RegisterData) {
   const res = await apiClient.post('/auth/register', data);

@@ -4,7 +4,6 @@ import { persist } from 'zustand/middleware';
 import {
   type Lead, type Notification, type Workspace, type UserProfile,
   type NotifSettings,
-  INITIAL_NOTIFICATIONS, INITIAL_WORKSPACES, INITIAL_PROFILE,
   INITIAL_NOTIF_SETTINGS,
 } from '@/lib/mockData';
 
@@ -72,10 +71,10 @@ export const useAppStore = create<AppState>()(
       leadsView: 'kanban',
       servicesView: 'grid',
       inventoryView: 'grid',
-      notifications: INITIAL_NOTIFICATIONS,
-      workspaces: INITIAL_WORKSPACES,
-      currentWorkspaceId: 'W1',
-      profile: INITIAL_PROFILE,
+      notifications: [],
+      workspaces: [],
+      currentWorkspaceId: '',
+      profile: { name: '', email: '', phone: '', business: '', city: '', timezone: '' },
       notifSettings: INITIAL_NOTIF_SETTINGS,
 
       toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),

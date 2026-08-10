@@ -1,10 +1,12 @@
 import { Toaster } from "@/shared/ui/Sonner";
 import type { Metadata } from "next";
 import { AuthLayoutShell } from "@/features/auth/components/AuthLayoutShell";
+import { PRIVATE_PAGE_ROBOTS } from "@/shared/seo/metadata";
 
 export const metadata: Metadata = {
   title: "Auth",
   description: "Sign in or create your AsaanRabta workspace",
+  robots: PRIVATE_PAGE_ROBOTS,
 };
 
 export default function AuthLayout({

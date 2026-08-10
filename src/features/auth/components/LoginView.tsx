@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/shared/ui/Button";
-import { Checkbox } from "@/shared/ui/Checkbox";
 import { Input } from "@/shared/ui/Input";
 import {
   Form,
@@ -116,11 +115,7 @@ export function LoginView() {
               )}
             />
 
-            <div className="flex items-center justify-between mt-0.5">
-              <label className="flex items-center gap-2 text-[12.5px] text-[var(--ink-soft)] cursor-pointer select-none">
-                <Checkbox defaultChecked />
-                Remember me
-              </label>
+            <div className="flex justify-end mt-0.5">
               <Link
                 href="/auth/forgot-password"
                 className="text-[12px] text-[var(--accent)] hover:underline"
@@ -128,7 +123,6 @@ export function LoginView() {
                 Forgot password?
               </Link>
             </div>
-
             <Button
               type="submit"
               size="lg"
@@ -143,11 +137,11 @@ export function LoginView() {
 
         <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
           By signing in you agree to our{" "}
-          <Link href="#" className="text-[var(--ink-soft)] hover:underline">
+          <Link href="/legal/terms" className="text-[var(--ink-soft)] hover:underline">
             Terms
           </Link>{" "}
           and{" "}
-          <Link href="#" className="text-[var(--ink-soft)] hover:underline">
+          <Link href="/legal/privacy" className="text-[var(--ink-soft)] hover:underline">
             Privacy
           </Link>
           .

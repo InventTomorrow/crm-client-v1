@@ -1,10 +1,12 @@
 import Image from 'next/image';
 import { Toaster } from '@/shared/ui/Sonner';
 import type { Metadata } from 'next';
+import { PRIVATE_PAGE_ROBOTS } from '@/shared/seo/metadata';
 
 export const metadata: Metadata = {
   title: 'Setup',
   description: 'Complete your workspace setup',
+  robots: PRIVATE_PAGE_ROBOTS,
 };
 
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {

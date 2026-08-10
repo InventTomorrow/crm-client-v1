@@ -16,11 +16,15 @@ export const setLoggingOut = (value: boolean) => {
   isLoggingOut = value;
 };
 
-// Routes that must never trigger an auth redirect (the public landing page).
-const PUBLIC_ROUTES = ["/"];
+// Routes that must never trigger an auth redirect.
+const PUBLIC_ROUTE_PREFIXES = ["/", "/auth/", "/subscribe/"];
 const onPublicRoute = () =>
   typeof window !== "undefined" &&
-  PUBLIC_ROUTES.includes(window.location.pathname);
+  PUBLIC_ROUTE_PREFIXES.some(
+    (p) =>
+      window.location.pathname === p.replace(/\/$/, "") ||
+      window.location.pathname.startsWith(p),
+  );
 
 let authOpChain: Promise<unknown> = Promise.resolve();
 
@@ -53,6 +57,7 @@ export const refreshAccessToken = (): Promise<void> => {
     .catch((err) => {
       if (typeof window !== "undefined" && !isLoggingOut && !onPublicRoute()) {
         window.location.href = "/auth/login";
+        return; // don't re-throw after navigation has started
       }
       throw err;
     })

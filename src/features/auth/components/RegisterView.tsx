@@ -30,10 +30,9 @@ const strengthMeta: Record<number, { label: string; color: string }> = {
 };
 
 function passwordStrength(pw: string): number {
-  if (!pw) return 0;
-  let score = 0;
-  if (pw.length > 0) score += 1;
-  if (pw.length >= 8) score += 1;
+  if (!pw || pw.length < 8) return 0;
+  let score = 1; // 8+ chars baseline
+  if (pw.length >= 12) score += 1;
   if (/[A-Z]/.test(pw)) score += 1;
   if (/[0-9]/.test(pw) || /[^a-zA-Z0-9]/.test(pw)) score += 1;
   return Math.min(score, 4);
@@ -227,11 +226,11 @@ export function RegisterView() {
                     </FormControl>
                     <span className="text-[12px] text-[var(--ink-soft)]">
                       I agree to the{" "}
-                      <Link href="#" className="text-[var(--accent)] hover:underline">
+                      <Link href="/legal/terms" className="text-[var(--accent)] hover:underline">
                         Terms of Service
                       </Link>{" "}
                       and{" "}
-                      <Link href="#" className="text-[var(--accent)] hover:underline">
+                      <Link href="/legal/privacy" className="text-[var(--accent)] hover:underline">
                         Privacy Policy
                       </Link>
                     </span>
