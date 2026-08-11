@@ -21,10 +21,9 @@ import { PlanGrid } from './PlanGrid';
 import { PlanRequestCard } from './PlanRequestCard';
 import { PlanUsageCard } from './PlanUsageCard';
 
-// SafePay is wired but disabled — the manual/customer-initiated flow is the
-// live path today. Flip to 'gateway' once plans carry a provisioned
-// providerPlanId and /billing/checkout is enabled.
-const CHECKOUT_MODE: 'manual' | 'gateway' = 'manual';
+// TEMPORARY: switched to 'gateway' so "Upgrade now" hits Safepay checkout
+// directly, for the Safepay approval demo video. Revert to 'manual' after.
+const CHECKOUT_MODE: 'manual' | 'gateway' = 'gateway';
 
 function BillingViewInner() {
   const params = useSearchParams();
