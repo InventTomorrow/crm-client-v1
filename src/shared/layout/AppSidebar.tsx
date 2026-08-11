@@ -99,7 +99,6 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const profileName = user
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
     : "";
-  const profileEmail = user?.email || "";
   const { data: entitlement } = useEntitlementStatus();
   const activePlanName = entitlement?.live ? entitlement.planName : null;
 
@@ -220,13 +219,10 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
                       {profileName}
                     </div>
                     {activePlanName && (
-                      <div className="text-[10px] font-medium text-[var(--accent)] truncate">
+                      <div className="text-[10.5px] font-medium text-[var(--accent)] truncate">
                         {activePlanName}
                       </div>
                     )}
-                    <div className="text-[10.5px] text-[var(--ink-mute)] truncate">
-                      {profileEmail}
-                    </div>
                   </div>
                   <ChevronDown size={13} className="text-[var(--ink-mute)]" />
                 </>
