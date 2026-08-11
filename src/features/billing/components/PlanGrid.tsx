@@ -40,7 +40,7 @@ export function PlanGrid({ plans, activePlanId, requestedPlanId, pendingPlanId, 
   const visiblePlans = selectedTab ? (plansByTab.get(selectedTab) ?? []) : [];
 
   if (plans.length === 0) {
-    return <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">No plans available yet.</div>;
+    return <div className="card p-5 text-[13px] text-[var(--ink-soft)]">No plans available yet.</div>;
   }
 
   return (
@@ -76,7 +76,7 @@ export function PlanGrid({ plans, activePlanId, requestedPlanId, pendingPlanId, 
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visiblePlans.map((plan) => (
           <PlanCard
             key={plan.id}

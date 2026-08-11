@@ -42,10 +42,10 @@ export function CurrentSubscriptionCard({ subscription, onCancel, isCancelling }
     Boolean(plan);
 
   return (
-    <div className="card p-[22px]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
+    <div className="card p-5 sm:p-[22px]">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-[17px] font-semibold">{plan?.name ?? 'No plan'}</h3>
             <span className={`badge font-medium ${STATUS_STYLES[subscription.status]}`}>
               {/* TRIALING on an actual trial plan is the trial itself, not a checkout in flight. */}
@@ -61,24 +61,26 @@ export function CurrentSubscriptionCard({ subscription, onCancel, isCancelling }
           )}
         </div>
 
-        {canCancel && (
-          <button
-            type="button"
-            className="btn btn-outline flex-shrink-0"
-            onClick={onCancel}
-            disabled={isCancelling}
-          >
-            {isCancelling ? <Loader2 size={14} className="animate-spin" /> : 'Cancel'}
-          </button>
-        )}
-      </div>
+        {/* Dates sit beside the plan on wide screens so the label and its value
+            never end up at opposite edges of the viewport. */}
+        <div className="flex flex-wrap items-start gap-x-8 gap-y-4 sm:gap-x-10">
+          <Field label="Renews on" value={fmtDate(subscription.currentPeriodEnd)} />
+          <Field label="Started" value={fmtDate(subscription.currentPeriodStart)} />
+          {subscription.cancelledAt && (
+            <Field label="Cancelled on" value={fmtDate(subscription.cancelledAt)} />
+          )}
 
-      <div className="grid grid-cols-2 gap-4 mt-5 sm:grid-cols-3">
-        <Field label="Renews on" value={fmtDate(subscription.currentPeriodEnd)} />
-        <Field label="Started" value={fmtDate(subscription.currentPeriodStart)} />
-        {subscription.cancelledAt && (
-          <Field label="Cancelled on" value={fmtDate(subscription.cancelledAt)} />
-        )}
+          {canCancel && (
+            <button
+              type="button"
+              className="btn btn-outline flex-shrink-0"
+              onClick={onCancel}
+              disabled={isCancelling}
+            >
+              {isCancelling ? <Loader2 size={14} className="animate-spin" /> : 'Cancel'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -88,7 +90,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)]">{label}</div>
-      <div className="text-[14px] font-medium mt-0.5">{value}</div>
+      <div className="text-[14px] font-medium mt-1 whitespace-nowrap">{value}</div>
     </div>
   );
 }

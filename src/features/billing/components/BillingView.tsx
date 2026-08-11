@@ -87,7 +87,9 @@ function BillingViewInner() {
     latestPlanRequest?.status === 'PENDING_APPROVAL' ? latestPlanRequest.planId : null;
 
   return (
-    <div className="space-y-6">
+    // Capped and centred — full-bleed rows push a label and its value to
+    // opposite edges of a wide screen, which is unreadable.
+    <div className="mx-auto w-full max-w-[1100px] space-y-8">
       <div>
         <h2 className="text-[20px] font-semibold">Billing &amp; Subscription</h2>
         <p className="text-[13px] mt-1 text-[var(--ink-soft)]">
@@ -95,30 +97,39 @@ function BillingViewInner() {
         </p>
       </div>
 
-      {subLoading ? (
-        <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">Loading…</div>
-      ) : subscription ? (
-        <CurrentSubscriptionCard
-          subscription={subscription}
-          onCancel={() => setConfirmCancel(true)}
-          isCancelling={cancel.isPending}
-        />
-      ) : (
-        <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">
-          You don&apos;t have an active subscription. Choose a plan below to get started.
-        </div>
-      )}
+      <div className="space-y-4">
+        {subLoading ? (
+          <div className="card p-5 text-[13px] text-[var(--ink-soft)] sm:p-[22px]">Loading…</div>
+        ) : subscription ? (
+          <CurrentSubscriptionCard
+            subscription={subscription}
+            onCancel={() => setConfirmCancel(true)}
+            isCancelling={cancel.isPending}
+          />
+        ) : (
+          <div className="card p-5 text-[13px] text-[var(--ink-soft)] sm:p-[22px]">
+            You don&apos;t have an active subscription. Choose a plan below to get started.
+          </div>
+        )}
 
-      {visiblePlanRequest && <PlanRequestCard request={visiblePlanRequest} />}
+        {visiblePlanRequest && <PlanRequestCard request={visiblePlanRequest} />}
 
-      {subscription?.plan && (
-        <PlanUsageCard subscription={subscription} tenantVertical={tenant?.businessVertical} />
-      )}
+        {subscription?.plan && (
+          <PlanUsageCard subscription={subscription} tenantVertical={tenant?.businessVertical} />
+        )}
+      </div>
 
       <div>
-        <h3 className="text-[15px] font-semibold mb-3">
-          {subscription ? 'Change plan' : 'Plans'}
-        </h3>
+        <div className="mb-4">
+          <h3 className="text-[15px] font-semibold">
+            {subscription ? 'Change plan' : 'Plans'}
+          </h3>
+          <p className="text-[13px] mt-0.5 text-[var(--ink-soft)]">
+            {subscription
+              ? 'Switch to a different plan at any time.'
+              : 'Pick the plan that fits your workspace.'}
+          </p>
+        </div>
         {plansLoading ? (
           <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">Loading plans…</div>
         ) : (

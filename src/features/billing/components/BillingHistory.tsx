@@ -51,56 +51,63 @@ export function BillingHistory() {
 
   return (
     <div className="card overflow-hidden">
-      <div className="px-[22px] py-4 border-b border-[var(--line)]">
+      <div className="border-b border-[var(--line)] px-5 py-4">
         <h3 className="text-[15px] font-semibold">Billing history</h3>
+        <p className="text-[12.5px] mt-0.5 text-[var(--ink-soft)]">
+          Every payment made on this workspace.
+        </p>
       </div>
 
       {isLoading ? (
-        <div className="p-[22px] text-[13px] text-[var(--ink-soft)]">Loading…</div>
+        <div className="p-5 text-[13px] text-[var(--ink-soft)]">Loading…</div>
       ) : !payments || payments.length === 0 ? (
-        <div className="p-[22px] text-[13px] text-[var(--ink-soft)]">No payments yet.</div>
+        <div className="p-5 text-[13px] text-[var(--ink-soft)]">No payments yet.</div>
       ) : (
-        <table className="w-full text-[13px]">
-          <thead>
-            <tr className="text-left text-[var(--ink-mute)]">
-              <th className="px-[22px] py-2.5 font-medium">Date</th>
-              <th className="px-[22px] py-2.5 font-medium">Amount</th>
-              <th className="px-[22px] py-2.5 font-medium">Method</th>
-              <th className="px-[22px] py-2.5 font-medium">Status</th>
-              <th className="px-[22px] py-2.5 font-medium text-right">Receipt</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((p) => (
-              <tr key={p.id} className="border-t border-[var(--line)]">
-                <td className="px-[22px] py-3">{fmtDate(p.paidAt ?? p.createdAt)}</td>
-                <td className="px-[22px] py-3 font-medium">{fmtAmount(p)}</td>
-                <td className="px-[22px] py-3 text-[var(--ink-soft)]">{p.method ?? '—'}</td>
-                <td className="px-[22px] py-3">
-                  <span className={`badge font-medium ${STATUS_STYLES[p.status]}`}>
-                    {p.status.charAt(0) + p.status.slice(1).toLowerCase()}
-                  </span>
-                </td>
-                <td className="px-[22px] py-3 text-right">
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadReceipt(p)}
-                    disabled={downloadingPaymentId === p.id}
-                    aria-label="Download receipt"
-                    title="Download receipt"
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--ink-soft)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)] disabled:opacity-60"
-                  >
-                    {downloadingPaymentId === p.id ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Download size={14} />
-                    )}
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-[13px]">
+            <thead>
+              <tr className="text-left text-[11px] uppercase tracking-wide text-[var(--ink-mute)]">
+                <th className="px-5 py-2.5 font-medium">Date</th>
+                <th className="px-5 py-2.5 font-medium">Amount</th>
+                <th className="px-5 py-2.5 font-medium">Method</th>
+                <th className="px-5 py-2.5 font-medium">Status</th>
+                <th className="w-20 px-5 py-2.5 text-right font-medium">Receipt</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {payments.map((payment) => (
+                <tr key={payment.id} className="border-t border-[var(--line)]">
+                  <td className="whitespace-nowrap px-5 py-3">
+                    {fmtDate(payment.paidAt ?? payment.createdAt)}
+                  </td>
+                  <td className="whitespace-nowrap px-5 py-3 font-medium">{fmtAmount(payment)}</td>
+                  <td className="px-5 py-3 text-[var(--ink-soft)]">{payment.method ?? '—'}</td>
+                  <td className="px-5 py-3">
+                    <span className={`badge font-medium ${STATUS_STYLES[payment.status]}`}>
+                      {payment.status.charAt(0) + payment.status.slice(1).toLowerCase()}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReceipt(payment)}
+                      disabled={downloadingPaymentId === payment.id}
+                      aria-label="Download receipt"
+                      title="Download receipt"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--ink-soft)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)] disabled:opacity-60"
+                    >
+                      {downloadingPaymentId === payment.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Download size={14} />
+                      )}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

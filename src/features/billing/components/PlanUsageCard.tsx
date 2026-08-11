@@ -28,7 +28,7 @@ export function PlanUsageCard({ subscription, tenantVertical }: PlanUsageCardPro
   const daysLeft = daysUntil(isTrial ? subscription.trialEndsAt : subscription.currentPeriodEnd);
 
   return (
-    <div className="card p-[22px]">
+    <div className="card p-5 sm:p-[22px]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-[15px] font-semibold">What&apos;s included</h3>
@@ -49,7 +49,7 @@ export function PlanUsageCard({ subscription, tenantVertical }: PlanUsageCardPro
       </div>
 
       <div className="mt-4 border-t border-[var(--line)] pt-4">
-        <PlanLimitsList plan={plan} tenantVertical={tenantVertical} />
+        <PlanLimitsList plan={plan} tenantVertical={tenantVertical} variant="grid" />
       </div>
     </div>
   );
