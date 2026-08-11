@@ -14,10 +14,12 @@ export type Category = (typeof CATEGORIES)[number];
 export type InventoryView = "grid" | "list";
 
 const numericField = z
-  .union([z.string(), z.number()])
-  .transform((v) =>
-    typeof v === "string" ? (v === "" ? 0 : parseFloat(v)) : v,
-  );
+  .union([z.string(), z.number(), z.undefined()])
+  .transform((v) => {
+    if (v === undefined || v === null) return undefined as unknown as number;
+    if (typeof v === "string") return v === "" ? undefined as unknown as number : parseFloat(v);
+    return v;
+  });
 
 export const GENDERS = ["Men", "Women", "Kids"] as const;
 
@@ -55,12 +57,19 @@ export const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   sku: z.string().optional(),
   price: numericField.pipe(z.number().positive("Price must be positive")),
-  discountPercentage: numericField
+  discountPercentage: z
+    .union([z.string(), z.number(), z.undefined()])
+    .transform((v) => {
+      if (v === undefined || v === null || v === "") return undefined;
+      const n = typeof v === "string" ? parseFloat(v) : v;
+      return isNaN(n) ? undefined : n;
+    })
     .pipe(
       z
         .number()
         .min(0, "Discount must be ≥ 0")
-        .max(100, "Discount must be ≤ 100"),
+        .max(100, "Discount must be ≤ 100")
+        .optional(),
     )
     .optional(),
   stock: numericField.pipe(z.number().min(0, "Stock must be ≥ 0")),

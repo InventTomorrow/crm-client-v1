@@ -16,7 +16,10 @@ import { ImageIcon, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Product } from "../types";
 
-const STATUS_STYLES: Record<Product["status"], { label: string; background: string }> = {
+const STATUS_STYLES: Record<
+  Product["status"],
+  { label: string; background: string }
+> = {
   in: { label: "In stock", background: "rgba(34,197,94,0.92)" },
   low: { label: "Low stock", background: "rgba(245,158,11,0.92)" },
   out: { label: "Out of stock", background: "rgba(239,68,68,0.92)" },
@@ -45,8 +48,13 @@ export function ProductPreviewDialog({
   const activeImage = images[activeImageIndex];
   const status = STATUS_STYLES[product.status];
   const discount = product.discountPercentage ?? 0;
-  const discountedPrice = discount > 0 ? product.price * (1 - discount / 100) : null;
-  const sizes = product.sizes?.length ? product.sizes : product.size ? [product.size] : [];
+  const discountedPrice =
+    discount > 0 ? product.price * (1 - discount / 100) : null;
+  const sizes = product.sizes?.length
+    ? product.sizes
+    : product.size
+      ? [product.size]
+      : [];
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
@@ -99,7 +107,9 @@ export function ProductPreviewDialog({
 
         <div className="scroll overflow-y-auto max-h-[52vh] px-5 py-4 flex flex-col gap-4">
           <DialogHeader className="p-0 gap-1 text-left">
-            <DialogTitle className="text-[16px] leading-tight">{product.name}</DialogTitle>
+            <DialogTitle className="text-[16px] leading-tight">
+              {product.name}
+            </DialogTitle>
             <DialogDescription className="text-[12px] font-[var(--font-mono)]">
               {product.sku || "No SKU"}
             </DialogDescription>
@@ -120,7 +130,9 @@ export function ProductPreviewDialog({
           </div>
 
           {product.desc && (
-            <p className="text-[12.5px] leading-relaxed text-[var(--ink-soft)]">{product.desc}</p>
+            <p className="text-[12.5px] leading-relaxed text-[var(--ink-soft)]">
+              {product.desc}
+            </p>
           )}
 
           <Separator />
@@ -172,7 +184,7 @@ export function ProductPreviewDialog({
           )}
         </div>
 
-        <DialogFooter className="border-t border-[var(--border)] px-5 py-3">
+        <DialogFooter className="border-t border-[var(--border)] p-6 flex items-center justify-between gap-3">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

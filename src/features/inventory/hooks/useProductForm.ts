@@ -15,9 +15,9 @@ import {
 const INITIAL_FORM_VALUES = {
   name: "",
   sku: "",
-  price: 0,
+  price: "",
   discountPercentage: undefined,
-  stock: 0,
+  stock: "",
   cat: "Apparel",
   sizes: [],
   gender: "",
@@ -62,9 +62,12 @@ export function useProductForm(productId?: string) {
     form.reset({
       name: editingProduct.name ?? "",
       sku: editingProduct.sku ?? "",
-      price: editingProduct.price ?? 0,
-      discountPercentage: editingProduct.discountPercentage ?? undefined,
-      stock: editingProduct.stock ?? 0,
+      price: editingProduct.price != null ? String(editingProduct.price) : "",
+      discountPercentage:
+        editingProduct.discountPercentage != null
+          ? editingProduct.discountPercentage
+          : undefined,
+      stock: editingProduct.stock != null ? String(editingProduct.stock) : "",
       cat: editingProduct.cat ?? "Apparel",
       sizes: editingProduct.sizes ?? [],
       gender: editingProduct.gender ?? "",
@@ -106,16 +109,10 @@ export function useProductForm(productId?: string) {
   const isSaving = addProduct.isPending || updateProduct.isPending;
   const isDeleting = deleteProduct.isPending;
 
+  // Single product image for now — variants will reintroduce a gallery. Extra
+  // URLs on products created earlier are kept as-is so nothing is lost.
   const setCoverImage = useCallback((url: string | null) => {
     setImageUrls((prev) => (url ? [url, ...prev.slice(1)] : prev.slice(1)));
-  }, []);
-
-  const addImage = useCallback((url: string) => {
-    setImageUrls((prev) => (prev.includes(url) ? prev : [...prev, url]));
-  }, []);
-
-  const removeImage = useCallback((url: string) => {
-    setImageUrls((prev) => prev.filter((existingUrl) => existingUrl !== url));
   }, []);
 
   const handleSubmit = form.handleSubmit((data: ProductFormData) => {
@@ -156,8 +153,6 @@ export function useProductForm(productId?: string) {
     editingProduct,
     imageUrls,
     setCoverImage,
-    addImage,
-    removeImage,
     categoryOptions,
     selectedCategory,
     discountedPrice,

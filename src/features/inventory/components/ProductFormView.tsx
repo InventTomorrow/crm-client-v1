@@ -1,5 +1,5 @@
 "use client";
-import { getImageUrl, pkr } from "@/lib/utils";
+import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { FileUpload } from "@/shared/ui/FileUpload";
@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
-import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { Textarea } from "@/shared/ui/Textarea";
 import {
   Form,
@@ -22,9 +21,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
-import { ArrowLeft, ImagePlus, Loader2, Trash2, X } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
 import { useProductForm } from "../hooks/useProductForm";
 import { usePresignedUpload } from "../hooks/useProducts";
 import { GENDERS } from "../types";
@@ -47,8 +45,6 @@ export function ProductFormView({ productId }: { productId?: string }) {
     editingProduct,
     imageUrls,
     setCoverImage,
-    addImage,
-    removeImage,
     categoryOptions,
     selectedCategory,
     discountedPrice,
@@ -60,29 +56,10 @@ export function ProductFormView({ productId }: { productId?: string }) {
     confirmDelete,
   } = useProductForm(productId);
 
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const [isAddingGalleryImage, setIsAddingGalleryImage] = useState(false);
-
   // Only an actual save/delete disables the fields — an in-flight photo upload
   // shouldn't block typing elsewhere. The Save button separately waits for it.
   const busy = isSaving || isDeleting;
-  const canSubmit = !busy && !isUploading && !isAddingGalleryImage;
-
-  const handleGalleryFile = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setIsAddingGalleryImage(true);
-    try {
-      addImage(await uploadImage(file));
-    } catch {
-      // usePresignedUpload already toasts the failure.
-    } finally {
-      setIsAddingGalleryImage(false);
-      event.target.value = "";
-    }
-  };
+  const canSubmit = !busy && !isUploading;
 
   if (isEditMode && isLoadingProducts && !editingProduct) {
     return (
@@ -256,6 +233,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                             type="number"
                             placeholder="8999"
                             {...field}
+                            value={field.value ?? ""}
                             disabled={busy}
                           />
                         </FormControl>
@@ -312,6 +290,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                             type="number"
                             placeholder="47"
                             {...field}
+                            value={field.value ?? ""}
                             disabled={busy}
                           />
                         </FormControl>
@@ -357,8 +336,11 @@ export function ProductFormView({ productId }: { productId?: string }) {
                 />
               </div>
 
-              {/* Images */}
-              <div className="card p-5 flex flex-col gap-4">
+              {/* Image */}
+              <div className="card p-5 flex flex-col gap-2">
+                <span className="text-[12px] font-medium text-[var(--ink-soft)]">
+                  Product photo
+                </span>
                 <FileUpload
                   value={imageUrls[0] ?? null}
                   onChange={setCoverImage}
@@ -368,80 +350,24 @@ export function ProductFormView({ productId }: { productId?: string }) {
                   progress={uploadProgress}
                   disabled={busy}
                   accept="image/*"
-                  aspectRatio="aspect-square"
-                  title="Upload product photo"
-                  description="Drag and drop a photo here, or click to browse"
-                  hint="Recommended: square, 1000×1000px • Max size: 5MB"
+                  maxSize={5 * 1024 * 1024}
+                  compact
+                  compactHeight="h-[180px]"
+                  description="Drop product photo or click to upload"
+                  hint="PNG, JPG, WEBP — up to 5 MB"
+                  tipsCollapsible
                   tipsTitle="Photo guidelines"
                   tips={[
                     "Use a plain background so the product stands out",
                     "Shoot in good, even lighting — avoid harsh shadows",
                     "Show the actual product customers will receive",
-                    "Supported formats: JPG, PNG, WebP",
+                    "Recommended: square, 1000×1000px",
                   ]}
                 />
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-medium text-[var(--ink-soft)]">
-                    Gallery images
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    onClick={() => galleryInputRef.current?.click()}
-                    disabled={busy || isAddingGalleryImage || !imageUrls.length}
-                    title={
-                      !imageUrls.length
-                        ? "Upload a cover photo first"
-                        : "Add another image"
-                    }
-                  >
-                    {isAddingGalleryImage ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <ImagePlus size={12} />
-                    )}
-                    Add image
-                  </Button>
-                </div>
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleGalleryFile}
-                />
-                {imageUrls.length > 1 ? (
-                  <ul className="grid grid-cols-4 gap-2">
-                    {imageUrls.slice(1).map((url) => (
-                      <li
-                        key={url}
-                        className="group relative aspect-square overflow-hidden rounded-lg border border-[var(--line)]"
-                      >
-                        <ShimmerImage
-                          src={getImageUrl(url)}
-                          alt="Product image"
-                          wrapperClassName="h-full w-full"
-                          className="h-full w-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(url)}
-                          aria-label="Remove image"
-                          className="absolute right-1 top-1 rounded-full bg-[var(--surface)]/90 p-1 text-[var(--ink-mute)] opacity-0 transition-opacity hover:text-[var(--destructive)] focus-visible:opacity-100 group-hover:opacity-100"
-                        >
-                          <X size={12} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-[12px] text-[var(--ink-mute)]">
-                    Extra photos show in the product preview and on WhatsApp
-                    cards. The cover photo above is used on lists.
-                  </p>
-                )}
+                <p className="text-[12px] text-[var(--ink-mute)]">
+                  This photo is used on lists, the product preview and WhatsApp
+                  cards.
+                </p>
               </div>
             </div>
 
@@ -479,9 +405,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                   type="submit"
                   disabled={!canSubmit}
                   title={
-                    isUploading || isAddingGalleryImage
-                      ? "Waiting for photo upload to finish…"
-                      : undefined
+                    isUploading ? "Waiting for photo upload to finish…" : undefined
                   }
                 >
                   {isSaving ? (
