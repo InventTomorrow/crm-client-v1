@@ -37,6 +37,7 @@ export function ResourceCard({ resource, onEdit, onDelete }: ResourceCardProps) 
               <PdfPreview
                 src={getImageUrl(resource.fileUrl)}
                 title={resource.label}
+                fit="cover"
                 className="absolute inset-0"
               />
             </span>

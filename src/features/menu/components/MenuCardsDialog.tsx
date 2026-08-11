@@ -1,18 +1,18 @@
-'use client';
-import { useCallback, useEffect, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn, getImageUrl, isPdfFile } from '@/lib/utils';
-import { Button } from '@/shared/ui/Button';
+"use client";
+import { cn, getImageUrl, isPdfFile } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui/Dialog';
-import { PdfPreview } from '@/shared/ui/PdfPreview';
-import { ShimmerImage } from '@/shared/ui/ShimmerImage';
-import { useMenuCards } from '../hooks/useMenuCards';
+} from "@/shared/ui/Dialog";
+import { PdfPreview } from "@/shared/ui/PdfPreview";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useMenuCards } from "../hooks/useMenuCards";
 
 /**
  * Full-bleed viewer for the physical menu cards — the same images a customer is
@@ -43,11 +43,11 @@ export function MenuCardsDialog({
   useEffect(() => {
     if (!open || totalCards < 2) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight') goToCard(activeIndex + 1);
-      if (event.key === 'ArrowLeft') goToCard(activeIndex - 1);
+      if (event.key === "ArrowRight") goToCard(activeIndex + 1);
+      if (event.key === "ArrowLeft") goToCard(activeIndex - 1);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, activeIndex, totalCards, goToCard]);
 
   const activeCard = visibleCards[activeIndex];
@@ -71,13 +71,15 @@ export function MenuCardsDialog({
           <DialogDescription className="text-[12px]">
             {totalCards > 0
               ? `Card ${activeIndex + 1} of ${totalCards} — exactly what customers receive.`
-              : 'What customers receive when they ask to see the menu.'}
+              : "What customers receive when they ask to see the menu."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="relative flex min-h-0 flex-1 items-center justify-center bg-[var(--surface-2)] p-3 sm:p-6">
           {isLoading && (
-            <p className="text-[12.5px] text-[var(--ink-mute)]">Loading menu cards…</p>
+            <p className="text-[12.5px] text-[var(--ink-mute)]">
+              Loading menu cards…
+            </p>
           )}
 
           {!isLoading && totalCards === 0 && (
@@ -143,16 +145,17 @@ export function MenuCardsDialog({
                 aria-label={menuCard.title ?? `Menu card ${index + 1}`}
                 aria-current={index === activeIndex}
                 className={cn(
-                  'relative h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all',
+                  "relative h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all",
                   index === activeIndex
-                    ? 'border-[var(--primary)]'
-                    : 'border-transparent opacity-60 hover:opacity-100',
+                    ? "border-[var(--primary)]"
+                    : "border-transparent opacity-60 hover:opacity-100",
                 )}
               >
                 {isPdfFile(menuCard.mimeType, menuCard.imageUrl) ? (
                   <PdfPreview
                     src={getImageUrl(menuCard.imageUrl)}
                     title={menuCard.title ?? `Menu card ${index + 1}`}
+                    fit="cover"
                     className="absolute inset-0"
                   />
                 ) : (

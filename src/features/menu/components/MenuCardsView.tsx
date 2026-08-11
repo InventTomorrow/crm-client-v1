@@ -114,7 +114,7 @@ export function MenuCardsView() {
                   <PdfPreview
                     src={getImageUrl(menuCard.imageUrl)}
                     title={menuCard.title ?? `Menu card ${index + 1}`}
-                    interactive
+                    fit="cover"
                     className={cn(
                       'absolute inset-0',
                       !menuCard.isActive && 'opacity-50 grayscale',
