@@ -112,6 +112,10 @@ export function extractApiErrorCode(error: unknown): string | null {
 export function getImageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
   if (!url.includes('amazonaws.com')) return url;
+  // Public-prefixed keys (e.g. subscription checkout receipts, uploaded before
+  // a session exists) are unsigned and publicly readable — proxying them
+  // through the authenticated /upload/image route would 401 on that page.
+  if (/amazonaws\.com\/public\//.test(url)) return url;
   const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? '';
   return `${apiOrigin}/api/v1/upload/image?url=${encodeURIComponent(url)}`;
 }
