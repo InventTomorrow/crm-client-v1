@@ -46,6 +46,12 @@ export interface Plan {
   providerPlanId: string | null;
   isPublic: boolean;
   isActive: boolean;
+
+  // Landing-page marketing fields, set in admin under "Landing page display".
+  ctaLabel: string | null;
+  features: string[];
+  isFeatured: boolean;
+  isComingSoon: boolean;
 }
 
 export interface Subscription {

@@ -26,28 +26,44 @@ interface PlanCardProps {
 
 export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, workspaceNotice, tenantVertical, checkoutMode, onSelect }: PlanCardProps) {
   const unavailable = checkoutMode === 'gateway' && !plan.providerPlanId;
+  const comingSoon = plan.isComingSoon;
   const badges = [
     ...(plan.canResell ? ['Reseller access'] : []),
     ...(plan.canWhitelabel ? ['White-label branding'] : []),
   ];
+  const ctaText =
+    plan.ctaLabel?.trim() ||
+    (checkoutMode === 'manual' ? 'Continue to checkout' : 'Choose plan');
 
   return (
     <div
-      className={`card p-[22px] flex flex-col ${
-        isCurrent ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : ''
+      className={`card relative flex flex-col p-5 ${
+        isCurrent
+          ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+          : plan.isFeatured
+            ? 'border-[var(--accent)]'
+            : ''
       }`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="text-[17px] font-semibold">{plan.name}</h3>
-        {isCurrent && (
-          <span className="badge font-medium text-white bg-[var(--accent)]">Current</span>
-        )}
-        {isRequested && !isCurrent && (
-          <span className="badge font-medium text-info-foreground bg-info-soft">Requested</span>
-        )}
-        {plan.isTrial && !isCurrent && !isRequested && (
-          <span className="badge font-medium text-info-foreground bg-info-soft">Trial</span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {plan.isFeatured && !isCurrent && (
+            <span className="badge font-medium text-white bg-[var(--accent)]">Popular</span>
+          )}
+          {isCurrent && (
+            <span className="badge font-medium text-white bg-[var(--accent)]">Current</span>
+          )}
+          {isRequested && !isCurrent && (
+            <span className="badge font-medium text-info-foreground bg-info-soft">Requested</span>
+          )}
+          {comingSoon && !isCurrent && !isRequested && (
+            <span className="badge font-medium text-warning-foreground bg-warning-soft">Coming soon</span>
+          )}
+          {plan.isTrial && !isCurrent && !isRequested && !comingSoon && (
+            <span className="badge font-medium text-info-foreground bg-info-soft">Trial</span>
+          )}
+        </div>
       </div>
 
       <div className="mt-3">
@@ -56,7 +72,18 @@ export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, wo
       </div>
 
       <div className="mt-4 flex-1">
-        <PlanLimitsList plan={plan} tenantVertical={tenantVertical} />
+        {plan.features.length > 0 ? (
+          <ul className="space-y-2">
+            {plan.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-[13px] text-[var(--ink-soft)]">
+                <span className="mt-0.5">✓</span>
+                {feature}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <PlanLimitsList plan={plan} tenantVertical={tenantVertical} />
+        )}
         {badges.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {badges.map((b) => (
@@ -71,7 +98,7 @@ export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, wo
       <button
         type="button"
         className={`btn ${isCurrent ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center gap-2`}
-        disabled={disabled || isCurrent || isRequested || isLoading || unavailable}
+        disabled={disabled || isCurrent || isRequested || isLoading || unavailable || comingSoon}
         onClick={() => onSelect(plan)}
       >
         {isLoading ? (
@@ -85,15 +112,15 @@ export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, wo
           'Current plan'
         ) : isRequested ? (
           'Request pending approval'
+        ) : comingSoon ? (
+          'Coming soon'
         ) : unavailable ? (
           'Unavailable'
-        ) : checkoutMode === 'manual' ? (
+        ) : (
           <>
-            Continue to checkout
+            {ctaText}
             <ArrowRight size={14} />
           </>
-        ) : (
-          'Choose plan'
         )}
       </button>
       {workspaceNotice && (
