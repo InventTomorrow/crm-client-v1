@@ -16,6 +16,7 @@ import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { profileSchema, type ProfileFormValues } from "../types";
+import { DeleteAccountSection } from "./DeleteAccountSection";
 
 export function ProfileSection() {
   const { user, isLoading } = useMe();
@@ -175,6 +176,8 @@ export function ProfileSection() {
             </div>
           </form>
         </Form>
+
+        <DeleteAccountSection />
       </div>
     </>
   );

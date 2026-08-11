@@ -14,6 +14,7 @@ import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useDeletedAccountRedirect } from "../hooks/useAccountRecovery";
 import { useLogin } from "../hooks/useAuth";
 import { loginSchema, type LoginData } from "../types";
 import { AuthFormError } from "./AuthFormError";
@@ -27,6 +28,8 @@ export function LoginView() {
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  useDeletedAccountRedirect(error, form.getValues("email"));
 
   const onSubmit = (data: LoginData) => {
     mutate(data);
@@ -134,6 +137,16 @@ export function LoginView() {
             </Button>
           </form>
         </Form>
+
+        <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/auth/register"
+            className="text-[var(--accent)] hover:underline font-medium"
+          >
+            Sign up
+          </Link>
+        </p>
 
         <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
           By signing in you agree to our{" "}

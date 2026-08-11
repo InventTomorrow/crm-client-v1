@@ -1,5 +1,5 @@
 import { apiClient, runExclusiveAuthOp } from '@/lib/apiClient';
-import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse } from '../types';
+import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse, AccountRecoveryOtpData, AccountRecoveryActionData, AccountRestoreResult, AccountDeletionResult } from '../types';
 
 export async function login(data: LoginData): Promise<LoginResponse> {
   const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/login', {
@@ -42,6 +42,39 @@ export async function forgotPassword(data: ForgotPasswordData) {
 
 export async function resetPassword(token: string, data: ResetPasswordData) {
   const res = await apiClient.post('/auth/reset-password', { token, password: data.password });
+  return res.data;
+}
+
+export async function requestAccountDeletion(): Promise<{ email: string; expiresAt: string }> {
+  const res = await apiClient.post<{ success: true; data: { email: string; expiresAt: string } }>(
+    '/auth/me/delete/request',
+  );
+  return res.data.data;
+}
+
+export async function confirmAccountDeletion(otp: string): Promise<AccountDeletionResult> {
+  const res = await apiClient.post<{ success: true; data: AccountDeletionResult }>(
+    '/auth/me/delete/confirm',
+    { otp },
+  );
+  return res.data.data;
+}
+
+export async function requestAccountRecoveryOtp(data: AccountRecoveryOtpData) {
+  const res = await apiClient.post('/auth/account-recovery/otp', data);
+  return res.data;
+}
+
+export async function restoreAccount(data: AccountRecoveryActionData): Promise<AccountRestoreResult> {
+  const res = await apiClient.post<{ success: true; data: AccountRestoreResult }>(
+    '/auth/account-recovery/restore',
+    data,
+  );
+  return res.data.data;
+}
+
+export async function permanentlyDeleteAccount(data: AccountRecoveryActionData) {
+  const res = await apiClient.post('/auth/account-recovery/delete-permanently', data);
   return res.data;
 }
 

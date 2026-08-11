@@ -57,6 +57,20 @@ export const resendVerificationSchema = z.object({
   email: z.string().email('Enter a valid email'),
 });
 
+// Account recovery runs unauthenticated, so the address is part of every
+// payload and the emailed code is the only credential.
+export const accountRecoveryOtpSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+});
+
+export const accountRecoveryActionSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6-digit code from your email'),
+});
+
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterData = z.infer<typeof registerSchema>;
 export type CreateWorkspaceData = z.infer<typeof createWorkspaceSchema>;
@@ -64,6 +78,19 @@ export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export type AcceptInviteData = z.infer<typeof acceptInviteSchema>;
 export type ResendVerificationData = z.infer<typeof resendVerificationSchema>;
+export type AccountRecoveryOtpData = z.infer<typeof accountRecoveryOtpSchema>;
+export type AccountRecoveryActionData = z.infer<typeof accountRecoveryActionSchema>;
+
+export interface AccountDeletionResult {
+  deletedAt: string;
+  scheduledPurgeAt: string;
+  affectedWorkspaces: string[];
+}
+
+export interface AccountRestoreResult {
+  restoredWorkspaces: number;
+  whatsappReconnectRequired: boolean;
+}
 
 export interface LoginResponse {
   id: string;

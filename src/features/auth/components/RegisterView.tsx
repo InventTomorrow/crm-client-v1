@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useDeletedAccountRedirect } from "../hooks/useAccountRecovery";
 import { useRegister } from "../hooks/useAuth";
 import { registerSchema, type RegisterData } from "../types";
 import { AuthFormError } from "./AuthFormError";
@@ -52,6 +53,8 @@ export function RegisterView() {
       acceptTerms: false,
     },
   });
+
+  useDeletedAccountRedirect(error, form.getValues("email"));
 
   const pw = form.watch("password");
   const strength = passwordStrength(pw);
