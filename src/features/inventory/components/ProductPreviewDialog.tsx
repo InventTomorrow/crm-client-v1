@@ -58,14 +58,14 @@ export function ProductPreviewDialog({
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
-        <div className="relative aspect-[16/9] bg-[var(--surface-2)]">
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+        <div className="relative aspect-[4/3] bg-[var(--surface-2)]">
           {activeImage ? (
             <ShimmerImage
               src={getImageUrl(activeImage)}
               alt={product.name}
               wrapperClassName="absolute inset-0"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-[var(--ink-mute)] opacity-50">
@@ -115,17 +115,24 @@ export function ProductPreviewDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex items-baseline gap-2.5 flex-wrap">
-            <span className="text-[20px] font-semibold font-[var(--font-mono)] text-[var(--ink)]">
-              {pkr(discountedPrice ?? product.price)}
-            </span>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-baseline gap-2.5 flex-wrap">
+              <span className="text-[20px] font-semibold font-[var(--font-mono)] text-[var(--ink)]">
+                {pkr(product.price)}
+              </span>
+              {discountedPrice !== null && (
+                <Badge variant="secondary">{discount}% negotiable</Badge>
+              )}
+            </div>
             {discountedPrice !== null && (
-              <>
-                <span className="text-[13px] line-through font-[var(--font-mono)] text-[var(--ink-mute)]">
-                  {pkr(product.price)}
-                </span>
-                <Badge variant="destructive">{discount}% off</Badge>
-              </>
+              <p className="text-[11.5px] leading-relaxed text-[var(--ink-mute)]">
+                Negotiation price:{" "}
+                <span className="font-[var(--font-mono)] text-[var(--ink-soft)]">
+                  {pkr(discountedPrice)}
+                </span>{" "}
+                — the lowest price staff can offer if a customer
+                negotiates. Not shown to customers upfront.
+              </p>
             )}
           </div>
 
