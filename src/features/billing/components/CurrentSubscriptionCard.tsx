@@ -34,11 +34,16 @@ interface Props {
 
 export function CurrentSubscriptionCard({ subscription, onCancel, isCancelling }: Props) {
   const plan = subscription.plan;
+  // A gateway checkout in flight has no providerSubscriptionId yet — Safepay
+  // hasn't confirmed it, so there's nothing the cancel endpoint can act on.
+  const isPendingGatewayCheckout =
+    subscription.provider !== 'MANUAL' && !subscription.providerSubscriptionId;
   // Cancel-at-period-end: status may still read ACTIVE/TRIALING with
   // cancelledAt set, so gate strictly on cancelledAt rather than status alone.
   const canCancel =
     (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING') &&
     !subscription.cancelledAt &&
+    !isPendingGatewayCheckout &&
     Boolean(plan);
 
   return (
