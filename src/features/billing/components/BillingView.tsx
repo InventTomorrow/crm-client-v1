@@ -1,10 +1,10 @@
-'use client';
-import { Suspense, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
-import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
+"use client";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   useCancelSubscription,
   useCreateCheckout,
@@ -13,24 +13,25 @@ import {
   useRequestPlan,
   useSubscription,
   useWorkspaceAllowance,
-} from '../hooks/useBilling';
-import type { Plan } from '../types';
-import { BillingHistory } from './BillingHistory';
-import { CurrentSubscriptionCard } from './CurrentSubscriptionCard';
-import { PlanGrid } from './PlanGrid';
-import { PlanRequestCard } from './PlanRequestCard';
-import { PlanUsageCard } from './PlanUsageCard';
+} from "../hooks/useBilling";
+import type { Plan } from "../types";
+import { BillingHistory } from "./BillingHistory";
+import { CurrentSubscriptionCard } from "./CurrentSubscriptionCard";
+import { PlanGrid } from "./PlanGrid";
+import { PlanRequestCard } from "./PlanRequestCard";
+import { PlanUsageCard } from "./PlanUsageCard";
 
-const CHECKOUT_MODE: 'manual' | 'gateway' = 'manual';
+const CHECKOUT_MODE: "manual" | "gateway" = "gateway";
 
 function BillingViewInner() {
   const params = useSearchParams();
-  const returnStatus = params.get('status'); // success | cancelled (Safepay return)
+  const returnStatus = params.get("status"); // success | cancelled (Safepay return)
   const { tenant } = useCurrentTenant();
 
   // Poll the subscription while we wait for the activation webhook.
-  const polling = returnStatus === 'success';
-  const { data: subscription, isLoading: subLoading } = useSubscription(polling);
+  const polling = returnStatus === "success";
+  const { data: subscription, isLoading: subLoading } =
+    useSubscription(polling);
   const { data: plans, isLoading: plansLoading } = usePlans();
   const { data: latestPlanRequest } = usePlanRequest();
   const { data: workspaceAllowance } = useWorkspaceAllowance();
@@ -44,16 +45,16 @@ function BillingViewInner() {
 
   // One-time toast for the redirect outcome.
   useEffect(() => {
-    if (returnStatus === 'success') {
-      toast.success('Payment received — activating your subscription…');
-    } else if (returnStatus === 'cancelled') {
-      toast.info('Checkout cancelled');
+    if (returnStatus === "success") {
+      toast.success("Payment received — activating your subscription…");
+    } else if (returnStatus === "cancelled") {
+      toast.info("Checkout cancelled");
     }
   }, [returnStatus]);
 
   const handleSelect = (plan: Plan) => {
     setPendingPlanId(plan.id);
-    if (CHECKOUT_MODE === 'manual') {
+    if (CHECKOUT_MODE === "manual") {
       // Sends the customer to their own /subscribe/:token page to enter
       // details and upload a payment receipt; the admin then approves it.
       // Deliberately no onSettled reset — the hook navigates away on success,
@@ -68,7 +69,7 @@ function BillingViewInner() {
   // that subscription is no longer "current" for plan-selection purposes.
   const activePlanId =
     subscription &&
-    (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING') &&
+    (subscription.status === "ACTIVE" || subscription.status === "TRIALING") &&
     !subscription.cancelledAt
       ? subscription.planId
       : null;
@@ -77,18 +78,23 @@ function BillingViewInner() {
   // superseded — only pending/rejected ones are worth showing.
   const visiblePlanRequest =
     latestPlanRequest &&
-    (latestPlanRequest.status === 'PENDING_APPROVAL' || latestPlanRequest.status === 'REJECTED')
+    (latestPlanRequest.status === "PENDING_APPROVAL" ||
+      latestPlanRequest.status === "REJECTED")
       ? latestPlanRequest
       : null;
   const requestedPlanId =
-    latestPlanRequest?.status === 'PENDING_APPROVAL' ? latestPlanRequest.planId : null;
+    latestPlanRequest?.status === "PENDING_APPROVAL"
+      ? latestPlanRequest.planId
+      : null;
 
   return (
     // Capped and centred — full-bleed rows push a label and its value to
     // opposite edges of a wide screen, which is unreadable.
     <div className="mx-auto w-full max-w-[1100px] space-y-8">
       <div>
-        <h2 className="text-[20px] font-semibold">Billing &amp; Subscription</h2>
+        <h2 className="text-[20px] font-semibold">
+          Billing &amp; Subscription
+        </h2>
         <p className="text-[13px] mt-1 text-[var(--ink-soft)]">
           Manage your workspace plan and view payment history.
         </p>
@@ -96,7 +102,9 @@ function BillingViewInner() {
 
       <div className="space-y-4">
         {subLoading ? (
-          <div className="card p-5 text-[13px] text-[var(--ink-soft)] sm:p-[22px]">Loading…</div>
+          <div className="card p-5 text-[13px] text-[var(--ink-soft)] sm:p-[22px]">
+            Loading…
+          </div>
         ) : subscription ? (
           <CurrentSubscriptionCard
             subscription={subscription}
@@ -105,37 +113,47 @@ function BillingViewInner() {
           />
         ) : (
           <div className="card p-5 text-[13px] text-[var(--ink-soft)] sm:p-[22px]">
-            You don&apos;t have an active subscription. Choose a plan below to get started.
+            You don&apos;t have an active subscription. Choose a plan below to
+            get started.
           </div>
         )}
 
         {visiblePlanRequest && <PlanRequestCard request={visiblePlanRequest} />}
 
         {subscription?.plan && (
-          <PlanUsageCard subscription={subscription} tenantVertical={tenant?.businessVertical} />
+          <PlanUsageCard
+            subscription={subscription}
+            tenantVertical={tenant?.businessVertical}
+          />
         )}
       </div>
 
       <div>
         <div className="mb-4">
           <h3 className="text-[15px] font-semibold">
-            {subscription ? 'Change plan' : 'Plans'}
+            {subscription ? "Change plan" : "Plans"}
           </h3>
           <p className="text-[13px] mt-0.5 text-[var(--ink-soft)]">
             {subscription
-              ? 'Switch to a different plan at any time.'
-              : 'Pick the plan that fits your workspace.'}
+              ? "Switch to a different plan at any time."
+              : "Pick the plan that fits your workspace."}
           </p>
         </div>
         {plansLoading ? (
-          <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">Loading plans…</div>
+          <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">
+            Loading plans…
+          </div>
         ) : (
           <PlanGrid
             plans={plans ?? []}
             activePlanId={activePlanId}
             requestedPlanId={requestedPlanId}
             pendingPlanId={pendingPlanId}
-            isMutating={CHECKOUT_MODE === 'manual' ? requestPlan.isPending : checkout.isPending}
+            isMutating={
+              CHECKOUT_MODE === "manual"
+                ? requestPlan.isPending
+                : checkout.isPending
+            }
             workspacesInUse={workspaceAllowance?.used ?? 0}
             tenantVertical={tenant?.businessVertical}
             checkoutMode={CHECKOUT_MODE}
@@ -173,14 +191,19 @@ function BillingViewInner() {
         cancelLabel="Keep plan"
         loading={cancel.isPending}
       />
-
     </div>
   );
 }
 
 export function BillingView() {
   return (
-    <Suspense fallback={<div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">Loading…</div>}>
+    <Suspense
+      fallback={
+        <div className="card p-[22px] text-[13px] text-[var(--ink-soft)]">
+          Loading…
+        </div>
+      }
+    >
       <BillingViewInner />
     </Suspense>
   );
