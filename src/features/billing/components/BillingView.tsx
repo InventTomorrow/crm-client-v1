@@ -21,9 +21,7 @@ import { PlanGrid } from './PlanGrid';
 import { PlanRequestCard } from './PlanRequestCard';
 import { PlanUsageCard } from './PlanUsageCard';
 
-// TEMPORARY: switched to 'gateway' so "Upgrade now" hits Safepay checkout
-// directly, for the Safepay approval demo video. Revert to 'manual' after.
-const CHECKOUT_MODE: 'manual' | 'gateway' = 'gateway';
+const CHECKOUT_MODE: 'manual' | 'gateway' = 'manual';
 
 function BillingViewInner() {
   const params = useSearchParams();
