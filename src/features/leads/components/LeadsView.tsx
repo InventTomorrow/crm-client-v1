@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
@@ -45,8 +46,15 @@ import TableView from "./views/TableView";
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
   const [archived, setArchived] = useState(false);
-  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useInfiniteLeads(archived);
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+    isFetching,
+  } = useInfiniteLeads(archived);
   const leads = useMemo(() => data?.pages.flat() ?? [], [data]);
   const addLead = useAddLead();
   const updateLead = useUpdateLead();
@@ -182,6 +190,10 @@ export function LeadsView() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
+          <RefreshButton
+            onRefresh={() => refetch()}
+            isRefreshing={isFetching}
+          />
           <PermissionGuard permission="leads:export">
             <Button variant="outline" onClick={() => openExport(leads)}>
               <Download size={13} /> Export

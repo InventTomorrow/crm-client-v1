@@ -1,6 +1,7 @@
 'use client';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { SearchField } from '@/shared/ui/SearchField';
 import {
   Select,
@@ -69,9 +70,16 @@ export function ResourcesView() {
         </p>
       </div>
 
-      <Button size="lg" onClick={openCreateDialog}>
-        <Plus size={14} className="mr-1.5" /> Add resource
-      </Button>
+      <div className="flex items-center gap-2">
+        <RefreshButton
+          onRefresh={() => resourcesQuery.refetch()}
+          isRefreshing={resourcesQuery.isFetching}
+          size="icon-lg"
+        />
+        <Button size="lg" onClick={openCreateDialog}>
+          <Plus size={14} className="mr-1.5" /> Add resource
+        </Button>
+      </div>
     </div>
   );
 

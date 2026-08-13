@@ -1968,15 +1968,19 @@ export function InboxView() {
         open={invalidLeadDialog.open}
         onClose={() => setInvalidLeadDialog({ open: false })}
         onConfirm={() => setInvalidLeadDialog({ open: false })}
-        title="Number Not Registered"
+        title="WhatsApp Number Verification"
         description={
           invalidLeadDialog.reason === "NOT_ON_WHATSAPP"
             ? `The phone number ${invalidLeadDialog.phone ? `(${invalidLeadDialog.phone})` : ""} for this lead is not registered on WhatsApp.`
             : invalidLeadDialog.reason === "NO_PHONE"
               ? "This lead does not have a phone number specified."
               : invalidLeadDialog.reason === "INVALID_PHONE"
-                ? `The phone number ${invalidLeadDialog.phone ? `(${invalidLeadDialog.phone})` : ""} is invalid.`
-                : "The phone number for this lead could not be verified on WhatsApp."
+                ? `The phone number ${invalidLeadDialog.phone ? `(${invalidLeadDialog.phone})` : ""} is invalid. Please include country code.`
+                : invalidLeadDialog.reason === "CHANNEL_DISCONNECTED"
+                  ? "WhatsApp is not connected. Please connect WhatsApp first in Settings/Channels."
+                  : invalidLeadDialog.reason === "VERIFICATION_FAILED"
+                    ? "Unable to verify this number on WhatsApp right now. Please try again."
+                    : "The phone number for this lead could not be verified on WhatsApp."
         }
         confirmLabel="Got it"
         cancelLabel="Close"

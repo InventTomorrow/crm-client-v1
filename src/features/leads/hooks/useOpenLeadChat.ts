@@ -16,7 +16,11 @@ function describeUnreachableNumber(result: CheckNumberResult): string {
     case "NO_PHONE":
       return "This lead does not have a phone number specified.";
     case "INVALID_PHONE":
-      return `The phone number${phoneSuffix} is invalid.`;
+      return `The phone number${phoneSuffix} is invalid. Please ensure it includes country code.`;
+    case "CHANNEL_DISCONNECTED":
+      return "WhatsApp is not connected. Please connect WhatsApp first in Settings/Channels.";
+    case "VERIFICATION_FAILED":
+      return "Unable to verify this number on WhatsApp right now. Please try again.";
     default:
       return "The phone number for this lead could not be verified on WhatsApp.";
   }

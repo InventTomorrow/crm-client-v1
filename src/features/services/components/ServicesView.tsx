@@ -12,6 +12,7 @@ import {
   useDeleteServiceOffering,
   useServiceOfferings,
 } from "../hooks/useServices";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { ServiceCard } from "./ServiceCard";
 import { ServicesEmptyState } from "./ServicesEmptyState";
 import { ServicesTableView } from "./ServicesTableView";
@@ -36,6 +37,8 @@ export function ServicesView() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
+    isFetching,
   } = useServiceOfferings({ search: search || undefined });
 
   const deleteService = useDeleteServiceOffering();
@@ -84,6 +87,12 @@ export function ServicesView() {
           </button>
         ))}
       </div>
+
+      <RefreshButton
+        onRefresh={() => refetch()}
+        isRefreshing={isFetching}
+        size="icon-lg"
+      />
 
       {/* <Button variant="outline" size="xl" onClick={() => router.push('/services/plans')}>
         <LayoutList size={14} className="mr-1.5" /> Plans

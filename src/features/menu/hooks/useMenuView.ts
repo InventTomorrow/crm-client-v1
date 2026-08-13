@@ -17,7 +17,15 @@ export function useMenuView() {
     [search, filterCategoryId],
   );
 
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useMenuItems(filters);
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    refetch,
+    isFetching,
+  } = useMenuItems(filters);
   const menuItems = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   const { data: categories = [] } = useMenuCategories();
@@ -36,6 +44,8 @@ export function useMenuView() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    refetch,
+    isFetching,
     search,
     setSearch,
     filterCategoryId,

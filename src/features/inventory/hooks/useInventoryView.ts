@@ -19,7 +19,7 @@ import {
  * view component stays a thin render layer. */
 export function useInventoryView() {
   const router = useRouter();
-  const { data: products = [], isLoading } = useProducts();
+  const { data: products = [], isLoading, refetch, isFetching } = useProducts();
   const deleteProduct = useDeleteProduct();
   const duplicateProduct = useDuplicateProduct();
   const bulkAddProducts = useBulkAddProducts();
@@ -220,6 +220,8 @@ export function useInventoryView() {
   return {
     products,
     isLoading,
+    refetch,
+    isFetching,
     inventoryView,
     setInventoryView,
     tier,

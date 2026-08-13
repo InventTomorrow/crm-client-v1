@@ -6,6 +6,7 @@ import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
 import { Skeleton } from "@/shared/ui/Motion";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
@@ -50,6 +51,8 @@ export function InventoryView() {
   const {
     products,
     isLoading,
+    refetch,
+    isFetching,
     inventoryView,
     setInventoryView,
     tier,
@@ -185,6 +188,10 @@ export function InventoryView() {
                 />
               </div>
               <div className="hidden flex-1 sm:block" />
+              <RefreshButton
+                onRefresh={() => refetch()}
+                isRefreshing={isFetching}
+              />
               <Button
                 variant="outline"
                 onClick={() => setExportOpen(true)}

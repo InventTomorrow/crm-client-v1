@@ -1,6 +1,7 @@
 'use client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/shared/ui/Button';
+import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { BellOff, CheckCheck, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useMarkAllRead, useNotificationsList, useUnreadCount } from '../hooks/useNotifications';
@@ -9,9 +10,15 @@ import { NotificationRow } from './NotificationRow';
 export function NotificationsView() {
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const { data: unread = 0 } = useUnreadCount();
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotificationsList(
-    tab === 'unread',
-  );
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    refetch,
+    isFetching,
+  } = useNotificationsList(tab === 'unread');
   const markAll = useMarkAllRead();
 
   const notifications = useMemo(() => data?.pages.flat() ?? [], [data]);
@@ -25,14 +32,21 @@ export function NotificationsView() {
             {unread > 0 ? `${unread} unread` : 'You’re all caught up.'}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => markAll.mutate()}
-          disabled={unread === 0 || markAll.isPending}
-        >
-          <CheckCheck size={14} /> Mark all read
-        </Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton
+            onRefresh={() => refetch()}
+            isRefreshing={isFetching}
+            size="icon-sm"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => markAll.mutate()}
+            disabled={unread === 0 || markAll.isPending}
+          >
+            <CheckCheck size={14} /> Mark all read
+          </Button>
+        </div>
       </div>
 
       <div className="seg mb-4 w-[240px]">

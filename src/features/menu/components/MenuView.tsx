@@ -2,6 +2,7 @@
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Skeleton } from "@/shared/ui/Motion";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { BookOpen, Images, Loader2, Plus, Tags } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +22,8 @@ export function MenuView() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    refetch,
+    isFetching,
     search,
     setSearch,
     filterCategoryId,
@@ -52,6 +55,11 @@ export function MenuView() {
           categories={categories}
         />
         <div className="flex items-center gap-2 flex-wrap">
+          <RefreshButton
+            onRefresh={() => refetch()}
+            isRefreshing={isFetching}
+            size="icon-lg"
+          />
           <Button variant="outline" size="lg" onClick={() => router.push("/menu/categories")}>
             <Tags size={14} /> Categories
           </Button>

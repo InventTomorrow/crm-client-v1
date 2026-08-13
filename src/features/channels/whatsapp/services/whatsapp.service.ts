@@ -36,7 +36,13 @@ export interface CheckNumberResult {
   phone: string | null;
   isConnected: boolean;
   jid?: string;
-  reason: 'NO_PHONE' | 'INVALID_PHONE' | 'NOT_ON_WHATSAPP' | null;
+  reason:
+    | 'NO_PHONE'
+    | 'INVALID_PHONE'
+    | 'CHANNEL_DISCONNECTED'
+    | 'NOT_ON_WHATSAPP'
+    | 'VERIFICATION_FAILED'
+    | null;
 }
 
 export const checkWhatsAppNumber = async (input: { phone?: string; leadId?: string }): Promise<CheckNumberResult> => {
