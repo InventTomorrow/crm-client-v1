@@ -6,6 +6,7 @@ import type {
   Payment,
   PaymentMethod,
   Plan,
+  PlanChangeResult,
   PlanRequest,
   PlanUsage,
   Subscription,
@@ -83,9 +84,30 @@ export async function createCheckout(planId: string) {
   return res.data.data;
 }
 
+/**
+ * Upgrade or downgrade. Upgrades need paying for first, so they come back as a
+ * checkout redirect; downgrades are booked for period end and return the
+ * updated subscription straight away.
+ */
+export async function changePlan(planId: string) {
+  const res = await apiClient.post<{ success: true; data: PlanChangeResult }>(
+    '/billing/subscription/change',
+    { planId },
+  );
+  return res.data.data;
+}
+
 export async function cancelSubscription() {
   const res = await apiClient.post<{ success: true; data: Subscription }>(
     '/billing/subscription/cancel',
+  );
+  return res.data.data;
+}
+
+/** Clears a scheduled downgrade or cancellation before it takes effect. */
+export async function reactivateSubscription() {
+  const res = await apiClient.post<{ success: true; data: Subscription }>(
+    '/billing/subscription/reactivate',
   );
   return res.data.data;
 }

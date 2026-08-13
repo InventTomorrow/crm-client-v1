@@ -16,11 +16,14 @@ export default async function SubscribePage({
   const { token } = await params;
   return (
     <div className="relative min-h-screen bg-[var(--bg)]">
-      {/* Soft brand wash behind the card so the page doesn't read as a bare
-          form on a flat grey field. Purely decorative. */}
+      {/* Multi-stop decorative wash — top accent glow + subtle bottom warmth */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,var(--accent-soft)_0%,transparent_65%)]"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 40% at 50% 0%, var(--accent-soft) 0%, transparent 60%), radial-gradient(ellipse 60% 30% at 80% 100%, color-mix(in oklch, var(--accent) 8%, transparent) 0%, transparent 70%)",
+        }}
       />
       <div className="relative">
         <SubscriptionCheckoutView token={token} />
@@ -28,3 +31,4 @@ export default async function SubscribePage({
     </div>
   );
 }
+

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pkPhoneSchema } from "@/features/checkout/validation";
 import { PAYMENT_METHODS } from "./types";
 
 /**
@@ -7,23 +8,84 @@ import { PAYMENT_METHODS } from "./types";
  * Keep the two in sync — the API re-validates everything here.
  */
 const baseSchema = z.object({
-  customerName: z.string().trim().min(1, "Name is required"),
-  customerEmail: z.string().trim().email("Enter a valid email"),
-  customerPhone: z
+  /** 2–80 characters */
+  customerName: z
     .string()
     .trim()
-    .min(5, "Phone is required")
-    .max(30, "Phone is too long"),
-  businessName: z.string().trim().max(120).optional().or(z.literal("")),
+    .min(2, "Name must be at least 2 characters")
+    .max(80, "Name must be 80 characters or fewer"),
+
+  /** Required, well-formed email, max 254 chars (RFC 5321) */
+  customerEmail: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .max(254, "Email is too long")
+    .email("Enter a valid email address"),
+
+  /** Pakistani mobile or landline — shared validator with checkout/validation */
+  customerPhone: pkPhoneSchema,
+
+  /** Optional — if entered: 2–120 chars, letters / digits / spaces / common punctuation */
+  businessName: z
+    .string()
+    .trim()
+    .refine(
+      (v) => v === "" || v.length >= 2,
+      "Business name must be at least 2 characters",
+    )
+    .refine(
+      (v) => v.length <= 120,
+      "Business name must be 120 characters or fewer",
+    )
+    .optional()
+    .or(z.literal("")),
+
   paymentMethod: z.enum(PAYMENT_METHODS, { message: "Select how you paid" }),
-  paymentReference: z.string().trim().max(120).optional().or(z.literal("")),
+
+  /** Optional — if entered: 3–120 alphanumeric/dash/underscore chars */
+  paymentReference: z
+    .string()
+    .trim()
+    .refine(
+      (v) => v === "" || v.length >= 3,
+      "Reference must be at least 3 characters",
+    )
+    .refine(
+      (v) => v === "" || /^[\w\-/]+$/.test(v),
+      "Reference can only contain letters, digits, hyphens, slashes, or underscores",
+    )
+    .refine(
+      (v) => v.length <= 120,
+      "Reference must be 120 characters or fewer",
+    )
+    .optional()
+    .or(z.literal("")),
+
+  /** Coerced number; must be ≥ 0 */
   paymentAmount: z.coerce
     .number({ message: "Enter the amount you paid" })
-    .min(0, "Amount cannot be negative"),
-  // Set by the receipt uploader once the file lands. Required only for paid
-  // plans — see subscriptionCheckoutSchema below.
+    .min(0, "Amount cannot be negative")
+    .max(10_000_000, "Amount seems too large — please check"),
+
+  /** Set by the receipt uploader once the file lands. Required only for paid
+   *  plans — see subscriptionCheckoutSchema below. */
   receiptUrl: z.string().optional().or(z.literal("")),
-  customerNote: z.string().trim().max(500).optional().or(z.literal("")),
+
+  /** Optional — if entered: 5–500 chars */
+  customerNote: z
+    .string()
+    .trim()
+    .refine(
+      (v) => v === "" || v.length >= 5,
+      "Note must be at least 5 characters",
+    )
+    .refine(
+      (v) => v.length <= 500,
+      "Note must be 500 characters or fewer",
+    )
+    .optional()
+    .or(z.literal("")),
 });
 
 /**
@@ -33,11 +95,17 @@ const baseSchema = z.object({
  */
 export function subscriptionCheckoutSchema(requiresPayment: boolean) {
   if (!requiresPayment) return baseSchema;
-  return baseSchema.refine((v) => Boolean(v.receiptUrl), {
-    path: ["receiptUrl"],
-    message: "Upload your payment receipt",
-  });
+  return baseSchema
+    .refine((v) => Boolean(v.receiptUrl), {
+      path: ["receiptUrl"],
+      message: "Upload your payment receipt",
+    })
+    .refine((v) => Number(v.paymentAmount) > 0, {
+      path: ["paymentAmount"],
+      message: "Enter the amount you paid",
+    });
 }
 
 export type SubscriptionCheckoutFormData = z.infer<typeof baseSchema>;
 export type SubscriptionCheckoutFormInput = z.input<typeof baseSchema>;
+

@@ -7,12 +7,13 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   useCancelSubscription,
+  useChangePlan,
   useCreateCheckout,
   usePlanRequest,
   usePlans,
+  useReactivateSubscription,
   useRequestPlan,
   useSubscription,
-  useWorkspaceAllowance,
 } from "../hooks/useBilling";
 import type { Plan } from "../types";
 import { BillingHistory } from "./BillingHistory";
@@ -34,14 +35,15 @@ function BillingViewInner() {
     useSubscription(polling);
   const { data: plans, isLoading: plansLoading } = usePlans();
   const { data: latestPlanRequest } = usePlanRequest();
-  const { data: workspaceAllowance } = useWorkspaceAllowance();
 
   const checkout = useCreateCheckout();
   const requestPlan = useRequestPlan();
+  const changePlan = useChangePlan();
   const cancel = useCancelSubscription();
+  const reactivate = useReactivateSubscription();
 
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
+  const [selectingPlanId, setSelectingPlanId] = useState<string | null>(null);
 
   // One-time toast for the redirect outcome.
   useEffect(() => {
@@ -52,19 +54,6 @@ function BillingViewInner() {
     }
   }, [returnStatus]);
 
-  const handleSelect = (plan: Plan) => {
-    setPendingPlanId(plan.id);
-    if (CHECKOUT_MODE === "manual") {
-      // Sends the customer to their own /subscribe/:token page to enter
-      // details and upload a payment receipt; the admin then approves it.
-      // Deliberately no onSettled reset — the hook navigates away on success,
-      // and clearing the spinner first would flash the button back to idle.
-      requestPlan.mutate(plan.id, { onError: () => setPendingPlanId(null) });
-      return;
-    }
-    checkout.mutate(plan.id, { onSettled: () => setPendingPlanId(null) });
-  };
-
   // Cancel-at-period-end leaves status ACTIVE/TRIALING with cancelledAt set —
   // that subscription is no longer "current" for plan-selection purposes.
   const activePlanId =
@@ -73,6 +62,25 @@ function BillingViewInner() {
     !subscription.cancelledAt
       ? subscription.planId
       : null;
+
+  const handleSelect = (plan: Plan) => {
+    setSelectingPlanId(plan.id);
+    // Switching from a live plan is an upgrade or a downgrade, each with its
+    // own rules — only a first purchase goes straight to checkout.
+    if (activePlanId) {
+      changePlan.mutate(plan.id, { onSettled: () => setSelectingPlanId(null) });
+      return;
+    }
+    if (CHECKOUT_MODE === "manual") {
+      // Sends the customer to their own /subscribe/:token page to enter
+      // details and upload a payment receipt; the admin then approves it.
+      // Deliberately no onSettled reset — the hook navigates away on success,
+      // and clearing the spinner first would flash the button back to idle.
+      requestPlan.mutate(plan.id, { onError: () => setSelectingPlanId(null) });
+      return;
+    }
+    checkout.mutate(plan.id, { onSettled: () => setSelectingPlanId(null) });
+  };
 
   // Approved requests already surface as the subscription; expired ones were
   // superseded — only pending/rejected ones are worth showing.
@@ -110,6 +118,8 @@ function BillingViewInner() {
             subscription={subscription}
             onCancel={() => setConfirmCancel(true)}
             isCancelling={cancel.isPending}
+            onReactivate={() => reactivate.mutate()}
+            isReactivating={reactivate.isPending}
           />
         ) : (
           <div className="card p-5 text-[13px] text-[var(--ink-soft)] sm:p-[22px]">
@@ -148,13 +158,15 @@ function BillingViewInner() {
             plans={plans ?? []}
             activePlanId={activePlanId}
             requestedPlanId={requestedPlanId}
-            pendingPlanId={pendingPlanId}
+            scheduledPlanId={subscription?.pendingPlanId ?? null}
+            activePlanPrice={activePlanId ? (subscription?.plan?.price ?? null) : null}
+            selectingPlanId={selectingPlanId}
             isMutating={
-              CHECKOUT_MODE === "manual"
+              changePlan.isPending ||
+              (CHECKOUT_MODE === "manual"
                 ? requestPlan.isPending
-                : checkout.isPending
+                : checkout.isPending)
             }
-            workspacesInUse={workspaceAllowance?.used ?? 0}
             tenantVertical={tenant?.businessVertical}
             checkoutMode={CHECKOUT_MODE}
             onSelect={handleSelect}

@@ -54,6 +54,9 @@ export interface Plan {
   isComingSoon: boolean;
 }
 
+/** A downgrade or cancellation the customer booked for the end of the paid period. */
+export type PendingChangeType = 'DOWNGRADE' | 'CANCEL';
+
 export interface Subscription {
   id: string;
   tenantId: string;
@@ -65,9 +68,18 @@ export interface Subscription {
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   cancelledAt: string | null;
+  pendingChangeType: PendingChangeType | null;
+  pendingPlanId: string | null;
+  pendingChangeEffectiveAt: string | null;
   createdAt: string;
   plan?: Plan | null;
+  pendingPlan?: Plan | null;
 }
+
+/** Upgrades redirect to checkout; downgrades apply to the subscription in place. */
+export type PlanChangeResult =
+  | { type: 'redirect'; url: string }
+  | { type: 'updated'; subscription: Subscription };
 
 export interface Payment {
   id: string;

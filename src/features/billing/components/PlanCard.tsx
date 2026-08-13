@@ -1,19 +1,23 @@
 'use client';
-import { ArrowRight, Loader2, TriangleAlert } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Plan } from '../types';
 import { PlanLimitsList } from './PlanLimitsList';
+
+/** Where this plan sits relative to the one the account is on. */
+export type PlanChangeDirection = 'upgrade' | 'downgrade' | 'new';
 
 interface PlanCardProps {
   plan: Plan;
   isCurrent: boolean;
   /** This plan already has a pending approval request — lock its CTA. */
   isRequested: boolean;
+  /** This plan is already booked to start at the end of the current period. */
+  isScheduled: boolean;
+  changeDirection: PlanChangeDirection;
   isLoading: boolean;
   disabled: boolean;
-  /** Heads-up when the plan covers fewer workspaces than the account uses — informative, never blocking. */
-  workspaceNotice: string | null;
   tenantVertical: BusinessVertical | undefined;
   /**
    * 'manual' — the live path today (SafePay disabled): CTA opens a request
@@ -24,43 +28,59 @@ interface PlanCardProps {
   onSelect: (plan: Plan) => void;
 }
 
-export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, workspaceNotice, tenantVertical, checkoutMode, onSelect }: PlanCardProps) {
+export function PlanCard({ plan, isCurrent, isRequested, isScheduled, changeDirection, isLoading, disabled, tenantVertical, checkoutMode, onSelect }: PlanCardProps) {
   const unavailable = checkoutMode === 'gateway' && !plan.providerPlanId;
   const comingSoon = plan.isComingSoon;
   const badges = [
     ...(plan.canResell ? ['Reseller access'] : []),
     ...(plan.canWhitelabel ? ['White-label branding'] : []),
   ];
-  const ctaText =
+  const defaultCta =
     plan.ctaLabel?.trim() ||
     (checkoutMode === 'manual' ? 'Continue to checkout' : 'Choose plan');
+  const ctaText =
+    changeDirection === 'upgrade'
+      ? 'Upgrade now'
+      : changeDirection === 'downgrade'
+        ? 'Switch at period end'
+        : defaultCta;
+  // Nothing here is clickable, so the card shouldn't compete for attention.
+  const isInert = unavailable || comingSoon;
 
   return (
     <div
       className={`card relative flex flex-col p-5 ${
         isCurrent
           ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
-          : plan.isFeatured
+          : plan.isFeatured && !isInert
             ? 'border-[var(--accent)]'
             : ''
-      }`}
+      } ${isInert ? 'opacity-60' : ''}`}
     >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-[17px] font-semibold">{plan.name}</h3>
         <div className="flex items-center gap-1.5">
-          {plan.isFeatured && !isCurrent && (
+          {plan.isFeatured && !isCurrent && !isInert && (
             <span className="badge font-medium text-white bg-[var(--accent)]">Popular</span>
           )}
           {isCurrent && (
             <span className="badge font-medium text-white bg-[var(--accent)]">Current</span>
           )}
-          {isRequested && !isCurrent && (
+          {isScheduled && !isCurrent && (
+            <span className="badge font-medium text-warning-foreground bg-warning-soft">Scheduled</span>
+          )}
+          {isRequested && !isCurrent && !isScheduled && (
             <span className="badge font-medium text-info-foreground bg-info-soft">Requested</span>
           )}
-          {comingSoon && !isCurrent && !isRequested && (
+          {comingSoon && !isCurrent && !isRequested && !isScheduled && (
             <span className="badge font-medium text-warning-foreground bg-warning-soft">Coming soon</span>
           )}
-          {plan.isTrial && !isCurrent && !isRequested && !comingSoon && (
+          {unavailable && !isCurrent && !isRequested && !isScheduled && !comingSoon && (
+            <span className="badge font-medium text-[var(--ink-soft)] bg-[var(--surface-2)]">
+              Not available yet
+            </span>
+          )}
+          {plan.isTrial && !isCurrent && !isRequested && !isScheduled && !comingSoon && !unavailable && (
             <span className="badge font-medium text-info-foreground bg-info-soft">Trial</span>
           )}
         </div>
@@ -97,8 +117,8 @@ export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, wo
 
       <button
         type="button"
-        className={`btn ${isCurrent ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center gap-2`}
-        disabled={disabled || isCurrent || isRequested || isLoading || unavailable || comingSoon}
+        className={`btn ${isCurrent || isInert || isScheduled ? 'btn-outline' : 'btn-grad'} mt-5 w-full justify-center gap-2`}
+        disabled={disabled || isCurrent || isRequested || isScheduled || isLoading || isInert}
         onClick={() => onSelect(plan)}
       >
         {isLoading ? (
@@ -110,12 +130,14 @@ export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, wo
           </>
         ) : isCurrent ? (
           'Current plan'
+        ) : isScheduled ? (
+          'Scheduled'
         ) : isRequested ? (
           'Request pending approval'
         ) : comingSoon ? (
           'Coming soon'
         ) : unavailable ? (
-          'Unavailable'
+          'Not available yet'
         ) : (
           <>
             {ctaText}
@@ -123,10 +145,9 @@ export function PlanCard({ plan, isCurrent, isRequested, isLoading, disabled, wo
           </>
         )}
       </button>
-      {workspaceNotice && (
-        <p className="mt-2 flex items-start gap-1.5 text-[11.5px] text-warning-foreground">
-          <TriangleAlert size={13} className="mt-px shrink-0" />
-          {workspaceNotice}
+      {changeDirection === 'downgrade' && !isInert && !isScheduled && (
+        <p className="mt-2 text-[11.5px] text-[var(--ink-mute)]">
+          Starts when your current plan ends — no refund for the time remaining.
         </p>
       )}
     </div>

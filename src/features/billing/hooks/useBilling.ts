@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/utils';
 import {
   cancelSubscription,
+  changePlan,
   createCheckout,
   createSelfServeCheckoutLink,
   getEntitlementStatus,
@@ -15,6 +16,7 @@ import {
   getUsage,
   getSupportContact,
   getWorkspaceAllowance,
+  reactivateSubscription,
 } from '../services/billingService';
 import type { Subscription } from '../types';
 
@@ -130,6 +132,26 @@ export function useCreateCheckout() {
   });
 }
 
+/**
+ * Upgrade or downgrade. Upgrades hand off to checkout because they must be paid
+ * for before anything switches; downgrades just book the change for period end.
+ */
+export function useChangePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) => changePlan(planId),
+    onSuccess: (result) => {
+      if (result.type === 'redirect') {
+        window.location.assign(result.url);
+        return;
+      }
+      toast.success('Plan change scheduled for the end of your billing period');
+      qc.invalidateQueries({ queryKey: keys.subscription });
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, 'Could not change your plan')),
+  });
+}
+
 export function useCancelSubscription() {
   const qc = useQueryClient();
   return useMutation({
@@ -139,5 +161,17 @@ export function useCancelSubscription() {
       qc.invalidateQueries({ queryKey: keys.subscription });
     },
     onError: (e) => toast.error(extractErrorMessage(e, 'Could not cancel subscription')),
+  });
+}
+
+export function useReactivateSubscription() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: reactivateSubscription,
+    onSuccess: () => {
+      toast.success('Scheduled change cancelled — your plan continues as before');
+      qc.invalidateQueries({ queryKey: keys.subscription });
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, 'Could not undo the scheduled change')),
   });
 }

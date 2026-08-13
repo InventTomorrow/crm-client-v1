@@ -1,5 +1,5 @@
 'use client';
-import { Loader2 } from 'lucide-react';
+import { CalendarClock, Loader2 } from 'lucide-react';
 import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Subscription, SubscriptionStatus } from '../types';
 
@@ -30,19 +30,29 @@ interface Props {
   subscription: Subscription;
   onCancel: () => void;
   isCancelling: boolean;
+  onReactivate: () => void;
+  isReactivating: boolean;
 }
 
-export function CurrentSubscriptionCard({ subscription, onCancel, isCancelling }: Props) {
+export function CurrentSubscriptionCard({
+  subscription,
+  onCancel,
+  isCancelling,
+  onReactivate,
+  isReactivating,
+}: Props) {
   const plan = subscription.plan;
   // A gateway checkout in flight has no providerSubscriptionId yet — Safepay
   // hasn't confirmed it, so there's nothing the cancel endpoint can act on.
   const isPendingGatewayCheckout =
     subscription.provider !== 'MANUAL' && !subscription.providerSubscriptionId;
+  const scheduledChange = subscription.pendingChangeType;
   // Cancel-at-period-end: status may still read ACTIVE/TRIALING with
   // cancelledAt set, so gate strictly on cancelledAt rather than status alone.
   const canCancel =
     (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING') &&
     !subscription.cancelledAt &&
+    !scheduledChange &&
     !isPendingGatewayCheckout &&
     Boolean(plan);
 
@@ -87,6 +97,27 @@ export function CurrentSubscriptionCard({ subscription, onCancel, isCancelling }
           )}
         </div>
       </div>
+
+      {scheduledChange && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-warning-soft px-4 py-3">
+          <div className="flex items-start gap-2 text-[13px] text-warning-foreground">
+            <CalendarClock size={15} className="mt-px shrink-0" />
+            <span>
+              {scheduledChange === 'DOWNGRADE'
+                ? `Switches to ${subscription.pendingPlan?.name ?? 'your new plan'} on ${fmtDate(subscription.pendingChangeEffectiveAt)}. You keep your current plan until then.`
+                : `Ends on ${fmtDate(subscription.pendingChangeEffectiveAt)}. You keep full access until then.`}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline shrink-0"
+            onClick={onReactivate}
+            disabled={isReactivating}
+          >
+            {isReactivating ? <Loader2 size={14} className="animate-spin" /> : 'Keep current plan'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

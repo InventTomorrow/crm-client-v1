@@ -3,17 +3,19 @@ import { useMemo, useState } from 'react';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { formatDurationLabel } from '../utils/planFormat';
 import type { Plan, PlanDuration } from '../types';
-import { PlanCard } from './PlanCard';
+import { PlanCard, type PlanChangeDirection } from './PlanCard';
 
 interface PlanGridProps {
   plans: Plan[];
   activePlanId: string | null;
   /** Plan with a pending approval request — its card shows "Requested". */
   requestedPlanId: string | null;
-  pendingPlanId: string | null;
+  /** Plan already booked to start when the current period ends. */
+  scheduledPlanId: string | null;
+  /** Price of the plan the account is on — decides upgrade vs downgrade. */
+  activePlanPrice: number | null;
+  selectingPlanId: string | null;
   isMutating: boolean;
-  /** Workspaces the account already runs — plans whose cap is below this get a heads-up note. */
-  workspacesInUse: number;
   tenantVertical: BusinessVertical | undefined;
   checkoutMode: 'manual' | 'gateway';
   onSelect: (plan: Plan) => void;
@@ -22,8 +24,14 @@ interface PlanGridProps {
 const TRIALS_TAB = 'TRIALS' as const;
 type Tab = PlanDuration | typeof TRIALS_TAB;
 
+function resolveChangeDirection(planPrice: number, activePlanPrice: number | null): PlanChangeDirection {
+  if (activePlanPrice === null) return 'new';
+  if (planPrice > activePlanPrice) return 'upgrade';
+  return planPrice < activePlanPrice ? 'downgrade' : 'new';
+}
+
 /** Duration toggle (Monthly / Quarterly / Annual / Trials, data-driven from what's actually offered) + the plan cards for the selected tab. */
-export function PlanGrid({ plans, activePlanId, requestedPlanId, pendingPlanId, isMutating, workspacesInUse, tenantVertical, checkoutMode, onSelect }: PlanGridProps) {
+export function PlanGrid({ plans, activePlanId, requestedPlanId, scheduledPlanId, activePlanPrice, selectingPlanId, isMutating, tenantVertical, checkoutMode, onSelect }: PlanGridProps) {
   const { tabs, plansByTab } = useMemo(() => {
     const byTab = new Map<Tab, Plan[]>();
     for (const plan of plans) {
@@ -83,13 +91,10 @@ export function PlanGrid({ plans, activePlanId, requestedPlanId, pendingPlanId, 
             plan={plan}
             isCurrent={plan.id === activePlanId}
             isRequested={plan.id === requestedPlanId}
-            isLoading={isMutating && pendingPlanId === plan.id}
+            isScheduled={plan.id === scheduledPlanId}
+            changeDirection={resolveChangeDirection(plan.price, activePlanPrice)}
+            isLoading={isMutating && selectingPlanId === plan.id}
             disabled={isMutating}
-            workspaceNotice={
-              plan.id !== activePlanId && workspacesInUse > plan.maxWorkspaces
-                ? `Covers ${plan.maxWorkspaces} workspace${plan.maxWorkspaces === 1 ? '' : 's'} — your account uses ${workspacesInUse}. Extra workspaces keep working, but you can't create new ones until you're within the limit.`
-                : null
-            }
             tenantVertical={tenantVertical}
             checkoutMode={checkoutMode}
             onSelect={onSelect}
