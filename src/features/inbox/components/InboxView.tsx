@@ -434,7 +434,8 @@ export function InboxView() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Deep-link from the Leads page: /inbox?lead=<leadId> validates and opens that lead's chat.
+  // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat.
+  // `verified=1` means the number was already checked on the way here — don't re-check it.
   const openedLeadRef = useRef<string | null>(null);
   useEffect(() => {
     const leadId = searchParams.get("lead");
@@ -449,6 +450,45 @@ export function InboxView() {
       return;
 
     openedLeadRef.current = leadId;
+
+    const openLeadConversation = () => {
+      const conv = conversations.find((c) => c.lead.id === leadId);
+      if (conv) {
+        setSelectedConversationId(conv.id);
+        setChatWasDeleted(false);
+        setMobPane("chat");
+        router.replace(pathname, { scroll: false });
+        return;
+      }
+      openConvMut.mutate(leadId, {
+        onSuccess: (detail) => {
+          setPinnedConv({
+            id: detail.id,
+            channel: detail.channel,
+            escalationStatus: detail.escalationStatus,
+            aiEnabled: detail.aiEnabled,
+            lastMessageAt: detail.lastMessageAt,
+            unreadCount: detail.unreadCount,
+            createdAt: detail.createdAt,
+            lead: detail.lead,
+            messages: [],
+          });
+          setSelectedConversationId(detail.id);
+          setChatWasDeleted(false);
+          setMobPane("chat");
+          router.replace(pathname, { scroll: false });
+        },
+        onError: () => {
+          router.replace(pathname, { scroll: false });
+        },
+      });
+    };
+
+    if (searchParams.get("verified") === "1") {
+      openLeadConversation();
+      return;
+    }
+
     setIsValidatingLead(true);
 
     checkWhatsAppNumber({ leadId })
@@ -463,37 +503,7 @@ export function InboxView() {
           });
           return;
         }
-
-        const conv = conversations.find((c) => c.lead.id === leadId);
-        if (conv) {
-          setSelectedConversationId(conv.id);
-          setChatWasDeleted(false);
-          setMobPane("chat");
-          router.replace(pathname, { scroll: false });
-        } else {
-          openConvMut.mutate(leadId, {
-            onSuccess: (detail) => {
-              setPinnedConv({
-                id: detail.id,
-                channel: detail.channel,
-                escalationStatus: detail.escalationStatus,
-                aiEnabled: detail.aiEnabled,
-                lastMessageAt: detail.lastMessageAt,
-                unreadCount: detail.unreadCount,
-                createdAt: detail.createdAt,
-                lead: detail.lead,
-                messages: [],
-              });
-              setSelectedConversationId(detail.id);
-              setChatWasDeleted(false);
-              setMobPane("chat");
-              router.replace(pathname, { scroll: false });
-            },
-            onError: () => {
-              router.replace(pathname, { scroll: false });
-            },
-          });
-        }
+        openLeadConversation();
       })
       .catch(() => {
         setIsValidatingLead(false);
