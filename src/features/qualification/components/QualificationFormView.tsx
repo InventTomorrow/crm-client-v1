@@ -18,6 +18,7 @@ import { Skeleton } from '@/shared/ui/Skeleton';
 import { Switch } from '@/shared/ui/Switch';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useWatch } from 'react-hook-form';
 import { useQualificationForm } from '../hooks/useQualification';
 import { QUALIFICATION_FORM_STEPS } from '../utils/qualificationFormSections';
@@ -36,7 +37,7 @@ export function QualificationFormView() {
     scoringRuleFields,
     savedFieldNames,
     savedVersion,
-    handleSubmit,
+    submitForm,
   } = useQualificationForm({ onSaved: returnToPreview });
 
   const hotThreshold = useWatch({ control: form.control, name: 'hotThreshold' });
@@ -52,6 +53,26 @@ export function QualificationFormView() {
   });
 
   const { activeStep } = wizard;
+
+  // isSaving covers both buttons at once — track which one was actually clicked so
+  // only that button shows the spinner. Cleared as soon as the save settles, by
+  // noticing the isSaving transition during render rather than in an effect.
+  const [pendingAction, setPendingAction] = useState<'next' | 'quit' | null>(null);
+  const [wasSaving, setWasSaving] = useState(isSaving);
+  if (isSaving !== wasSaving) {
+    setWasSaving(isSaving);
+    if (!isSaving) setPendingAction(null);
+  }
+
+  function handleSaveAndQuit() {
+    setPendingAction('quit');
+    submitForm(returnToPreview);
+  }
+
+  function handleSaveAndNext() {
+    setPendingAction('next');
+    submitForm(wizard.goToNextStep);
+  }
 
   if (isLoading) {
     return (
@@ -91,7 +112,10 @@ export function QualificationFormView() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4 lg:flex-row lg:gap-8">
+        <form
+          onSubmit={(event) => event.preventDefault()}
+          className="mt-6 flex flex-col gap-4 lg:flex-row lg:gap-8"
+        >
           <FormWizardNav
             title="Sections"
             stepStates={wizard.stepStates}
@@ -235,21 +259,9 @@ export function QualificationFormView() {
                 </Button>
               )}
 
-              {!wizard.isLastStep && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  disabled={isSaving}
-                  onClick={wizard.goToNextStep}
-                >
-                  Next
-                  <ArrowRight size={14} className="ml-1.5" />
-                </Button>
-              )}
-
               <Button
-                type="submit"
+                type="button"
+                variant="outline"
                 size="lg"
                 disabled={isSaving || !wizard.canSubmit}
                 title={
@@ -257,15 +269,41 @@ export function QualificationFormView() {
                     ? undefined
                     : `Finish every section first — ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
                 }
+                onClick={handleSaveAndQuit}
               >
-                {isSaving ? (
+                {pendingAction === 'quit' ? (
                   <>
                     <Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…
                   </>
                 ) : (
-                  'Save'
+                  'Save and quit'
                 )}
               </Button>
+
+              {!wizard.isLastStep && (
+                <Button
+                  type="button"
+                  size="lg"
+                  disabled={isSaving || !wizard.canSubmit}
+                  title={
+                    wizard.canSubmit
+                      ? undefined
+                      : `Finish every section first — ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
+                  }
+                  onClick={handleSaveAndNext}
+                >
+                  {pendingAction === 'next' ? (
+                    <>
+                      <Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      Save and next
+                      <ArrowRight size={14} className="ml-1.5" />
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </form>

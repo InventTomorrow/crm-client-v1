@@ -109,21 +109,24 @@ export function useQualificationForm(options?: { onSaved?: () => void }) {
 
   const upsertForm = useUpsertQualificationForm();
 
-  const handleSubmit = form.handleSubmit((formData) => {
-    upsertForm.mutate(
-      {
-        ...formData,
-        // Order is positional in the UI; persist it that way rather than trusting a stale field.
-        questions: formData.questions.map((question, index) => ({
-          ...question,
-          order: index,
-          options: question.inputType === 'QUICK_REPLY' ? question.options.filter(Boolean) : [],
-          mapsToLeadField: question.mapsToLeadField || null,
-        })),
-      },
-      { onSuccess: () => options?.onSaved?.() },
-    );
-  });
+  // Same mutation, different post-save action — lets the caller wire "Save and Next" vs
+  // "Save and Quit" onto one save path instead of duplicating the submit logic.
+  const submitForm = (onSuccess?: () => void) =>
+    form.handleSubmit((formData) => {
+      upsertForm.mutate(
+        {
+          ...formData,
+          // Order is positional in the UI; persist it that way rather than trusting a stale field.
+          questions: formData.questions.map((question, index) => ({
+            ...question,
+            order: index,
+            options: question.inputType === 'QUICK_REPLY' ? question.options.filter(Boolean) : [],
+            mapsToLeadField: question.mapsToLeadField || null,
+          })),
+        },
+        { onSuccess: () => (onSuccess ?? options?.onSaved)?.() },
+      );
+    })();
 
   // Keys that already exist in the saved form. Those are live storage keys — referenced by
   // LeadQualification.answers, scoring rules and resource conditions — so the builder must
@@ -141,6 +144,6 @@ export function useQualificationForm(options?: { onSaved?: () => void }) {
     scoringRuleFields,
     savedFieldNames,
     savedVersion: savedForm?.version,
-    handleSubmit,
+    submitForm,
   };
 }

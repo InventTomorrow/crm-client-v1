@@ -1,33 +1,22 @@
 'use client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/shared/ui/Button';
-import { EditableListField } from '@/shared/ui/EditableListField';
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/shared/ui/form';
-import { Input } from '@/shared/ui/Input';
-import { NativeSelect } from '@/shared/ui/NativeSelect';
-import { Switch } from '@/shared/ui/Switch';
-import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import { useRef } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/Tooltip';
+import { Copy, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
 import { useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 import {
-  LEAD_FIELD_MAPPINGS,
-  QUESTION_INPUT_TYPES,
   QUESTION_INPUT_TYPE_LABELS,
   qualificationFormSchema,
   type QualificationFormData,
 } from '../types';
 import { deriveUniqueFieldName } from '../utils/fieldName';
+import { QuestionDialog, type QuestionDialogData } from './QuestionDialog';
 
 type QualificationFormInput = z.input<typeof qualificationFormSchema>;
+type QualificationQuestionInput = QualificationFormInput['questions'][number];
 
 /** Three question cards plus the gaps between them. Past the third the list scrolls inside the
  * section rather than pushing the save bar further down the page — capped against the viewport
@@ -42,15 +31,47 @@ interface QuestionBuilderProps {
   disabled?: boolean;
 }
 
-function buildEmptyQuestion(order: number): QualificationFormInput['questions'][number] {
+interface QuestionIconButtonProps {
+  label: string;
+  disabled?: boolean;
+  className?: string;
+  onClick: (event: MouseEvent) => void;
+  children: ReactNode;
+}
+
+/** Icon button with a tooltip that also stops the click from reaching the card
+ * behind it — the card itself opens the edit dialog, so these actions must not. */
+function QuestionIconButton({ label, disabled, className, onClick, children }: QuestionIconButtonProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={label}
+          className={className}
+          disabled={disabled}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClick(event);
+          }}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function toDialogData(question: QualificationQuestionInput): QuestionDialogData {
   return {
-    order,
-    fieldName: '',
-    questionText: '',
-    inputType: 'FREE_TEXT',
-    options: [],
-    isRequired: true,
-    mapsToLeadField: null,
+    questionText: question.questionText,
+    inputType: question.inputType,
+    options: question.options ?? [],
+    isRequired: question.isRequired ?? true,
+    mapsToLeadField: question.mapsToLeadField ?? null,
   };
 }
 
@@ -60,39 +81,74 @@ export function QuestionBuilder({
   savedFieldNames,
   disabled = false,
 }: QuestionBuilderProps) {
-  const { fields, append, remove, swap } = fieldArray;
+  const { fields, append, remove, update, swap } = fieldArray;
   const questions = useWatch({ control: form.control, name: 'questions' });
   const listRef = useRef<HTMLDivElement>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  // Past the third question the new card is appended below the fold, so follow it down —
-  // otherwise Add question reads as having done nothing.
-  function handleAddQuestion() {
-    append(buildEmptyQuestion(fields.length));
+  function fieldNameFor(text: string, index: number, currentFieldName: string) {
+    if (savedFieldNames.has(currentFieldName)) return currentFieldName;
+    const keysInUse = (form.getValues('questions') ?? [])
+      .map((question, questionIndex) => (questionIndex === index ? '' : question.fieldName))
+      .filter(Boolean);
+    return deriveUniqueFieldName(text, index, keysInUse);
+  }
+
+  // Past the third question a new card lands below the fold, so follow it down —
+  // otherwise the dialog closing reads as having done nothing.
+  function scrollListToEnd() {
     requestAnimationFrame(() => {
       const list = listRef.current;
       if (list) list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
     });
   }
 
-  /**
-   * Keeps an unsaved question's storage key following its text. A saved key is left
-   * alone — answers and scoring rules already reference it, so rewriting it would
-   * orphan them. Keys in use elsewhere in the form are passed in so a duplicate
-   * question gets a numbered key instead of an error nobody can act on.
-   */
-  function handleQuestionTextChange(index: number, nextText: string) {
-    const currentFieldName = form.getValues(`questions.${index}.fieldName`) ?? '';
-    if (savedFieldNames.has(currentFieldName)) return;
+  function handleAddSubmit(data: QuestionDialogData) {
+    const order = fields.length;
+    append({
+      order,
+      fieldName: fieldNameFor(data.questionText, order, ''),
+      questionText: data.questionText,
+      inputType: data.inputType,
+      options: data.options,
+      isRequired: data.isRequired,
+      mapsToLeadField: data.mapsToLeadField,
+    });
+    scrollListToEnd();
+  }
 
-    const keysInUse = (form.getValues('questions') ?? [])
-      .map((question, questionIndex) => (questionIndex === index ? '' : question.fieldName))
-      .filter(Boolean);
+  function handleEditSubmit(data: QuestionDialogData) {
+    if (editingIndex === null) return;
+    const current = questions?.[editingIndex];
+    update(editingIndex, {
+      order: current?.order ?? editingIndex,
+      fieldName: fieldNameFor(data.questionText, editingIndex, current?.fieldName ?? ''),
+      questionText: data.questionText,
+      inputType: data.inputType,
+      options: data.options,
+      isRequired: data.isRequired,
+      mapsToLeadField: data.mapsToLeadField,
+    });
+  }
 
-    form.setValue(
-      `questions.${index}.fieldName`,
-      deriveUniqueFieldName(nextText, index, keysInUse),
-      { shouldValidate: true, shouldDirty: true },
-    );
+  function handleCopy(index: number) {
+    const source = questions?.[index];
+    if (!source) return;
+    const order = fields.length;
+    append({
+      order,
+      fieldName: fieldNameFor(`${source.questionText} copy`, order, ''),
+      questionText: source.questionText,
+      inputType: source.inputType,
+      options: source.options ?? [],
+      isRequired: source.isRequired ?? true,
+      mapsToLeadField: source.mapsToLeadField ?? null,
+    });
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 1500);
+    scrollListToEnd();
   }
 
   return (
@@ -116,7 +172,7 @@ export function QuestionBuilder({
           size="lg"
           variant="outline"
           disabled={disabled}
-          onClick={handleAddQuestion}
+          onClick={() => setIsAdding(true)}
         >
           <Plus size={14} className="mr-1.5" /> Add question
         </Button>
@@ -131,197 +187,117 @@ export function QuestionBuilder({
         </div>
       )}
 
-      {/* pr-1.5 keeps the cards' focus rings clear of the scrollbar once the list overflows */}
       <div
         ref={listRef}
         className={cn(
-          'flex flex-col gap-4',
+          'flex flex-col gap-2',
           fields.length > 3 && `scroll-themed overflow-y-auto pr-1.5 ${VISIBLE_QUESTIONS_HEIGHT}`,
         )}
       >
         {fields.map((field, index) => {
-          const inputType = questions?.[index]?.inputType;
+          const question = questions?.[index];
 
           return (
             <article
               key={field.id}
-              className="flex flex-col gap-4 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-5"
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              onClick={() => !disabled && setEditingIndex(index)}
+              onKeyDown={(event) => {
+                if (disabled) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setEditingIndex(index);
+                }
+              }}
+              className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3 hover:border-[var(--ink-mute)]"
             >
-              <div className="flex items-start gap-2">
-                <div className="flex shrink-0 flex-col gap-0.5 pt-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label="Move question up"
-                    disabled={disabled || index === 0}
-                    onClick={() => swap(index, index - 1)}
-                  >
-                    <ChevronUp size={12} />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label="Move question down"
-                    disabled={disabled || index === fields.length - 1}
-                    onClick={() => swap(index, index + 1)}
-                  >
-                    <ChevronDown size={12} />
-                  </Button>
-                </div>
+              <div className="flex shrink-0 flex-col gap-0.5">
+                <QuestionIconButton
+                  label="Move question up"
+                  disabled={disabled || index === 0}
+                  onClick={() => swap(index, index - 1)}
+                >
+                  <ChevronUp size={12} />
+                </QuestionIconButton>
+                <QuestionIconButton
+                  label="Move question down"
+                  disabled={disabled || index === fields.length - 1}
+                  onClick={() => swap(index, index + 1)}
+                >
+                  <ChevronDown size={12} />
+                </QuestionIconButton>
+              </div>
 
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-mute)]">
-                    Question {index + 1}
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-mute)]">
+                  Question {index + 1}
+                </span>
+                <p className="mt-0.5 truncate text-sm text-[var(--ink)]" title={question?.questionText}>
+                  {question?.questionText || 'Untitled question'}
+                </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--ink-mute)]">
+                  <span className="rounded-full border border-[var(--line)] px-2 py-0.5">
+                    {question ? QUESTION_INPUT_TYPE_LABELS[question.inputType] : ''}
                   </span>
-                  <FormField
-                    control={form.control}
-                    name={`questions.${index}.questionText`}
-                    render={({ field: questionTextField }) => (
-                      <FormItem className="mt-1">
-                        <FormControl>
-                          <Input
-                            placeholder="What's your monthly marketing budget?"
-                            disabled={disabled}
-                            {...questionTextField}
-                            onChange={(event) => {
-                              handleQuestionTextChange(index, event.target.value);
-                              questionTextField.onChange(event);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {question?.isRequired && (
+                    <span className="rounded-full border border-[var(--line)] px-2 py-0.5">
+                      Required
+                    </span>
+                  )}
+                  {question?.mapsToLeadField && (
+                    <span className="rounded-full border border-[var(--line)] px-2 py-0.5">
+                      Saves to {question.mapsToLeadField}
+                    </span>
+                  )}
                 </div>
+              </div>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Delete question"
-                  className="mt-6 shrink-0 text-[var(--ink-mute)] hover:text-destructive"
+              <div className="flex shrink-0 items-center gap-0.5">
+                <QuestionIconButton
+                  label={copiedIndex === index ? 'Copied' : 'Copy question'}
+                  disabled={disabled}
+                  onClick={() => handleCopy(index)}
+                >
+                  {copiedIndex === index ? (
+                    <span className="text-[10px] text-[var(--ink-mute)]">Copied</span>
+                  ) : (
+                    <Copy size={13} />
+                  )}
+                </QuestionIconButton>
+                <QuestionIconButton
+                  label="Edit question"
+                  disabled={disabled}
+                  onClick={() => setEditingIndex(index)}
+                >
+                  <Pencil size={13} />
+                </QuestionIconButton>
+                <QuestionIconButton
+                  label="Delete question"
+                  className="text-[var(--ink-mute)] hover:text-destructive"
                   disabled={disabled}
                   onClick={() => remove(index)}
                 >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-
-              <div className="h-px bg-[var(--line)]" />
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.inputType`}
-                  render={({ field: inputTypeField }) => (
-                    <FormItem>
-                      <FormLabel>Answer type</FormLabel>
-                      <FormControl>
-                        <NativeSelect size="lg" disabled={disabled} {...inputTypeField}>
-                          {QUESTION_INPUT_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                              {QUESTION_INPUT_TYPE_LABELS[type]}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.mapsToLeadField`}
-                  render={({ field: mapsToField }) => (
-                    <FormItem>
-                      <FormLabel>Save to lead field</FormLabel>
-                      <FormControl>
-                        <NativeSelect
-                          size="lg"
-                          disabled={disabled}
-                          value={mapsToField.value ?? ''}
-                          onChange={(e) => mapsToField.onChange(e.target.value || null)}
-                        >
-                          <option value="">Don&apos;t save</option>
-                          {LEAD_FIELD_MAPPINGS.map((leadField) => (
-                            <option key={leadField} value={leadField}>
-                              {leadField}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {inputType === 'QUICK_REPLY' && (
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.options`}
-                  render={({ field: optionsField }) => (
-                    <FormItem>
-                      <FormControl>
-                        <EditableListField
-                          label="Reply options"
-                          values={optionsField.value ?? []}
-                          onChange={optionsField.onChange}
-                          placeholder="e.g. Under 50k"
-                          addLabel="Add option"
-                          emptyHint="Quick replies need at least two options."
-                          disabled={disabled}
-                          showOrderHandle
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.isRequired`}
-                  render={({ field: isRequiredField }) => (
-                    <FormItem className="flex flex-row items-center gap-3 space-y-0">
-                      <FormControl>
-                        <Switch
-                          checked={isRequiredField.value}
-                          disabled={disabled}
-                          onCheckedChange={isRequiredField.onChange}
-                        />
-                      </FormControl>
-                      <div>
-                        <FormLabel className="cursor-pointer">Required</FormLabel>
-                        <FormDescription>
-                          The bot waits here until it gets an answer.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                {/* The storage key is derived, not typed — but once answers reference it,
-                    it stops moving, and that is worth saying out loud. */}
-                {savedFieldNames.has(questions?.[index]?.fieldName ?? '') && (
-                  <p className="text-[11px] text-[var(--ink-mute)]">
-                    Answers saved under{' '}
-                    <code className="rounded border border-[var(--line)] bg-[var(--surface)] px-1 py-0.5 font-mono text-[10.5px] text-[var(--ink-soft)]">
-                      {questions?.[index]?.fieldName}
-                    </code>
-                  </p>
-                )}
+                  <Trash2 size={13} />
+                </QuestionIconButton>
               </div>
             </article>
           );
         })}
       </div>
+
+      <QuestionDialog
+        open={isAdding}
+        onClose={() => setIsAdding(false)}
+        onSubmit={handleAddSubmit}
+      />
+
+      <QuestionDialog
+        open={editingIndex !== null && questions?.[editingIndex] != null}
+        initial={editingIndex !== null && questions?.[editingIndex] ? toDialogData(questions[editingIndex]) : null}
+        onClose={() => setEditingIndex(null)}
+        onSubmit={handleEditSubmit}
+      />
     </div>
   );
 }

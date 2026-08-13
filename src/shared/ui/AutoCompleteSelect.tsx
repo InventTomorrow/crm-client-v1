@@ -46,12 +46,15 @@ export function AutoCompleteSelect<T extends AutoCompleteSelectOption>({
     setQuery(selected?.label ?? "");
   }, [selected]);
 
+  // While the field still reads exactly what was selected — nothing typed yet — clicking it
+  // back open should offer every option, not just the one substring-matching itself.
+  const isUnchangedSinceSelect = query === (selected?.label ?? "");
   const trimmedQuery = query.trim();
   const filteredItems = React.useMemo(() => {
-    if (!trimmedQuery) return items;
+    if (isUnchangedSinceSelect || !trimmedQuery) return items;
     const term = trimmedQuery.toLowerCase();
     return items.filter((item) => item.label.toLowerCase().includes(term));
-  }, [items, trimmedQuery]);
+  }, [items, trimmedQuery, isUnchangedSinceSelect]);
 
   const handleQueryChange = (next: string) => {
     setQuery(next);
