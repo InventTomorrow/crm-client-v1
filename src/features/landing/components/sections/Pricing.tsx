@@ -1,16 +1,24 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { formatOfferCountdown, getOfferDaysRemaining } from "../../constants";
-import { PLANS } from "../../plans";
+import type { Plan } from "../../plans";
 import Container from "../Container";
 import { CheckIcon, ZapIcon } from "../icons";
-import { PrimaryCta } from "../LandingCta";
+import { PlanCta } from "../LandingCta";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
 
-export default function Pricing() {
-  const daysRemaining = getOfferDaysRemaining();
+/**
+ * Plans come from the public catalogue, fetched by the server component that
+ * renders this one, so the prices are in the SSR HTML for crawlers.
+ */
+export default function Pricing({ plans }: { plans: Plan[] }) {
+  // Nothing published yet — drop the section rather than show an empty grid.
+  if (plans.length === 0) return null;
+
+  // Two plans sit side by side; three or more need a third column.
+  const columns =
+    plans.length >= 3 ? "md:grid-cols-3 max-w-[1180px]" : "md:grid-cols-2 max-w-[860px]";
 
   return (
     <section
@@ -28,9 +36,9 @@ export default function Pricing() {
           subtitle="Start with one branch and upgrade to unlimited workspaces, unlimited broadcasts whenever your business is ready. No hidden fees."
         />
 
-        <div className="mt-12 sm:mt-14 grid gap-6 md:grid-cols-2 max-w-[860px] mx-auto items-stretch">
-          {PLANS.map((plan, i) => (
-            <Reveal key={plan.name} delay={i * 0.1}>
+        <div className={`mt-12 sm:mt-14 grid gap-6 ${columns} mx-auto items-stretch`}>
+          {plans.map((plan, i) => (
+            <Reveal key={plan.id} delay={i * 0.1}>
               <motion.div
                 whileHover={plan.comingSoon ? undefined : { y: -4 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -86,7 +94,7 @@ export default function Pricing() {
                         {plan.discountPercentage}% OFF
                       </span>
                       <span className="text-[12px] font-medium text-brand-amber">
-                        {formatOfferCountdown(daysRemaining)}
+                        {plan.offerCountdown}
                       </span>
                     </div>
                   )}
@@ -109,9 +117,9 @@ export default function Pricing() {
                     </span>
                   </div>
 
-                  {plan.discountPercentage && (
+                  {plan.tagline && (
                     <p className="mt-2.5 text-[13px] font-medium text-brand-green">
-                      One saved sale pays for the whole month.
+                      {plan.tagline}
                     </p>
                   )}
 
@@ -139,7 +147,8 @@ export default function Pricing() {
                   </ul>
 
                   <div className="mt-8">
-                    <PrimaryCta
+                    <PlanCta
+                      planId={plan.id}
                       className={`w-full justify-center h-auto rounded-full px-7 py-3.5 text-base font-semibold transition-all hover:-translate-y-0.5 ${
                         plan.featured
                           ? "bg-white text-brand-dark hover:bg-gray-100 hover:text-brand-dark"
@@ -147,7 +156,7 @@ export default function Pricing() {
                       }`}
                     >
                       {plan.cta}
-                    </PrimaryCta>
+                    </PlanCta>
                     {!plan.featured && (
                       <>
                         <p className="mt-3 text-center text-[13px] text-brand-text-soft">

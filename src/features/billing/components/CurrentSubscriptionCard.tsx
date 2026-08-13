@@ -5,14 +5,18 @@ import type { Subscription, SubscriptionStatus } from '../types';
 
 const STATUS_STYLES: Record<SubscriptionStatus, string> = {
   ACTIVE: 'text-white bg-[var(--accent)]',
+  PENDING: 'text-[var(--ink-soft)] bg-[var(--line)]',
   TRIALING: 'text-info-foreground bg-info-soft',
   PAST_DUE: 'text-destructive-foreground bg-destructive-soft',
   CANCELLED: 'text-[var(--ink-soft)] bg-[var(--line)]',
 };
 
+// TRIALING now only ever means a real free trial — an unpaid checkout handoff
+// carries its own PENDING status instead of borrowing this one.
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
   ACTIVE: 'Active',
-  TRIALING: 'Processing',
+  PENDING: 'Processing',
+  TRIALING: 'Trial',
   PAST_DUE: 'Past due',
   CANCELLED: 'Cancelled',
 };

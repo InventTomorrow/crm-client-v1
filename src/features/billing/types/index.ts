@@ -1,4 +1,5 @@
-export type PlanTier = 'STARTER' | 'GROWTH' | 'AGENCY' | 'RESELLER';
+// TRIAL is paired with the plan's isTrial flag — the two always agree.
+export type PlanTier = 'TRIAL' | 'STARTER' | 'GROWTH' | 'AGENCY' | 'RESELLER';
 export type BusinessVertical = 'ECOMMERCE' | 'RESTAURANT' | 'MARKETING_AGENCY';
 export type PlanDuration =
   | 'DAYS_3'
@@ -9,7 +10,9 @@ export type PlanDuration =
   | 'SEMI_ANNUAL'
   | 'ANNUAL'
   | 'CUSTOM_DAYS';
-export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED';
+// PENDING is an unpaid gateway checkout handoff — the API never returns one
+// as the current subscription, but the union mirrors the server enum.
+export type SubscriptionStatus = 'PENDING' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED';
 export type PaymentStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
 export type PaymentProvider = 'SAFEPAY' | 'MANUAL';
 

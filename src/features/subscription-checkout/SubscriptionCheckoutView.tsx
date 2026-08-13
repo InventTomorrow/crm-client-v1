@@ -1,37 +1,21 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BadgeCheck,
   Building2,
   CheckCircle2,
+  Crown,
   Loader2,
   MessageCircle,
-  Sparkles,
+  MessageSquare,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { Button } from "@/shared/ui/Button";
-import { Input } from "@/shared/ui/Input";
-import { NativeSelect, NativeSelectOption } from "@/shared/ui/NativeSelect";
-import { Textarea } from "@/shared/ui/Textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/form";
 import { formatPlanPrice, formatPlanPeriod } from "@/features/billing/utils/planFormat";
-import { usePublicSubscriptionLink, useSubmitSubscription } from "./hooks";
-import { ReceiptUploadField } from "./ReceiptUploadField";
+import { usePublicSubscriptionLink } from "./hooks";
 import { SubmissionSuccess } from "./SubmissionSuccess";
-import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from "./types";
-import {
-  subscriptionCheckoutSchema,
-  type SubscriptionCheckoutFormInput,
-} from "./validation";
+import { SubscriptionCheckoutForm } from "./SubscriptionCheckoutForm";
 
 /* ─── Plan sidebar ─────────────────────────────────────────────────────────── */
 
@@ -77,7 +61,7 @@ function PlanSidebar({ plan, supportContact }: {
               )}
             </div>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <Sparkles size={18} className="text-white" />
+              <Crown size={18} className="text-white" />
             </div>
           </div>
 
@@ -212,43 +196,11 @@ function ContactLink({
   );
 }
 
-/* ─── Section label helper ──────────────────────────────────────────────────── */
-
-function SectionLabel({ step, label }: { step: number; label: string }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-bold text-white">
-        {step}
-      </span>
-      <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
-        {label}
-      </p>
-    </div>
-  );
-}
-
 /* ─── Main view ─────────────────────────────────────────────────────────────── */
 
 export function SubscriptionCheckoutView({ token }: { token: string }) {
   const { data, isLoading, isError, error } = usePublicSubscriptionLink(token);
-  const submit = useSubmitSubscription(token);
-
-  const requiresPayment = (data?.plan.price ?? 0) > 0;
-
-  const form = useForm<SubscriptionCheckoutFormInput>({
-    resolver: zodResolver(subscriptionCheckoutSchema(requiresPayment)),
-    values: {
-      customerName: data?.prefill.customerName ?? "",
-      customerEmail: data?.prefill.customerEmail ?? "",
-      customerPhone: data?.prefill.customerPhone ?? "",
-      businessName: "",
-      paymentMethod: "BANK_TRANSFER",
-      paymentReference: "",
-      paymentAmount: data?.plan.price ?? 0,
-      receiptUrl: "",
-      customerNote: "",
-    },
-  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   /* ── Loading ── */
   if (isLoading) {
@@ -285,15 +237,13 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
   }
 
   const { plan, supportContact } = data;
-  const submitted = submit.isSuccess;
-  const emailLocked = Boolean(data.prefill.customerEmail);
 
   return (
     <div className="mx-auto w-full max-w-[1020px] px-4 py-8 md:py-12">
       {/* Brand header */}
       <div className="mb-8 flex items-center gap-2.5">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-md shadow-[color-mix(in_oklch,var(--accent)_40%,transparent)]">
-          <Sparkles size={16} />
+          <MessageSquare size={16} />
         </span>
         <div>
           <div className="text-[15px] font-semibold text-[var(--ink)]">AsaanRabta</div>
@@ -311,236 +261,15 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
 
         {/* RIGHT — form (or success state) */}
         <div>
-          {submitted ? (
+          {isSubmitted ? (
             <SubmissionSuccess planName={plan.name} contact={supportContact} />
           ) : (
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit((values) =>
-                  submit.mutate({
-                    customerName: values.customerName,
-                    customerEmail: values.customerEmail,
-                    customerPhone: values.customerPhone,
-                    businessName: values.businessName || undefined,
-                    paymentMethod: values.paymentMethod,
-                    paymentReference: values.paymentReference || undefined,
-                    paymentAmount: Number(values.paymentAmount),
-                    currency: plan.currency,
-                    receiptUrl: values.receiptUrl || undefined,
-                    customerNote: values.customerNote || undefined,
-                  }),
-                )}
-                className="flex flex-col gap-5 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 md:p-6"
-              >
-                {/* ── Section 1: Your details ── */}
-                <SectionLabel step={1} label="Your details" />
-
-                <FormField
-                  control={form.control}
-                  name="customerName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="customerEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="you@email.com"
-                            {...field}
-                            readOnly={emailLocked}
-                            aria-readonly={emailLocked}
-                            className={emailLocked ? "cursor-not-allowed opacity-70" : undefined}
-                          />
-                        </FormControl>
-                        {emailLocked ? (
-                          <p className="text-[11.5px] text-[var(--ink-mute)]">
-                            Linked to your account — contact us to change it.
-                          </p>
-                        ) : null}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="customerPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="03xx-xxxxxxx" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="businessName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Business name <span className="text-[var(--ink-mute)]">(optional)</span></FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your business" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* ── Divider ── */}
-                <div className="-mx-1 border-t border-dashed border-[var(--line)]" />
-
-                {/* ── Section 2: Payment ── */}
-                {requiresPayment ? (
-                  <>
-                    <SectionLabel step={2} label="Payment details" />
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>How did you pay? *</FormLabel>
-                            <FormControl>
-                              <NativeSelect size="lg" {...field}>
-                                {PAYMENT_METHODS.map((method) => (
-                                  <NativeSelectOption key={method} value={method}>
-                                    {PAYMENT_METHOD_LABELS[method]}
-                                  </NativeSelectOption>
-                                ))}
-                              </NativeSelect>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="paymentAmount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount paid *</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                inputMode="decimal"
-                                min={0}
-                                name={field.name}
-                                ref={field.ref}
-                                onBlur={field.onBlur}
-                                disabled={field.disabled}
-                                value={String(field.value ?? "")}
-                                onChange={(e) => field.onChange(e.target.value)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="paymentReference"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Transaction reference <span className="text-[var(--ink-mute)]">(optional)</span></FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. HBL-77120" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="receiptUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Payment receipt *</FormLabel>
-                          <FormControl>
-                            <ReceiptUploadField
-                              token={token}
-                              value={field.value ?? ""}
-                              onChange={field.onChange}
-                              disabled={submit.isPending}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <SectionLabel step={2} label="Payment" />
-                    <div className="flex items-start gap-3 rounded-xl bg-[var(--surface-2)] p-3.5 text-[12.5px] text-[var(--ink-soft)]">
-                      <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[var(--accent)]" />
-                      <span>
-                        This plan is free — no payment needed. Submit and we&apos;ll
-                        activate your workspace.
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                {/* ── Divider ── */}
-                <div className="-mx-1 border-t border-dashed border-[var(--line)]" />
-
-                {/* ── Section 3: Note ── */}
-                <SectionLabel step={3} label="Additional note" />
-
-                <FormField
-                  control={form.control}
-                  name="customerNote"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Note <span className="text-[var(--ink-mute)]">(optional)</span></FormLabel>
-                      <FormControl>
-                        <Textarea rows={3} placeholder="Anything we should know?" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* ── Submit ── */}
-                <Button
-                  type="submit"
-                  className="mt-1 w-full justify-center"
-                  disabled={submit.isPending}
-                >
-                  {submit.isPending ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={14} />
-                  )}
-                  Submit for approval · {formatPlanPrice(plan)}
-                </Button>
-
-                <p className="text-center text-[11px] text-[var(--ink-mute)]">
-                  We&apos;ll verify your payment and activate your workspace within 24 hours.
-                </p>
-              </form>
-            </Form>
+            <SubscriptionCheckoutForm
+              token={token}
+              plan={plan}
+              prefill={data.prefill}
+              onSubmitted={() => setIsSubmitted(true)}
+            />
           )}
         </div>
       </div>
