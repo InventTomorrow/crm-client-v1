@@ -22,7 +22,7 @@ import { PlanGrid } from "./PlanGrid";
 import { PlanRequestCard } from "./PlanRequestCard";
 import { PlanUsageCard } from "./PlanUsageCard";
 
-const CHECKOUT_MODE: "manual" | "gateway" = "gateway";
+const CHECKOUT_MODE: "manual" | "gateway" = "manual";
 
 function BillingViewInner() {
   const params = useSearchParams();
@@ -159,7 +159,9 @@ function BillingViewInner() {
             activePlanId={activePlanId}
             requestedPlanId={requestedPlanId}
             scheduledPlanId={subscription?.pendingPlanId ?? null}
-            activePlanPrice={activePlanId ? (subscription?.plan?.price ?? null) : null}
+            activePlanPrice={
+              activePlanId ? (subscription?.plan?.price ?? null) : null
+            }
             selectingPlanId={selectingPlanId}
             isMutating={
               changePlan.isPending ||
