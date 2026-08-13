@@ -229,29 +229,34 @@ button { font-family: inherit; font-weight: 500; }
 input, textarea, select { font-family: inherit; color: inherit; font-weight: 400; }
 
 /* surfaces */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-1);
-}
-.card-2 {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-2);
-}
-.glass {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-1);
-}
-.glass-strong {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-3);
+/* @layer components so utility classes (e.g. bg-[#0F172A]) reliably
+   override these — otherwise same-specificity source order lets these
+   rules silently win over a utility applied alongside them. */
+@layer components {
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-1);
+  }
+  .card-2 {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-2);
+  }
+  .glass {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-1);
+  }
+  .glass-strong {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-3);
+  }
 }
 
 /* WhatsApp-style default chat wallpaper — doodle pattern over a flat base,

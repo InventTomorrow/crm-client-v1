@@ -2,6 +2,7 @@
 import { useAppStore } from "@/lib/appStore";
 import GlobalLoadingOverlay from "@/shared/ui/GlobalLoadingOverlay";
 import RouteProgressBar from "@/shared/ui/RouteProgressBar";
+import { TooltipProvider } from "@/shared/ui/Tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -25,7 +26,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <ThemeSync />
       <RouteProgressBar />
       <GlobalLoadingOverlay />
-      {children}
+      <TooltipProvider>{children}</TooltipProvider>
     </QueryClientProvider>
   );
 }
