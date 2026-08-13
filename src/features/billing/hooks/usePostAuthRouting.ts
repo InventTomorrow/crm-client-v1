@@ -27,8 +27,9 @@ function isProtectedFromRedirect(pathname: string): boolean {
  *  2. Point free-trial accounts at the pricing page, at most once a day, so
  *     the reminder never turns into a redirect loop on every navigation.
  *
- * Expired and planless accounts are not handled here — RouteGuard already
- * sends them to /pricing from anywhere in the app.
+ * Expired and planless accounts are not handled here, and are deliberately not
+ * redirected at all — the workspace stays readable and RouteGuard's banner
+ * carries the upgrade CTA instead.
  */
 export function usePostAuthRouting(): void {
   const router = useRouter();

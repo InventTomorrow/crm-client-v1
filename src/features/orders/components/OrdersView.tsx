@@ -1,4 +1,5 @@
 "use client";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { extractErrorMessage } from "@/lib/utils";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
@@ -61,6 +62,7 @@ export function OrdersView() {
   );
   const [exportRows, setExportRows] = useState<OrderListItem[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
+  const { can } = usePermissions();
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
@@ -204,6 +206,10 @@ export function OrdersView() {
     [loadAndEditOrder],
   );
 
+  // The CSV is built client-side from rows already fetched, so hiding the
+  // control is the only place orders:export can be enforced.
+  const canExportOrders = can("orders:export");
+
   const openExport = (rows: OrderListItem[]) => {
     setExportRows(rows);
     setExportOpen(true);
@@ -251,7 +257,7 @@ export function OrdersView() {
         isLoading={isLoading}
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
-        onExport={openExport}
+        onExport={canExportOrders ? openExport : undefined}
         onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
         defaultPageSize={20}

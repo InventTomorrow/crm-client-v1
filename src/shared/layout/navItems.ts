@@ -50,7 +50,7 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/dashboard",
     label: "Dashboard",
     Icon: LayoutDashboard,
-    perm: "reports:view",
+    perm: "dashboard:view",
   },
   { href: "/inbox", label: "Inbox", Icon: Inbox, perm: "conversations:view" },
   { href: "/leads", label: "Leads", Icon: Users, perm: "leads:view" },
@@ -84,7 +84,7 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/services",
     label: "Services",
     Icon: Megaphone,
-    perm: "inventory:view",
+    perm: "services:view",
     capability: "CATALOG_SERVICES",
     // children: [
     //   { href: '/services', label: 'All services' },

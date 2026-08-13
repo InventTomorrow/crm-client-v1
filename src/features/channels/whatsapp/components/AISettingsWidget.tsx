@@ -1,4 +1,5 @@
 "use client";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { hasCapability, type VerticalCapability } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
@@ -54,8 +55,14 @@ const ASSISTANT_SETTINGS: {
 export function AISettingsWidget() {
   const { data: config, isLoading } = useWAConfig();
   const { tenant } = useCurrentTenant();
+  const { can } = usePermissions();
   const updateConfigMut = useUpdateWAConfig();
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // The toggles write the bot's behaviour, which the server gates on
+  // chatbot:edit — without this a read-only role could flip a switch and
+  // collect a 403 instead of the toggle it expected.
+  const canEditAssistant = can("chatbot:edit");
 
   const visibleSettings = ASSISTANT_SETTINGS.filter(
     (setting) =>
@@ -147,7 +154,9 @@ export function AISettingsWidget() {
               onCheckedChange={(checked) =>
                 updateConfigMut.mutate({ [setting.key]: checked })
               }
-              disabled={isLoading || updateConfigMut.isPending}
+              disabled={
+                isLoading || updateConfigMut.isPending || !canEditAssistant
+              }
             />
           </div>
         ))}

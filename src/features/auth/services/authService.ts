@@ -94,14 +94,21 @@ export async function validateInvite(token: string): Promise<InviteValidation> {
   return res.data.data;
 }
 
-export async function acceptInvite(token: string, data?: AcceptInviteData) {
-  const res = await apiClient.post('/auth/accept-invite', {
+export interface AcceptInviteResult {
+  message: string;
+  /** True when the joiner already had an account — no session was issued for them. */
+  requiresLogin: boolean;
+  user?: LoginResponse;
+}
+
+export async function acceptInvite(token: string, data?: AcceptInviteData): Promise<AcceptInviteResult> {
+  const res = await apiClient.post<{ success: true; data: AcceptInviteResult }>('/auth/accept-invite', {
     token,
     ...(data
       ? { firstName: data.firstName, lastName: data.lastName, password: data.password }
       : {}),
   });
-  return res.data;
+  return res.data.data;
 }
 
 export interface MyInvitationItem {
@@ -228,6 +235,30 @@ export interface RoleItem {
 
 export async function getRoles(): Promise<RoleItem[]> {
   const res = await apiClient.get<{ success: true; data: RoleItem[] }>('/auth/roles');
+  return res.data.data;
+}
+
+export interface PermissionCatalogEntry {
+  key: string;
+  label: string;
+  action: string;
+}
+
+export interface PermissionCatalogGroup {
+  group: string;
+  permissions: PermissionCatalogEntry[];
+}
+
+/**
+ * The grantable permissions, grouped and labelled by the server. Fetched rather
+ * than mirrored so a permission added on the backend is immediately grantable
+ * here — a hardcoded copy silently dropped services/bookings/qualification/
+ * resources out of Access Control.
+ */
+export async function getPermissionCatalog(): Promise<PermissionCatalogGroup[]> {
+  const res = await apiClient.get<{ success: true; data: PermissionCatalogGroup[] }>(
+    '/auth/permissions',
+  );
   return res.data.data;
 }
 
