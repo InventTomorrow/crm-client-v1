@@ -20,8 +20,8 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useOpenLeadChat } from "../hooks/useOpenLeadChat";
 import {
   useAddLead,
   useArchiveLead,
@@ -44,7 +44,6 @@ import TableView from "./views/TableView";
 
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
-  const router = useRouter();
   const [archived, setArchived] = useState(false);
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteLeads(archived);
@@ -151,9 +150,12 @@ export function LeadsView() {
     setSelected(null);
   };
 
-  const handleOpenChat = (lead: Lead) => {
-    router.push(`/inbox?lead=${lead.id}`);
-  };
+  const {
+    openLeadChat,
+    verifyingLeadId,
+    unreachableMessage,
+    dismissUnreachableMessage,
+  } = useOpenLeadChat();
 
   const isSavingForm = addLead.isPending || updateLead.isPending;
 
@@ -306,7 +308,8 @@ export function LeadsView() {
               archived={archived}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
-              onOpenChat={handleOpenChat}
+              onOpenChat={openLeadChat}
+              openingChatLeadId={verifyingLeadId}
               onEdit={openEdit}
               onArchive={handleArchive}
               onRestore={handleRestore}
@@ -324,7 +327,8 @@ export function LeadsView() {
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
-          onOpenChat={handleOpenChat}
+          onOpenChat={openLeadChat}
+          openingChatLeadId={verifyingLeadId}
           onEdit={openEdit}
           onArchive={handleArchive}
           onRestore={handleRestore}
@@ -338,7 +342,8 @@ export function LeadsView() {
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
-          onOpenChat={handleOpenChat}
+          onOpenChat={openLeadChat}
+          openingChatLeadId={verifyingLeadId}
           onEdit={openEdit}
           onArchive={handleArchive}
           onRestore={handleRestore}
@@ -372,7 +377,8 @@ export function LeadsView() {
         onArchive={handleArchive}
         onRestore={handleRestore}
         onDelete={handleDelete}
-        onOpenChat={handleOpenChat}
+        onOpenChat={openLeadChat}
+        isOpeningChat={verifyingLeadId === selected?.id}
         isDeleting={deleteLead.isPending}
       />
       <LeadFormDialog
@@ -408,6 +414,16 @@ export function LeadsView() {
         }
         confirmLabel="Delete permanently"
         loading={deleteLead.isPending}
+      />
+      <ConfirmDialog
+        open={!!unreachableMessage}
+        onClose={dismissUnreachableMessage}
+        onConfirm={dismissUnreachableMessage}
+        title="Number Not Registered"
+        description={unreachableMessage ?? undefined}
+        confirmLabel="Got it"
+        cancelLabel="Close"
+        destructive
       />
       <ConfirmDialog
         open={bulkDeleteTargets.length > 0}

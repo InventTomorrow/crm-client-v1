@@ -1,7 +1,14 @@
 'use client';
 import { cn } from '@/lib/utils';
+import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
-import { CalendarSync, CalendarX2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/ui/DropdownMenu';
+import { CalendarSync, CalendarX2, MoreVertical } from 'lucide-react';
 import { useState } from 'react';
 import { useUpdateAppointmentStatus } from '../hooks/useBookings';
 import {
@@ -91,66 +98,113 @@ function ActionIconBtn({
   );
 }
 
+/** One row action, rendered either as an icon button (sheet) or a menu item (table). */
+interface AppointmentAction {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  isDestructive?: boolean;
+  run: () => void;
+}
+
 export function AppointmentStatusActions({
   appointment,
   wrap = false,
+  layout = 'buttons',
 }: {
   appointment: Appointment;
   /** Allow wrapping (e.g. in the detail sheet footer). Default false keeps table column tight. */
   wrap?: boolean;
+  /** `menu` collapses the actions behind a ⋮ trigger — how table rows show them. */
+  layout?: 'buttons' | 'menu';
 }) {
   const [pendingStatus, setPendingStatus] = useState<AppointmentStatus | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const updateStatus = useUpdateAppointmentStatus();
 
-  const statusButtons = NEXT_STATUSES[appointment.status].filter(
+  const nextStatuses = NEXT_STATUSES[appointment.status].filter(
     (s) => s !== 'CANCELLED',
   );
   const canCancel     = NEXT_STATUSES[appointment.status].includes('CANCELLED');
   const canReschedule = isReschedulable(appointment);
 
-  if (statusButtons.length === 0 && !canCancel && !canReschedule) return null;
+  if (nextStatuses.length === 0 && !canCancel && !canReschedule) return null;
+
+  const actions: AppointmentAction[] = [
+    ...nextStatuses.map((status) => ({
+      key: status,
+      label: APPOINTMENT_STATUS_LABELS[status],
+      icon: APPOINTMENT_STATUS_ICONS[status],
+      run: () =>
+        CONFIRMED_TRANSITIONS[status]
+          ? setPendingStatus(status)
+          : updateStatus.mutate({ appointmentId: appointment.id, status }),
+    })),
+    ...(canReschedule
+      ? [
+          {
+            key: 'reschedule',
+            label: 'Reschedule',
+            icon: CalendarSync,
+            run: () => setIsRescheduleOpen(true),
+          },
+        ]
+      : []),
+    ...(canCancel
+      ? [
+          {
+            key: 'cancel',
+            label: 'Cancel',
+            icon: CalendarX2,
+            isDestructive: true,
+            run: () => setIsCancelOpen(true),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
-      <div className={cn('flex items-center gap-1', wrap && 'flex-wrap')}>
-        {statusButtons.map((status) => {
-          const StatusIcon = APPOINTMENT_STATUS_ICONS[status];
-          return (
+      {layout === 'menu' ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Appointment actions"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical size={15} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            {actions.map(({ key, label, icon: ActionIcon, isDestructive, run }) => (
+              <DropdownMenuItem
+                key={key}
+                variant={isDestructive ? 'destructive' : 'default'}
+                disabled={updateStatus.isPending}
+                onSelect={run}
+              >
+                <ActionIcon size={13} /> {label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <div className={cn('flex items-center gap-1', wrap && 'flex-wrap')}>
+          {actions.map(({ key, label, icon: ActionIcon, isDestructive, run }) => (
             <ActionIconBtn
-              key={status}
-              label={APPOINTMENT_STATUS_LABELS[status]}
-              icon={StatusIcon}
+              key={key}
+              label={label}
+              icon={ActionIcon}
+              variant={isDestructive ? 'danger' : 'default'}
               disabled={updateStatus.isPending}
-              onClick={() =>
-                CONFIRMED_TRANSITIONS[status]
-                  ? setPendingStatus(status)
-                  : updateStatus.mutate({ appointmentId: appointment.id, status })
-              }
+              onClick={run}
             />
-          );
-        })}
-
-        {canReschedule && (
-          <ActionIconBtn
-            label="Reschedule"
-            icon={CalendarSync}
-            disabled={updateStatus.isPending}
-            onClick={() => setIsRescheduleOpen(true)}
-          />
-        )}
-
-        {canCancel && (
-          <ActionIconBtn
-            label="Cancel"
-            icon={CalendarX2}
-            variant="danger"
-            disabled={updateStatus.isPending}
-            onClick={() => setIsCancelOpen(true)}
-          />
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       <ConfirmDialog
         open={pendingStatus !== null}

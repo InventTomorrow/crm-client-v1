@@ -5,10 +5,24 @@ import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { Button } from "@/shared/ui/Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/DropdownMenu";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
 import LeadStatusSelect from "../LeadStatusSelect";
-import { Archive, ArchiveRestore, Inbox, Pencil, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Inbox,
+  Loader2,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 export default function TableView({
   leads,
@@ -17,6 +31,7 @@ export default function TableView({
   onSelect,
   onStatusChange,
   onOpenChat,
+  openingChatLeadId = null,
   onEdit,
   onArchive,
   onRestore,
@@ -30,6 +45,8 @@ export default function TableView({
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onOpenChat: (l: Lead) => void;
+  /** Lead whose WhatsApp number is being verified before the inbox opens. */
+  openingChatLeadId?: string | null;
   onEdit: (l: Lead) => void;
   onArchive: (l: Lead) => void;
   onRestore: (l: Lead) => void;
@@ -117,42 +134,67 @@ export default function TableView({
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "",
+        size: 56,
         enableSorting: false,
         cell: ({ row }) => {
           const l = row.original;
+          const isOpeningChat = openingChatLeadId === l.id;
           return (
-            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" title="Open chat" onClick={() => onOpenChat(l)}>
-                <Inbox size={13} />
-              </Button>
-              <Button variant="ghost" size="icon" title="Edit" onClick={() => onEdit(l)}>
-                <Pencil size={13} />
-              </Button>
-              {archived ? (
-                <Button variant="ghost" size="icon" title="Restore" onClick={() => onRestore(l)}>
-                  <ArchiveRestore size={13} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Actions for ${l.name}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {isOpeningChat ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <MoreVertical size={15} />
+                  )}
                 </Button>
-              ) : (
-                <Button variant="ghost" size="icon" title="Archive" onClick={() => onArchive(l)}>
-                  <Archive size={13} />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Delete permanently"
-                className="text-[#DC2626]"
-                onClick={() => onDelete(l)}
-              >
-                <Trash2 size={13} />
-              </Button>
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem
+                  disabled={openingChatLeadId !== null}
+                  onSelect={() => onOpenChat(l)}
+                >
+                  <Inbox size={13} /> Open chat
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onEdit(l)}>
+                  <Pencil size={13} /> Edit
+                </DropdownMenuItem>
+                {archived ? (
+                  <DropdownMenuItem onSelect={() => onRestore(l)}>
+                    <ArchiveRestore size={13} /> Restore
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={() => onArchive(l)}>
+                    <Archive size={13} /> Archive
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem variant="destructive" onSelect={() => onDelete(l)}>
+                  <Trash2 size={13} /> Delete permanently
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         },
       },
     ],
-    [archived, onSelect, onStatusChange, onOpenChat, onEdit, onArchive, onRestore, onDelete],
+    [
+      archived,
+      onSelect,
+      onStatusChange,
+      onOpenChat,
+      openingChatLeadId,
+      onEdit,
+      onArchive,
+      onRestore,
+      onDelete,
+    ],
   );
 
   return (

@@ -20,6 +20,9 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   // /settings itself is auth-only — Profile & Notifications are every user's
   // own context. Individual tabs gate themselves; the Workspaces sub-route is
   // owner/admin territory.
+  // Choosing a plan is a billing action, and it's also where an expired
+  // account is sent — gating it any harder would strand the owner.
+  { prefix: "/pricing", permission: "billing:view" },
   { prefix: "/settings/workspaces", permission: "settings:edit" },
   { prefix: "/settings/billing", permission: "billing:view" },
   { prefix: "/settings/chatbot", permission: "chatbot:view" },

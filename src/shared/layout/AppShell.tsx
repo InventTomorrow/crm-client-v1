@@ -1,5 +1,6 @@
 "use client";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
+import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
 import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
 import { useAppStore } from "@/lib/appStore";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
@@ -26,6 +27,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Keep the displayed workspace in lock-step with the tenant the server serves.
   useSyncActiveWorkspace();
+  // Redeem a plan chosen before sign-in, and nudge trial accounts to /pricing.
+  usePostAuthRouting();
 
   return (
     <AuthGate>

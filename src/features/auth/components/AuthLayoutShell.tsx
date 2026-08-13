@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
+import { useCapturePlanIntent } from "@/features/billing/hooks/useCapturePlanIntent";
 import {
   AcceptInviteVisualPanel,
   ForgotPasswordVisualPanel,
@@ -62,6 +64,15 @@ function HeaderActionLink({ pathname }: { pathname: string }) {
 }
 
 /* ── MAIN SHELL COMPONENT ── */
+/**
+ * Parks `?plan=` from a marketing-site CTA. Isolated in its own component so
+ * the useSearchParams() suspense boundary can't hold up the auth form.
+ */
+function PlanIntentCapture() {
+  useCapturePlanIntent();
+  return null;
+}
+
 export function AuthLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
 
@@ -80,6 +91,9 @@ export function AuthLayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
+      <Suspense fallback={null}>
+        <PlanIntentCapture />
+      </Suspense>
       {/* ── Left: Form Pane ── */}
       <section className="relative flex flex-col w-full lg:w-1/2 bg-[var(--surface)] overflow-y-auto min-h-screen">
         {/* Top Header Row */}

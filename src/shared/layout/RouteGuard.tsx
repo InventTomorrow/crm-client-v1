@@ -5,13 +5,26 @@ import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { Button } from "@/shared/ui/Button";
 import { Lock } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { hasCapability } from "@/lib/business-verticals";
 import { getRequiredCapability, getRequiredPermission } from "./routePermissions";
 
-// With a dead plan the app is locked except settings, so the owner can still
-// reach billing to renew (and anyone their own profile).
-const OPEN_WHEN_PLAN_DEAD_PREFIX = "/settings";
+// With a dead plan the app is locked except the pages that exist to revive it:
+// pricing (choose a plan) and settings (billing history, profile).
+const OPEN_WHEN_PLAN_DEAD_PREFIXES = ["/pricing", "/settings"];
+
+/**
+ * Sends the owner to /pricing. Rendered rather than redirecting inside the
+ * guard body so navigation happens in an effect, not during render.
+ */
+function PricingRedirect() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/pricing");
+  }, [router]);
+  return null;
+}
 
 /**
  * Client-side gate for `(app)` pages. Resolves the permission required by the
@@ -31,13 +44,16 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   // render a page left over from the previous (still-unmounting) workspace.
   if (isLoading || isTenantLoading) return null;
 
-  // Expired or missing plan locks everything except settings; the server
-  // enforces the same on feature APIs, this just explains it.
+  // Expired or missing plan locks everything except the pages that can fix it.
+  // The owner is sent straight to pricing — that is the only action available
+  // to them, so a card asking them to click through to it is a wasted step.
+  // Members can't buy anything, so they get the explanation instead.
   if (
     entitlement &&
     !entitlement.live &&
-    !pathname.startsWith(OPEN_WHEN_PLAN_DEAD_PREFIX)
+    !OPEN_WHEN_PLAN_DEAD_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   ) {
+    if (isOwner) return <PricingRedirect />;
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="card flex max-w-sm flex-col items-center gap-3 p-8 text-center">
@@ -50,17 +66,8 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
               : "No active plan"}
           </div>
           <p className="text-[13px] text-[var(--ink-mute)]">
-            {isOwner
-              ? "Renew or choose a plan to unlock your workspaces again."
-              : "Ask the workspace owner to renew the plan to restore access."}
+            Ask the workspace owner to renew the plan to restore access.
           </p>
-          {isOwner && (
-            <Button asChild size="sm" className="mt-1">
-              <Link href="/settings/billing">
-                {entitlement.reason === "expired" ? "Renew plan" : "Choose a plan"}
-              </Link>
-            </Button>
-          )}
         </div>
       </div>
     );

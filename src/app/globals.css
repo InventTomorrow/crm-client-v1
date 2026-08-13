@@ -924,6 +924,32 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   --color-success-soft: var(--success-soft);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-soft: var(--destructive-soft);
+
+  /* Radix Accordion open/close transitions */
+  --animate-accordion-down: accordionDown 0.22s ease-out;
+  --animate-accordion-up: accordionUp 0.18s ease-out;
+}
+
+@keyframes accordionDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes accordionUp {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
 }
 
 /* shadcn semantic tokens mapped onto the WhatsApp dark palette so primitives
@@ -1162,4 +1188,17 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
   background: var(--surface-2);
   border-color: var(--accent);
   color: var(--ink);
+}
+
+/* FullCalendar paints the event body with --fc-event-text-color (page bg), which
+   disappears on the soft status fills — let the status colour above win instead. */
+.bookings-calendar .fc-v-event .fc-event-main,
+.bookings-calendar .fc-h-event .fc-event-main,
+.bookings-calendar .fc-daygrid-event .fc-event-title,
+.bookings-calendar .fc-daygrid-event .fc-event-time {
+  color: inherit;
+}
+/* The drag-to-book mirror keeps the solid accent fill, so it keeps light text. */
+.bookings-calendar .fc-event-mirror {
+  color: var(--bg);
 }

@@ -161,15 +161,15 @@ export function AppointmentsList({
       {
         id: '__actions',
         // Fixed pixel size — tanstack-table won't ever auto-resize it
-        size: 110,
-        minSize: 110,
-        maxSize: 110,
+        size: 56,
+        minSize: 56,
+        maxSize: 56,
         header: '',
         enableSorting: false,
         cell: ({ row }) => (
-          // Stop the row-click handler from also triggering when an action button is clicked
+          // Stop the row-click handler from also triggering when an action is clicked
           <div className="flex justify-end pr-1" onClick={(e) => e.stopPropagation()}>
-            <AppointmentStatusActions appointment={row.original} />
+            <AppointmentStatusActions appointment={row.original} layout="menu" />
           </div>
         ),
       },
