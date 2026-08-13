@@ -100,6 +100,7 @@ export function useUpdateBusinessVertical() {
 /** Switch to an existing workspace */
 export function useSwitchWorkspace() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
 
   return useMutation({
@@ -121,7 +122,9 @@ export function useSwitchWorkspace() {
       await queryClient.fetchQuery({ queryKey: ["me"], queryFn: getMe });
       // 3. Update workspace ID — triggers key-based remount of <main>, unmounting all page components
       setCurrentWorkspace(tenantId);
-      // 4. Let React process the unmount before lifting the overlay
+      // 4. Land on the dashboard — the previous route may not exist or be permitted in the new workspace
+      router.push("/dashboard");
+      // 5. Let React process the unmount before lifting the overlay
       await new Promise((r) => setTimeout(r, 80));
       setWorkspaceSwitching(false);
     },
