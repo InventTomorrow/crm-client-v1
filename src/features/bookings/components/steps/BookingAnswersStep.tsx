@@ -1,8 +1,8 @@
 'use client';
 import type { QualificationQuestionFormData } from '@/features/qualification/types';
+import { AutoCompleteSelect } from '@/shared/ui/AutoCompleteSelect';
 import { FormControl, FormField, FormItem, FormLabel } from '@/shared/ui/form';
 import { Input } from '@/shared/ui/Input';
-import { NativeSelect } from '@/shared/ui/NativeSelect';
 import { Skeleton } from '@/shared/ui/Skeleton';
 import type { UseFormReturn } from 'react-hook-form';
 import type { ManualBookingFormData, ManualBookingFormInput } from '../../types';
@@ -61,19 +61,13 @@ export function BookingAnswersStep({
               <FormLabel>{question.questionText}</FormLabel>
               <FormControl>
                 {question.inputType === 'QUICK_REPLY' ? (
-                  <NativeSelect
-                    size="lg"
+                  <AutoCompleteSelect
+                    items={question.options.map((option) => ({ id: option, label: option }))}
+                    selected={field.value ? { id: field.value, label: field.value } : null}
+                    onSelect={(item) => field.onChange(item?.id ?? '')}
+                    placeholder="Not answered"
                     disabled={disabled}
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                  >
-                    <option value="">Not answered</option>
-                    {question.options.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </NativeSelect>
+                  />
                 ) : (
                   <Input
                     type={inputTypeFor(question)}

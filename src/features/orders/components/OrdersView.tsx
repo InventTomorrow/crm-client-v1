@@ -257,8 +257,8 @@ export function OrdersView() {
         defaultPageSize={20}
         maxBodyHeight="60vh"
         toolbar={
-          <div className="flex items-center gap-2 flex-1">
-            <div className="relative flex-1 max-w-[340px]">
+          <div className="flex items-center gap-2 flex-1 flex-wrap">
+            <div className="relative flex-1 min-w-45 max-w-85">
               <Search
                 size={13}
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"

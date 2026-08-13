@@ -9,15 +9,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
+import { AutoCompleteSelect } from "@/shared/ui/AutoCompleteSelect";
 import { FormSection } from "@/shared/ui/FormSection";
 import { Input } from "@/shared/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/Select";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -41,6 +35,16 @@ const COMMON_TIMEZONES = [
   "America/New_York",
   "America/Los_Angeles",
 ];
+
+const timezoneOptions = COMMON_TIMEZONES.map((timezone) => ({
+  id: timezone,
+  label: timezone.replace("_", " "),
+}));
+
+const meetingTypeOptions = MEETING_TYPES.map((meetingType) => ({
+  id: meetingType,
+  label: MEETING_TYPE_LABELS[meetingType],
+}));
 
 /** Editor for the single BookingConfig per workspace — what the bot is allowed to offer. */
 export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
@@ -104,28 +108,19 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Meeting type</FormLabel>
-                  <Select
-                    value={field.value ?? undefined}
-                    onValueChange={field.onChange}
-                    disabled={isSaving}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-10 w-full">
-                        <SelectValue placeholder="Pick how the call happens">
-                          {field.value
-                            ? MEETING_TYPE_LABELS[field.value]
-                            : undefined}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {MEETING_TYPES.map((meetingType) => (
-                        <SelectItem key={meetingType} value={meetingType}>
-                          {MEETING_TYPE_LABELS[meetingType]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <AutoCompleteSelect
+                      items={meetingTypeOptions}
+                      selected={
+                        field.value
+                          ? { id: field.value, label: MEETING_TYPE_LABELS[field.value] }
+                          : null
+                      }
+                      onSelect={(item) => item && field.onChange(item.id)}
+                      placeholder="Pick how the call happens"
+                      disabled={isSaving}
+                    />
+                  </FormControl>
                   <FormDescription>
                     How the meeting is held — the bot tells the lead this when
                     confirming.
@@ -196,26 +191,19 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={isSaving}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-10 w-full">
-                      <SelectValue placeholder="Pick a timezone">
-                        {field.value ? field.value.replace("_", " ") : undefined}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {COMMON_TIMEZONES.map((timezone) => (
-                      <SelectItem key={timezone} value={timezone}>
-                        {timezone.replace("_", " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <AutoCompleteSelect
+                    items={timezoneOptions}
+                    selected={
+                      field.value
+                        ? { id: field.value, label: field.value.replace("_", " ") }
+                        : null
+                    }
+                    onSelect={(item) => item && field.onChange(item.id)}
+                    placeholder="Pick a timezone"
+                    disabled={isSaving}
+                  />
+                </FormControl>
                 <FormDescription>
                   The times below are read in this zone. Leads see their own
                   local time.

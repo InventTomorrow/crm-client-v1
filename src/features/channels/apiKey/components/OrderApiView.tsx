@@ -54,9 +54,9 @@ export function OrderApiView() {
         </div>
       </div>
 
-      <div className="flex items-start gap-5">
+      <div className="flex flex-col items-stretch gap-5 md:flex-row md:items-start">
         {/* Section nav */}
-        <div className="card flex w-[200px] shrink-0 flex-col gap-1 p-2.5">
+        <div className="card flex gap-1 p-2.5 md:w-50 md:shrink-0 md:flex-col">
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
             const active = section === id;
             return (
@@ -65,7 +65,7 @@ export function OrderApiView() {
                 type="button"
                 onClick={() => setSection(id)}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-left text-[13.5px] font-medium transition-colors",
+                  "flex flex-1 items-center justify-center gap-2.5 rounded-[10px] px-3 py-2.5 text-left text-[13.5px] font-medium transition-colors md:w-full md:flex-none md:justify-start",
                   active
                     ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                     : "text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",

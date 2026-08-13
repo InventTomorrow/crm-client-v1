@@ -581,7 +581,7 @@ export function WorkspacesManagementView() {
       </div>
 
       {/* Stats banner */}
-      <div className="card p-4 bg-gradient-to-r from-[var(--accent)] to-[#4FC3F7] text-white border-none overflow-hidden relative">
+      <div className="card p-4 bg-gradient-to-r from-[var(--accent)] to-[#4FC3F7] text-white border-none overflow-hidden relative shrink-0">
         <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-10">
           <Building2 size={80} />
         </div>
