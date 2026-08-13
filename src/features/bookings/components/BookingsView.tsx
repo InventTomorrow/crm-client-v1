@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { StatCard } from "@/shared/ui/StatCard";
 import {
@@ -28,6 +29,7 @@ import {
   useAppointmentsQuery,
   useBookingConfigQuery,
   useBookingStatsQuery,
+  useRefreshBookings,
 } from "../hooks/useBookings";
 import {
   APPOINTMENT_STATUSES,
@@ -71,6 +73,7 @@ export function BookingsView() {
 
   const { data: config, isLoading: isLoadingConfig } = useBookingConfigQuery();
   const { data: statusCounts } = useBookingStatsQuery();
+  const { refreshBookings, isRefreshing } = useRefreshBookings();
 
   const appointmentsQuery = useAppointmentsQuery(
     statusFilter === ALL_STATUSES ? {} : { status: statusFilter },
@@ -112,6 +115,12 @@ export function BookingsView() {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        <RefreshButton
+          onRefresh={refreshBookings}
+          isRefreshing={isRefreshing}
+          size="icon-lg"
+          label="Refresh appointments"
+        />
         {isBookingConfigured(config) && (
           <Button size="lg" variant="outline" onClick={goToAvailability}>
             <Settings2 size={14} className="mr-1.5" /> Availability

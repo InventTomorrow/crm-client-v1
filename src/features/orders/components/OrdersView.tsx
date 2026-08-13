@@ -8,6 +8,7 @@ import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ import {
   useDeleteOrder,
   useOrders,
   useOrdersSummary,
+  useRefreshOrders,
   useUpdateOrder,
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
@@ -67,6 +69,7 @@ export function OrdersView() {
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
   const { data: summary } = useOrdersSummary();
+  const { refreshOrders, isRefreshing } = useRefreshOrders();
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
   const deleteOrder = useDeleteOrder();
@@ -228,11 +231,18 @@ export function OrdersView() {
               : "Manage your orders"}
           </p>
         </div>
-        <PermissionGuard permission="orders:create">
-          <Button onClick={openCreate}>
-            <Plus size={15} /> New order
-          </Button>
-        </PermissionGuard>
+        <div className="flex items-center gap-2">
+          <RefreshButton
+            onRefresh={refreshOrders}
+            isRefreshing={isRefreshing}
+            label="Refresh orders"
+          />
+          <PermissionGuard permission="orders:create">
+            <Button onClick={openCreate}>
+              <Plus size={15} /> New order
+            </Button>
+          </PermissionGuard>
+        </div>
       </div>
 
       {/* Summary cards */}

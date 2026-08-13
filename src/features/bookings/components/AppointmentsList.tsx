@@ -2,19 +2,17 @@
 
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/shared/ui/Badge';
 import { CRMAvatar } from '@/shared/ui/CRMAvatar';
 import { DataTable, type ColumnDef } from '@/shared/ui/DataTable';
 import { APPOINTMENT_STATUS_LABELS, type Appointment } from '../types';
 import {
-  APPOINTMENT_STATUS_ICONS,
-  APPOINTMENT_STATUS_VARIANTS,
   formatSlotTime,
   isPastAppointment,
   toLocalDateKey,
 } from '../utils/appointmentFormat';
 import { AppointmentDetailSheet } from './AppointmentDetailSheet';
 import { AppointmentStatusActions } from './AppointmentStatusActions';
+import { AppointmentStatusCell } from './AppointmentStatusCell';
 
 interface AppointmentsListProps {
   appointments: Appointment[];
@@ -119,19 +117,12 @@ export function AppointmentsList({
         accessorFn: (appointment) => APPOINTMENT_STATUS_LABELS[appointment.status],
         header: 'Status',
         enableSorting: true,
-        cell: ({ row }) => {
-          const appointment = row.original;
-          const StatusIcon = APPOINTMENT_STATUS_ICONS[appointment.status];
-          return (
-            <Badge
-              variant={APPOINTMENT_STATUS_VARIANTS[appointment.status]}
-              className="gap-1 whitespace-nowrap text-[10px]"
-            >
-              <StatusIcon size={10} />
-              {APPOINTMENT_STATUS_LABELS[appointment.status]}
-            </Badge>
-          );
-        },
+        cell: ({ row }) => (
+          // Stop the row-click handler from opening the sheet behind the menu
+          <div onClick={(event) => event.stopPropagation()}>
+            <AppointmentStatusCell appointment={row.original} />
+          </div>
+        ),
       },
       {
         id: 'notes',

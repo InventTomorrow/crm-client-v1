@@ -8,9 +8,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/ui/DropdownMenu';
-import { CalendarSync, CalendarX2, MoreVertical } from 'lucide-react';
+import { CalendarSync, CalendarX2, MoreVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUpdateAppointmentStatus } from '../hooks/useBookings';
+import { useDeleteAppointment, useUpdateAppointmentStatus } from '../hooks/useBookings';
 import {
   APPOINTMENT_STATUS_LABELS,
   type Appointment,
@@ -18,16 +18,12 @@ import {
 } from '../types';
 import {
   APPOINTMENT_STATUS_ICONS,
+  CONFIRMED_TRANSITIONS,
   isReschedulable,
   NEXT_STATUSES,
 } from '../utils/appointmentFormat';
 import { CancelAppointmentDialog } from './CancelAppointmentDialog';
 import { RescheduleAppointmentDialog } from './RescheduleAppointmentDialog';
-
-/** Statuses worth a confirmation step. */
-const CONFIRMED_TRANSITIONS: Partial<Record<AppointmentStatus, string>> = {
-  COMPLETED: 'Marks the call as done and frees the slot for another lead.',
-};
 
 /**
  * Fixed-size icon button. The label floats *above* via position:absolute so
@@ -121,15 +117,20 @@ export function AppointmentStatusActions({
   const [pendingStatus, setPendingStatus] = useState<AppointmentStatus | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const updateStatus = useUpdateAppointmentStatus();
+  const deleteAppointment = useDeleteAppointment();
 
-  const nextStatuses = NEXT_STATUSES[appointment.status].filter(
-    (s) => s !== 'CANCELLED',
-  );
-  const canCancel     = NEXT_STATUSES[appointment.status].includes('CANCELLED');
+  // In a table row the status column owns the transitions, so the menu carries
+  // only what that cell can't do — no duplicate "Mark confirmed" in both places.
+  const isMenu = layout === 'menu';
+  const nextStatuses = isMenu
+    ? []
+    : NEXT_STATUSES[appointment.status].filter((s) => s !== 'CANCELLED');
+  const canCancel     = !isMenu && NEXT_STATUSES[appointment.status].includes('CANCELLED');
   const canReschedule = isReschedulable(appointment);
 
-  if (nextStatuses.length === 0 && !canCancel && !canReschedule) return null;
+  if (nextStatuses.length === 0 && !canCancel && !canReschedule && !isMenu) return null;
 
   const actions: AppointmentAction[] = [
     ...nextStatuses.map((status) => ({
@@ -162,6 +163,17 @@ export function AppointmentStatusActions({
           },
         ]
       : []),
+    ...(isMenu
+      ? [
+          {
+            key: 'delete',
+            label: 'Delete',
+            icon: Trash2,
+            isDestructive: true,
+            run: () => setIsDeleteOpen(true),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -183,7 +195,7 @@ export function AppointmentStatusActions({
               <DropdownMenuItem
                 key={key}
                 variant={isDestructive ? 'destructive' : 'default'}
-                disabled={updateStatus.isPending}
+                disabled={updateStatus.isPending || deleteAppointment.isPending}
                 onSelect={run}
               >
                 <ActionIcon size={13} /> {label}
@@ -242,6 +254,20 @@ export function AppointmentStatusActions({
           onOpenChange={setIsCancelOpen}
         />
       )}
+
+      <ConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        loading={deleteAppointment.isPending}
+        title="Delete this appointment?"
+        description="The booking is removed from the calendar for good. The customer is not notified — cancel it instead if they should hear about it."
+        confirmLabel="Delete"
+        onConfirm={() =>
+          deleteAppointment.mutate(appointment.id, {
+            onSuccess: () => setIsDeleteOpen(false),
+          })
+        }
+      />
     </>
   );
 }

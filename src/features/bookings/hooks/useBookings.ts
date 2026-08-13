@@ -3,6 +3,7 @@ import { extractErrorMessage } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useInfiniteQuery,
+  useIsFetching,
   useMutation,
   useQuery,
   useQueryClient,
@@ -12,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
   createAppointment,
+  deleteAppointment,
   getAppointments,
   getAvailability,
   getBookingConfig,
@@ -131,6 +133,13 @@ function useInvalidateBookings() {
   return () => queryClient.invalidateQueries({ queryKey: bookingKeys.all });
 }
 
+/** Manual refresh for the bookings page — re-fetches the appointments, stats and config. */
+export function useRefreshBookings() {
+  const invalidateBookings = useInvalidateBookings();
+  const isRefreshing = useIsFetching({ queryKey: bookingKeys.all }) > 0;
+  return { refreshBookings: invalidateBookings, isRefreshing };
+}
+
 export function useUpsertBookingConfig() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -195,6 +204,19 @@ export function useUpdateAppointmentStatus() {
       toast.success(`Marked as ${updated.status.toLowerCase().replace('_', '-')}`);
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to update appointment')),
+  });
+}
+
+export function useDeleteAppointment() {
+  const invalidateBookings = useInvalidateBookings();
+  return useMutation({
+    mutationFn: (appointmentId: string) => deleteAppointment(appointmentId),
+    onSuccess: () => {
+      invalidateBookings();
+      toast.success('Appointment deleted');
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, 'Failed to delete appointment')),
   });
 }
 

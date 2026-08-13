@@ -409,7 +409,7 @@ export function LeadsView() {
         title="Delete lead permanently?"
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" and their chat history will be permanently removed. This can't be undone. Leads with orders can't be deleted — archive them instead.`
+            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone — archive the lead instead if you may need any of it.`
             : undefined
         }
         confirmLabel="Delete permanently"
@@ -430,7 +430,7 @@ export function LeadsView() {
         onClose={() => setBulkDeleteTargets([])}
         onConfirm={confirmBulkDelete}
         title={`Delete ${bulkDeleteTargets.length} lead${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
-        description="The selected leads will be permanently removed. This can't be undone."
+        description="The selected leads will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone."
         confirmLabel="Delete leads"
         loading={deleteLead.isPending}
       />

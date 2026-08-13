@@ -49,6 +49,11 @@ export const NEXT_STATUSES: Record<AppointmentStatus, AppointmentStatus[]> = {
   RESCHEDULED: ['CONFIRMED', 'CANCELLED'],
 };
 
+/** Transitions worth a confirmation step, keyed to the copy explaining them. */
+export const CONFIRMED_TRANSITIONS: Partial<Record<AppointmentStatus, string>> = {
+  COMPLETED: 'Marks the call as done and frees the slot for another lead.',
+};
+
 /**
  * A call that already happened cannot be moved; everything else can, including a
  * cancelled one — putting it back on the calendar is how the owner un-cancels.

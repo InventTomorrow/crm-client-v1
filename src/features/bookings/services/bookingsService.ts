@@ -74,6 +74,11 @@ export async function updateAppointmentStatus(
   return res.data.data;
 }
 
+export async function deleteAppointment(appointmentId: string) {
+  await apiClient.delete(`/bookings/appointments/${appointmentId}`);
+  return { appointmentId };
+}
+
 export async function getBookingStats() {
   const res = await apiClient.get<{ success: true; data: AppointmentStatusCounts }>(
     '/bookings/stats',

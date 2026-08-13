@@ -129,7 +129,8 @@ export const restoreLead = async (id: string): Promise<{ id: string }> => {
   return { id };
 };
 
-// Delete = hard delete (permanent). Blocked by the API when the lead has orders.
+// Delete = hard delete (permanent). Takes the lead's orders, appointments,
+// qualification and chats with it — always confirm before calling.
 export const deleteLead = async (id: string): Promise<{ id: string }> => {
   await apiClient.delete(`/leads/${id}`);
   return { id };

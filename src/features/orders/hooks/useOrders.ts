@@ -1,6 +1,7 @@
 'use client';
 import {
   useInfiniteQuery,
+  useIsFetching,
   useMutation,
   useQuery,
   useQueryClient,
@@ -73,6 +74,13 @@ export function useOrder(id: string | null) {
 
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: keys.all });
+}
+
+/** Manual refresh for the orders page — re-fetches the list and the summary cards. */
+export function useRefreshOrders() {
+  const qc = useQueryClient();
+  const isRefreshing = useIsFetching({ queryKey: keys.all }) > 0;
+  return { refreshOrders: () => invalidateAll(qc), isRefreshing };
 }
 
 export function useCreateOrder() {
