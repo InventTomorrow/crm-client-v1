@@ -1,10 +1,14 @@
 import { apiClient, runExclusiveAuthOp } from '@/lib/apiClient';
-import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse } from '../types';
+import type { LoginData, RegisterData, ForgotPasswordData, ResetPasswordData, AcceptInviteData, CreateWorkspaceData, LoginResponse, UserResponse, AccountRecoveryOtpData, AccountRecoveryActionData, AccountRestoreResult, AccountDeletionResult } from '../types';
 
 export async function login(data: LoginData): Promise<LoginResponse> {
-  const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/login', data);
+  const res = await apiClient.post<{ success: true; data: LoginResponse }>('/auth/login', {
+    email: data.email,
+    password: data.password,
+  });
   return res.data.data;
 }
+
 
 export async function register(data: RegisterData) {
   const res = await apiClient.post('/auth/register', data);
@@ -41,6 +45,39 @@ export async function resetPassword(token: string, data: ResetPasswordData) {
   return res.data;
 }
 
+export async function requestAccountDeletion(): Promise<{ email: string; expiresAt: string }> {
+  const res = await apiClient.post<{ success: true; data: { email: string; expiresAt: string } }>(
+    '/auth/me/delete/request',
+  );
+  return res.data.data;
+}
+
+export async function confirmAccountDeletion(otp: string): Promise<AccountDeletionResult> {
+  const res = await apiClient.post<{ success: true; data: AccountDeletionResult }>(
+    '/auth/me/delete/confirm',
+    { otp },
+  );
+  return res.data.data;
+}
+
+export async function requestAccountRecoveryOtp(data: AccountRecoveryOtpData) {
+  const res = await apiClient.post('/auth/account-recovery/otp', data);
+  return res.data;
+}
+
+export async function restoreAccount(data: AccountRecoveryActionData): Promise<AccountRestoreResult> {
+  const res = await apiClient.post<{ success: true; data: AccountRestoreResult }>(
+    '/auth/account-recovery/restore',
+    data,
+  );
+  return res.data.data;
+}
+
+export async function permanentlyDeleteAccount(data: AccountRecoveryActionData) {
+  const res = await apiClient.post('/auth/account-recovery/delete-permanently', data);
+  return res.data;
+}
+
 export interface InviteValidation {
   status: 'VALID' | 'EXPIRED' | 'ACCEPTED' | 'NOT_FOUND';
   email?: string;
@@ -57,14 +94,21 @@ export async function validateInvite(token: string): Promise<InviteValidation> {
   return res.data.data;
 }
 
-export async function acceptInvite(token: string, data?: AcceptInviteData) {
-  const res = await apiClient.post('/auth/accept-invite', {
+export interface AcceptInviteResult {
+  message: string;
+  /** True when the joiner already had an account — no session was issued for them. */
+  requiresLogin: boolean;
+  user?: LoginResponse;
+}
+
+export async function acceptInvite(token: string, data?: AcceptInviteData): Promise<AcceptInviteResult> {
+  const res = await apiClient.post<{ success: true; data: AcceptInviteResult }>('/auth/accept-invite', {
     token,
     ...(data
       ? { firstName: data.firstName, lastName: data.lastName, password: data.password }
       : {}),
   });
-  return res.data;
+  return res.data.data;
 }
 
 export interface MyInvitationItem {
@@ -191,6 +235,30 @@ export interface RoleItem {
 
 export async function getRoles(): Promise<RoleItem[]> {
   const res = await apiClient.get<{ success: true; data: RoleItem[] }>('/auth/roles');
+  return res.data.data;
+}
+
+export interface PermissionCatalogEntry {
+  key: string;
+  label: string;
+  action: string;
+}
+
+export interface PermissionCatalogGroup {
+  group: string;
+  permissions: PermissionCatalogEntry[];
+}
+
+/**
+ * The grantable permissions, grouped and labelled by the server. Fetched rather
+ * than mirrored so a permission added on the backend is immediately grantable
+ * here — a hardcoded copy silently dropped services/bookings/qualification/
+ * resources out of Access Control.
+ */
+export async function getPermissionCatalog(): Promise<PermissionCatalogGroup[]> {
+  const res = await apiClient.get<{ success: true; data: PermissionCatalogGroup[] }>(
+    '/auth/permissions',
+  );
   return res.data.data;
 }
 

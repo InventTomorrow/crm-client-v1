@@ -1,3 +1,4 @@
+import type { BusinessVertical } from '@/lib/business-verticals';
 import { z } from 'zod';
 
 const passwordSchema = z
@@ -10,6 +11,7 @@ export const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
 });
+
 
 export const registerSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -55,6 +57,20 @@ export const resendVerificationSchema = z.object({
   email: z.string().email('Enter a valid email'),
 });
 
+// Account recovery runs unauthenticated, so the address is part of every
+// payload and the emailed code is the only credential.
+export const accountRecoveryOtpSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+});
+
+export const accountRecoveryActionSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6-digit code from your email'),
+});
+
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterData = z.infer<typeof registerSchema>;
 export type CreateWorkspaceData = z.infer<typeof createWorkspaceSchema>;
@@ -62,6 +78,19 @@ export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export type AcceptInviteData = z.infer<typeof acceptInviteSchema>;
 export type ResendVerificationData = z.infer<typeof resendVerificationSchema>;
+export type AccountRecoveryOtpData = z.infer<typeof accountRecoveryOtpSchema>;
+export type AccountRecoveryActionData = z.infer<typeof accountRecoveryActionSchema>;
+
+export interface AccountDeletionResult {
+  deletedAt: string;
+  scheduledPurgeAt: string;
+  affectedWorkspaces: string[];
+}
+
+export interface AccountRestoreResult {
+  restoredWorkspaces: number;
+  whatsappReconnectRequired: boolean;
+}
 
 export interface LoginResponse {
   id: string;
@@ -71,7 +100,7 @@ export interface LoginResponse {
   tenantId: string | null;
   role: string;
   onboardingStatus: 'EMAIL_UNVERIFIED' | 'COMPLETE';
-  onboardingStep: 'WORKSPACE' | 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
+  onboardingStep: 'WORKSPACE' | 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
   isTester: boolean;
 }
 
@@ -87,7 +116,7 @@ export interface UserResponse {
   memberships: Array<{
     id: string;
     role: { id: string; name: string };
-    tenant: { id: string; name: string; type: string; deletedAt?: string | null };
+    tenant: { id: string; name: string; type: string; businessVertical: BusinessVertical; deletedAt?: string | null };
     isActive?: boolean;
   }>;
   // Active-membership convenience fields (resolved server-side from the JWT tenant)

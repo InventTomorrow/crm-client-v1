@@ -17,6 +17,7 @@ import {
   getMe,
   getMembers,
   getMyInvitations,
+  getPermissionCatalog,
   getRoles,
   inviteUser,
   login,
@@ -98,7 +99,7 @@ export function useCreateWorkspace() {
     onSuccess: () => {
       // Fresh session cookies now carry the new tenantId — refetch identity.
       queryClient.invalidateQueries({ queryKey: ['me'] });
-      router.push('/onboarding/channel');
+      router.push('/onboarding/category');
     },
     // Error surfaced inline via <AuthFormError /> in the view (mutation.error).
   });
@@ -175,9 +176,24 @@ export function useValidateInvite(token: string) {
 
 export function useAcceptInvite(token: string) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const setCurrentWorkspace = useAppStore((s) => s.setCurrentWorkspace);
   return useMutation({
     mutationFn: (data?: AcceptInviteData) => acceptInvite(token, data),
-    onSuccess: () => router.push('/inbox'),
+    onSuccess: (result) => {
+      // An existing account joined without a session — sending it to a protected
+      // page would only bounce it back out, so go straight to sign-in.
+      if (result.requiresLogin || !result.user) {
+        toast.success('You joined the workspace. Sign in to open it.');
+        router.push('/auth/login');
+        return;
+      }
+      // New account, already signed in by the server. Drop any cache from a
+      // previous session in this browser before entering the workspace.
+      queryClient.clear();
+      if (result.user.tenantId) setCurrentWorkspace(result.user.tenantId);
+      router.push('/inbox');
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }
@@ -308,6 +324,11 @@ export function useChangeMemberRole() {
 
 export function useRoles() {
   return useQuery({ queryKey: ['roles'], queryFn: getRoles });
+}
+
+export function usePermissionCatalog() {
+  // The catalogue only changes on deploy, so it never needs refetching mid-session.
+  return useQuery({ queryKey: ['permission-catalog'], queryFn: getPermissionCatalog, staleTime: Infinity });
 }
 
 export function useUpdateRolePermissions() {

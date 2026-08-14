@@ -7,7 +7,7 @@ import {
 } from "@/shared/ui/DropdownMenu";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Button } from "@/shared/ui/Button";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import type { OrderListItem } from "../types";
 
 interface OrderRowActionsProps {
@@ -28,7 +28,7 @@ export function OrderRowActions({ order, onEdit, onDelete }: OrderRowActionsProp
           aria-label={`Actions for order #${order.orderNumber}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <MoreHorizontal size={16} />
+          <MoreVertical size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>

@@ -6,6 +6,7 @@ import {
   useInvitations,
   useInviteUser,
   useMembers,
+  usePermissionCatalog,
   useRemoveMember,
   useRoles,
   useUpdateRolePermissions,
@@ -14,6 +15,8 @@ import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import type {
   InvitationItem,
   MemberItem,
+  PermissionCatalogEntry,
+  PermissionCatalogGroup,
   RoleItem,
 } from "@/features/auth/services/authService";
 import { cn } from "@/lib/utils";
@@ -81,123 +84,17 @@ import { Skeleton } from "@/shared/ui/Skeleton";
 
 import { inviteMemberSchema, type InviteMemberForm } from "../types";
 
-// ── Permission catalogue (mirrors server constants) ──────────────────────────
-const PERMISSION_GROUPS = [
-  {
-    group: "Dashboard",
-    perms: [{ key: "dashboard:view", label: "View Dashboard" }],
-  },
-  {
-    group: "Leads",
-    perms: [
-      { key: "leads:view", label: "View Leads" },
-      { key: "leads:create", label: "Create Leads" },
-      { key: "leads:edit", label: "Edit Leads" },
-      { key: "leads:delete", label: "Delete Leads" },
-      { key: "leads:export", label: "Export Leads" },
-    ],
-  },
-  {
-    group: "Conversations",
-    perms: [
-      { key: "conversations:view", label: "View Conversations" },
-      { key: "conversations:reply", label: "Reply" },
-      { key: "conversations:assign", label: "Assign" },
-      { key: "conversations:close", label: "Close" },
-    ],
-  },
-  {
-    group: "Orders",
-    perms: [
-      { key: "orders:view", label: "View Orders" },
-      { key: "orders:create", label: "Create Orders" },
-      { key: "orders:edit", label: "Edit Orders" },
-      { key: "orders:cancel", label: "Cancel Orders" },
-      { key: "orders:export", label: "Export Orders" },
-    ],
-  },
-  {
-    group: "Inventory",
-    perms: [
-      { key: "inventory:view", label: "View Inventory" },
-      { key: "inventory:edit", label: "Edit Inventory" },
-    ],
-  },
-  {
-    group: "Broadcasts",
-    perms: [
-      { key: "broadcasts:view", label: "View Broadcasts" },
-      { key: "broadcasts:create", label: "Create Broadcasts" },
-      { key: "broadcasts:send", label: "Send Broadcasts" },
-    ],
-  },
-  {
-    group: "Reports",
-    perms: [
-      { key: "reports:view", label: "View Reports" },
-      { key: "reports:export", label: "Export Reports" },
-    ],
-  },
-  {
-    group: "Settings",
-    perms: [
-      { key: "settings:view", label: "View Settings" },
-      { key: "settings:edit", label: "Edit Settings" },
-    ],
-  },
-  {
-    group: "Channels",
-    perms: [
-      { key: "channels:view", label: "View Channels" },
-      { key: "channels:connect", label: "Connect / Disconnect WhatsApp" },
-      { key: "api_keys:view", label: "View Website Orders API Keys" },
-      { key: "api_keys:manage", label: "Create / Revoke Website Orders API Keys" },
-    ],
-  },
-  {
-    group: "Members",
-    perms: [
-      { key: "members:view", label: "View Members" },
-      { key: "members:invite", label: "Invite Members" },
-      { key: "members:remove", label: "Remove Members" },
-      { key: "members:role_change", label: "Change Roles" },
-    ],
-  },
-  {
-    group: "Billing",
-    perms: [
-      { key: "billing:view", label: "View Billing" },
-      { key: "billing:manage", label: "Manage Billing" },
-    ],
-  },
-  {
-    group: "Chatbot / AI",
-    perms: [
-      { key: "chatbot:view", label: "View Chatbot" },
-      { key: "chatbot:edit", label: "Edit Chatbot" },
-    ],
-  },
-  {
-    group: "Roles",
-    perms: [
-      { key: "roles:view", label: "View Roles" },
-      { key: "roles:edit", label: "Edit Roles" },
-    ],
-  },
-  {
-    group: "Knowledge Base",
-    perms: [
-      { key: "knowledge:view", label: "View Knowledge Base" },
-      { key: "knowledge:edit", label: "Edit Knowledge Base" },
-    ],
-  },
-] as const;
+// ── Permission catalogue ─────────────────────────────────────────────────────
+// Served by the API (`usePermissionCatalog`) rather than mirrored here. The
+// previous hardcoded copy fell 8 permissions behind the server, which made
+// Services, Bookings, Bot questions and Resources impossible to grant.
 
-const ALL_PERMISSIONS: { key: string; label: string }[] =
-  PERMISSION_GROUPS.flatMap((g) =>
-    g.perms.map((p) => ({ key: p.key as string, label: p.label as string })),
-  );
-const ALL_PERMISSION_KEYS = ALL_PERMISSIONS.map((p) => p.key);
+/** Flattens the grouped catalogue into a lookup of every grantable key. */
+function flattenCatalog(
+  catalog: PermissionCatalogGroup[],
+): PermissionCatalogEntry[] {
+  return catalog.flatMap((group) => group.permissions);
+}
 
 // ── Role meta ────────────────────────────────────────────────────────────────
 const ROLE_META: Record<string, { color: string; bg: string; desc: string }> = {
@@ -303,14 +200,15 @@ function InviteMemberDialog({
     },
   });
 
+  const { data: catalog = [] } = usePermissionCatalog();
   const watchedRoleId = form.watch("roleId");
   const selectedRole = roles.find((r) => r.id === watchedRoleId);
   const previewPerms = useMemo(() => {
     const granted = new Set(selectedRole?.permissions ?? []);
-    return ALL_PERMISSIONS.filter((p) => granted.has(p.key)).map(
-      (p) => p.label,
-    );
-  }, [selectedRole]);
+    return flattenCatalog(catalog)
+      .filter((entry) => granted.has(entry.key))
+      .map((entry) => entry.label);
+  }, [selectedRole, catalog]);
 
   // Briefly show a loading state whenever the role changes, so the permission
   // list visibly "resolves" for the role being assigned.
@@ -369,7 +267,7 @@ function InviteMemberDialog({
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="ali@saleflow.pk"
+                        placeholder="ali@asaanrabta.pk"
                         autoFocus
                         {...field}
                       />
@@ -697,10 +595,11 @@ function MemberDetailSheet({
 
   const role = roles.find((r) => r.id === roleId);
   const roleName = role?.name ?? display?.roleName ?? "";
+  const { data: catalog = [] } = usePermissionCatalog();
   const grantedPerms = useMemo(() => {
     const granted = new Set(role?.permissions ?? []);
-    return ALL_PERMISSIONS.filter((p) => granted.has(p.key));
-  }, [role]);
+    return flattenCatalog(catalog).filter((entry) => granted.has(entry.key));
+  }, [role, catalog]);
 
   const isOwner = display?.roleName === "OWNER";
   const canEditRole = can("members:role_change") && !isOwner;
@@ -980,17 +879,32 @@ function MembersTab() {
 
   const toolbar = (
     <>
-      <div className="relative min-w-[200px] flex-[1_1_240px]">
+      <div className="relative min-w-[220px] flex-[1_1_280px]">
         <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
+          size={15}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
         />
         <Input
-          className="pl-9"
+          className="h-10 rounded-[10px] border-[var(--line)] bg-[var(--surface)] pl-10 pr-20 text-[13px] shadow-sm focus-visible:border-[var(--accent)]"
           placeholder="Search by name or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+            <span className="text-[11px] tabular-nums text-[var(--ink-mute)]">
+              {filtered.length} found
+            </span>
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearch("")}
+              className="flex size-5 items-center justify-center rounded-full text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
       </div>
       <div className="seg">
         <button
@@ -1126,19 +1040,28 @@ function RolePermissionsSheet({
   onOpenChange: (v: boolean) => void;
 }) {
   const { mutate: savePerms, isPending: isSaving } = useUpdateRolePermissions();
+  const { data: catalog = [], isLoading: isCatalogLoading } =
+    usePermissionCatalog();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Keep the last role visible through the close animation (avoids the "jerk"
   // caused by unmounting content the instant the sheet starts closing).
   const [displayRole, setDisplayRole] = useState<RoleItem | null>(role);
 
+  const catalogKeys = useMemo(
+    () => flattenCatalog(catalog).map((entry) => entry.key),
+    [catalog],
+  );
+
   useEffect(() => {
-    if (role) {
+    if (role && catalogKeys.length > 0) {
+      const grantable = new Set(catalogKeys);
+      // Drop keys the server no longer recognises — it rejects unknown keys on
+      // save, so carrying a retired one through would block every edit.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayRole(role);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelected(new Set(role.permissions));
+      setSelected(new Set(role.permissions.filter((p) => grantable.has(p))));
     }
-  }, [role]);
+  }, [role, catalogKeys]);
 
   const toggle = (key: string) =>
     setSelected((prev) => {
@@ -1175,13 +1098,18 @@ function RolePermissionsSheet({
               <SheetDescription>
                 {ROLE_META[displayRole.name]?.desc ??
                   "Configure what this role can access."}{" "}
-                · {selected.size} of {ALL_PERMISSION_KEYS.length} granted
+                · {selected.size} of {catalogKeys.length} granted
               </SheetDescription>
             </SheetHeader>
 
             <div className="flex-1 overflow-y-auto px-5 py-3 flex flex-col divide-y divide-[var(--line-soft)]">
-              {PERMISSION_GROUPS.map((group) => {
-                const keys = group.perms.map((p) => p.key);
+              {isCatalogLoading && (
+                <p className="py-4 text-[12.5px] text-[var(--ink-mute)]">
+                  Loading permissions…
+                </p>
+              )}
+              {catalog.map((group) => {
+                const keys = group.permissions.map((entry) => entry.key);
                 const allOn = keys.every((k) => selected.has(k));
                 return (
                   <div key={group.group} className="py-2.5 first:pt-0">
@@ -1200,23 +1128,20 @@ function RolePermissionsSheet({
                       </Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                      {group.perms.map((p) => {
-                        const checked = selected.has(p.key);
-                        return (
-                          <label
-                            key={p.key}
-                            className="flex items-center gap-2.5 py-1 px-1.5 rounded-md text-[12.5px] hover:bg-[var(--surface-2)] cursor-pointer transition-colors"
-                          >
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => toggle(p.key)}
-                            />
-                            <span className="text-[var(--ink-soft)]">
-                              {p.label}
-                            </span>
-                          </label>
-                        );
-                      })}
+                      {group.permissions.map((entry) => (
+                        <label
+                          key={entry.key}
+                          className="flex items-center gap-2.5 py-1 px-1.5 rounded-md text-[12.5px] hover:bg-[var(--surface-2)] cursor-pointer transition-colors"
+                        >
+                          <Checkbox
+                            checked={selected.has(entry.key)}
+                            onCheckedChange={() => toggle(entry.key)}
+                          />
+                          <span className="text-[var(--ink-soft)]">
+                            {entry.label}
+                          </span>
+                        </label>
+                      ))}
                     </div>
                   </div>
                 );
@@ -1334,10 +1259,14 @@ export function TeamSection() {
   const canViewRoles = can("roles:view");
   const [tab, setTab] = useState<TeamTab>("members");
 
+  // Same queries the tabs use — React Query dedupes, so the counts are free.
+  const { data: members = [] } = useMembers();
+  const { data: roles = [] } = useRoles();
+
   const tabs = (
     [
-      { id: "members", label: "Members", icon: Users },
-      { id: "permissions", label: "Roles & Permissions", icon: Shield },
+      { id: "members", label: "Members", icon: Users, count: members.length },
+      { id: "permissions", label: "Roles & Permissions", icon: Shield, count: roles.length },
     ] as const
   ).filter((t) => t.id !== "permissions" || canViewRoles);
 
@@ -1357,22 +1286,43 @@ export function TeamSection() {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex items-center gap-1 p-1 rounded-[12px] bg-[var(--surface-2)] w-fit">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all duration-150",
-              tab === id
-                ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm"
-                : "text-[var(--ink-mute)] hover:text-[var(--ink)]",
-            )}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
+      <div
+        role="tablist"
+        aria-label="Access control sections"
+        className="flex items-center gap-1 p-1 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line)] w-fit"
+      >
+        {tabs.map(({ id, label, icon: Icon, count }) => {
+          const isSelected = tab === id;
+          return (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => setTab(id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-150",
+                isSelected
+                  ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
+                  : "text-[var(--ink-mute)] hover:text-[var(--ink)] hover:bg-[var(--surface)]",
+              )}
+            >
+              <Icon size={14} />
+              {label}
+              {count > 0 && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums",
+                    isSelected
+                      ? "bg-[var(--bg)]/20 text-[var(--bg)]"
+                      : "bg-[var(--surface)] text-[var(--ink-soft)]",
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab content */}

@@ -37,31 +37,33 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
 
   const isConnected = status === "CONNECTED";
   const isPending = status === "PENDING" || status === "CONNECTING";
+  const showsPhone = Boolean(isConnected && hovered && phone);
 
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      title={
+        isConnected
+          ? "WhatsApp connected"
+          : isPending
+            ? "WhatsApp connecting"
+            : "Connect WhatsApp"
+      }
+      aria-label="WhatsApp connection"
       className={cn(
-        "btn btn-ghost relative flex items-center gap-1.5 px-2 py-2 rounded-lg transition-all duration-200",
-        isConnected && "text-[#25D366]",
-        isPending && "text-[#CA8A04]",
-        !isConnected && !isPending && "text-[var(--ink-mute)]",
+        "relative inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] transition-all duration-200",
+        // The phone label keeps its flex slot when hidden — drop the gap too, or
+        // the icon sits off-centre in the circle.
+        showsPhone ? "gap-1.5 px-3" : "w-9 gap-0 px-0",
+        isConnected && "text-[var(--accent-2)] hover:bg-[var(--accent-soft)]",
+        isPending && "text-[var(--warning)] hover:bg-[var(--warning)]/10",
+        !isConnected &&
+          !isPending &&
+          "text-[var(--ink-mute)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]",
       )}
-      style={{
-        boxShadow:
-          isConnected && hovered
-            ? "0 0 0 2px rgba(37,211,102,0.2), 0 0 14px rgba(37,211,102,0.12)"
-            : isPending && hovered
-              ? "0 0 0 2px rgba(202,138,4,0.2)"
-              : undefined,
-      }}
     >
-      {isConnected && hovered && (
-        <span className="absolute inset-0 rounded-lg bg-[#25D366] opacity-[0.07] pointer-events-none" />
-      )}
-
       <svg
         width="16"
         height="16"
@@ -76,9 +78,7 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
       <span
         className={cn(
           "overflow-hidden whitespace-nowrap text-[11.5px] font-medium transition-all duration-200 relative z-10",
-          isConnected && hovered && phone
-            ? "max-w-[120px] opacity-100"
-            : "max-w-0 opacity-0",
+          showsPhone ? "max-w-[120px] opacity-100" : "max-w-0 opacity-0",
         )}
       >
         +{phone}
@@ -86,11 +86,11 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
 
       <span
         className={cn(
-          "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-[1.5px] border-[var(--surface)] transition-opacity duration-150",
-          isConnected && "bg-[#25D366]",
-          isPending && "bg-[#CA8A04] animate-pulse",
+          "absolute top-0.5 right-0.5 w-2 h-2 rounded-full border-[1.5px] border-[var(--surface)] transition-opacity duration-150",
+          isConnected && "bg-[var(--accent-2)]",
+          isPending && "bg-[var(--warning)] animate-pulse",
           !isConnected && !isPending && "bg-[var(--ink-mute)] opacity-50",
-          isConnected && hovered && phone && "opacity-0",
+          showsPhone && "opacity-0",
         )}
       />
     </button>

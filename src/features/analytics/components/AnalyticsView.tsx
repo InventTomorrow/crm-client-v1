@@ -9,6 +9,9 @@ import {
   type ChartConfig,
 } from "@/shared/ui/Chart";
 import {
+  CalendarCheck,
+  CalendarClock,
+  CalendarX,
   CheckCircle2,
   Flame,
   RefreshCw,
@@ -29,6 +32,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { UsageSummaryCard } from "@/features/billing/components/UsageSummaryCard";
 import { useAnalyticsOverview } from "../hooks/useAnalyticsOverview";
 import type { AiHandoff, FunnelStage, KpiCard, RangePreset } from "../types";
 
@@ -37,7 +41,9 @@ const PRESETS: RangePreset[] = ["3d", "7d", "30d", "90d"];
 const chartConfig = {
   leads: { label: "Leads", color: "var(--accent)" },
   orders: { label: "Orders", color: "var(--accent-2)" },
-  completed: { label: "Completed", color: "#7C3AED" },
+  completedOrders: { label: "Completed", color: "#7C3AED" },
+  appointments: { label: "Appointments", color: "var(--accent-2)" },
+  completedAppointments: { label: "Calls completed", color: "#7C3AED" },
 } satisfies ChartConfig;
 
 const KPI_ICONS: Record<string, LucideIcon> = {
@@ -46,6 +52,9 @@ const KPI_ICONS: Record<string, LucideIcon> = {
   closed: CheckCircle2,
   orders: ShoppingBag,
   revenue: Wallet,
+  appointments: CalendarClock,
+  completedAppointments: CalendarCheck,
+  cancelledAppointments: CalendarX,
   aiResolution: Zap,
 };
 
@@ -100,6 +109,8 @@ function KpiTile({ kpi }: { kpi: KpiCard }) {
         ? `${kpi.value}%`
         : kpi.value.toLocaleString();
   const Trend = kpi.up ? TrendingUp : TrendingDown;
+  // Direction and desirability are separate — no-shows trending up is bad news.
+  const isImproving = kpi.lowerIsBetter ? !kpi.up : kpi.up;
   const Icon = KPI_ICONS[kpi.key] ?? Zap;
   return (
     <div className="card kpi group relative overflow-hidden p-4 transition-shadow hover:shadow-md">
@@ -112,7 +123,7 @@ function KpiTile({ kpi }: { kpi: KpiCard }) {
           <span
             className={cn(
               "badge font-medium inline-flex items-center gap-1",
-              kpi.up
+              isImproving
                 ? "bg-[rgba(34,197,94,0.12)] text-[#15803D]"
                 : "bg-[rgba(239,68,68,0.12)] text-[#DC2626]",
             )}
@@ -304,12 +315,13 @@ export function AnalyticsView() {
             ))}
           </div>
 
-          {/* The one graph: Leads vs Orders */}
+          {/* The one graph — the server names it and picks the metrics, so a
+              booking workspace gets appointments where a store gets orders. */}
           <div className="card mb-3.5 p-[18px]">
             <div className="mb-2.5">
-              <h3 className="text-[14px] font-semibold">Leads vs Orders</h3>
+              <h3 className="text-[14px] font-semibold">{data.chart.title}</h3>
               <div className="text-[12px] text-[var(--ink-mute)]">
-                New leads and paid orders per day
+                {data.chart.subtitle}
               </div>
             </div>
             <ChartContainer config={chartConfig} className="h-[280px] w-full">
@@ -340,27 +352,16 @@ export function AnalyticsView() {
                   }
                 />
                 <ChartLegend content={<ChartLegendContent />} />
-                <Line
-                  dataKey="leads"
-                  type="monotone"
-                  stroke="var(--color-leads)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  dataKey="orders"
-                  type="monotone"
-                  stroke="var(--color-orders)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  dataKey="completed"
-                  type="monotone"
-                  stroke="var(--color-completed)"
-                  strokeWidth={2}
-                  dot={false}
-                />
+                {data.chart.metrics.map((metric) => (
+                  <Line
+                    key={metric}
+                    dataKey={metric}
+                    type="monotone"
+                    stroke={`var(--color-${metric})`}
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                ))}
               </RLineChart>
             </ChartContainer>
           </div>
@@ -377,6 +378,11 @@ export function AnalyticsView() {
               <FunnelChart data={data.funnel} />
             </div>
             <AiHandoffCard data={data.aiHandoff} />
+          </div>
+
+          {/* Account plan consumption — full breakdown at Settings → Usage. */}
+          <div className="mt-3.5">
+            <UsageSummaryCard />
           </div>
         </>
       )}

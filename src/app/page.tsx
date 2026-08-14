@@ -1,5 +1,12 @@
 import { LandingPage } from "@/features/landing/components/LandingPage";
-import type { Metadata } from "next";
+import { LANDING_FAQ_ITEMS } from "@/features/landing/constants";
+import {
+  JsonLd,
+  faqSchema,
+  softwareApplicationSchema,
+  webPageSchema,
+} from "@/shared/seo/jsonLd";
+import { buildPageMetadata } from "@/shared/seo/metadata";
 import { Inter } from "next/font/google";
 import type { CSSProperties } from "react";
 
@@ -9,25 +16,24 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant",
-  description:
-    "Reply faster, manage every lead, send broadcasts, and convert more customers, all from one simple WhatsApp sales platform built for WhatsApp-first businesses.",
-  openGraph: {
-    title: "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant",
-    url: "https://asaarabta.com",
-    description:
-      "Reply faster, manage every lead, send broadcasts, and convert more customers, all from one simple WhatsApp sales platform built for WhatsApp-first businesses.",
-    images: [
-      {
-        url: "/assets/images/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant",
-      },
-    ],
-  },
-};
+const HOME_TITLE = "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant";
+const HOME_DESCRIPTION =
+  "Reply faster, manage every lead, send broadcasts, and convert more customers, all from one simple WhatsApp sales platform built for WhatsApp-first businesses.";
+
+export const metadata = buildPageMetadata({
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  path: "/",
+  isPublic: true,
+  keywords: [
+    "WhatsApp CRM",
+    "WhatsApp CRM Pakistan",
+    "WhatsApp sales automation",
+    "AI WhatsApp auto reply",
+    "WhatsApp broadcast",
+    "lead management",
+  ],
+});
 
 export default function RootPage() {
   return (
@@ -41,6 +47,17 @@ export default function RootPage() {
         } as CSSProperties
       }
     >
+      <JsonLd
+        nodes={[
+          webPageSchema({
+            name: HOME_TITLE,
+            description: HOME_DESCRIPTION,
+            path: "/",
+          }),
+          softwareApplicationSchema(),
+          faqSchema(LANDING_FAQ_ITEMS),
+        ]}
+      />
       <LandingPage />
     </div>
   );

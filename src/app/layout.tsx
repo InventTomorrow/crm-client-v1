@@ -1,11 +1,19 @@
 import { Providers } from "@/lib/providers";
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import Script from "next/script";
 // GTM analytics: the snippet boots the container, GTMProvider tracks SPA pageviews.
 import { GTM_ID } from "@/lib/gtm";
 import { GTMProvider } from "@/shared/analytics/GTMProvider";
+import {
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_NAME,
+  SITE_URL,
+} from "@/shared/lib/site";
+import { JsonLd, organizationSchema, webSiteSchema } from "@/shared/seo/jsonLd";
+import { PUBLIC_PAGE_ROBOTS } from "@/shared/seo/metadata";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -14,25 +22,46 @@ const manrope = Manrope({
   weight: ["400", "500", "600", "700"],
 });
 
+const DEFAULT_TITLE =
+  "AsaanRabta – Turn WhatsApp Into Your 24/7 Sales Team (Pakistan WhatsApp CRM)";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://asaanrabta.com",
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default:
-      "AsaanRabta – Turn WhatsApp Into Your 24/7 Sales Team (Pakistan WhatsApp CRM)",
-    template: "%s · AsaanRabta",
+    default: DEFAULT_TITLE,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "WhatsApp CRM in Pakistan with AI that responds to customers instantly. Reply faster, manage leads, send broadcasts, and grow sales. Fast setup, Urdu & English support.",
-  applicationName: "AsaanRabta",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  category: "business",
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  manifest: "/manifest.webmanifest",
+  robots: PUBLIC_PAGE_ROBOTS,
+  // No layout-level canonical on purpose — it would stamp every page that
+  // doesn't set its own with the wrong URL. Pages declare theirs via buildPageMetadata().
   openGraph: {
-    title: "AsaanRabta",
-    description:
-      "WhatsApp CRM in Pakistan with AI that responds to customers instantly. Reply faster, manage leads, send broadcasts, and grow sales. Fast setup, Urdu & English support.",
-    siteName: "AsaanRabta",
     type: "website",
+    title: DEFAULT_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: SITE_NAME,
+    locale: SITE_LOCALE,
   },
+  twitter: {
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B141A" },
+  ],
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -74,6 +103,7 @@ export default function RootLayout({
             />
           </noscript>
         )}
+        <JsonLd nodes={[organizationSchema(), webSiteSchema()]} />
         <GTMProvider>
           <Providers>
             <Analytics />

@@ -1,6 +1,7 @@
 import { useAppStore } from "@/lib/appStore";
 import { parseCsv } from "@/lib/csv";
 import { useUrlState } from "@/shared/hooks/useUrlState";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BulkItem, Product } from "../types";
@@ -8,21 +9,17 @@ import { CATEGORIES } from "../types";
 import { objectToRow, rowToBulkItem } from "../utils/importProductsCsv";
 import { stockStatus } from "../utils/stock";
 import {
-  useAddProduct,
   useBulkAddProducts,
   useDeleteProduct,
   useDuplicateProduct,
   useProducts,
-  useUpdateProduct,
 } from "./useProducts";
-import type { ProductFormData } from "../types";
 
 /** Owns all Inventory tab state, derived data, and mutation wiring so the
  * view component stays a thin render layer. */
 export function useInventoryView() {
-  const { data: products = [], isLoading } = useProducts();
-  const addProduct = useAddProduct();
-  const updateProduct = useUpdateProduct();
+  const router = useRouter();
+  const { data: products = [], isLoading, refetch, isFetching } = useProducts();
   const deleteProduct = useDeleteProduct();
   const duplicateProduct = useDuplicateProduct();
   const bulkAddProducts = useBulkAddProducts();
@@ -41,14 +38,13 @@ export function useInventoryView() {
   const [filterStockParam, setFilterStock] = useUrlState("stock");
   const filterStock = filterStockParam as "" | "in" | "low" | "out";
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const [singleOpen, setSingleOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [importedItems, setImportedItems] = useState<BulkItem[] | undefined>(
     undefined,
   );
   const [parsingImport, setParsingImport] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<Product[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
 
@@ -68,9 +64,6 @@ export function useInventoryView() {
   const importRef = useRef<HTMLInputElement>(null);
   const importType = useRef<"csv" | "json">("csv");
   const addMenuRef = useRef<HTMLDivElement>(null);
-
-  const isSaving = addProduct.isPending || updateProduct.isPending;
-  const isDeleting = deleteProduct.isPending;
 
   useEffect(() => {
     if (!addMenuOpen) return;
@@ -121,66 +114,28 @@ export function useInventoryView() {
     [products, search, filterCat, filterStock],
   );
 
-  const closeDialog = useCallback(() => {
-    setSingleOpen(false);
-    setEditing(null);
-  }, []);
+  const goToAddProduct = useCallback(
+    () => router.push("/inventory/new"),
+    [router],
+  );
 
-  const openEditDialog = useCallback((p: Product) => {
-    setEditing(p);
-    setSingleOpen(true);
-  }, []);
-
-  const openAddDialog = useCallback(() => {
-    setEditing(null);
-    setSingleOpen(true);
-  }, []);
+  const goToEditProduct = useCallback(
+    (product: Product) => router.push(`/inventory/${product.id}/edit`),
+    [router],
+  );
 
   const openBulkDialog = useCallback(() => setBulkOpen(true), []);
 
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
-    const id = deleteTarget.id;
-    const fromEditor = editing?.id === id;
-    deleteProduct.mutate(id, {
-      onSuccess: () => {
-        if (fromEditor) closeDialog();
-      },
-    });
+    deleteProduct.mutate(deleteTarget.id);
     setDeleteTarget(null);
-  }, [deleteTarget, editing, deleteProduct, closeDialog]);
+  }, [deleteTarget, deleteProduct]);
 
   const confirmBulkDelete = useCallback(() => {
     bulkDeleteTargets.forEach((p) => deleteProduct.mutate(p.id));
     setBulkDeleteTargets([]);
   }, [bulkDeleteTargets, deleteProduct]);
-
-  const handleSave = useCallback(
-    (data: ProductFormData & { imageUrls: string[] }) => {
-      const payload = {
-        name: data.name,
-        sku: data.sku || undefined,
-        price: data.price,
-        discountPercentage: data.discountPercentage,
-        stock: data.stock,
-        description: data.desc || undefined,
-        category: data.cat || undefined,
-        sizes: data.sizes ?? [],
-        gender: data.gender || undefined,
-        color: data.color || undefined,
-        imageUrls: data.imageUrls,
-      };
-      if (editing?.id) {
-        updateProduct.mutate(
-          { id: editing.id, data: payload },
-          { onSuccess: closeDialog },
-        );
-      } else {
-        addProduct.mutate(payload, { onSuccess: closeDialog });
-      }
-    },
-    [editing, updateProduct, addProduct, closeDialog],
-  );
 
   // Imported files are parsed into review cards and opened in the bulk dialog.
   // Nothing is written to the DB until the user confirms there.
@@ -265,6 +220,8 @@ export function useInventoryView() {
   return {
     products,
     isLoading,
+    refetch,
+    isFetching,
     inventoryView,
     setInventoryView,
     tier,
@@ -279,14 +236,14 @@ export function useInventoryView() {
     toggleStock,
     addMenuOpen,
     setAddMenuOpen,
-    singleOpen,
     bulkOpen,
     setBulkOpen,
     importedItems,
     parsingImport,
-    editing,
     deleteTarget,
     setDeleteTarget,
+    previewProduct,
+    setPreviewProduct,
     bulkDeleteTargets,
     setBulkDeleteTargets,
     exportOpen,
@@ -295,17 +252,13 @@ export function useInventoryView() {
     importRef,
     importType,
     addMenuRef,
-    isSaving,
-    isDeleting,
     stockCounts,
     filtered,
-    closeDialog,
-    openEditDialog,
-    openAddDialog,
+    goToAddProduct,
+    goToEditProduct,
     openBulkDialog,
     confirmDelete,
     confirmBulkDelete,
-    handleSave,
     handleImport,
     closeBulkDialog,
     saveBulkItems,

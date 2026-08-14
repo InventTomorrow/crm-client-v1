@@ -6,14 +6,18 @@ import {
   switchWorkspace,
 } from "@/features/auth/services/authService";
 import { useAppStore } from "@/lib/appStore";
-import { extractErrorMessage } from "@/lib/utils";
+import type { BusinessVertical } from "@/lib/business-verticals";
+import { extractApiErrorCode, extractErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   createTenant,
   deleteTenant,
+  getMyWorkspaceStats,
   getTenants,
   restoreTenant,
+  updateTenant,
 } from "../services/tenantService";
 import type { CreateTenantPayload } from "../types";
 
@@ -26,9 +30,19 @@ export function useTenants() {
   });
 }
 
+/** Headline counters (leads, members, revenue, appointments) per workspace the user belongs to */
+export function useMyWorkspaceStats() {
+  return useQuery({
+    queryKey: ["workspace-stats"],
+    queryFn: getMyWorkspaceStats,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 /** Create a new workspace, then immediately switch into it */
 export function useCreateTenant() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
 
   return useMutation({
@@ -37,28 +51,47 @@ export function useCreateTenant() {
       toast.success(`Workspace "${tenant.name}" created!`);
       setWorkspaceSwitching(true, tenant.name);
       try {
-        // 1. Refetch /me so the new membership is in the cache before we switch
-        await queryClient.invalidateQueries({ queryKey: ["me"] });
-        await queryClient.refetchQueries({ queryKey: ["me"] });
-
-        // 2. Now switch — the backend membership exists, so it will succeed
+        // Switch first — the new membership already exists server-side by the
+        // time createTenant resolves, and switching rotates the JWT cookies to
+        // scope them to the new tenant.
         await switchWorkspace(tenant.id);
+
+        // Wipe all cached data (including the old /me) and refetch /me fresh —
+        // its roleId/tenant now reflect the new JWT, which useSyncActiveWorkspace
+        // relies on to confirm the switch instead of reverting it.
+        queryClient.clear();
+        await queryClient.fetchQuery({ queryKey: ["me"], queryFn: getMe });
         setCurrentWorkspace(tenant.id);
 
-        // 3. Invalidate all data for the new workspace
-        await queryClient.invalidateQueries({ queryKey: ["tenants"] });
-        await queryClient.invalidateQueries({ queryKey: ["leads"] });
-        await queryClient.invalidateQueries({ queryKey: ["inventory"] });
-        queryClient.removeQueries({ queryKey: ["conversations"] });
-        queryClient.removeQueries({ queryKey: ["conversation"] });
-        queryClient.removeQueries({ queryKey: ["orders"] });
-
-        await new Promise((r) => setTimeout(r, 600));
+        await new Promise((r) => setTimeout(r, 80));
       } catch (err) {
         toast.error(extractErrorMessage(err, "Could not switch to new workspace."));
       } finally {
         setWorkspaceSwitching(false);
       }
+    },
+    onError: (error) => {
+      toast.error(extractErrorMessage(error));
+      // Out of workspace slots — take the user straight to the upgrade options.
+      if (extractApiErrorCode(error) === "billing/plan_limit_reached") {
+        router.push("/settings/billing");
+      }
+    },
+  });
+}
+
+/** Update the active workspace's business category */
+export function useUpdateBusinessVertical() {
+  const queryClient = useQueryClient();
+  const { currentWorkspaceId } = useAppStore();
+
+  return useMutation({
+    mutationFn: (businessVertical: BusinessVertical) =>
+      updateTenant(currentWorkspaceId, { businessVertical }),
+    onSuccess: () => {
+      toast.success('Business category updated');
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
@@ -67,6 +100,7 @@ export function useCreateTenant() {
 /** Switch to an existing workspace */
 export function useSwitchWorkspace() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
 
   return useMutation({
@@ -88,7 +122,9 @@ export function useSwitchWorkspace() {
       await queryClient.fetchQuery({ queryKey: ["me"], queryFn: getMe });
       // 3. Update workspace ID — triggers key-based remount of <main>, unmounting all page components
       setCurrentWorkspace(tenantId);
-      // 4. Let React process the unmount before lifting the overlay
+      // 4. Land on the dashboard — the previous route may not exist or be permitted in the new workspace
+      router.push("/dashboard");
+      // 5. Let React process the unmount before lifting the overlay
       await new Promise((r) => setTimeout(r, 80));
       setWorkspaceSwitching(false);
     },

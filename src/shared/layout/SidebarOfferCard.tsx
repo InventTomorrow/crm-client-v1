@@ -1,49 +1,108 @@
 "use client";
-import { formatOfferCountdown, getOfferDaysRemaining } from "@/features/landing/constants";
-import { PLANS } from "@/features/landing/plans";
-import { ArrowRight, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
+import { useSubscription } from "@/features/billing/hooks/useBilling";
 
-// Sidebar surfaces the cheapest plan that's actually purchasable right now.
-const offerPlan = PLANS.find((p) => !p.comingSoon) ?? PLANS[0];
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86_400_000));
+}
 
-/**
- * Temporary launch-offer promo — always shown for now since there's no
- * billing/upgrade flow yet. Once billing exists, gate this on whether the
- * workspace has already redeemed the offer.
- */
-export function SidebarOfferCard() {
-  const daysRemaining = getOfferDaysRemaining();
-  if (daysRemaining <= 0) return null;
+interface PromptCardProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string | null;
+  cta: string;
+  tone?: "accent" | "warning";
+}
 
+function PromptCard({ icon, title, subtitle, cta, tone = "accent" }: PromptCardProps) {
+  const isWarning = tone === "warning";
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-[var(--accent)]/25 bg-[var(--accent-soft)] px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--accent)]">
-        <Zap size={12} className="shrink-0" />
-        {offerPlan.discountPercentage}% off — limited time
-      </div>
-      <div className="flex items-baseline gap-1.5">
-        <span className="text-[13.5px] font-semibold text-[var(--ink)]">
-          Rs {offerPlan.price}
-        </span>
-        {offerPlan.originalPrice && (
-          <span className="text-[11px] text-[var(--ink-mute)] line-through">
-            Rs {offerPlan.originalPrice}
-          </span>
-        )}
-        <span className="text-[10.5px] text-[var(--ink-mute)]">
-          {offerPlan.period}
-        </span>
-      </div>
-      <div className="text-[10.5px] text-[var(--ink-mute)]">
-        {formatOfferCountdown(daysRemaining)}
-      </div>
-      <Link
-        href="/#pricing"
-        className="mt-0.5 flex items-center justify-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-1.5 text-[11.5px] font-semibold text-white no-underline transition-opacity hover:opacity-90"
+    <div
+      className={
+        isWarning
+          ? "flex flex-col gap-2 rounded-lg border border-warning/25 bg-warning-soft px-3 py-2.5"
+          : "flex flex-col gap-2 rounded-lg border border-[var(--accent)]/25 bg-[var(--accent-soft)] px-3 py-2.5"
+      }
+    >
+      <div
+        className={
+          isWarning
+            ? "flex items-center gap-1.5 text-[12px] font-semibold text-warning-foreground"
+            : "flex items-center gap-1.5 text-[12px] font-semibold text-[var(--accent)]"
+        }
       >
-        Upgrade <ArrowRight size={12} />
+        {icon}
+        {title}
+      </div>
+      {subtitle && <div className="text-[10.5px] text-[var(--ink-mute)]">{subtitle}</div>}
+      <Link
+        href="/settings/billing"
+        className={
+          isWarning
+            ? "mt-0.5 flex items-center justify-center gap-1 rounded-md bg-warning px-2.5 py-1.5 text-[11.5px] font-semibold text-warning-foreground no-underline transition-opacity hover:opacity-90"
+            : "mt-0.5 flex items-center justify-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-1.5 text-[11.5px] font-semibold text-white no-underline transition-opacity hover:opacity-90"
+        }
+      >
+        {cta} <ArrowRight size={12} />
       </Link>
     </div>
   );
+}
+
+/** Sidebar footer upsell — reflects the workspace's actual subscription state. */
+export function SidebarOfferCard() {
+  const { data: subscription, isLoading } = useSubscription();
+  if (isLoading) return null;
+
+  if (!subscription) {
+    return <PromptCard icon={<Zap size={12} className="shrink-0" />} title="Choose a plan to get started" cta="View plans" />;
+  }
+
+  if (subscription.status === "PAST_DUE") {
+    return (
+      <PromptCard
+        icon={<AlertTriangle size={12} className="shrink-0" />}
+        title="Payment past due"
+        subtitle="Update your payment to keep your workspace active."
+        cta="Fix billing"
+        tone="warning"
+      />
+    );
+  }
+
+  // Cancel-at-period-end: status still reads ACTIVE/TRIALING, but the plan
+  // won't renew — worth a prompt before it actually lapses.
+  if (subscription.cancelledAt && (subscription.status === "ACTIVE" || subscription.status === "TRIALING")) {
+    const days = daysUntil(subscription.currentPeriodEnd);
+    return (
+      <PromptCard
+        icon={<AlertTriangle size={12} className="shrink-0" />}
+        title={days !== null ? `Access ends in ${days} day${days === 1 ? "" : "s"}` : "Subscription won't renew"}
+        subtitle="Pick a plan to keep your workspace active."
+        cta="Choose a plan"
+        tone="warning"
+      />
+    );
+  }
+
+  if (subscription.status === "TRIALING") {
+    const days = daysUntil(subscription.trialEndsAt);
+    return (
+      <PromptCard
+        icon={<Zap size={12} className="shrink-0" />}
+        title={days !== null ? `Trial ends in ${days} day${days === 1 ? "" : "s"}` : "Trial active"}
+        subtitle={subscription.plan?.name}
+        cta="Upgrade now"
+      />
+    );
+  }
+
+  // ACTIVE, not on a trial, not cancelled — no upsell needed.
+  if (subscription.status === "ACTIVE") return null;
+
+  // CANCELLED (or cancel-at-period-end already elapsed) — re-prompt.
+  return <PromptCard icon={<Zap size={12} className="shrink-0" />} title="Your subscription has ended" cta="Renew plan" />;
 }

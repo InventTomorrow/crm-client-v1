@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/apiClient';
+import { formatActivityDate } from '@/lib/date';
 import type { Channel } from '@/lib/mockData';
-import type { Lead, LeadStatus } from '../types';
+import type { BulkImportResult, DuplicatePhoneMatch, Lead, LeadStatus } from '../types';
 
 const CHANNEL_TO_FE: Record<string, Channel> = {
   WHATSAPP: 'wa', INSTAGRAM: 'ig', MESSENGER: 'fb',
@@ -17,7 +18,9 @@ const toLead = (data: any): Lead => ({
   email: data.email || undefined,
   conversationId: data.conversations?.[0]?.id ?? undefined,
   lastMsg: data.conversations?.[0]?.messages?.[0]?.content || '',
-  time: data.lastContactedAt ? new Date(data.lastContactedAt).toLocaleDateString() : 'New',
+  createdAt: data.createdAt ?? undefined,
+  lastContactedAt: data.lastContactedAt ?? undefined,
+  time: formatActivityDate(data.lastContactedAt, 'Never contacted'),
   unread: 0,
   // Pipeline value = sum of the lead's realised (non-cancelled) order totals.
   value: Array.isArray(data.orders)
@@ -126,7 +129,8 @@ export const restoreLead = async (id: string): Promise<{ id: string }> => {
   return { id };
 };
 
-// Delete = hard delete (permanent). Blocked by the API when the lead has orders.
+// Delete = hard delete (permanent). Takes the lead's orders, appointments,
+// qualification and chats with it — always confirm before calling.
 export const deleteLead = async (id: string): Promise<{ id: string }> => {
   await apiClient.delete(`/leads/${id}`);
   return { id };
@@ -149,8 +153,14 @@ export const parseImportCsv = async (csvContent: string): Promise<any[]> => {
   return response.data.data;
 };
 
-export const bulkCreateLeads = async (leads: any[]): Promise<{ total: number; successful: number; failed: number }> => {
+export const bulkCreateLeads = async (leads: any[]): Promise<BulkImportResult> => {
   const response = await apiClient.post('/leads/import/commit', { leads });
   return response.data.data;
+};
+
+/** Checks phones against every lead in the tenant, not just the loaded page. */
+export const checkDuplicatePhones = async (phones: string[]): Promise<DuplicatePhoneMatch[]> => {
+  const response = await apiClient.post('/leads/check-duplicates', { phones });
+  return response.data.data.duplicates;
 };
 

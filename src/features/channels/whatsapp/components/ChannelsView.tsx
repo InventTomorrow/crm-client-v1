@@ -4,7 +4,7 @@ import { WhatsAppCard } from "./WhatsAppCard";
 
 export function ChannelsView() {
   return (
-    <div className="max-w-3xl space-y-6 p-4 md:p-8">
+    <div className="max-w-5xl space-y-6 p-4 md:p-8">
       <div>
         <h1 className="text-[22px] font-semibold font-[var(--font-head)]">
           Channels
@@ -14,7 +14,7 @@ export function ChannelsView() {
         </p>
       </div>
 
-      <div className="flex max-w-md flex-col gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
         <WhatsAppCard />
         <OrderApiCard />
       </div>

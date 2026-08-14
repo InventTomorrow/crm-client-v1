@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/shared/ui/Button";
-import { Checkbox } from "@/shared/ui/Checkbox";
 import { Input } from "@/shared/ui/Input";
 import {
   Form,
@@ -15,6 +14,7 @@ import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useDeletedAccountRedirect } from "../hooks/useAccountRecovery";
 import { useLogin } from "../hooks/useAuth";
 import { loginSchema, type LoginData } from "../types";
 import { AuthFormError } from "./AuthFormError";
@@ -28,6 +28,8 @@ export function LoginView() {
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  useDeletedAccountRedirect(error, form.getValues("email"));
 
   const onSubmit = (data: LoginData) => {
     mutate(data);
@@ -116,11 +118,7 @@ export function LoginView() {
               )}
             />
 
-            <div className="flex items-center justify-between mt-0.5">
-              <label className="flex items-center gap-2 text-[12.5px] text-[var(--ink-soft)] cursor-pointer select-none">
-                <Checkbox defaultChecked />
-                Remember me
-              </label>
+            <div className="flex justify-end mt-0.5">
               <Link
                 href="/auth/forgot-password"
                 className="text-[12px] text-[var(--accent)] hover:underline"
@@ -128,7 +126,6 @@ export function LoginView() {
                 Forgot password?
               </Link>
             </div>
-
             <Button
               type="submit"
               size="lg"
@@ -142,12 +139,22 @@ export function LoginView() {
         </Form>
 
         <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/auth/register"
+            className="text-[var(--accent)] hover:underline font-medium"
+          >
+            Sign up
+          </Link>
+        </p>
+
+        <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
           By signing in you agree to our{" "}
-          <Link href="#" className="text-[var(--ink-soft)] hover:underline">
+          <Link href="/legal/terms" className="text-[var(--ink-soft)] hover:underline">
             Terms
           </Link>{" "}
           and{" "}
-          <Link href="#" className="text-[var(--ink-soft)] hover:underline">
+          <Link href="/legal/privacy" className="text-[var(--ink-soft)] hover:underline">
             Privacy
           </Link>
           .

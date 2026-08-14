@@ -6,6 +6,9 @@ export interface Lead extends BaseLead {
   phone?: string;
   email?: string;
   conversationId?: string;
+  /** Raw ISO timestamps from the API — `time` is only their display form. */
+  createdAt?: string;
+  lastContactedAt?: string;
 }
 
 export type LeadsView = 'kanban' | 'list' | 'table';
@@ -14,6 +17,23 @@ export type LeadsChannelFilter = 'all' | 'wa' | 'ig' | 'fb' | 'tk';
 export interface LeadsFilter {
   channel: LeadsChannelFilter;
   search: string;
+}
+
+/** A phone that already belongs to a lead. Mirrors the server's DuplicatePhoneMatch. */
+export interface DuplicatePhoneMatch {
+  /** Echoes the exact string that was checked, so callers can key errors by it. */
+  phone: string;
+  leadId: string;
+  name: string | null;
+  /** Archived matches are restored by an import rather than blocking it. */
+  archived: boolean;
+}
+
+export interface BulkImportResult {
+  total: number;
+  successful: number;
+  skipped: number;
+  failed: number;
 }
 
 export const STATUS_META: Record<string, { label: string; color: string; tint: string }> = {

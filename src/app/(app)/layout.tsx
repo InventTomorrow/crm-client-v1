@@ -1,83 +1,10 @@
-"use client";
-import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
-import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
-import { useAppStore } from "@/lib/appStore";
-import { AppSidebar } from "@/shared/layout/AppSidebar";
-import { AppTopBar } from "@/shared/layout/AppTopBar";
-import { EscalateDialog } from "@/shared/layout/EscalateDialog";
-import { HotToast } from "@/shared/layout/HotToast";
-import { MobileDock } from "@/shared/layout/MobileDock";
-import { RouteGuard } from "@/shared/layout/RouteGuard";
-import { WorkspaceSwitchingOverlay } from "@/shared/layout/WorkspaceSwitchingOverlay";
-import { Button } from "@/shared/ui/Button";
-import { Toaster } from "@/shared/ui/Sonner";
-import { Minimize2 } from "lucide-react";
+import { AppShell } from "@/shared/layout/AppShell";
+import { PRIVATE_PAGE_ROBOTS } from "@/shared/seo/metadata";
+import type { Metadata } from "next";
 
-function FullScreenBar() {
-  const { toggleFullScreen } = useAppStore();
-  return (
-    <div className="h-8 flex-shrink-0 flex items-center justify-end px-3 bg-[var(--surface)] border-b border-[var(--line)]">
-      <Button
-        variant="ghost"
-        onClick={toggleFullScreen}
-        className="h-7 px-2 text-[var(--ink-mute)] text-[11px] flex items-center gap-1.5"
-        title="Exit full screen"
-      >
-        <Minimize2 size={13} />
-        <span>Exit full screen</span>
-      </Button>
-    </div>
-  );
-}
+// Server layout so the whole authenticated CRM segment carries noindex.
+export const metadata: Metadata = { robots: PRIVATE_PAGE_ROBOTS };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const {
-    mobileMenuOpen,
-    setMobileMenuOpen,
-    escalatingLead,
-    hotLead,
-    setEscalatingLead,
-    setHotLead,
-    isFullScreen,
-    currentWorkspaceId,
-  } = useAppStore();
-
-  // Keep the displayed workspace in lock-step with the tenant the server serves.
-  useSyncActiveWorkspace();
-
-  return (
-    <div className="app-shell">
-      {!isFullScreen && (
-        <AppSidebar
-          mobileOpen={mobileMenuOpen}
-          onCloseMobile={() => setMobileMenuOpen(false)}
-        />
-      )}
-      <div className="app-main">
-        {!isFullScreen && (
-          <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
-        )}
-        {isFullScreen && <FullScreenBar />}
-        <main key={currentWorkspaceId} className="app-content">
-          <RouteGuard>{children}</RouteGuard>
-        </main>
-      </div>
-      <MobileDock />
-
-      {escalatingLead && (
-        <EscalateDialog
-          lead={escalatingLead}
-          onClose={() => setEscalatingLead(null)}
-          onConfirm={() => {
-            setEscalatingLead(null);
-            setHotLead(escalatingLead);
-          }}
-        />
-      )}
-      {hotLead && <HotToast lead={hotLead} onClose={() => setHotLead(null)} />}
-      <Toaster richColors position="top-right" />
-      <WorkspaceSwitchingOverlay />
-      <WelcomeDemoDialog />
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }

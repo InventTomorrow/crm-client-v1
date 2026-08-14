@@ -30,3 +30,22 @@ export const denyWATakeover = async (): Promise<void> => {
 export const updateWAConfig = async (config: Partial<WAConfig>): Promise<void> => {
   await apiClient.patch('/whatsapp/config', config);
 };
+
+export interface CheckNumberResult {
+  exists: boolean;
+  phone: string | null;
+  isConnected: boolean;
+  jid?: string;
+  reason:
+    | 'NO_PHONE'
+    | 'INVALID_PHONE'
+    | 'CHANNEL_DISCONNECTED'
+    | 'NOT_ON_WHATSAPP'
+    | 'VERIFICATION_FAILED'
+    | null;
+}
+
+export const checkWhatsAppNumber = async (input: { phone?: string; leadId?: string }): Promise<CheckNumberResult> => {
+  const res = await apiClient.post('/whatsapp/check-number', input);
+  return res.data.data;
+};

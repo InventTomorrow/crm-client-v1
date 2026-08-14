@@ -1,6 +1,7 @@
 "use client";
 import { useGenerateCheckout, useSendReceipt } from "@/features/checkout/hooks";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
+import { formatDateTime } from "@/lib/date";
 import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -57,6 +58,7 @@ export default function LeadDetailSheet({
   onRestore,
   onDelete,
   onOpenChat,
+  isOpeningChat = false,
   isDeleting,
 }: {
   lead: Lead | null;
@@ -66,12 +68,12 @@ export default function LeadDetailSheet({
   onArchive: (lead: Lead) => void;
   onRestore: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
-  onOpenChat: (lead: Lead) => void;
+  onOpenChat: (lead: Lead) => void | Promise<void>;
+  /** True while the lead's WhatsApp number is being verified — spinner stays until navigation. */
+  isOpeningChat?: boolean;
   isDeleting?: boolean;
 }) {
   // All hooks must run before the early return below — call them unconditionally.
-  // Spinner stays until navigation unmounts the sheet — the chat opens in the inbox.
-  const [opening, setOpening] = useState(false);
   const { data: orders, isLoading: ordersLoading } = useLeadOrders(lead?.id);
   const generateCheckout = useGenerateCheckout();
   const sendReceipt = useSendReceipt();
@@ -216,16 +218,29 @@ export default function LeadDetailSheet({
           {/* Stats */}
           <div className="grid grid-cols-2 gap-2">
             {[
-              { l: "Lifetime Value", v: pkr(lead.value || 0) },
-              { l: "Last Active", v: `${lead.time} ago` },
-              { l: "Channel", v: lead.channel.toUpperCase() },
-            ].map((k, i) => (
-              <div key={i} className="card p-[11px]">
+              { label: "Lifetime Value", value: pkr(lead.value || 0) },
+              { label: "Channel", value: lead.channel.toUpperCase() },
+              {
+                label: "Joined",
+                value: formatDateTime(lead.createdAt),
+                compact: true,
+              },
+              {
+                label: "Last Activity",
+                value: formatDateTime(lead.lastContactedAt, "Never contacted"),
+                compact: true,
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="card p-[11px]">
                 <div className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-                  {k.l}
+                  {stat.label}
                 </div>
-                <div className="font-semibold text-[17px] mt-1 text-[var(--ink)] font-[var(--font-head)]">
-                  {k.v}
+                <div
+                  className={`font-semibold mt-1 text-[var(--ink)] font-[var(--font-head)] ${
+                    stat.compact ? "text-[13px]" : "text-[17px]"
+                  }`}
+                >
+                  {stat.value}
                 </div>
               </div>
             ))}
@@ -321,18 +336,15 @@ export default function LeadDetailSheet({
             <Button
               variant="outline"
               className="flex-1 justify-center"
-              disabled={opening}
-              onClick={() => {
-                setOpening(true);
-                onOpenChat(lead);
-              }}
+              disabled={isOpeningChat}
+              onClick={() => onOpenChat(lead)}
             >
-              {opening ? (
+              {isOpeningChat ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
                 <Inbox size={14} />
               )}{" "}
-              {opening ? "Opening…" : "Open Chat"}
+              {isOpeningChat ? "Opening…" : "Open Chat"}
             </Button>
             <PermissionGuard permission="leads:edit">
               <Button

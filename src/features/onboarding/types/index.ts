@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import { BUSINESS_VERTICAL_VALUES, type BusinessVertical } from '@/lib/business-verticals';
+
+export const selectCategorySchema = z.object({
+  businessVertical: z.enum(BUSINESS_VERTICAL_VALUES),
+});
 
 export const connectChannelSchema = z.object({
   skip: z.boolean().optional(),
@@ -18,7 +23,9 @@ export const saveChatbotSchema = z.object({
   aiEnabled: z.boolean(),
 });
 
+export type SelectCategoryData = z.infer<typeof selectCategorySchema>;
 export type ConnectChannelData = z.infer<typeof connectChannelSchema>;
 export type SaveChatbotData = z.infer<typeof saveChatbotSchema>;
 
-export type OnboardingStep = 'CHANNEL' | 'CHATBOT' | 'DONE';
+export type { BusinessVertical };
+export type OnboardingStep = 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE';

@@ -1,7 +1,7 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Loader2, Plus, Zap, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import {
   useChatbotConfig,
@@ -9,7 +9,12 @@ import {
   useUpdateBusinessProfile,
 } from '../hooks/useChatbotSettings';
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
+import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
+import { useUpdateBusinessVertical } from '@/features/tenant/hooks/useTenant';
+import { BUSINESS_VERTICALS, getBusinessVerticalShortLabel, type BusinessVertical } from '@/lib/business-verticals';
+import { VerticalCard } from '@/features/onboarding/components/VerticalCard';
 import { Button } from '@/shared/ui/Button';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { CRMSwitch } from '@/shared/ui/CRMSwitch';
 import { Input } from '@/shared/ui/Input';
 import { Textarea } from '@/shared/ui/Textarea';
@@ -30,12 +35,16 @@ const DEFAULTS: BusinessProfileForm = {
   supportPhone: '',
   supportEmail: '',
   shareSupportContactOnHandoff: false,
+  notifyOnEscalation: false,
 };
 
 export function BusinessSection() {
   const { data, isLoading } = useChatbotConfig();
   const { mutate: save, isPending } = useUpdateBusinessProfile();
   const { mutate: generate, isPending: isGenerating } = useGenerateBusinessIntro();
+  const { tenant } = useCurrentTenant();
+  const { mutate: updateVertical, isPending: isUpdatingVertical } = useUpdateBusinessVertical();
+  const [pendingVertical, setPendingVertical] = useState<BusinessVertical | null>(null);
 
   const form = useForm<BusinessProfileForm>({
     resolver: zodResolver(businessProfileSchema),
@@ -57,6 +66,7 @@ export function BusinessSection() {
         supportPhone: data.config.supportPhone ?? '',
         supportEmail: data.config.supportEmail ?? '',
         shareSupportContactOnHandoff: data.config.shareSupportContactOnHandoff ?? false,
+        notifyOnEscalation: data.config.notifyOnEscalation ?? false,
       });
     }
   }, [data, form]);
@@ -86,6 +96,44 @@ export function BusinessSection() {
       <p className="text-[12.5px] text-[var(--ink-mute)] -mt-2">
         Describe your business and add common Q&amp;A — the chatbot uses these to answer questions about you.
       </p>
+
+      <div className="card p-[22px] flex flex-col gap-3">
+        <div>
+          <h4 className="text-[13.5px] font-semibold">Business category</h4>
+          <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+            Determines which AI agents and workspace pages you get. Changing this switches your
+            AI assistant&apos;s behavior immediately.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {BUSINESS_VERTICALS.map((vertical, index) => (
+            <VerticalCard
+              key={vertical.value}
+              icon={vertical.icon}
+              title={vertical.title}
+              description={vertical.description}
+              selected={tenant?.businessVertical === vertical.value}
+              disabled={isUpdatingVertical}
+              index={index}
+              onSelect={() => setPendingVertical(vertical.value)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <ConfirmDialog
+        open={!!pendingVertical}
+        onClose={() => setPendingVertical(null)}
+        onConfirm={() => {
+          if (!pendingVertical) return;
+          updateVertical(pendingVertical, { onSuccess: () => setPendingVertical(null) });
+        }}
+        title={`Switch to ${pendingVertical ? getBusinessVerticalShortLabel(pendingVertical) : ''}?`}
+        description="This changes which AI agents and workspace pages your team gets, effective immediately. Existing data isn't deleted, but the assistant's behavior switches right away."
+        confirmLabel="Switch business type"
+        destructive={false}
+        loading={isUpdatingVertical}
+      />
 
       <Form {...form}>
         <form
@@ -296,6 +344,30 @@ export function BusinessSection() {
                         Off by default — the AI tells the customer a human will
                         follow up, without naming a contact. Turn on to include
                         the name/phone/email above in that message.
+                      </p>
+                    </div>
+                    <FormControl>
+                      <CRMSwitch on={field.value} onChange={() => field.onChange(!field.value)} />
+                    </FormControl>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notifyOnEscalation"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
+                    <div>
+                      <FormLabel className="text-[12.5px]">
+                        Notify me on WhatsApp when a chat is escalated
+                      </FormLabel>
+                      <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                        Off by default. Turn on to receive the lead&apos;s info and
+                        escalation reason on the support number above whenever the
+                        AI hands a conversation off to a human.
                       </p>
                     </div>
                     <FormControl>

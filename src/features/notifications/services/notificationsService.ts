@@ -26,7 +26,12 @@ export async function getNotificationPreferences() {
   return res.data.data;
 }
 
-export async function updateNotificationPreference(patch: { type: NotificationType; inApp?: boolean; email?: boolean }) {
+export async function updateNotificationPreference(patch: {
+  type: NotificationType;
+  inApp?: boolean;
+  email?: boolean;
+  whatsapp?: boolean;
+}) {
   const res = await apiClient.patch<{ success: true; data: NotificationPreference }>('/notifications/preferences', patch);
   return res.data.data;
 }

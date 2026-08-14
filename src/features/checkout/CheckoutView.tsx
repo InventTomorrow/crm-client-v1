@@ -149,6 +149,11 @@ export function CheckoutView({ token }: { token: string }) {
             <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
               Delivery details
             </p>
+            {data?.shipping?.customerName && (
+              <p className="text-[11px] text-info-foreground">
+                Pre-filled from a previous attempt — please review before confirming.
+              </p>
+            )}
             <FormField
               control={form.control}
               name="customerName"

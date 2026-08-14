@@ -173,7 +173,7 @@ export const INITIAL_WORKSPACES: Workspace[] = [
 
 export const INITIAL_PROFILE: UserProfile = {
   name: 'Ahmed Raza',
-  email: 'ahmed@saleflow.pk',
+  email: 'ahmed@asaanrabta.pk',
   phone: '+92 321 4567890',
   business: 'AsaanRabta Boutique',
   city: 'Lahore',

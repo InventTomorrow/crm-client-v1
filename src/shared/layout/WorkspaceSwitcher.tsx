@@ -1,99 +1,18 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import {
-  useCreateTenant,
-  useSwitchWorkspace,
-} from "@/features/tenant/hooks/useTenant";
+import { useSwitchWorkspace } from "@/features/tenant/hooks/useTenant";
 import { useAppStore } from "@/lib/appStore";
+import { getBusinessVerticalShortLabel, type BusinessVertical } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/Dialog";
-import { Input } from "@/shared/ui/Input";
-import { Button } from "@/shared/ui/Button";
 import { Check, ChevronDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
 
 type Membership = {
-  tenant: { id: string; name: string; type: string };
+  tenant: { id: string; name: string; type: string; businessVertical: BusinessVertical };
   role: { name: string };
 };
-
-// ─────────────────────────────────────────────────────────────
-// Create Dialog — calls real API
-// ─────────────────────────────────────────────────────────────
-function CreateDialog({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const { mutate: createTenant, isPending } = useCreateTenant();
-
-  const handleCreate = () => {
-    if (!name.trim()) return;
-    createTenant({ name: name.trim() }, { onSuccess: () => onClose() });
-  };
-
-  return (
-    <Dialog
-      open
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
-    >
-      <DialogContent
-        className="flex flex-col gap-0 p-0 sm:max-w-[440px] overflow-hidden"
-        showCloseButton={false}
-      >
-        <DialogHeader className="px-5 py-4 border-b border-[var(--line)]">
-          <DialogTitle className="text-[16px] font-semibold">
-            Create new workspace
-          </DialogTitle>
-          <DialogDescription className="text-[12px] text-[var(--ink-mute)] mt-0.5">
-            Each workspace has isolated data, members, and billing.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="p-5 flex flex-col gap-3.5">
-          <div>
-            <label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
-              Workspace name
-            </label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Karachi Karahi Co."
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreate();
-              }}
-              disabled={isPending}
-            />
-          </div>
-          <p className="text-[11.5px] text-[var(--ink-mute)] leading-relaxed">
-            You&apos;ll be the <strong>Owner</strong> of this workspace. Team members
-            can be invited after setup.
-          </p>
-        </div>
-
-        <div className="px-[14px] py-[14px] border-t border-[var(--line)] flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={!name.trim() || isPending}>
-            {isPending ? (
-              <><Loader2 size={13} className="animate-spin" /> Creating…</>
-            ) : (
-              <><Plus size={13} /> Create workspace</>
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────
 // Colour palette helper
@@ -145,7 +64,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
     id: m.tenant.id,
     name: m.tenant.name,
     short: m.tenant.name.substring(0, 2).toUpperCase(),
-    plan: m.tenant.type === "INDIVIDUAL" ? "Individual" : "Organization",
+    category: getBusinessVerticalShortLabel(m.tenant.businessVertical),
     role: m.role.name,
     color: PALETTE[idx % PALETTE.length],
   });
@@ -198,7 +117,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
             {workspace.name}
           </div>
           <div className="text-[11px] text-[var(--ink-mute)]">
-            {workspace.plan} · {workspace.role}
+            {workspace.category} · {workspace.role}
           </div>
         </div>
         {isActive && (
@@ -245,7 +164,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
                 {current.name}
               </div>
               <div className="text-[11px] text-[var(--ink-mute)] flex items-center gap-1 mt-px">
-                <span>{current.plan}</span>
+                <span>{current.category}</span>
                 <span>·</span>
                 <span>{current.role}</span>
               </div>
@@ -314,7 +233,9 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         </div>
       )}
 
-      {showCreate && <CreateDialog onClose={() => setShowCreate(false)} />}
+      {showCreate && (
+        <CreateWorkspaceDialog onClose={() => setShowCreate(false)} />
+      )}
     </div>
   );
 }

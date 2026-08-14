@@ -2,28 +2,14 @@ import { z } from 'zod';
 
 export type { UserProfile, NotifSettings } from '@/lib/mockData';
 
-export type SettingsSection =
-  | 'profile'
-  | 'notif'
-  | 'chatbot'
-  | 'business'
-  | 'channels'
-  | 'tier'
-  | 'access'
-  | 'system'
-  | 'workspaces';
-
-export const SECTION_NAV: Array<{ id: SettingsSection; label: string }> = [
-  { id: 'profile',    label: 'Profile' },
-  { id: 'notif',      label: 'Notifications' },
-  { id: 'chatbot',    label: 'Chatbot' },
-  { id: 'business',   label: 'Business' },
-  { id: 'channels',   label: 'Channels' },
-  { id: 'tier',       label: 'Integration Tier' },
-  { id: 'access',     label: 'Access Control' },
-  { id: 'workspaces', label: 'Workspaces' },
-  { id: 'system',     label: 'System Status' },
-];
+// ──────────────────── Profile form ────────────────────
+export const profileSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+export type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Chatbot config (mirrors server chatbot.dto) ────────────────────
 export const chatbotConfigSchema = z.object({
@@ -54,6 +40,7 @@ export const businessProfileSchema = z.object({
       message: 'Enter a valid email',
     }),
   shareSupportContactOnHandoff: z.boolean(),
+  notifyOnEscalation: z.boolean(),
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
@@ -83,6 +70,7 @@ export interface ChatbotConfigResponse {
     supportPhone: string | null;
     supportEmail: string | null;
     shareSupportContactOnHandoff: boolean;
+    notifyOnEscalation: boolean;
   } | null;
   workspaceName: string | null;
 }

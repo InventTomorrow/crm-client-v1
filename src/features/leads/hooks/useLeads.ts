@@ -19,6 +19,7 @@ import {
   exportLeads,
   parseImportCsv,
   bulkCreateLeads,
+  checkDuplicatePhones,
   type UpdateLeadInput,
 } from '../services/leadsService';
 
@@ -197,16 +198,29 @@ export function useBulkCreateLeads() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: bulkCreateLeads,
-    onSuccess: (data) => {
-      toast.success(`Imported ${data.successful} leads successfully.`);
-      if (data.failed > 0) {
-        toast.warning(`${data.failed} leads failed to import.`);
+    onSuccess: (result) => {
+      toast.success(`Imported ${result.successful} lead${result.successful === 1 ? '' : 's'} successfully.`);
+      if (result.skipped > 0) {
+        toast.warning(`${result.skipped} skipped — a lead with that phone already exists.`);
+      }
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} lead${result.failed === 1 ? '' : 's'} failed to import.`);
       }
     },
     onError: (error) => {
       toast.error(extractErrorMessage(error) || 'Failed to import leads');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
+  });
+}
+
+/** Duplicate-phone check against the whole tenant — the paginated cache can't answer this. */
+export function useCheckDuplicatePhones() {
+  return useMutation({
+    mutationFn: checkDuplicatePhones,
+    onError: (error) => {
+      toast.error(extractErrorMessage(error) || 'Could not check for duplicate phones');
+    },
   });
 }
 

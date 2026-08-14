@@ -1,10 +1,14 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
-import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
+import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
+import { StatCard } from "@/shared/ui/StatCard";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
   Download,
@@ -17,10 +21,8 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { StatCard } from "@/shared/ui/StatCard";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useUrlState } from "@/shared/hooks/useUrlState";
+import { useOpenLeadChat } from "../hooks/useOpenLeadChat";
 import {
   useAddLead,
   useArchiveLead,
@@ -33,9 +35,9 @@ import {
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
 import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
-import { ExportDialog } from "@/shared/ui/ExportDialog";
+import type { LeadFormData } from "../validations.lead";
 import LeadDetailSheet from "./LeadDetailSheet";
-import LeadFormDialog, { type LeadFormData } from "./LeadFormDialog";
+import LeadFormDialog from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
 import KanbanView from "./views/KanbanView";
 import ListView from "./views/ListView";
@@ -43,7 +45,6 @@ import TableView from "./views/TableView";
 
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
-  const router = useRouter();
   const [archived, setArchived] = useState(false);
   const {
     data,
@@ -51,6 +52,8 @@ export function LeadsView() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
+    refetch,
+    isFetching,
   } = useInfiniteLeads(archived);
   const leads = useMemo(() => data?.pages.flat() ?? [], [data]);
   const addLead = useAddLead();
@@ -155,9 +158,12 @@ export function LeadsView() {
     setSelected(null);
   };
 
-  const handleOpenChat = (lead: Lead) => {
-    router.push(`/inbox?lead=${lead.id}`);
-  };
+  const {
+    openLeadChat,
+    verifyingLeadId,
+    unreachableMessage,
+    dismissUnreachableMessage,
+  } = useOpenLeadChat();
 
   const isSavingForm = addLead.isPending || updateLead.isPending;
 
@@ -184,16 +190,17 @@ export function LeadsView() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
+          <RefreshButton
+            onRefresh={() => refetch()}
+            isRefreshing={isFetching}
+          />
           <PermissionGuard permission="leads:export">
             <Button variant="outline" onClick={() => openExport(leads)}>
               <Download size={13} /> Export
             </Button>
           </PermissionGuard>
           <PermissionGuard permission="leads:create">
-            <Button
-              variant="outline"
-              onClick={() => setImportOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Layers size={13} /> Import
             </Button>
             <Button onClick={() => openCreate()}>
@@ -206,12 +213,7 @@ export function LeadsView() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="Total leads" value={leads.length} Icon={Users} />
-        <StatCard
-          label="Hot leads"
-          value={hot}
-          Icon={Flame}
-          accent="#EF4444"
-        />
+        <StatCard label="Hot leads" value={hot} Icon={Flame} accent="#EF4444" />
         <StatCard
           label="Projected value"
           value={pkr(totalValue)}
@@ -242,7 +244,11 @@ export function LeadsView() {
           spacing={0}
           value={filter.channel}
           onValueChange={(v) => {
-            if (v) setFilter((f) => ({ ...f, channel: v as LeadsFilter["channel"] }));
+            if (v)
+              setFilter((f) => ({
+                ...f,
+                channel: v as LeadsFilter["channel"],
+              }));
           }}
         >
           {CHANNEL_TABS.map((c) => (
@@ -314,7 +320,8 @@ export function LeadsView() {
               archived={archived}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
-              onOpenChat={handleOpenChat}
+              onOpenChat={openLeadChat}
+              openingChatLeadId={verifyingLeadId}
               onEdit={openEdit}
               onArchive={handleArchive}
               onRestore={handleRestore}
@@ -332,7 +339,8 @@ export function LeadsView() {
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
-          onOpenChat={handleOpenChat}
+          onOpenChat={openLeadChat}
+          openingChatLeadId={verifyingLeadId}
           onEdit={openEdit}
           onArchive={handleArchive}
           onRestore={handleRestore}
@@ -346,7 +354,8 @@ export function LeadsView() {
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
-          onOpenChat={handleOpenChat}
+          onOpenChat={openLeadChat}
+          openingChatLeadId={verifyingLeadId}
           onEdit={openEdit}
           onArchive={handleArchive}
           onRestore={handleRestore}
@@ -380,7 +389,8 @@ export function LeadsView() {
         onArchive={handleArchive}
         onRestore={handleRestore}
         onDelete={handleDelete}
-        onOpenChat={handleOpenChat}
+        onOpenChat={openLeadChat}
+        isOpeningChat={verifyingLeadId === selected?.id}
         isDeleting={deleteLead.isPending}
       />
       <LeadFormDialog
@@ -411,18 +421,28 @@ export function LeadsView() {
         title="Delete lead permanently?"
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" and their chat history will be permanently removed. This can't be undone. Leads with orders can't be deleted — archive them instead.`
+            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone — archive the lead instead if you may need any of it.`
             : undefined
         }
         confirmLabel="Delete permanently"
         loading={deleteLead.isPending}
       />
       <ConfirmDialog
+        open={!!unreachableMessage}
+        onClose={dismissUnreachableMessage}
+        onConfirm={dismissUnreachableMessage}
+        title="Number Not Registered"
+        description={unreachableMessage ?? undefined}
+        confirmLabel="Got it"
+        cancelLabel="Close"
+        destructive
+      />
+      <ConfirmDialog
         open={bulkDeleteTargets.length > 0}
         onClose={() => setBulkDeleteTargets([])}
         onConfirm={confirmBulkDelete}
         title={`Delete ${bulkDeleteTargets.length} lead${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
-        description="The selected leads will be permanently removed. This can't be undone."
+        description="The selected leads will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone."
         confirmLabel="Delete leads"
         loading={deleteLead.isPending}
       />

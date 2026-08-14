@@ -1,5 +1,13 @@
 "use client";
-import { Archive, ArchiveRestore, Inbox, MapPin, Pencil, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Inbox,
+  Loader2,
+  MapPin,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useMemo } from "react";
 import { pkr } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -18,6 +26,7 @@ export default function ListView({
   onSelect,
   onStatusChange,
   onOpenChat,
+  openingChatLeadId = null,
   onEdit,
   onArchive,
   onRestore,
@@ -29,6 +38,8 @@ export default function ListView({
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onOpenChat: (l: Lead) => void;
+  /** Lead whose WhatsApp number is being verified before the inbox opens. */
+  openingChatLeadId?: string | null;
   onEdit: (l: Lead) => void;
   onArchive: (l: Lead) => void;
   onRestore: (l: Lead) => void;
@@ -63,7 +74,7 @@ export default function ListView({
                   {l.city}
                 </span>
                 <span>·</span>
-                <span>{l.time} ago</span>
+                <span>{l.time}</span>
                 {l.value > 0 && (
                   <>
                     <span>·</span>
@@ -121,9 +132,15 @@ export default function ListView({
               <Button
                 variant="outline"
                 size="sm"
+                disabled={openingChatLeadId !== null}
                 onClick={() => onOpenChat(l)}
               >
-                <Inbox size={12} /> Open
+                {openingChatLeadId === l.id ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Inbox size={12} />
+                )}{" "}
+                Open
               </Button>
             </div>
           </div>

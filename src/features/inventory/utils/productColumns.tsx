@@ -1,8 +1,14 @@
 import { getImageUrl, pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import type { ColumnDef } from "@/shared/ui/DataTable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/DropdownMenu";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
-import { Copy, ImageIcon, Pencil, Trash2 } from "lucide-react";
+import { Copy, ImageIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import type { Product } from "../types";
 
 /** Builds the list-view column defs. Kept out of InventoryView so the row
@@ -110,35 +116,41 @@ export function buildProductColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "",
+      size: 56,
       enableSorting: false,
       cell: ({ row }) => {
         const p = row.original;
         return (
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => onEdit(p)}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Actions for ${p.name}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical size={15} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Pencil size={13} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => onDuplicate(p)}
-            >
-              <Copy size={13} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-[var(--destructive)]"
-              onClick={() => onDelete(p)}
-            >
-              <Trash2 size={13} />
-            </Button>
-          </div>
+              <DropdownMenuItem onSelect={() => onEdit(p)}>
+                <Pencil size={13} /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onDuplicate(p)}>
+                <Copy size={13} /> Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => onDelete(p)}
+              >
+                <Trash2 size={13} /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         );
       },
     },

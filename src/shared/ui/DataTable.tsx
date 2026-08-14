@@ -26,6 +26,13 @@ import {
 import { useState } from "react";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./Select";
 
 export type { ColumnDef };
 
@@ -140,11 +147,11 @@ export function DataTable<TData>({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {/* Toolbar */}
+      {/* Toolbar — the caller's row grows to the full width so it lays out identically to the
+          same toolbar rendered outside a table (e.g. a grid view of the same data). */}
       {(toolbar || selectable) && (
         <div className="flex items-center gap-2 flex-wrap">
-          {toolbar}
-          <div className="flex-1" />
+          {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
           {selectedRows.length > 0 && (
             <div className="flex items-center gap-1.5 text-[12.5px] text-[var(--ink-soft)]">
               <span className="font-medium text-[var(--ink)]">{selectedRows.length}</span> selected
@@ -305,15 +312,21 @@ export function DataTable<TData>({
         {/* Items per page */}
         <div className="flex items-center gap-2">
           <span>Rows per page</span>
-          <select
-            value={pageSize}
-            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-            className="input py-1 px-2 h-auto text-[12.5px] w-auto"
+          <Select
+            value={String(pageSize)}
+            onValueChange={(nextPageSize) => handlePageSizeChange(Number(nextPageSize))}
           >
-            {PAGE_SIZES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            <SelectTrigger size="sm" aria-label="Rows per page" className="w-[72px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZES.map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Page info */}

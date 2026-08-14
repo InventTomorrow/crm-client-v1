@@ -6,29 +6,7 @@ import Container from "../Container";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
 import { PlusIcon, MinusIcon } from "../icons";
-
-const ITEMS = [
-  {
-    q: "Win Leads While They Are Still Interested",
-    a: "Fast replies help you reach customers before competitors do.",
-  },
-  {
-    q: "Save Your Team Hours Every Day",
-    a: "Let AI handle the repeat questions while your team focuses on closing deals and high-value conversations.",
-  },
-  {
-    q: "Never Lose Track Of A Customer",
-    a: "Every WhatsApp inquiry is saved with context, history, and status — no more digging through chats to find what was promised.",
-  },
-  {
-    q: "Manage Multiple Numbers Easily",
-    a: "Connect up to 3 WhatsApp numbers in one dashboard. Perfect for businesses with multiple branches or teams.",
-  },
-  {
-    q: "Grow Without Hiring More Staff",
-    a: "Scale your customer support and sales conversations without proportional headcount growth. Your AI assistant works 24/7.",
-  },
-];
+import { LANDING_FAQ_ITEMS } from "@/features/landing/constants";
 
 export default function FAQ() {
   const [open, setOpen] = useState(0);
@@ -45,7 +23,7 @@ export default function FAQ() {
           subtitle="Got questions? We've got you covered—here are some quick answers to help you get the most out of AsaanRabta."
         />
         <div className="mt-14 max-w-3xl mx-auto space-y-3">
-          {ITEMS.map((item, i) => {
+          {LANDING_FAQ_ITEMS.map((item, i) => {
             const isOpen = open === i;
             return (
               <Reveal key={i} delay={i * 0.05}>
@@ -59,7 +37,7 @@ export default function FAQ() {
                   >
                     <div className="flex-1">
                       <h3 className="text-base md:text-lg font-bold text-brand-dark">
-                        {item.q}
+                        {item.question}
                       </h3>
                       <AnimatePresence>
                         {isOpen && (
@@ -77,7 +55,7 @@ export default function FAQ() {
                             }}
                             className="text-brand-text text-[14px] leading-relaxed overflow-hidden"
                           >
-                            {item.a}
+                            {item.answer}
                           </motion.p>
                         )}
                       </AnimatePresence>

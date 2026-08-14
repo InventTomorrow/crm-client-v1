@@ -6,6 +6,7 @@ import { Loader2, Bot, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveChatbotSchema, type SaveChatbotData } from '../types';
 import { useSaveChatbot, useOnboardingStatus } from '../hooks/useOnboarding';
+import { getDefaultMessages } from '../utils/defaultMessages';
 import { OnboardingShell } from './OnboardingShell';
 import { Button } from '@/shared/ui/Button';
 import { Textarea } from '@/shared/ui/Textarea';
@@ -25,24 +26,16 @@ const PERSONALITIES = [
   { key: 'PERSUASIVE' as const, label: 'Persuasive', desc: 'Confident & sales-driven' },
 ] as const;
 
-/** Personalized starter messages seeded with the workspace name. */
-function defaultMessages(workspace: string) {
-  return {
-    greetingMessage: `Hi! 👋 Welcome to ${workspace}. How can I help you today?`,
-    escalationMessage: `Let me connect you with someone from the ${workspace} team — please hold on a moment.`,
-    fallbackMessage: `Sorry, I didn't quite catch that. Could you rephrase it so I can help you better?`,
-  };
-}
-
 export function ChatbotView() {
   const { mutate: save, isPending } = useSaveChatbot();
   const { data: status } = useOnboardingStatus();
   const workspaceName = status?.workspaceName?.trim();
+  const businessVertical = status?.businessVertical ?? 'ECOMMERCE';
 
   const form = useForm<SaveChatbotData>({
     resolver: zodResolver(saveChatbotSchema),
     defaultValues: {
-      ...defaultMessages(workspaceName || 'our store'),
+      ...getDefaultMessages(workspaceName || 'our store', businessVertical),
       aiPersonality: 'CASUAL',
       aiEnabled: true,
     },
@@ -50,17 +43,17 @@ export function ChatbotView() {
 
   const { isDirty } = form.formState;
 
-  // Re-seed the messages with the real workspace name once it loads —
+  // Re-seed the messages with the real workspace name + vertical once they load —
   // only while the owner hasn't started editing.
   useEffect(() => {
     if (workspaceName && !isDirty) {
       form.reset({
-        ...defaultMessages(workspaceName),
+        ...getDefaultMessages(workspaceName, businessVertical),
         aiPersonality: 'CASUAL',
         aiEnabled: true,
       });
     }
-  }, [workspaceName, isDirty, form]);
+  }, [workspaceName, businessVertical, isDirty, form]);
 
   const aiEnabled = form.watch('aiEnabled');
 

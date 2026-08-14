@@ -52,8 +52,10 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useMessageAllowance } from "../../billing/hooks/useBilling";
 import { BroadcasterDialog } from "../../broadcast/components/BroadcasterDialog";
 import { useWAStatus } from "../../channels/whatsapp/hooks/useWhatsApp";
+import { checkWhatsAppNumber } from "../../channels/whatsapp/services/whatsapp.service";
 import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
 import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
 import { STATUS_META } from "../../leads/types";
@@ -142,6 +144,13 @@ export function InboxView() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+
+  const [isValidatingLead, setIsValidatingLead] = useState(false);
+  const [invalidLeadDialog, setInvalidLeadDialog] = useState<{
+    open: boolean;
+    phone?: string | null;
+    reason?: string | null;
+  }>({ open: false });
 
   const [chatBg, setChatBg] = useState<string>(() => {
     if (typeof window !== "undefined")
@@ -254,6 +263,14 @@ export function InboxView() {
   // server rejects sends otherwise, so we disable the composer to match.
   const { data: waStatus } = useWAStatus();
   const waConnected = waStatus?.status === "CONNECTED";
+  // Plan send quotas — the server enforces these on every send; this mirrors
+  // them in the composer so the agent sees the limit instead of a 403.
+  const { data: messageAllowance } = useMessageAllowance();
+  const messageLimitReached = messageAllowance?.messages.exhausted === true;
+  const imageLimitReached =
+    messageLimitReached || messageAllowance?.imageMessages.exhausted === true;
+  const voiceLimitReached =
+    messageLimitReached || messageAllowance?.voiceMessages.exhausted === true;
   const uploadMut = useUploadAttachment();
   const escalateMut = useEscalate();
   const resolveMut = useResolve();
@@ -417,52 +434,82 @@ export function InboxView() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat,
-  // creating the conversation on the fly if the lead has never been messaged.
-  // The ?lead= param is stripped from the URL the moment it's consumed — if we
-  // left it there, every later re-render (a refetch on tab refocus, a manual
-  // click on a different chat) would re-run this effect and snap the user
-  // back to that same lead's chat.
+  // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat.
+  // `verified=1` means the number was already checked on the way here — don't re-check it.
   const openedLeadRef = useRef<string | null>(null);
   useEffect(() => {
     const leadId = searchParams.get("lead");
     if (!leadId) return;
-    const conv = conversations.find((c) => c.lead.id === leadId);
-    if (conv) {
-      setSelectedConversationId(conv.id);
-      setChatWasDeleted(false);
-      setMobPane("chat");
-      router.replace(pathname, { scroll: false });
-      return;
-    }
-    // Wait for the list before deciding the lead has no chat, then open one
-    // (idempotent server-side) exactly once and pin it so it lists immediately.
+
     if (
       listLoading ||
       openedLeadRef.current === leadId ||
-      openConvMut.isPending
+      openConvMut.isPending ||
+      isValidatingLead
     )
       return;
+
     openedLeadRef.current = leadId;
-    openConvMut.mutate(leadId, {
-      onSuccess: (detail) => {
-        setPinnedConv({
-          id: detail.id,
-          channel: detail.channel,
-          escalationStatus: detail.escalationStatus,
-          aiEnabled: detail.aiEnabled,
-          lastMessageAt: detail.lastMessageAt,
-          unreadCount: detail.unreadCount,
-          createdAt: detail.createdAt,
-          lead: detail.lead,
-          messages: [],
-        });
-        setSelectedConversationId(detail.id);
+
+    const openLeadConversation = () => {
+      const conv = conversations.find((c) => c.lead.id === leadId);
+      if (conv) {
+        setSelectedConversationId(conv.id);
         setChatWasDeleted(false);
         setMobPane("chat");
         router.replace(pathname, { scroll: false });
-      },
-    });
+        return;
+      }
+      openConvMut.mutate(leadId, {
+        onSuccess: (detail) => {
+          setPinnedConv({
+            id: detail.id,
+            channel: detail.channel,
+            escalationStatus: detail.escalationStatus,
+            aiEnabled: detail.aiEnabled,
+            lastMessageAt: detail.lastMessageAt,
+            unreadCount: detail.unreadCount,
+            createdAt: detail.createdAt,
+            lead: detail.lead,
+            messages: [],
+          });
+          setSelectedConversationId(detail.id);
+          setChatWasDeleted(false);
+          setMobPane("chat");
+          router.replace(pathname, { scroll: false });
+        },
+        onError: () => {
+          router.replace(pathname, { scroll: false });
+        },
+      });
+    };
+
+    if (searchParams.get("verified") === "1") {
+      openLeadConversation();
+      return;
+    }
+
+    setIsValidatingLead(true);
+
+    checkWhatsAppNumber({ leadId })
+      .then((res) => {
+        setIsValidatingLead(false);
+        if (!res.exists) {
+          router.replace(pathname, { scroll: false });
+          setInvalidLeadDialog({
+            open: true,
+            phone: res.phone,
+            reason: res.reason,
+          });
+          return;
+        }
+        openLeadConversation();
+      })
+      .catch(() => {
+        setIsValidatingLead(false);
+        router.replace(pathname, { scroll: false });
+        toast.error("Failed to verify WhatsApp registration.");
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, conversations, listLoading]);
 
@@ -544,6 +591,13 @@ export function InboxView() {
       toast.error("WhatsApp is not connected. Reconnect in Channels to send.");
       return;
     }
+    // Editing rewrites an existing message, so it doesn't consume quota.
+    if (!editingMessageId && messageLimitReached) {
+      toast.error(
+        "Your plan's message limit is used up. Upgrade to keep sending.",
+      );
+      return;
+    }
     stopAgentTyping();
     if (editingMessageId) {
       if (editMut.isPending) return;
@@ -575,6 +629,24 @@ export function InboxView() {
       toast.error("WhatsApp is not connected. Reconnect in Channels to send.");
       return;
     }
+    if (messageLimitReached) {
+      toast.error(
+        "Your plan's message limit is used up. Upgrade to keep sending.",
+      );
+      return;
+    }
+    if (pendingFile.mimeType.startsWith("image/") && imageLimitReached) {
+      toast.error(
+        "Your plan's image message limit is used up. Upgrade to send images.",
+      );
+      return;
+    }
+    if (pendingFile.mimeType.startsWith("audio/") && voiceLimitReached) {
+      toast.error(
+        "Your plan's voice message limit is used up. Upgrade to send voice notes.",
+      );
+      return;
+    }
     try {
       const { url } = await uploadMut.mutateAsync(pendingFile.file);
       await sendMediaMut.mutateAsync({
@@ -595,6 +667,12 @@ export function InboxView() {
   };
 
   const startRecording = async () => {
+    if (voiceLimitReached) {
+      toast.error(
+        "Your plan's voice message limit is used up. Upgrade to send voice notes.",
+      );
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
@@ -1342,12 +1420,38 @@ export function InboxView() {
                     messages.
                   </Link>
                 )}
+                {waConnected && messageLimitReached && (
+                  <PermissionGuard
+                    permission="billing:view"
+                    fallback={
+                      <div className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E]">
+                        <AlertTriangle size={12} className="shrink-0" />
+                        Your plan’s message limit is used up — ask the workspace
+                        owner to upgrade.
+                      </div>
+                    }
+                  >
+                    <Link
+                      href="/settings/billing"
+                      className="flex items-center justify-between gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E] hover:opacity-90"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <AlertTriangle size={12} className="shrink-0" />
+                        Current plan’s message limit reached — sending is
+                        paused.
+                      </span>
+                      <span className="shrink-0 rounded-md bg-[#854D0E] px-2 py-0.5 text-[10.5px] font-semibold text-[#FEF9C3]">
+                        Upgrade plan
+                      </span>
+                    </Link>
+                  </PermissionGuard>
+                )}
                 <div className="flex items-end gap-1.5">
                   {/* + attachment dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
-                        disabled={!waConnected}
+                        disabled={!waConnected || messageLimitReached}
                         className="shrink-0 w-8 h-8 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-40 mb-0.5"
                         title="Attach"
                       >
@@ -1360,6 +1464,7 @@ export function InboxView() {
                       className="w-44"
                     >
                       <DropdownMenuItem
+                        disabled={imageLimitReached}
                         onClick={() => {
                           fileInputRef.current?.setAttribute(
                             "accept",
@@ -1369,6 +1474,11 @@ export function InboxView() {
                         }}
                       >
                         <Image size={14} className="mr-2" /> Photo
+                        {imageLimitReached && (
+                          <span className="ml-auto text-[10px] text-[var(--ink-mute)]">
+                            Limit reached
+                          </span>
+                        )}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
@@ -1393,6 +1503,7 @@ export function InboxView() {
                         <Video size={14} className="mr-2" /> Video
                       </DropdownMenuItem>
                       <DropdownMenuItem
+                        disabled={voiceLimitReached}
                         onClick={() => {
                           fileInputRef.current?.setAttribute(
                             "accept",
@@ -1402,6 +1513,11 @@ export function InboxView() {
                         }}
                       >
                         <FileAudio size={14} className="mr-2" /> Audio
+                        {voiceLimitReached && (
+                          <span className="ml-auto text-[10px] text-[var(--ink-mute)]">
+                            Limit reached
+                          </span>
+                        )}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1410,7 +1526,9 @@ export function InboxView() {
                   <textarea
                     rows={1}
                     value={draft}
-                    disabled={!waConnected}
+                    disabled={
+                      !waConnected || (messageLimitReached && !editingMessageId)
+                    }
                     onChange={(e) => {
                       setDraft(e.target.value);
                       if (e.target.value.trim()) notifyAgentTyping();
@@ -1427,7 +1545,9 @@ export function InboxView() {
                         ? "Connect WhatsApp to send messages…"
                         : editingMessageId
                           ? "Edit your message…"
-                          : "Type a message…"
+                          : messageLimitReached
+                            ? "Message limit reached — upgrade your plan…"
+                            : "Type a message…"
                     }
                     className="flex-1 resize-none rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] outline-none px-3.5 py-2 min-h-[38px] max-h-[120px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)] disabled:opacity-60 disabled:cursor-not-allowed overflow-y-auto"
                   />
@@ -1445,9 +1565,13 @@ export function InboxView() {
                   {/* Mic */}
                   <button
                     onClick={startRecording}
-                    disabled={!waConnected}
+                    disabled={!waConnected || voiceLimitReached}
                     className="flex-shrink-0 w-8 h-8 rounded-full text-[var(--ink-mute)] flex items-center justify-center disabled:opacity-40 mb-0.5"
-                    title="Voice message"
+                    title={
+                      voiceLimitReached
+                        ? "Voice message limit reached"
+                        : "Voice message"
+                    }
                   >
                     <Mic size={18} />
                   </button>
@@ -1458,6 +1582,7 @@ export function InboxView() {
                     disabled={
                       !waConnected ||
                       !draft.trim() ||
+                      (messageLimitReached && !editingMessageId) ||
                       (editingMessageId
                         ? editMut.isPending
                         : sendReplyMut.isPending)
@@ -1836,6 +1961,42 @@ export function InboxView() {
             })
           }
         />
+      )}
+
+      {/* Invalid WhatsApp Number Dialog */}
+      <ConfirmDialog
+        open={invalidLeadDialog.open}
+        onClose={() => setInvalidLeadDialog({ open: false })}
+        onConfirm={() => setInvalidLeadDialog({ open: false })}
+        title="WhatsApp Number Verification"
+        description={
+          invalidLeadDialog.reason === "NOT_ON_WHATSAPP"
+            ? `The phone number ${invalidLeadDialog.phone ? `(${invalidLeadDialog.phone})` : ""} for this lead is not registered on WhatsApp.`
+            : invalidLeadDialog.reason === "NO_PHONE"
+              ? "This lead does not have a phone number specified."
+              : invalidLeadDialog.reason === "INVALID_PHONE"
+                ? `The phone number ${invalidLeadDialog.phone ? `(${invalidLeadDialog.phone})` : ""} is invalid. Please include country code.`
+                : invalidLeadDialog.reason === "CHANNEL_DISCONNECTED"
+                  ? "WhatsApp is not connected. Please connect WhatsApp first in Settings/Channels."
+                  : invalidLeadDialog.reason === "VERIFICATION_FAILED"
+                    ? "Unable to verify this number on WhatsApp right now. Please try again."
+                    : "The phone number for this lead could not be verified on WhatsApp."
+        }
+        confirmLabel="Got it"
+        cancelLabel="Close"
+        destructive={true}
+      />
+
+      {/* WhatsApp Validation Loader */}
+      {isValidatingLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+          <div className="bg-[var(--surface)] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border border-[var(--line)]">
+            <Loader2 className="animate-spin text-[var(--accent)]" size={20} />
+            <span className="text-sm font-medium">
+              Validating WhatsApp number...
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

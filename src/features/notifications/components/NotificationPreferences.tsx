@@ -1,87 +1,136 @@
 'use client';
+import { cn } from '@/lib/utils';
+import { Check, Loader2, MessageCircle } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreference } from '../hooks/useNotifications';
+import { NOTIFICATION_PREFERENCE_META, NOTIFICATION_TYPES } from '../lib/preferenceMeta';
 import type { NotificationType } from '../types';
 
-// Display order + labels + default email behaviour (mirrors the server defaults).
-const TYPES: { type: NotificationType; label: string; emailDefault: boolean }[] = [
-  { type: 'NEW_MESSAGE', label: 'New inbound message', emailDefault: false },
-  { type: 'CHAT_ESCALATED', label: 'Chat escalated to a human', emailDefault: false },
-  { type: 'NEW_LEAD', label: 'New lead', emailDefault: false },
-  { type: 'LEAD_ASSIGNED', label: 'Lead assigned to me', emailDefault: false },
-  { type: 'ORDER_CREATED', label: 'Order created', emailDefault: false },
-  { type: 'ORDER_STATUS_CHANGED', label: 'Order status changed', emailDefault: false },
-  { type: 'MEMBER_INVITED', label: 'Member invited', emailDefault: true },
-  { type: 'MEMBER_JOINED', label: 'Member joined', emailDefault: false },
-  { type: 'BROADCAST_COMPLETED', label: 'Broadcast completed', emailDefault: false },
-  { type: 'NEW_LOGIN', label: 'New sign-in (security)', emailDefault: true },
-  { type: 'BILLING', label: 'Billing & subscription', emailDefault: true },
-  { type: 'SUPPORT_CONTACT_CHANGED', label: 'Support number changed', emailDefault: true },
-];
+const ROW_GRID = 'grid grid-cols-[1fr_56px_56px_72px] gap-2 items-center';
 
-function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
+type PreferenceChannel = 'inApp' | 'email' | 'whatsapp';
+
+function Toggle({
+  on,
+  onClick,
+  disabled,
+  loading,
+}: {
+  on: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
   return (
     <button
       role="switch"
       aria-checked={on}
       disabled={disabled}
       onClick={onClick}
-      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors ${
         on ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
-      <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-          on ? 'translate-x-4' : 'translate-x-0'
-        }`}
-      />
+      {loading ? (
+        <Loader2 size={11} className="animate-spin text-white" />
+      ) : (
+        <span
+          className={`pointer-events-none absolute inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+            on ? 'translate-x-2' : 'translate-x-[-6px]'
+          }`}
+        />
+      )}
     </button>
   );
 }
 
 export function NotificationPreferences() {
-  const { data: prefs } = useNotificationPreferences();
+  const { data: preferences } = useNotificationPreferences();
   const update = useUpdateNotificationPreference();
 
-  const find = (type: NotificationType) => prefs?.find((p) => p.type === type);
+  // Only the toggle actually being changed shows a loader/disables — not every
+  // row — since the mutation is a single shared instance across the grid.
+  const isSaving = (type: NotificationType, channel: PreferenceChannel) =>
+    update.isPending && update.variables?.type === type && update.variables?.[channel] !== undefined;
 
   return (
-    <section className="card p-5 mt-6">
-      <h2 className="text-[15px] font-semibold text-[var(--ink)]">Notification preferences</h2>
-      <p className="text-[12.5px] text-[var(--ink-mute)] mt-0.5 mb-4">
-        Choose how you’re notified for each event.
-      </p>
+    <section className="card p-0 overflow-hidden h-fit">
+      <div className="px-4 pt-4 pb-3">
+        <h2 className="text-[15px] font-semibold text-[var(--ink)]">Notification preferences</h2>
+        <p className="text-[12.5px] text-[var(--ink-mute)] mt-0.5">
+          Choose how you’re notified for each event.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-1 items-center">
-        <div />
-        <div className="text-[11px] font-medium text-[var(--ink-mute)] text-center">In-app</div>
-        <div className="text-[11px] font-medium text-[var(--ink-mute)] text-center">Email</div>
+      <div
+        className={cn(
+          ROW_GRID,
+          'px-4 py-2 border-y border-[var(--line)] bg-[var(--surface-2)] text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]',
+        )}
+      >
+        <span>Event</span>
+        <span className="text-center">In-app</span>
+        <span className="text-center">Email</span>
+        <span className="text-center">WhatsApp</span>
+      </div>
 
-        {TYPES.map(({ type, label, emailDefault }) => {
-          const pref = find(type);
-          const inApp = pref?.inApp ?? true;
-          const email = pref?.email ?? emailDefault;
-          return (
-            <div key={type} className="contents">
-              <div className="text-[13px] text-[var(--ink)] py-2 border-t border-[var(--line-soft)]">
-                {label}
-              </div>
-              <div className="flex justify-center py-2 border-t border-[var(--line-soft)]">
-                <Toggle
-                  on={inApp}
-                  disabled={update.isPending}
-                  onClick={() => update.mutate({ type, inApp: !inApp })}
-                />
-              </div>
-              <div className="flex justify-center py-2 border-t border-[var(--line-soft)]">
-                <Toggle
-                  on={email}
-                  disabled={update.isPending}
-                  onClick={() => update.mutate({ type, email: !email })}
-                />
-              </div>
+      {NOTIFICATION_TYPES.map((type, index) => {
+        const meta = NOTIFICATION_PREFERENCE_META[type];
+        const saved = preferences?.find((preference) => preference.type === type);
+        const inApp = saved?.inApp ?? meta.inAppDefault;
+        const email = saved?.email ?? meta.emailDefault;
+        const whatsapp = saved?.whatsapp ?? meta.whatsappDefault;
+        const inAppSaving = isSaving(type, 'inApp');
+        const emailSaving = isSaving(type, 'email');
+        const whatsappSaving = isSaving(type, 'whatsapp');
+        return (
+          <div
+            key={type}
+            className={cn(
+              ROW_GRID,
+              'px-4 py-3',
+              index > 0 && 'border-t border-[var(--line-soft)]',
+            )}
+          >
+            <div className="min-w-0">
+              <div className="text-[13px] font-medium text-[var(--ink)]">{meta.title}</div>
+              <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">{meta.description}</div>
             </div>
-          );
-        })}
+            <div className="flex justify-center">
+              <Toggle
+                on={inApp}
+                loading={inAppSaving}
+                disabled={inAppSaving}
+                onClick={() => update.mutate({ type, inApp: !inApp })}
+              />
+            </div>
+            <div className="flex justify-center">
+              <Toggle
+                on={email}
+                loading={emailSaving}
+                disabled={emailSaving}
+                onClick={() => update.mutate({ type, email: !email })}
+              />
+            </div>
+            <div className="flex justify-center">
+              <Toggle
+                on={whatsapp}
+                loading={whatsappSaving}
+                disabled={whatsappSaving}
+                onClick={() => update.mutate({ type, whatsapp: !whatsapp })}
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="flex flex-col gap-1.5 px-4 py-3 border-t border-[var(--line)] text-[11.5px] text-[var(--ink-mute)]">
+        <span className="flex items-center gap-1.5">
+          <Check size={12} className="text-[#15803D]" /> Preferences save automatically
+        </span>
+        <span className="flex items-center gap-1.5">
+          <MessageCircle size={12} /> WhatsApp alerts go to your number on file, or the
+          workspace support number.
+        </span>
       </div>
     </section>
   );

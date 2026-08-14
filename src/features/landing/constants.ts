@@ -1,3 +1,31 @@
+/** Landing FAQ entries — rendered in the FAQ section and emitted as FAQPage JSON-LD. */
+export const LANDING_FAQ_ITEMS = [
+  {
+    question: "Win Leads While They Are Still Interested",
+    answer: "Fast replies help you reach customers before competitors do.",
+  },
+  {
+    question: "Save Your Team Hours Every Day",
+    answer:
+      "Let AI handle the repeat questions while your team focuses on closing deals and high-value conversations.",
+  },
+  {
+    question: "Never Lose Track Of A Customer",
+    answer:
+      "Every WhatsApp inquiry is saved with context, history, and status — no more digging through chats to find what was promised.",
+  },
+  {
+    question: "Manage Multiple Numbers Easily",
+    answer:
+      "Connect up to 3 WhatsApp numbers in one dashboard. Perfect for businesses with multiple branches or teams.",
+  },
+  {
+    question: "Grow Without Hiring More Staff",
+    answer:
+      "Scale your customer support and sales conversations without proportional headcount growth. Your AI assistant works 24/7.",
+  },
+];
+
 /** Launch-offer discount expiry. Update this date to restart/extend the countdown. */
 export const OFFER_END_DATE = new Date("2026-07-21T23:59:59");
 

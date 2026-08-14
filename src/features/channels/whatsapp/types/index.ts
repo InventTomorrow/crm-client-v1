@@ -12,6 +12,7 @@ export interface WAConfig {
   aiEnabled: boolean;
   autoReply: boolean;
   allowOrderCancellation: boolean;
+  allowReschedule: boolean;
 }
 
 export type WASSEEvent =

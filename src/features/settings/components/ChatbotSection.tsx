@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, Check, Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISettingsWidget';
 import { cn } from '@/lib/utils';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
@@ -122,6 +123,7 @@ export function ChatbotSection() {
         <div className="border-t border-[var(--line)] pt-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-[12px] font-medium text-[var(--ink-soft)]">Greeting message</label>
+            <p className="text-[11px] text-[var(--ink-mute)]">Sent when a customer starts a new conversation</p>
             <Textarea className="text-[13px] min-h-[68px] resize-y" {...register('greetingMessage')} />
             {errors.greetingMessage && <p className="text-[11px] text-[var(--destructive)]">{errors.greetingMessage.message}</p>}
           </div>
@@ -145,6 +147,8 @@ export function ChatbotSection() {
           </Button>
         </div>
       </form>
+
+      <AISettingsWidget />
     </>
   );
 }

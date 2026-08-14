@@ -7,12 +7,14 @@ import type { Product } from "../types";
 
 function ProductGridCardBase({
   product,
+  onPreview,
   onEdit,
   onDelete,
   onDuplicate,
   highlight = false,
 }: {
   product: Product;
+  onPreview: (product: Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onDuplicate: (product: Product) => void;
@@ -42,11 +44,22 @@ function ProductGridCardBase({
   return (
     <div
       ref={ref}
+      role="button"
+      tabIndex={0}
+      aria-label={`Preview ${product.name}`}
       className={cn(
-        "card overflow-hidden flex flex-col p-0 transition-shadow",
+        "card overflow-hidden flex flex-col p-0 transition-shadow cursor-pointer",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
         highlight &&
           "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg)]",
       )}
+      onClick={() => onPreview(product)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPreview(product);
+        }
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -78,14 +91,20 @@ function ProductGridCardBase({
           <Button
             size="sm"
             className="flex-1 bg-white/95 text-slate-900 hover:bg-white"
-            onClick={() => onEdit(product)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(product);
+            }}
           >
             <Pencil size={12} /> Edit
           </Button>
           <Button
             size="icon-sm"
             className="bg-white/95 text-slate-900 hover:bg-white"
-            onClick={() => onDuplicate(product)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate(product);
+            }}
             title="Duplicate"
           >
             <Copy size={13} />
@@ -93,7 +112,10 @@ function ProductGridCardBase({
           <Button
             size="icon-sm"
             className="bg-[rgba(239,68,68,0.95)] text-white hover:bg-[rgba(239,68,68,1)]"
-            onClick={() => onDelete(product)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(product);
+            }}
             title="Delete"
           >
             <Trash2 size={13} />

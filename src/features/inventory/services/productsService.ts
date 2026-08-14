@@ -131,7 +131,7 @@ export const bulkCreateProducts = async (products: CreateProductPayload[]): Prom
   return (data.data ?? []).map(mapProduct);
 };
 
-export type UploadFolder = 'products' | 'avatars' | 'attachments';
+export type UploadFolder = 'products' | 'menu' | 'avatars' | 'attachments' | 'resources';
 
 /** Step 1: get a presigned PUT URL from our backend */
 export const getPresignedUrl = async (
@@ -146,16 +146,30 @@ export const getPresignedUrl = async (
   return data.data;
 };
 
-/** Step 2: PUT the file directly to S3 using the presigned URL */
-export const uploadToS3 = async (uploadUrl: string, file: File): Promise<void> => {
-  const res = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': file.type },
+/**
+ * Step 2: PUT the file directly to S3 using the presigned URL.
+ * Uses XMLHttpRequest rather than fetch — fetch has no cross-browser upload
+ * progress event, XHR's `upload.onprogress` does.
+ */
+export const uploadToS3 = (
+  uploadUrl: string,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`S3 upload failed: ${xhr.status} ${xhr.statusText}`));
+    };
+    xhr.onerror = () => reject(new Error('S3 upload failed: network error'));
+    xhr.send(file);
   });
-  if (!res.ok) {
-    throw new Error(`S3 upload failed: ${res.status} ${res.statusText}`);
-  }
 };
 
 /**
@@ -164,8 +178,12 @@ export const uploadToS3 = async (uploadUrl: string, file: File): Promise<void> =
  * 2. PUT the file directly to S3
  * 3. Return the public CDN URL
  */
-export const presignedUpload = async (file: File, folder: UploadFolder = 'products'): Promise<string> => {
+export const presignedUpload = async (
+  file: File,
+  folder: UploadFolder = 'products',
+  onProgress?: (percent: number) => void,
+): Promise<string> => {
   const { uploadUrl, publicUrl } = await getPresignedUrl(file.name, file.type, folder);
-  await uploadToS3(uploadUrl, file);
+  await uploadToS3(uploadUrl, file, onProgress);
   return publicUrl;
 };

@@ -4,17 +4,23 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { extractErrorMessage } from '@/lib/utils';
-import type { ConnectChannelData, SaveChatbotData } from '../types';
+import type { BusinessVertical, ConnectChannelData, SaveChatbotData, SelectCategoryData } from '../types';
 
 async function getOnboardingStatus() {
   const res = await apiClient.get('/onboarding/status');
   return res.data.data as {
-    onboardingStep: 'CHANNEL' | 'CHATBOT' | 'DONE';
+    onboardingStep: 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE';
     workspaceName: string;
+    businessVertical: BusinessVertical;
     inventoryTier: string | null;
     channels: Array<{ channel: string; status: string }>;
     hasChatbotConfig: boolean;
   };
+}
+
+async function selectCategory(data: SelectCategoryData) {
+  const res = await apiClient.post('/onboarding/category', data);
+  return res.data.data as { onboardingStep: 'CHANNEL'; businessVertical: BusinessVertical };
 }
 
 async function connectChannel(data: ConnectChannelData) {
@@ -34,6 +40,15 @@ async function skipStep() {
 
 export function useOnboardingStatus() {
   return useQuery({ queryKey: ['onboarding-status'], queryFn: getOnboardingStatus });
+}
+
+export function useSelectCategory() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (data: SelectCategoryData) => selectCategory(data),
+    onSuccess: () => router.push('/onboarding/channel'),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
 }
 
 export function useConnectChannel() {

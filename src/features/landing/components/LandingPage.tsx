@@ -1,3 +1,4 @@
+import { fetchLandingPlans } from "../plans";
 import BusinessTypes from "./sections/BusinessTypes";
 import FAQ from "./sections/FAQ";
 import FeatureDetail from "./sections/FeatureDetail";
@@ -13,7 +14,13 @@ import Pricing from "./sections/Pricing";
 import StopLosingLeads from "./sections/StopLosingLeads";
 import Values from "./sections/Values";
 
-export function LandingPage() {
+/**
+ * Server component: the plan catalogue is fetched here so pricing ships in
+ * the SSR HTML rather than appearing after hydration.
+ */
+export async function LandingPage() {
+  const plans = await fetchLandingPlans();
+
   return (
     <div className="min-h-screen bg-white antialiased text-brand-dark">
       <OfferBanner />
@@ -25,7 +32,7 @@ export function LandingPage() {
       <ManageInbox />
       <FeatureDetail />
       <BusinessTypes />
-      <Pricing />
+      <Pricing plans={plans} />
       <Values />
       {/* <WhyAsaanRabta /> */}
       <FAQ />

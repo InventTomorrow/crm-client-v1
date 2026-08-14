@@ -1,4 +1,5 @@
 "use client";
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { extractErrorMessage } from "@/lib/utils";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
@@ -7,6 +8,7 @@ import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import {
   Select,
   SelectContent,
@@ -23,6 +25,7 @@ import {
   useDeleteOrder,
   useOrders,
   useOrdersSummary,
+  useRefreshOrders,
   useUpdateOrder,
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
@@ -61,10 +64,12 @@ export function OrdersView() {
   );
   const [exportRows, setExportRows] = useState<OrderListItem[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
+  const { can } = usePermissions();
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
   const { data: summary } = useOrdersSummary();
+  const { refreshOrders, isRefreshing } = useRefreshOrders();
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
   const deleteOrder = useDeleteOrder();
@@ -204,6 +209,10 @@ export function OrdersView() {
     [loadAndEditOrder],
   );
 
+  // The CSV is built client-side from rows already fetched, so hiding the
+  // control is the only place orders:export can be enforced.
+  const canExportOrders = can("orders:export");
+
   const openExport = (rows: OrderListItem[]) => {
     setExportRows(rows);
     setExportOpen(true);
@@ -222,11 +231,18 @@ export function OrdersView() {
               : "Manage your orders"}
           </p>
         </div>
-        <PermissionGuard permission="orders:create">
-          <Button onClick={openCreate}>
-            <Plus size={15} /> New order
-          </Button>
-        </PermissionGuard>
+        <div className="flex items-center gap-2">
+          <RefreshButton
+            onRefresh={refreshOrders}
+            isRefreshing={isRefreshing}
+            label="Refresh orders"
+          />
+          <PermissionGuard permission="orders:create">
+            <Button onClick={openCreate}>
+              <Plus size={15} /> New order
+            </Button>
+          </PermissionGuard>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -251,14 +267,14 @@ export function OrdersView() {
         isLoading={isLoading}
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
-        onExport={openExport}
+        onExport={canExportOrders ? openExport : undefined}
         onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
         defaultPageSize={20}
         maxBodyHeight="60vh"
         toolbar={
-          <div className="flex items-center gap-2 flex-1">
-            <div className="relative flex-1 max-w-[340px]">
+          <div className="flex items-center gap-2 flex-1 flex-wrap">
+            <div className="relative flex-1 min-w-45 max-w-85">
               <Search
                 size={13}
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
