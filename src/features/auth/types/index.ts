@@ -92,6 +92,9 @@ export interface AccountRestoreResult {
   whatsappReconnectRequired: boolean;
 }
 
+export type OnboardingStatus = 'EMAIL_UNVERIFIED' | 'ONBOARDING' | 'COMPLETE';
+export type OnboardingStep = 'WORKSPACE' | 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE';
+
 export interface LoginResponse {
   id: string;
   email: string;
@@ -99,8 +102,8 @@ export interface LoginResponse {
   lastName: string | null;
   tenantId: string | null;
   role: string;
-  onboardingStatus: 'EMAIL_UNVERIFIED' | 'COMPLETE';
-  onboardingStep: 'WORKSPACE' | 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE' | null;
+  onboardingStatus: OnboardingStatus;
+  onboardingStep: OnboardingStep | null;
   isTester: boolean;
 }
 
@@ -111,7 +114,7 @@ export interface UserResponse {
   lastName: string | null;
   phone: string | null;
   avatarUrl: string | null;
-  onboardingStatus: string;
+  onboardingStatus: OnboardingStatus;
   isTester: boolean;
   memberships: Array<{
     id: string;
@@ -120,7 +123,9 @@ export interface UserResponse {
     isActive?: boolean;
   }>;
   // Active-membership convenience fields (resolved server-side from the JWT tenant)
+  tenantId: string | null;
   roleId: string | null;
   roleName: string | null;
   permissions: string[];
+  onboardingStep: OnboardingStep;
 }

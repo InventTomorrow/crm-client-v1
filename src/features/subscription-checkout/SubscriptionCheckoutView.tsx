@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/shared/ui/Button";
 import { formatPlanPrice, formatPlanPeriod } from "@/features/billing/utils/planFormat";
+import { formatPlanLimit } from "@/features/billing/utils/planLimits";
 import { usePublicSubscriptionLink } from "./hooks";
 import { SubmissionSuccess } from "./SubmissionSuccess";
 import { SubscriptionCheckoutForm } from "./SubscriptionCheckoutForm";
@@ -77,12 +78,12 @@ function PlanSidebar({ plan, supportContact }: {
 
         {/* Feature rows */}
         <div className="divide-y divide-[var(--line)]">
-          <FeatureRow icon={<BadgeCheck size={14} />} label="Workspaces" value={plan.maxWorkspaces.toLocaleString("en-PK")} />
-          <FeatureRow icon={<BadgeCheck size={14} />} label="Team members / workspace" value={plan.maxMembersPerWorkspace.toLocaleString("en-PK")} />
-          <FeatureRow icon={<BadgeCheck size={14} />} label="Connected channels" value={plan.maxChannels.toLocaleString("en-PK")} />
-          <FeatureRow icon={<BadgeCheck size={14} />} label="Messages / month" value={plan.maxMonthlyMessages.toLocaleString("en-PK")} />
-          <FeatureRow icon={<BadgeCheck size={14} />} label="Image vision" value={plan.maxImageMessages.toLocaleString("en-PK")} muted />
-          <FeatureRow icon={<BadgeCheck size={14} />} label="Voice messages" value={plan.maxVoiceMessages.toLocaleString("en-PK")} muted />
+          <FeatureRow icon={<BadgeCheck size={14} />} label="Workspaces" value={formatPlanLimit(plan.maxWorkspaces)} />
+          <FeatureRow icon={<BadgeCheck size={14} />} label="Team members / workspace" value={formatPlanLimit(plan.maxMembersPerWorkspace)} />
+          <FeatureRow icon={<BadgeCheck size={14} />} label="Connected channels" value={formatPlanLimit(plan.maxChannels)} />
+          <FeatureRow icon={<BadgeCheck size={14} />} label="Messages / month" value={formatPlanLimit(plan.maxMonthlyMessages)} />
+          <FeatureRow icon={<BadgeCheck size={14} />} label="Image vision" value={formatPlanLimit(plan.maxImageMessages)} muted />
+          <FeatureRow icon={<BadgeCheck size={14} />} label="Voice messages" value={formatPlanLimit(plan.maxVoiceMessages)} muted />
         </div>
       </div>
 

@@ -1,9 +1,9 @@
-import type { MetadataRoute } from "next";
 import {
   LEGAL_LAST_UPDATED_ISO,
   LEGAL_ROUTES,
 } from "@/features/legal/constants";
 import { SITE_URL, absoluteUrl } from "@/shared/lib/site";
+import type { MetadataRoute } from "next";
 
 // Only the indexable surface belongs here: the landing page + legal docs.
 // Auth, onboarding, and all (app) CRM routes are noindexed and robots-disallowed.

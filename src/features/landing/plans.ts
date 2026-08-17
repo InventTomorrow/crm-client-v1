@@ -56,7 +56,10 @@ const PERIOD_LABEL: Record<string, string> = {
   ANNUAL: "/year",
 };
 
-function periodLabel(duration: string, customDurationDays: number | null): string {
+function periodLabel(
+  duration: string,
+  customDurationDays: number | null,
+): string {
   if (duration === "CUSTOM_DAYS") {
     const days = customDurationDays ?? 0;
     return `/${days} day${days === 1 ? "" : "s"}`;
@@ -72,7 +75,9 @@ function formatAmount(amount: number): string {
 function offerCountdown(offerEndsAt: string | null): string {
   if (!offerEndsAt) return formatOfferCountdown(getOfferDaysRemaining());
   const diffMs = new Date(offerEndsAt).getTime() - Date.now();
-  return formatOfferCountdown(Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24))));
+  return formatOfferCountdown(
+    Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24))),
+  );
 }
 
 /**
@@ -91,7 +96,8 @@ function fallbackFeatures(plan: PublicPlanDto): string[] {
 }
 
 function toPlan(dto: PublicPlanDto): Plan {
-  const hasOffer = !dto.isTrial && dto.originalPrice !== null && dto.originalPrice > dto.price;
+  const hasOffer =
+    !dto.isTrial && dto.originalPrice !== null && dto.originalPrice > dto.price;
   const discountPercentage = hasOffer
     ? Math.round((1 - dto.price / (dto.originalPrice as number)) * 100)
     : undefined;
@@ -101,9 +107,13 @@ function toPlan(dto: PublicPlanDto): Plan {
     name: dto.name,
     tagline: dto.tagline ?? "",
     price: dto.isTrial ? "0" : formatAmount(dto.price),
-    ...(hasOffer ? { originalPrice: formatAmount(dto.originalPrice as number) } : {}),
+    ...(hasOffer
+      ? { originalPrice: formatAmount(dto.originalPrice as number) }
+      : {}),
     ...(discountPercentage ? { discountPercentage } : {}),
-    ...(discountPercentage ? { offerCountdown: offerCountdown(dto.offerEndsAt) } : {}),
+    ...(discountPercentage
+      ? { offerCountdown: offerCountdown(dto.offerEndsAt) }
+      : {}),
     period: periodLabel(dto.duration, dto.customDurationDays),
     cta: dto.ctaLabel?.trim() || `Start with ${dto.name}`,
     featured: dto.isFeatured,
@@ -125,7 +135,7 @@ export async function fetchLandingPlans(): Promise<Plan[]> {
   if (!apiUrl) return [];
 
   try {
-    const response = await fetch(`${apiUrl.replace(/\/$/, "")}/public/plans`, {
+    const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/v1/public/plans`, {
       next: { revalidate: 300 },
     });
     if (!response.ok) return [];

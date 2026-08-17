@@ -1,5 +1,5 @@
 'use client';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
@@ -62,20 +62,28 @@ export function useConnectChannel() {
 
 export function useSaveChatbot() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: SaveChatbotData) => saveChatbot(data),
-    onSuccess: () => router.push('/onboarding/done'),
+    onSuccess: () => {
+      // Setup is finished server-side; drop the identity cached before it so the
+      // app gate refetches instead of reading the pre-completion step.
+      queryClient.removeQueries({ queryKey: ['me'] });
+      router.push('/onboarding/done');
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }
 
 export function useSkipOnboarding() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: skipStep,
     // Skip advances one step only: from the channel step → chatbot config;
     // from the last step → finish into the app.
     onSuccess: (result) => {
+      queryClient.removeQueries({ queryKey: ['me'] });
       if (result.onboardingStep === 'CHATBOT') {
         router.push('/onboarding/chatbot');
       } else {

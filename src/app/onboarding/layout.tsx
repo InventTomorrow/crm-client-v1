@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { OnboardingGate } from '@/features/onboarding/components/OnboardingGate';
 import { Toaster } from '@/shared/ui/Sonner';
 import type { Metadata } from 'next';
 import { PRIVATE_PAGE_ROBOTS } from '@/shared/seo/metadata';
@@ -17,7 +18,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       </header>
 
       <main className="flex flex-col flex-1 items-center justify-center px-4 py-8 pt-16">
-        {children}
+        <OnboardingGate>{children}</OnboardingGate>
       </main>
 
       <Toaster richColors position="top-right" />

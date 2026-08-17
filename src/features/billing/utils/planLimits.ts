@@ -15,6 +15,23 @@ const CATALOG_LABEL: Record<CatalogLimitField, string> = {
   maxServices: 'services',
 };
 
+/**
+ * "No cap" sentinel, mirroring the server's UNLIMITED_LIMIT
+ * (server/src/modules/plans/plan-limits.util.ts). Any plan limit or usage
+ * metric can carry it, so nothing renders a max* value without going through
+ * formatPlanLimit — a raw one would print "-1" on the pricing page.
+ */
+export const UNLIMITED_LIMIT = -1;
+
+export function isUnlimitedLimit(limit: number | null | undefined): boolean {
+  return limit === UNLIMITED_LIMIT;
+}
+
+/** A plan limit as a customer reads it. */
+export function formatPlanLimit(limit: number): string {
+  return isUnlimitedLimit(limit) ? 'Unlimited' : limit.toLocaleString('en-PK');
+}
+
 /** Client mirror of the server's resolveCatalogLimit (plan-limits.util.ts) — the one catalogue cap that applies to a tenant. */
 export function resolveCatalogLimit(plan: Plan, tenantVertical: BusinessVertical): { label: string; value: number | null } {
   const field = VERTICAL_CATALOG_FIELD[tenantVertical];

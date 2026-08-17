@@ -1,5 +1,5 @@
 'use client';
-import { resolveCatalogLimit } from '../utils/planLimits';
+import { formatPlanLimit, resolveCatalogLimit } from '../utils/planLimits';
 import type { Plan } from '../types';
 import type { BusinessVertical } from '@/lib/business-verticals';
 
@@ -24,19 +24,19 @@ export function PlanLimitsList({ plan, tenantVertical, variant = 'list' }: PlanL
   const catalog = tenantVertical ? resolveCatalogLimit(plan, tenantVertical) : null;
   const catalogLimit =
     catalog && catalog.value !== null
-      ? { label: `Max ${catalog.label}`, value: catalog.value.toLocaleString('en-PK') }
+      ? { label: `Max ${catalog.label}`, value: formatPlanLimit(catalog.value) }
       : null;
 
-  const messages = plan.maxMonthlyMessages.toLocaleString('en-PK');
-  const imageMessages = plan.maxImageMessages.toLocaleString('en-PK');
-  const voiceMessages = plan.maxVoiceMessages.toLocaleString('en-PK');
+  const messages = formatPlanLimit(plan.maxMonthlyMessages);
+  const imageMessages = formatPlanLimit(plan.maxImageMessages);
+  const voiceMessages = formatPlanLimit(plan.maxVoiceMessages);
 
   if (variant === 'grid') {
     return (
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
-        <Tile label="Workspaces" value={plan.maxWorkspaces.toLocaleString('en-PK')} />
-        <Tile label="Team members / workspace" value={plan.maxMembersPerWorkspace.toLocaleString('en-PK')} />
-        <Tile label="Connected channels" value={plan.maxChannels.toLocaleString('en-PK')} />
+        <Tile label="Workspaces" value={formatPlanLimit(plan.maxWorkspaces)} />
+        <Tile label="Team members / workspace" value={formatPlanLimit(plan.maxMembersPerWorkspace)} />
+        <Tile label="Connected channels" value={formatPlanLimit(plan.maxChannels)} />
         {catalogLimit && <Tile label={catalogLimit.label} value={catalogLimit.value} />}
         <Tile label="Messages / month" value={messages}>
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-[var(--line)] pt-2 text-[11.5px] text-[var(--ink-mute)]">
@@ -54,9 +54,9 @@ export function PlanLimitsList({ plan, tenantVertical, variant = 'list' }: PlanL
 
   return (
     <dl className="space-y-2.5 text-[13px]">
-      <Row label="Workspaces" value={plan.maxWorkspaces.toLocaleString('en-PK')} />
-      <Row label="Team members / workspace" value={plan.maxMembersPerWorkspace.toLocaleString('en-PK')} />
-      <Row label="Connected channels" value={plan.maxChannels.toLocaleString('en-PK')} />
+      <Row label="Workspaces" value={formatPlanLimit(plan.maxWorkspaces)} />
+      <Row label="Team members / workspace" value={formatPlanLimit(plan.maxMembersPerWorkspace)} />
+      <Row label="Connected channels" value={formatPlanLimit(plan.maxChannels)} />
       {catalogLimit && <Row label={catalogLimit.label} value={catalogLimit.value} />}
 
       <div className="pt-1">

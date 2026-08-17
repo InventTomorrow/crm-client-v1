@@ -3,6 +3,7 @@ import {
   formatPlanPeriod,
   formatPlanPrice,
 } from "@/features/billing/utils/planFormat";
+import { formatPlanLimit } from "@/features/billing/utils/planLimits";
 import type { Plan } from "@/features/billing/types";
 
 /** Read-only summary of the plan the admin issued this link for. */
@@ -36,27 +37,16 @@ export function PlanSummaryCard({ plan }: { plan: Plan }) {
       </div>
 
       <div className="flex flex-col gap-1.5 p-4 text-[13px]">
-        <Row label="Workspaces" value={plan.maxWorkspaces.toLocaleString("en-PK")} />
+        <Row label="Workspaces" value={formatPlanLimit(plan.maxWorkspaces)} />
         <Row
           label="Team members / workspace"
-          value={plan.maxMembersPerWorkspace.toLocaleString("en-PK")}
+          value={formatPlanLimit(plan.maxMembersPerWorkspace)}
         />
-        <Row label="Connected channels" value={plan.maxChannels.toLocaleString("en-PK")} />
-        <Row
-          label="Messages / month"
-          value={plan.maxMonthlyMessages.toLocaleString("en-PK")}
-        />
+        <Row label="Connected channels" value={formatPlanLimit(plan.maxChannels)} />
+        <Row label="Messages / month" value={formatPlanLimit(plan.maxMonthlyMessages)} />
         <div className="ml-3 flex flex-col gap-1.5 border-l border-[var(--line)] pl-3">
-          <Row
-            label="Image vision"
-            value={plan.maxImageMessages.toLocaleString("en-PK")}
-            muted
-          />
-          <Row
-            label="Voice messages"
-            value={plan.maxVoiceMessages.toLocaleString("en-PK")}
-            muted
-          />
+          <Row label="Image vision" value={formatPlanLimit(plan.maxImageMessages)} muted />
+          <Row label="Voice messages" value={formatPlanLimit(plan.maxVoiceMessages)} muted />
         </div>
       </div>
     </div>
