@@ -13,12 +13,15 @@ import SectionHeading from "../SectionHeading";
  * renders this one, so the prices are in the SSR HTML for crawlers.
  */
 export default function Pricing({ plans }: { plans: Plan[] }) {
+  console.log("plans:", plans);
   // Nothing published yet — drop the section rather than show an empty grid.
   if (plans.length === 0) return null;
 
   // Two plans sit side by side; three or more need a third column.
   const columns =
-    plans.length >= 3 ? "md:grid-cols-3 max-w-[1180px]" : "md:grid-cols-2 max-w-[860px]";
+    plans.length >= 3
+      ? "md:grid-cols-3 max-w-[1180px]"
+      : "md:grid-cols-2 max-w-[860px]";
 
   return (
     <section
@@ -36,7 +39,9 @@ export default function Pricing({ plans }: { plans: Plan[] }) {
           subtitle="Start with one branch and upgrade to unlimited workspaces, unlimited broadcasts whenever your business is ready. No hidden fees."
         />
 
-        <div className={`mt-12 sm:mt-14 grid gap-6 ${columns} mx-auto items-stretch`}>
+        <div
+          className={`mt-12 sm:mt-14 grid gap-6 ${columns} mx-auto items-stretch`}
+        >
           {plans.map((plan, i) => (
             <Reveal key={plan.id} delay={i * 0.1}>
               <motion.div

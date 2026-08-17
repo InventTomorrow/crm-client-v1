@@ -68,7 +68,7 @@ export function RegisterView() {
             Create your account
           </h1>
           <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
-            Start selling smarter with AsaanRabta — set up your workspace next.
+            Start selling smarter with AsaanRabta, set up your workspace next.
           </p>
         </div>
 
@@ -97,11 +97,7 @@ export function RegisterView() {
                       First name *
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Ali"
-                        autoFocus
-                        {...field}
-                      />
+                      <Input placeholder="Ali" autoFocus {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,10 +112,7 @@ export function RegisterView() {
                       Last name
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Hassan"
-                        {...field}
-                      />
+                      <Input placeholder="Hassan" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -219,24 +212,30 @@ export function RegisterView() {
               name="acceptTerms"
               render={({ field }) => (
                 <FormItem className="mt-0.5">
-                  <div className="flex items-start gap-2">
+                  <div className="flex justify-start items-center gap-2">
                     <FormControl>
                       <Checkbox
                         className="mt-0.5"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
+                      <span className="text-[12px] text-[var(--ink-soft)]">
+                        I agree to the{" "}
+                        <Link
+                          href="/legal/terms"
+                          className="text-[var(--accent)] hover:underline"
+                        >
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          href="/legal/privacy"
+                          className="text-[var(--accent)] hover:underline"
+                        >
+                          Privacy Policy
+                        </Link>
+                      </span>
                     </FormControl>
-                    <span className="text-[12px] text-[var(--ink-soft)]">
-                      I agree to the{" "}
-                      <Link href="/legal/terms" className="text-[var(--accent)] hover:underline">
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
-                      <Link href="/legal/privacy" className="text-[var(--accent)] hover:underline">
-                        Privacy Policy
-                      </Link>
-                    </span>
                   </div>
                   <FormMessage />
                 </FormItem>

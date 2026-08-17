@@ -33,6 +33,7 @@ import {
   verifyEmail,
 } from '../services/authService';
 import type { AcceptInviteData, CreateWorkspaceData, ForgotPasswordData, LoginData, RegisterData, ResetPasswordData } from '../types';
+import { resolveAuthLanding } from '../utils/authLanding';
 
 export function useLogin() {
   const router = useRouter();
@@ -47,17 +48,11 @@ export function useLogin() {
       // Drop any cache left by a previously signed-in user in this browser so
       // the new session never renders the prior identity, role, or permissions.
       queryClient.clear();
-      if (user.onboardingStatus === 'EMAIL_UNVERIFIED') {
-        router.push('/auth/verify-email');
-        return;
-      }
-      if (!user.tenantId || user.onboardingStep === 'WORKSPACE') {
-        router.push('/onboarding/workspace');
-        return;
-      }
-      if (user.onboardingStep && user.onboardingStep !== 'DONE') {
-        const step = user.onboardingStep.toLowerCase();
-        router.push(`/onboarding/${step}`);
+      // A non-dashboard landing means setup is unfinished; the tenantId check is
+      // the same condition restated so the workspace calls below stay narrowed.
+      const landing = resolveAuthLanding(user);
+      if (landing !== '/dashboard' || !user.tenantId) {
+        router.push(landing);
         return;
       }
       // Resume the workspace the user last worked in (persisted across logout).
@@ -130,9 +125,15 @@ export function useLogout() {
 
 export function useVerifyEmail() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (token: string) => verifyEmail(token),
-    onSuccess: () => router.push('/onboarding/workspace'),
+    onSuccess: () => {
+      // The server signs the user in as part of verifying — drop any identity
+      // cached while they were still unverified before the gate reads it.
+      queryClient.removeQueries({ queryKey: ['me'] });
+      router.push('/onboarding/workspace');
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }

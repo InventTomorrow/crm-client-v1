@@ -23,6 +23,8 @@ export interface Plan {
   // Null = universal (applies to every vertical); non-null = scoped to one.
   businessVertical: BusinessVertical | null;
 
+  // Every max* below is a count, or -1 when the plan leaves it uncapped —
+  // render them through formatPlanLimit (utils/planLimits) rather than raw.
   maxWorkspaces: number;
   maxMembersPerWorkspace: number;
   maxChannels: number;
@@ -139,6 +141,7 @@ export interface UsageMetric {
   key: string;
   label: string;
   used: number;
+  /** -1 when the plan leaves this metric uncapped. */
   limit: number;
 }
 

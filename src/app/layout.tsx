@@ -39,8 +39,6 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   manifest: "/manifest.webmanifest",
   robots: PUBLIC_PAGE_ROBOTS,
-  // No layout-level canonical on purpose — it would stamp every page that
-  // doesn't set its own with the wrong URL. Pages declare theirs via buildPageMetadata().
   openGraph: {
     type: "website",
     title: DEFAULT_TITLE,
