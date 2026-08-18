@@ -7,9 +7,10 @@ const FOOTER_LINK_GROUPS = [
   {
     heading: "Product",
     links: [
-      { href: "#features", label: "Features" },
-      { href: "#how-it-works", label: "How it works" },
-      { href: "#pricing", label: "Pricing" },
+      { href: "/#features", label: "Features" },
+      { href: "/#how-it-works", label: "How it works" },
+      { href: "/#pricing", label: "Pricing" },
+      { href: "/blog", label: "Blog" },
     ],
   },
   {

@@ -1,6 +1,3 @@
-// Single source of truth for the public origin. Every canonical URL, sitemap
-// entry, OG tag, and JSON-LD @id resolves through here so preview deploys never
-// emit production URLs.
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_APP_URL ?? "https://asaanrabta.com"
 ).replace(/\/+$/, "");
@@ -14,7 +11,8 @@ export const SITE_DESCRIPTION =
 
 export const SITE_LOCALE = "en_US";
 
-export const SUPPORT_EMAIL = "support@asaanrabta.com";
+// TODO: update this email  -  create the support mailbox
+export const SUPPORT_EMAIL = "info@asaanrabta.com";
 
 // Public social profiles — feed JSON-LD `sameAs` and any footer social icons.
 // Add full profile URLs here as they go live (e.g. "https://www.facebook.com/asaanrabta").

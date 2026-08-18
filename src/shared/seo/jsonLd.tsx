@@ -125,6 +125,76 @@ export function webPageSchema({
   };
 }
 
+/** A single article. `image` is omitted rather than faked when a post has no cover. */
+export function blogPostingSchema({
+  title,
+  description,
+  path,
+  datePublished,
+  dateModified,
+  authorName,
+  imageUrl,
+  section,
+  keywords,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  datePublished: string | null;
+  dateModified: string;
+  authorName: string;
+  imageUrl?: string | null;
+  section?: string;
+  keywords?: string[];
+}): JsonLdNode {
+  return {
+    "@type": "BlogPosting",
+    "@id": `${absoluteUrl(path)}#article`,
+    headline: title,
+    description,
+    url: absoluteUrl(path),
+    mainEntityOfPage: { "@id": `${absoluteUrl(path)}#webpage` },
+    ...(datePublished ? { datePublished } : {}),
+    dateModified,
+    author: { "@type": "Organization", name: authorName, url: SITE_URL },
+    publisher: { "@id": ORGANIZATION_ID },
+    isPartOf: { "@id": WEBSITE_ID },
+    inLanguage: "en",
+    ...(imageUrl ? { image: imageUrl } : {}),
+    ...(section ? { articleSection: section } : {}),
+    ...(keywords?.length ? { keywords: keywords.join(", ") } : {}),
+  };
+}
+
+/** The blog index itself, listing the posts currently on the first page. */
+export function blogSchema({
+  name,
+  description,
+  path,
+  posts,
+}: {
+  name: string;
+  description: string;
+  path: string;
+  posts: Array<{ title: string; slug: string }>;
+}): JsonLdNode {
+  return {
+    "@type": "Blog",
+    "@id": `${absoluteUrl(path)}#blog`,
+    name,
+    description,
+    url: absoluteUrl(path),
+    publisher: { "@id": ORGANIZATION_ID },
+    isPartOf: { "@id": WEBSITE_ID },
+    inLanguage: "en",
+    blogPost: posts.map((post) => ({
+      "@type": "BlogPosting",
+      headline: post.title,
+      url: absoluteUrl(`/blog/${post.slug}`),
+    })),
+  };
+}
+
 // Renders schema.org nodes as one @graph script tag; "<" is escaped to block script injection.
 export function JsonLd({ nodes }: { nodes: JsonLdNode[] }) {
   const json = JSON.stringify({

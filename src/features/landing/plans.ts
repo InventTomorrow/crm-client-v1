@@ -122,22 +122,17 @@ function toPlan(dto: PublicPlanDto): Plan {
   };
 }
 
-/**
- * Loads the catalogue for the landing page. Called from a server component so
- * the pricing ships in the SSR HTML — a marketing page's prices have to be
- * crawlable, not painted in after hydration.
- *
- * Revalidated rather than fetched per request: plans change rarely, and the
- * landing page must not fall over because the API is briefly unreachable.
- */
 export async function fetchLandingPlans(): Promise<Plan[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return [];
 
   try {
-    const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/v1/public/plans`, {
-      next: { revalidate: 300 },
-    });
+    const response = await fetch(
+      `${apiUrl.replace(/\/$/, "")}/api/v1/public/plans`,
+      {
+        next: { revalidate: 300 },
+      },
+    );
     if (!response.ok) return [];
     const payload = (await response.json()) as { data?: PublicPlanDto[] };
     return (payload.data ?? []).map(toPlan);

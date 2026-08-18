@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         port: apiUrl.port,
         pathname: "/api/v1/upload/image**",
       },
+      // Blog covers are served straight from object storage — the same hosts
+      // the server's article sanitizer allows.
+      { protocol: "https", hostname: "**.amazonaws.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "**.public.blob.vercel-storage.com" },
     ],
   },
   async rewrites() {

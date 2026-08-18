@@ -35,6 +35,9 @@ export const metadata = buildPageMetadata({
   ],
 });
 
+/** Featured articles and plans are admin-managed; /api/revalidate purges sooner. */
+export const revalidate = 900;
+
 export default function RootPage() {
   return (
     <div

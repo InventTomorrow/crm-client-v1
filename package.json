@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "start": "next start",
-    "build": "next build",
+    "build": "node scripts/generate-featured-blog.mjs && next build",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"

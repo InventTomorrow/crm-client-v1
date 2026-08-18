@@ -1202,3 +1202,149 @@ html.dark .theme-seg button.on { background: #1F2535; color: white; }
 .bookings-calendar .fc-event-mirror {
   color: var(--bg);
 }
+
+/* ─── Blog article body ──────────────────────────────────────────────────────
+   Styles the sanitized HTML the server stores for a post. Scoped to
+   .article-body so no other surface inherits it. */
+.article-body {
+  color: var(--color-brand-text);
+  font-size: 17px;
+  line-height: 1.8;
+}
+/* Blocks the editor gave an explicit line-height keep it; the rest inherit. */
+.article-body > * + * { margin-top: 1.5em; }
+
+.article-body h2 {
+  margin-top: 2.4em;
+  margin-bottom: -0.4em;
+  scroll-margin-top: 7rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--color-brand-dark);
+  text-wrap: balance;
+}
+.article-body h3 {
+  margin-top: 1.9em;
+  margin-bottom: -0.5em;
+  scroll-margin-top: 7rem;
+  font-size: 1.2rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--color-brand-dark);
+}
+.article-body h4 {
+  margin-top: 1.6em;
+  margin-bottom: -0.6em;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-brand-dark);
+}
+
+.article-body strong { font-weight: 650; color: var(--color-brand-dark); }
+.article-body a {
+  color: var(--color-brand-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--color-brand-green) 35%, transparent);
+  transition: text-decoration-color 0.2s ease;
+}
+.article-body a:hover { text-decoration-color: var(--color-brand-green); }
+
+.article-body ul, .article-body ol { padding-inline-start: 1.35em; }
+.article-body ul { list-style: disc; }
+.article-body ol { list-style: decimal; }
+.article-body li { margin-top: 0.5em; padding-inline-start: 0.35em; }
+.article-body li::marker { color: var(--color-brand-leaf); }
+.article-body ol li::marker { color: var(--color-brand-green); font-weight: 600; }
+
+.article-body blockquote {
+  margin-block: 2em;
+  border-inline-start: 3px solid var(--color-brand-green);
+  border-radius: 0 12px 12px 0;
+  background: var(--color-brand-mint-3);
+  padding: 1.1em 1.4em;
+  font-size: 17.5px;
+  line-height: 1.65;
+  color: var(--color-brand-dark);
+}
+.article-body blockquote p { margin: 0; }
+
+.article-body img, .article-body figure img {
+  border-radius: 16px;
+  border: 1px solid var(--color-brand-mint-2);
+}
+.article-body figure { margin-block: 2em; }
+.article-body figcaption {
+  margin-top: 0.7em;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--color-brand-text-soft);
+}
+
+.article-body code {
+  border-radius: 5px;
+  background: var(--color-brand-mint);
+  padding: 0.15em 0.4em;
+  font-size: 0.88em;
+  color: var(--color-brand-dark-2);
+}
+.article-body pre {
+  overflow-x: auto;
+  border-radius: 14px;
+  background: var(--color-brand-dark);
+  padding: 1.1em 1.3em;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.article-body pre code { background: transparent; padding: 0; color: #eaf5ee; }
+
+/* Wide tables scroll inside the article instead of stretching the page. */
+.article-body table {
+  display: block;
+  overflow-x: auto;
+  /* Block + max-content keeps the cells at their natural widths instead of
+     collapsing to the left, and the column still caps how wide it can get. */
+  width: max-content;
+  max-width: 100%;
+  margin-block: 2.2em;
+  border: 1px solid var(--color-brand-mint-2);
+  border-radius: 14px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.article-body th, .article-body td {
+  min-width: 9rem;
+  border-bottom: 1px solid var(--color-brand-mint-2);
+  border-inline-start: 1px solid var(--color-brand-mint-2);
+  padding: 0.85em 1.1em;
+  text-align: start;
+  vertical-align: top;
+}
+/* Outer edges come from the table's own border, so the first column and the
+   last row must not double up on it. */
+.article-body th:first-child, .article-body td:first-child { border-inline-start: 0; }
+.article-body tr:last-child td { border-bottom: 0; }
+.article-body th {
+  background: var(--color-brand-mint-3);
+  font-weight: 600;
+  color: var(--color-brand-dark);
+}
+.article-body tbody tr:nth-child(even) td { background: var(--color-brand-mint-3); }
+
+.article-body hr {
+  margin-block: 2.6em;
+  border: 0;
+  border-top: 1px solid var(--color-brand-mint-2);
+}
+
+.article-body iframe {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+}

@@ -3,23 +3,39 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PrimaryCta } from "../LandingCta";
 import Logo from "../Logo";
 
+// Root-relative so the same nav works from /blog, where the sections do not exist.
 const NAV_LINKS = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#features", label: "Features" },
-  { href: "#who-its-for", label: "Who it's for" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#features", label: "Features" },
+  { href: "/#who-its-for", label: "Who it's for" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
+/** Section id a hash link targets, or null for a plain route link. */
+const sectionIdOf = (href: string) => href.split("#")[1] ?? null;
+
 export default function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeId, setActiveId] = useState(NAV_LINKS[0].href.slice(1));
+  const [activeId, setActiveId] = useState(
+    sectionIdOf(NAV_LINKS[0].href) ?? "",
+  );
   const navRef = useRef<HTMLDivElement>(null);
+  const isBlogRoute = pathname.startsWith("/blog");
+
+  const isLinkActive = (href: string) => {
+    const sectionId = sectionIdOf(href);
+    if (!sectionId) return pathname.startsWith(href);
+    return !isBlogRoute && sectionId === activeId;
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,9 +45,10 @@ export default function Navbar() {
 
   // Scrollspy — highlight the nav link whose section is in view.
   useEffect(() => {
-    const sections = NAV_LINKS.map((l) =>
-      document.getElementById(l.href.slice(1)),
-    ).filter((el): el is HTMLElement => el !== null);
+    const sections = NAV_LINKS.map((link) => {
+      const sectionId = sectionIdOf(link.href);
+      return sectionId ? document.getElementById(sectionId) : null;
+    }).filter((el): el is HTMLElement => el !== null);
     if (!sections.length) return;
 
     const observer = new IntersectionObserver(
@@ -86,11 +103,13 @@ export default function Navbar() {
             scrolled || menuOpen ? "shadow-nav" : ""
           }`}
         >
-          <Logo />
+          <Link href={"/"}>
+            <Logo />
+          </Link>
 
           <div className="hidden lg:flex items-center gap-9 text-[15px]">
             {NAV_LINKS.map((link) => {
-              const active = link.href === `#${activeId}`;
+              const active = isLinkActive(link.href);
               return (
                 <Link
                   key={link.href}
@@ -179,15 +198,15 @@ export default function Navbar() {
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
                       aria-current={
-                        link.href === `#${activeId}` ? "true" : undefined
+                        isLinkActive(link.href) ? "true" : undefined
                       }
                       className={`relative block px-4 py-3 rounded-2xl text-[15px] font-medium transition-colors duration-300 active:scale-[0.98] ${
-                        link.href === `#${activeId}`
+                        isLinkActive(link.href)
                           ? "text-brand-green"
                           : "text-brand-dark/90 hover:text-brand-dark hover:bg-brand-mint-soft"
                       }`}
                     >
-                      {link.href === `#${activeId}` && (
+                      {isLinkActive(link.href) && (
                         <motion.span
                           layoutId="mobile-nav-active"
                           className="absolute inset-0 rounded-2xl bg-brand-mint-soft"
