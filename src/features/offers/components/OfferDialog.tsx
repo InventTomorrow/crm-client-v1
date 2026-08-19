@@ -47,10 +47,13 @@ export function OfferDialog({
           <div className="text-6xl font-extrabold leading-none tracking-tight">
             {offer.discountPercent}%
           </div>
-          <div className="mt-1 text-sm font-semibold uppercase tracking-[0.2em] opacity-90">
-            off every plan
+          <div className="mt-1 text-sm font-semibold uppercase tracking-[0.2em] text-white/95">
+            off any plan
           </div>
-          <OfferCountdown endsAt={offer.endsAt} variant="blocks" className="mt-6" />
+          <p className="mt-5 text-[12px] font-semibold uppercase tracking-wider text-white/90">
+            Offer ends in
+          </p>
+          <OfferCountdown endsAt={offer.endsAt} variant="blocks" className="mt-2" />
         </div>
 
         <div className="px-6 pb-6 pt-5 text-center">
@@ -60,7 +63,7 @@ export function OfferDialog({
             </DialogTitle>
             <DialogDescription className="text-center text-sm text-ink-mute">
               {offer.description ??
-                `Upgrade before the timer runs out and pay ${offer.discountPercent}% less on any paid plan.`}
+                `Pick any paid plan before the timer runs out and pay ${offer.discountPercent}% less on it.`}
             </DialogDescription>
           </DialogHeader>
 

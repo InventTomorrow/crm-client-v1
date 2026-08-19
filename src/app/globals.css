@@ -63,9 +63,12 @@
   --color-brand-leaf-2: #C4E2B0;
   --color-brand-text: #6B7670;
   --color-brand-text-soft: #8B9590;
-  /* Energy / offer accent */
-  --color-brand-amber: #F97316;
-  --color-brand-amber-dark: #EA580C;
+  /* Energy / offer accent. Deeper than the old #F97316, which could not carry
+     white text or read on a tint at 12–13px. -dark is the on-tint text shade,
+     -light the dark-mode one. */
+  --color-brand-amber: #C2410C;
+  --color-brand-amber-dark: #9A3412;
+  --color-brand-amber-light: #FDBA74;
 
   /* Landing page shadows */
   --shadow-card: 0 1px 2px rgba(20, 64, 58, 0.04), 0 4px 16px rgba(20, 64, 58, 0.04);

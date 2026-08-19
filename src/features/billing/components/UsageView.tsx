@@ -3,6 +3,7 @@ import { Progress } from "@/shared/ui/Progress";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useUsage } from "../hooks/useBilling";
+import { isUnlimitedLimit } from "../utils/planLimits";
 
 /** Anything at or above this share of the allowance is worth flagging. */
 const WARN_AT = 0.8;
@@ -94,9 +95,12 @@ export function UsageView() {
 
         <div className="mt-5 space-y-4 border-t border-[var(--line)] pt-5">
           {usage.metrics.map((metric) => {
-            const percent = pct(metric.used, metric.limit);
-            const exhausted = metric.limit > 0 && metric.used >= metric.limit;
+            const unlimited = isUnlimitedLimit(metric.limit);
+            const percent = unlimited ? 0 : pct(metric.used, metric.limit);
+            const exhausted =
+              !unlimited && metric.limit > 0 && metric.used >= metric.limit;
             const warning =
+              !unlimited &&
               !exhausted &&
               metric.limit > 0 &&
               metric.used / metric.limit >= WARN_AT;
@@ -126,14 +130,20 @@ export function UsageView() {
                     }`}
                   >
                     {(metric.used ?? 0).toLocaleString("en-PK")} /{" "}
-                    {metric.limit != null
-                      ? metric.limit.toLocaleString("en-PK")
-                      : "—"}
+                    {unlimited
+                      ? "Unlimited"
+                      : metric.limit != null
+                        ? metric.limit.toLocaleString("en-PK")
+                        : "—"}
                   </span>
                 </div>
                 <Progress
                   value={percent}
-                  aria-label={`${metric.label}: ${metric.used} of ${metric.limit} used`}
+                  aria-label={
+                    unlimited
+                      ? `${metric.label}: ${metric.used} used of unlimited`
+                      : `${metric.label}: ${metric.used} of ${metric.limit} used`
+                  }
                   className={`mt-1.5 h-1.5 ${
                     exhausted
                       ? "[&_[data-slot=progress-indicator]]:bg-destructive"
