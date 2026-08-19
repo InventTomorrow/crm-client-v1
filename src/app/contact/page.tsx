@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/shared/seo/metadata";
 
 const TITLE = "Contact Us";
 const DESCRIPTION =
-  "Get help with AsaanRabta — setup, billing, or anything that isn't working. Send us a message and we reply within one business day.";
+  "Get help with AsaanRabta setup, billing, or anything that isn't working. Send us a message and we reply within one business day.";
 
 export const metadata = buildPageMetadata({
   title: `${TITLE} | AsaanRabta`,

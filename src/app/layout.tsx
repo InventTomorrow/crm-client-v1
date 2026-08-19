@@ -23,7 +23,7 @@ const manrope = Manrope({
 });
 
 const DEFAULT_TITLE =
-  "AsaanRabta – Turn WhatsApp Into Your 24/7 Sales Team (Pakistan WhatsApp CRM)";
+  "AsaanRabta | Turn WhatsApp Into Your 24/7 Sales Team (Pakistan WhatsApp CRM)";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

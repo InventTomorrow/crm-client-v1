@@ -51,7 +51,7 @@ export function webSiteSchema(): JsonLdNode {
 export function softwareApplicationSchema(): JsonLdNode {
   return {
     "@type": "SoftwareApplication",
-    name: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    name: `${SITE_NAME}: ${SITE_TAGLINE}`,
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "Customer Relationship Management",
     operatingSystem: "Web",

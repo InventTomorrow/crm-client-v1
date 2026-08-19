@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/shared/seo/metadata";
 
 export const BLOG_TITLE = "WhatsApp Sales & CRM Blog";
 export const BLOG_DESCRIPTION =
-  "Practical guides for WhatsApp-first businesses in Pakistan — replying faster, running broadcasts that work, and turning chats into a sales pipeline.";
+  "Practical guides for WhatsApp-first businesses in Pakistan: replying faster, running broadcasts that work, and turning chats into a sales pipeline.";
 
 export const revalidate = 900;
 
@@ -54,7 +54,7 @@ export default async function BlogIndexPage() {
         description={BLOG_DESCRIPTION}
         categories={categories}
         firstPage={firstPage}
-        emptyMessage="No articles published yet — check back shortly."
+        emptyMessage="No articles published yet. Check back shortly."
       />
     </>
   );

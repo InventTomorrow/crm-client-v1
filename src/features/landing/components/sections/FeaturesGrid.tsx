@@ -49,7 +49,7 @@ const FEATURES = [
   {
     icon: FileSpreadsheetIcon,
     title: "Excel Lead Import",
-    body: "Upload your existing customer lists and start your first high-conversion marketing campaign in seconds.",
+    body: "Upload your existing customer lists and send your first campaign the same day.",
   },
   {
     icon: UsersIcon,

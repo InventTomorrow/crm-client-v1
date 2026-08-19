@@ -32,7 +32,7 @@ const SUPPORT_CHANNELS = [
   {
     icon: Clock,
     title: "Reply time",
-    description: "Within one business day, Mon–Sat",
+    description: "Within one business day, Mon to Sat",
     href: null,
   },
 ] as const;
@@ -55,8 +55,8 @@ export default function ContactView() {
             Contact us
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-brand-text md:text-[17px]">
-            Tell us what you need help with — setup, billing, or something that
-            is not working. Every message reaches a real person on our team.
+            Tell us what you need help with: setup, billing, or something that
+            is not working. A real person on our team reads every message.
           </p>
         </header>
 
@@ -66,11 +66,11 @@ export default function ContactView() {
               <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <CheckCircle2 className="size-10 text-brand-green" />
                 <h2 className="text-xl font-bold text-brand-dark">
-                  Thanks — your message is with us
+                  Thanks, your message is with us
                 </h2>
                 <p className="max-w-sm text-[15px] leading-relaxed text-brand-text">
                   We reply by email within one business day. Check your spam
-                  folder if you do not see us.
+                  folder if you do not hear from us.
                 </p>
                 <button
                   type="button"

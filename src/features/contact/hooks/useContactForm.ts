@@ -22,7 +22,7 @@ export function useContactForm() {
     mutationFn: sendContactMessage,
     onSuccess: () => {
       form.reset();
-      toast.success("Message sent — we'll reply by email.");
+      toast.success("Message sent. We'll reply by email.");
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });

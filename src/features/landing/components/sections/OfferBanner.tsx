@@ -30,7 +30,7 @@ export default function OfferBanner({ offer }: { offer: ActiveOffer | null }) {
           <div className="relative mx-auto flex max-w-[1392px] flex-wrap items-center justify-center gap-x-2.5 gap-y-1 px-10 py-2.5 text-center text-[13px] font-medium sm:text-sm">
             <ZapIcon className="hidden h-4 w-4 shrink-0 sm:block" />
             <p>
-              <span className="font-semibold">{offer.title} —</span> get{" "}
+              <span className="font-semibold">{offer.title}:</span> get{" "}
               <span className="font-semibold">{offer.discountPercent}% off</span>{" "}
               every plan.
             </p>

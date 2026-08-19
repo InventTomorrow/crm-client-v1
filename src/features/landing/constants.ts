@@ -12,7 +12,7 @@ export const LANDING_FAQ_ITEMS = [
   {
     question: "Never Lose Track Of A Customer",
     answer:
-      "Every WhatsApp inquiry is saved with context, history, and status — no more digging through chats to find what was promised.",
+      "Every WhatsApp inquiry is saved with its context, history, and status, so nobody has to scroll back through chats to find what was promised.",
   },
   {
     question: "Manage Multiple Numbers Easily",
@@ -22,7 +22,7 @@ export const LANDING_FAQ_ITEMS = [
   {
     question: "Grow Without Hiring More Staff",
     answer:
-      "Scale your customer support and sales conversations without proportional headcount growth. Your AI assistant works 24/7.",
+      "Handle more conversations without adding people. Your AI assistant keeps replying at night, on weekends, and during rush hours.",
   },
 ];
 

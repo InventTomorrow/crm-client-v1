@@ -62,7 +62,7 @@ export default function Footer() {
             <Logo />
             <p className="mt-4 max-w-xs text-brand-text text-[14px]">
               WhatsApp sales, simplified. Turn every chat into a tracked lead,
-              order and follow-up — without leaving WhatsApp.
+              order, and follow-up without leaving WhatsApp.
             </p>
             <h3 className="mt-8 text-[14px] font-semibold text-brand-dark">
               Stay in the loop

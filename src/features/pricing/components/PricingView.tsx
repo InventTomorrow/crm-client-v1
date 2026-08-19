@@ -119,7 +119,7 @@ export function PricingView() {
         <InfoCard
           icon={<ShieldCheck size={16} />}
           title="Changing plans"
-          body="Upgrades start as soon as they're paid for. Downgrades and cancellations take effect at the end of the period you've already paid for — never sooner."
+          body="Upgrades start as soon as they're paid for. Downgrades and cancellations take effect at the end of the period you've already paid for, never sooner."
         />
         <InfoCard
           icon={<Headphones size={16} />}

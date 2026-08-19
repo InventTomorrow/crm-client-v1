@@ -31,7 +31,7 @@ const ITEMS = [
   {
     Mock: AIRepliesMockup,
     title: "Let AI Answer Repeated Questions Instantly",
-    body: "Customers ask the same questions every day — prices, availability, delivery, bookings, timings, product details.",
+    body: "Customers ask the same questions every day: prices, availability, delivery, bookings, timings, product details.",
     body2:
       "AsaanRabta answers using your business information, so customers get quick replies even when your team is busy.",
     link: "Connect WhatsApp",

@@ -33,7 +33,7 @@ export default function NewsletterForm() {
           <p className="mt-0.5 text-[12px] text-brand-text">
             {isNewSubscriber
               ? "Product updates and WhatsApp sales tips are on their way to your inbox."
-              : "This email is already on our list — nothing more to do."}
+              : "This email is already on our list, nothing more to do."}
           </p>
         </div>
       </div>

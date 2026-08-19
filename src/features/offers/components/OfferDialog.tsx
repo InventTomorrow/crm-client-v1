@@ -81,7 +81,7 @@ export function OfferDialog({
             className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-ink-mute transition-colors hover:text-ink"
           >
             <Clock className="h-3.5 w-3.5" />
-            Maybe later — the timer stays on screen
+            Maybe later, the timer stays on screen
           </button>
         </div>
       </DialogContent>

@@ -48,7 +48,7 @@ export function OfferTopBanner({ offer, ctaHref }: OfferTopBannerProps) {
       <Zap className="hidden h-4 w-4 shrink-0 sm:block" />
       <p className="text-[13px] font-medium">
         <span className="font-semibold">Save {offer.discountPercent}% on any plan</span>
-        <span className="hidden sm:inline"> — {offer.title}</span>
+        <span className="hidden sm:inline">: {offer.title}</span>
       </p>
       <span className="hidden text-[12px] font-medium text-white/90 sm:inline">
         Ends in

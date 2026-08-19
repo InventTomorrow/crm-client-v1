@@ -43,7 +43,7 @@ export default function Pricing({
               <br /> Grows With You
             </>
           }
-          subtitle="Start with one branch and upgrade to unlimited workspaces, unlimited broadcasts whenever your business is ready. No hidden fees."
+          subtitle="Start with one branch and move up to more workspaces and broadcasts when your business is ready. No hidden fees."
         />
 
         {/* The decision point — restate the deadline right above the grid so

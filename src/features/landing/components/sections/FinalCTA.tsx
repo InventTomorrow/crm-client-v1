@@ -23,9 +23,8 @@ export default function FinalCTA() {
                 </h2>
                 <p className="mt-6 text-white/70 text-[15px] md:text-base leading-relaxed max-w-md mx-auto lg:mx-0 text-center lg:text-left">
                   Your next customer may already be waiting in your WhatsApp
-                  inbox. AsaanRabta helps you reply faster, manage leads better,
-                  broadcast offers, and convert more conversations into
-                  customers.
+                  inbox. AsaanRabta helps you reply faster, keep track of every
+                  lead, and turn more chats into orders.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center lg:justify-start gap-3">
                   <PrimaryCta className="h-auto w-full sm:w-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">

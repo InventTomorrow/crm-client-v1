@@ -16,7 +16,7 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const HOME_TITLE = "AsaanRabta — Turn WhatsApp Into Your 24/7 Sales Assistant";
+const HOME_TITLE = "AsaanRabta | Turn WhatsApp Into Your 24/7 Sales Assistant";
 const HOME_DESCRIPTION =
   "Reply faster, manage every lead, send broadcasts, and convert more customers, all from one simple WhatsApp sales platform built for WhatsApp-first businesses.";
 

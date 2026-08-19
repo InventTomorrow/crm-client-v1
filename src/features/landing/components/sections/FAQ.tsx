@@ -20,7 +20,7 @@ export default function FAQ() {
               <br className="hidden md:block" /> AsaanRabta
             </>
           }
-          subtitle="Got questions? We've got you covered—here are some quick answers to help you get the most out of AsaanRabta."
+          subtitle="Quick answers to the questions business owners ask us most."
         />
         <div className="mt-14 max-w-3xl mx-auto space-y-3">
           {LANDING_FAQ_ITEMS.map((item, i) => {
