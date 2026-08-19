@@ -3,6 +3,7 @@ import { Progress } from "@/shared/ui/Progress";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useUsage } from "../hooks/useBilling";
+import { isUnlimitedLimit } from "../utils/planLimits";
 
 /** Anything at or above this share of the allowance is worth flagging. */
 const WARN_AT = 0.8;
@@ -73,8 +74,11 @@ export function UsageSummaryCard() {
 
       <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
         {usage.metrics.map((metric) => {
-          const exhausted = metric.limit > 0 && metric.used >= metric.limit;
+          const unlimited = isUnlimitedLimit(metric.limit);
+          const exhausted =
+            !unlimited && metric.limit > 0 && metric.used >= metric.limit;
           const warning =
+            !unlimited &&
             !exhausted &&
             metric.limit > 0 &&
             metric.used / metric.limit >= WARN_AT;
@@ -94,12 +98,18 @@ export function UsageSummaryCard() {
                   }`}
                 >
                   {metric.used.toLocaleString("en-PK")} /{" "}
-                  {metric.limit.toLocaleString("en-PK")}
+                  {unlimited
+                    ? "Unlimited"
+                    : metric.limit.toLocaleString("en-PK")}
                 </span>
               </div>
               <Progress
-                value={pct(metric.used, metric.limit)}
-                aria-label={`${metric.label}: ${metric.used} of ${metric.limit} used`}
+                value={unlimited ? 0 : pct(metric.used, metric.limit)}
+                aria-label={
+                  unlimited
+                    ? `${metric.label}: ${metric.used} used of unlimited`
+                    : `${metric.label}: ${metric.used} of ${metric.limit} used`
+                }
                 className={`mt-1 h-1 ${
                   exhausted
                     ? "[&_[data-slot=progress-indicator]]:bg-destructive"

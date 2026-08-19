@@ -18,9 +18,10 @@ export function OfferHeroPill({ offer }: { offer: ActiveOffer | null }) {
     >
       <Tag className="h-4 w-4 shrink-0" />
       <span>
-        <span className="font-semibold">{offer.discountPercent}% off</span> every plan
+        <span className="font-semibold">Save {offer.discountPercent}%</span> on any plan
       </span>
-      <span className="text-brand-amber/40">|</span>
+      <span className="text-brand-amber-dark/30">|</span>
+      <span className="font-medium">Ends in</span>
       <OfferCountdown endsAt={offer.endsAt} />
     </a>
   );

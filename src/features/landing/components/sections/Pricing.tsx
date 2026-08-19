@@ -55,7 +55,7 @@ export default function Pricing({
               <span className="text-[15px] font-semibold">
                 {offer.discountPercent}% off every plan
               </span>
-              <span className="text-brand-amber/40">|</span>
+              <span className="text-brand-amber-dark/30">|</span>
               <span className="text-[13px] font-medium">Ends in</span>
               <OfferCountdown endsAt={offer.endsAt} className="text-[15px]" />
             </div>
@@ -124,10 +124,10 @@ export default function Pricing({
                       {plan.offerEndsAt ? (
                         <OfferCountdown
                           endsAt={plan.offerEndsAt}
-                          className="text-brand-amber"
+                          className="text-brand-amber-dark"
                         />
                       ) : (
-                        <span className="text-[12px] font-medium text-brand-amber">
+                        <span className="text-[12px] font-medium text-brand-amber-dark">
                           {plan.offerCountdown}
                         </span>
                       )}

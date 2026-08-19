@@ -47,10 +47,13 @@ export function OfferTopBanner({ offer, ctaHref }: OfferTopBannerProps) {
     <div className="relative flex items-center justify-center gap-3 bg-brand-amber px-10 py-2 text-white">
       <Zap className="hidden h-4 w-4 shrink-0 sm:block" />
       <p className="text-[13px] font-medium">
-        <span className="font-semibold">{offer.discountPercent}% off every plan</span>
+        <span className="font-semibold">Save {offer.discountPercent}% on any plan</span>
         <span className="hidden sm:inline"> — {offer.title}</span>
       </p>
-      <OfferCountdown endsAt={offer.endsAt} className="rounded-md bg-white/20 px-2 py-0.5" />
+      <span className="hidden text-[12px] font-medium text-white/90 sm:inline">
+        Ends in
+      </span>
+      <OfferCountdown endsAt={offer.endsAt} className="rounded-md bg-white/25 px-2 py-0.5" />
       <Link
         href={ctaHref}
         className="hidden items-center gap-1 rounded-md bg-white px-2.5 py-1 text-[12px] font-semibold text-brand-amber-dark no-underline transition-opacity hover:opacity-90 sm:inline-flex"

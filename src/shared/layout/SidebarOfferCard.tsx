@@ -40,7 +40,9 @@ function PromptCard({ icon, title, subtitle, cta, tone = "accent" }: PromptCardP
         {icon}
         {title}
       </div>
-      {subtitle && <div className="text-[10.5px] text-[var(--ink-mute)]">{subtitle}</div>}
+      {subtitle && (
+        <div className="text-[11px] leading-snug text-[var(--ink-soft)]">{subtitle}</div>
+      )}
       <Link
         href="/settings/billing"
         className={
@@ -80,16 +82,23 @@ export function SidebarOfferCard() {
   }
 
   if (!subscription) {
-    return <PromptCard icon={<Zap size={12} className="shrink-0" />} title="Choose a plan to get started" cta="View plans" />;
+    return (
+      <PromptCard
+        icon={<Zap size={12} className="shrink-0" />}
+        title="You're not on a plan yet"
+        subtitle="Pick a plan to unlock every feature in your workspace."
+        cta="See plans"
+      />
+    );
   }
 
   if (subscription.status === "PAST_DUE") {
     return (
       <PromptCard
         icon={<AlertTriangle size={12} className="shrink-0" />}
-        title="Payment past due"
-        subtitle="Update your payment to keep your workspace active."
-        cta="Fix billing"
+        title="Payment is past due"
+        subtitle="Update your payment method to keep your workspace running."
+        cta="Update payment"
         tone="warning"
       />
     );
@@ -102,9 +111,13 @@ export function SidebarOfferCard() {
     return (
       <PromptCard
         icon={<AlertTriangle size={12} className="shrink-0" />}
-        title={days !== null ? `Access ends in ${days} day${days === 1 ? "" : "s"}` : "Subscription won't renew"}
-        subtitle="Pick a plan to keep your workspace active."
-        cta="Choose a plan"
+        title={
+          days !== null
+            ? `Your plan ends in ${days} day${days === 1 ? "" : "s"}`
+            : "Your plan won't renew"
+        }
+        subtitle="Renew before it ends to keep your data and features."
+        cta="Renew plan"
         tone="warning"
       />
     );
@@ -115,8 +128,16 @@ export function SidebarOfferCard() {
     return (
       <PromptCard
         icon={<Zap size={12} className="shrink-0" />}
-        title={days !== null ? `Trial ends in ${days} day${days === 1 ? "" : "s"}` : "Trial active"}
-        subtitle={subscription.plan?.name}
+        title={
+          days !== null
+            ? `Free trial ends in ${days} day${days === 1 ? "" : "s"}`
+            : "You're on a free trial"
+        }
+        subtitle={
+          subscription.plan?.name
+            ? `Upgrade to keep using ${subscription.plan.name} without a break.`
+            : "Upgrade to keep your workspace after the trial."
+        }
         cta="Upgrade now"
       />
     );
@@ -126,5 +147,12 @@ export function SidebarOfferCard() {
   if (subscription.status === "ACTIVE") return null;
 
   // CANCELLED (or cancel-at-period-end already elapsed) — re-prompt.
-  return <PromptCard icon={<Zap size={12} className="shrink-0" />} title="Your subscription has ended" cta="Renew plan" />;
+  return (
+    <PromptCard
+      icon={<Zap size={12} className="shrink-0" />}
+      title="Your plan has ended"
+      subtitle="Choose a plan to get your workspace back."
+      cta="Choose a plan"
+    />
+  );
 }

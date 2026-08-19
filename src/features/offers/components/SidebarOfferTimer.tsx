@@ -17,18 +17,25 @@ interface SidebarOfferTimerProps {
  */
 export function SidebarOfferTimer({ offer, subtitle }: SidebarOfferTimerProps) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-3 py-2.5 text-brand-amber-dark">
+    <div className="flex flex-col gap-2 rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-3 py-2.5 text-brand-amber-dark dark:text-brand-amber-light">
       <div className="flex items-center gap-1.5 text-[12px] font-semibold">
         <Timer size={12} className="shrink-0" />
-        {offer.discountPercent}% off every plan
+        Save {offer.discountPercent}% on any plan
       </div>
-      <OfferCountdown endsAt={offer.endsAt} className="text-[13px]" />
-      {subtitle && <div className="text-[10.5px] opacity-80">{subtitle}</div>}
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10.5px] font-semibold uppercase tracking-wide">
+          Offer ends in
+        </span>
+        <OfferCountdown endsAt={offer.endsAt} className="text-[13px]" />
+      </div>
+      {subtitle && (
+        <div className="text-[10.5px] font-medium leading-snug">{subtitle}</div>
+      )}
       <Link
         href="/settings/billing"
         className="mt-0.5 flex items-center justify-center gap-1 rounded-md bg-brand-amber px-2.5 py-1.5 text-[11.5px] font-semibold text-white no-underline transition-opacity hover:opacity-90"
       >
-        Claim offer <ArrowRight size={12} />
+        Upgrade and save {offer.discountPercent}% <ArrowRight size={12} />
       </Link>
     </div>
   );
