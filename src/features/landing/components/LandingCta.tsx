@@ -10,15 +10,15 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * Where every landing CTA points: a signed-in user with finished setup jumps
- * straight to the inbox, one still mid-onboarding resumes the step they owe,
- * and everyone else goes to signup.
+ * Where every landing CTA points — signup, for everyone.
+ *
+ * Deliberately session-blind: a stale cookie from a half-finished account used
+ * to send "Get Started" straight into the wizard, which reads as the landing
+ * page being broken. Login and the post-register flow already route by
+ * onboarding state (see resolveAuthLanding), so nothing is lost by keeping
+ * this link fixed.
  */
-function useCtaHref() {
-  const { user } = useMe();
-  if (!user) return "/auth/register";
-  return hasFinishedOnboarding(user) ? "/inbox" : resolveAuthLanding(user);
-}
+const CTA_HREF = "/auth/register";
 
 /** Primary pill button used across the landing page. */
 export function PrimaryCta({
@@ -28,14 +28,13 @@ export function PrimaryCta({
   children: ReactNode;
   className?: string;
 }) {
-  const href = useCtaHref();
   return (
     <Button
       asChild
       variant="ghost"
       className={cn("hover:text-white", className)}
     >
-      <Link href={href}>{children}</Link>
+      <Link href={CTA_HREF}>{children}</Link>
     </Button>
   );
 }
@@ -104,9 +103,8 @@ export function CtaTextLink({
   children: ReactNode;
   className?: string;
 }) {
-  const href = useCtaHref();
   return (
-    <Link href={href} className={className}>
+    <Link href={CTA_HREF} className={className}>
       {children}
     </Link>
   );
