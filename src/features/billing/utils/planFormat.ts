@@ -41,7 +41,34 @@ export function formatDurationLabel(duration: PlanDuration): string {
 }
 
 /** pkr() for the PKR default; Intl.NumberFormat fallback for any other currency. */
-export function formatPlanPrice(plan: Pick<Plan, 'price' | 'currency'>): string {
-  if (plan.currency === 'PKR') return pkr(plan.price);
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: plan.currency }).format(plan.price);
+export function formatAmount(amount: number, currency: string): string {
+  if (currency === 'PKR') return pkr(amount);
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+}
+
+/**
+ * What the account owes today — the campaign price when one is running. The
+ * server re-derives the same number when it validates the payment, so this is
+ * also the amount the checkout form submits.
+ */
+export function planPayableAmount(plan: Pick<Plan, 'price' | 'offerPrice'>): number {
+  return plan.offerPrice ?? plan.price;
+}
+
+/** What the account pays today — the campaign price when one is running. */
+export function formatPlanPrice(plan: Pick<Plan, 'price' | 'currency' | 'offerPrice'>): string {
+  return formatAmount(planPayableAmount(plan), plan.currency);
+}
+
+/**
+ * The struck-through list price, or null when nothing is discounted. Loose
+ * null check on purpose: endpoints that serve an already-subscribed plan
+ * (e.g. /billing/subscription) omit the campaign fields entirely, and an
+ * undefined offerPrice must read as "no discount", not as a free strike-through.
+ */
+export function formatPlanListPrice(
+  plan: Pick<Plan, 'price' | 'currency' | 'offerPrice'>,
+): string | null {
+  if (plan.offerPrice == null || plan.offerPrice >= plan.price) return null;
+  return formatAmount(plan.price, plan.currency);
 }

@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { Plan } from "@/features/billing/types";
-import { formatPlanPrice } from "@/features/billing/utils/planFormat";
+import { formatPlanPrice, planPayableAmount } from "@/features/billing/utils/planFormat";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -81,7 +81,7 @@ export function SubscriptionCheckoutForm({
       businessName: "",
       paymentMethod: "BANK_TRANSFER",
       paymentReference: "",
-      paymentAmount: plan.price,
+      paymentAmount: planPayableAmount(plan),
       receiptUrl: "",
       customerNote: "",
     },

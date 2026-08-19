@@ -46,6 +46,13 @@ export interface Plan {
   wholesalePrice: number;
   currency: string;
 
+  // Platform campaign pricing, applied server-side. Null when no campaign is
+  // running or the plan is a free trial. `price` deliberately stays the list
+  // price so upgrade/downgrade comparisons are unaffected by a campaign.
+  offerPrice: number | null;
+  offerDiscountPercent: number | null;
+  offerEndsAt: string | null;
+
   canResell: boolean;
   canWhitelabel: boolean;
   providerPlanId: string | null;

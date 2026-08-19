@@ -1,5 +1,6 @@
 "use client";
 import {
+  formatPlanListPrice,
   formatPlanPeriod,
   formatPlanPrice,
 } from "@/features/billing/utils/planFormat";
@@ -8,6 +9,8 @@ import type { Plan } from "@/features/billing/types";
 
 /** Read-only summary of the plan the admin issued this link for. */
 export function PlanSummaryCard({ plan }: { plan: Plan }) {
+  const listPrice = formatPlanListPrice(plan);
+
   return (
     <div className="card overflow-hidden">
       <div className="border-b border-[var(--line)] p-4">
@@ -26,6 +29,16 @@ export function PlanSummaryCard({ plan }: { plan: Plan }) {
             )}
           </div>
           <div className="text-right">
+            {listPrice && (
+              <div className="flex items-center justify-end gap-1.5">
+                <span className="text-[12.5px] text-[var(--ink-mute)] line-through">
+                  {listPrice}
+                </span>
+                <span className="badge font-medium text-white bg-brand-amber">
+                  {plan.offerDiscountPercent}% OFF
+                </span>
+              </div>
+            )}
             <div className="text-[17px] font-semibold text-[var(--ink)]">
               {formatPlanPrice(plan)}
             </div>

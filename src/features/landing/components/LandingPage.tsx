@@ -1,4 +1,6 @@
 import { fetchFeaturedPosts } from "@/features/blog/blog.api";
+import { OfferDialog } from "@/features/offers/components/OfferDialog";
+import { fetchActiveOffer } from "@/features/offers/services/offerService";
 import { fetchLandingPlans } from "../plans";
 import BusinessTypes from "./sections/BusinessTypes";
 import FAQ from "./sections/FAQ";
@@ -21,29 +23,32 @@ import Values from "./sections/Values";
  * the SSR HTML rather than appearing after hydration.
  */
 export async function LandingPage() {
-  const [plans, featuredPosts] = await Promise.all([
+  const [plans, featuredPosts, offer] = await Promise.all([
     fetchLandingPlans(),
     fetchFeaturedPosts(4),
+    fetchActiveOffer(),
   ]);
 
   return (
     <div className="min-h-screen bg-white antialiased text-brand-dark">
-      <OfferBanner />
+      <OfferBanner offer={offer} />
       <Navbar />
-      <Hero />
+      <Hero offer={offer} />
       <GettingStarted />
       <StopLosingLeads />
       <FeaturesGrid />
       <ManageInbox />
       <FeatureDetail />
       <BusinessTypes />
-      <Pricing plans={plans} />
+      <Pricing plans={plans} offer={offer} />
       <Values />
       {/* <WhyAsaanRabta /> */}
       <LatestArticles posts={featuredPosts} />
       <FAQ />
       <FinalCTA />
       <Footer />
+      {/* Opens itself 15s in, once a day — see useOfferDialog. */}
+      <OfferDialog offer={offer} ctaHref="#pricing" />
     </div>
   );
 }

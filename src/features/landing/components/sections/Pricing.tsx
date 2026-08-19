@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { OfferCountdown } from "@/features/offers/components/OfferCountdown";
+import type { ActiveOffer } from "@/features/offers/types";
 import type { Plan } from "../../plans";
 import Container from "../Container";
 import { CheckIcon, ZapIcon } from "../icons";
@@ -12,8 +14,13 @@ import SectionHeading from "../SectionHeading";
  * Plans come from the public catalogue, fetched by the server component that
  * renders this one, so the prices are in the SSR HTML for crawlers.
  */
-export default function Pricing({ plans }: { plans: Plan[] }) {
-  console.log("plans:", plans);
+export default function Pricing({
+  plans,
+  offer,
+}: {
+  plans: Plan[];
+  offer: ActiveOffer | null;
+}) {
   // Nothing published yet — drop the section rather than show an empty grid.
   if (plans.length === 0) return null;
 
@@ -38,6 +45,22 @@ export default function Pricing({ plans }: { plans: Plan[] }) {
           }
           subtitle="Start with one branch and upgrade to unlimited workspaces, unlimited broadcasts whenever your business is ready. No hidden fees."
         />
+
+        {/* The decision point — restate the deadline right above the grid so
+            nobody has to scroll back to the strip to see how long is left. */}
+        {offer && (
+          <Reveal>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 rounded-2xl border border-brand-amber/25 bg-brand-amber/10 px-5 py-3 text-center text-brand-amber-dark sm:mt-10">
+              <ZapIcon className="hidden h-4 w-4 shrink-0 sm:block" />
+              <span className="text-[15px] font-semibold">
+                {offer.discountPercent}% off every plan
+              </span>
+              <span className="text-brand-amber/40">|</span>
+              <span className="text-[13px] font-medium">Ends in</span>
+              <OfferCountdown endsAt={offer.endsAt} className="text-[15px]" />
+            </div>
+          </Reveal>
+        )}
 
         <div
           className={`mt-12 sm:mt-14 grid gap-6 ${columns} mx-auto items-stretch`}
@@ -98,9 +121,16 @@ export default function Pricing({ plans }: { plans: Plan[] }) {
                       <span className="rounded-full bg-brand-amber px-2.5 py-0.5 text-[12px] font-semibold text-white">
                         {plan.discountPercentage}% OFF
                       </span>
-                      <span className="text-[12px] font-medium text-brand-amber">
-                        {plan.offerCountdown}
-                      </span>
+                      {plan.offerEndsAt ? (
+                        <OfferCountdown
+                          endsAt={plan.offerEndsAt}
+                          className="text-brand-amber"
+                        />
+                      ) : (
+                        <span className="text-[12px] font-medium text-brand-amber">
+                          {plan.offerCountdown}
+                        </span>
+                      )}
                     </div>
                   )}
 

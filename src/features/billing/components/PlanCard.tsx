@@ -1,7 +1,8 @@
 'use client';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import type { BusinessVertical } from '@/lib/business-verticals';
-import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
+import { OfferCountdown } from '@/features/offers/components/OfferCountdown';
+import { formatPlanListPrice, formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Plan } from '../types';
 import { PlanLimitsList } from './PlanLimitsList';
 
@@ -30,6 +31,7 @@ interface PlanCardProps {
 
 export function PlanCard({ plan, isCurrent, isRequested, isScheduled, changeDirection, isLoading, disabled, tenantVertical, checkoutMode, onSelect }: PlanCardProps) {
   const unavailable = checkoutMode === 'gateway' && !plan.providerPlanId;
+  const listPrice = formatPlanListPrice(plan);
   const comingSoon = plan.isComingSoon;
   const badges = [
     ...(plan.canResell ? ['Reseller access'] : []),
@@ -87,6 +89,19 @@ export function PlanCard({ plan, isCurrent, isRequested, isScheduled, changeDire
       </div>
 
       <div className="mt-3">
+        {listPrice && (
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="text-[15px] font-semibold text-[var(--ink-mute)] line-through">
+              {listPrice}
+            </span>
+            <span className="badge font-medium text-white bg-brand-amber">
+              {plan.offerDiscountPercent}% OFF
+            </span>
+            {plan.offerEndsAt && (
+              <OfferCountdown endsAt={plan.offerEndsAt} className="text-brand-amber-dark" />
+            )}
+          </div>
+        )}
         <span className="text-[26px] font-bold">{formatPlanPrice(plan)}</span>
         <span className="text-[13px] text-[var(--ink-soft)]"> {formatPlanPeriod(plan.duration, plan.customDurationDays)}</span>
       </div>

@@ -2,6 +2,9 @@
 import { AlertTriangle, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { useSubscription } from "@/features/billing/hooks/useBilling";
+import { SidebarOfferTimer } from "@/features/offers/components/SidebarOfferTimer";
+import { useActiveOffer } from "@/features/offers/hooks/useActiveOffer";
+import { useOfferEligibility } from "@/features/offers/hooks/useOfferEligibility";
 
 function daysUntil(iso: string | null): number | null {
   if (!iso) return null;
@@ -55,7 +58,26 @@ function PromptCard({ icon, title, subtitle, cta, tone = "accent" }: PromptCardP
 /** Sidebar footer upsell — reflects the workspace's actual subscription state. */
 export function SidebarOfferCard() {
   const { data: subscription, isLoading } = useSubscription();
+  const { data: offer } = useActiveOffer();
+  const { isEligible } = useOfferEligibility();
   if (isLoading) return null;
+
+  // A live campaign takes over the upsell slot entirely — it is the stronger
+  // prompt, and it is the one surface the user cannot dismiss, so the trial
+  // deadline rides along as its subtitle rather than as a second card.
+  if (offer && isEligible) {
+    const trialDays = daysUntil(subscription?.trialEndsAt ?? null);
+    return (
+      <SidebarOfferTimer
+        offer={offer}
+        subtitle={
+          subscription?.status === "TRIALING" && trialDays !== null
+            ? `Trial ends in ${trialDays} day${trialDays === 1 ? "" : "s"}`
+            : null
+        }
+      />
+    );
+  }
 
   if (!subscription) {
     return <PromptCard icon={<Zap size={12} className="shrink-0" />} title="Choose a plan to get started" cta="View plans" />;
