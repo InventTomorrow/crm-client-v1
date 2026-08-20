@@ -152,7 +152,9 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
             disabled={isSwitching}
             className={cn(
               "group w-full flex items-center gap-2.5 border border-[var(--line)] rounded-[10px] cursor-pointer font-[inherit] bg-[var(--surface)] transition-colors hover:bg-[var(--surface-2)] data-open:bg-[var(--surface-2)]",
-              collapsed ? "justify-center p-1.5" : "justify-start px-[10px] py-2",
+              collapsed
+                ? "justify-center p-1.5"
+                : "justify-start px-[10px] py-2",
               isSwitching && "opacity-60 cursor-not-allowed",
             )}
           >
@@ -191,10 +193,7 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
           align="start"
           side={collapsed ? "right" : "bottom"}
           sideOffset={collapsed ? 8 : 6}
-          className={cn(
-            "p-1.5 bg-[var(--surface)]",
-            collapsed && "w-70",
-          )}
+          className={cn("p-1.5 bg-[var(--surface)]", collapsed && "w-70")}
         >
           {ownedGroup.length > 0 && (
             <>

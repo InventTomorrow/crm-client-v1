@@ -6,8 +6,11 @@ import { useInboxUnreadCount } from "@/features/inbox/hooks/useConversations";
 import { useLeadsCount } from "@/features/leads/hooks/useLeads";
 import { usePendingOrdersCount } from "@/features/orders/hooks/useOrders";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
-import { hasCapability, type VerticalCapability } from "@/lib/business-verticals";
 import { useAppStore } from "@/lib/appStore";
+import {
+  hasCapability,
+  type VerticalCapability,
+} from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -36,7 +39,8 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const navItems = NAV_ITEMS.filter(
     (item) =>
       (permsLoading || !item.perm || can(item.perm)) &&
-      (!item.capability || hasCapability(tenant?.businessVertical, item.capability)),
+      (!item.capability ||
+        hasCapability(tenant?.businessVertical, item.capability)),
   );
   const { data: inboxUnread } = useInboxUnreadCount();
   const { data: leadsCount } = useLeadsCount();
@@ -52,7 +56,9 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
 
   // Sections open themselves when you're inside them; this only records the ones you've
   // since clicked open or shut, so a manual choice isn't undone on the next render.
-  const [sectionOverrides, setSectionOverrides] = useState<Record<string, boolean>>({});
+  const [sectionOverrides, setSectionOverrides] = useState<
+    Record<string, boolean>
+  >({});
   const toggleSection = (href: string) =>
     setSectionOverrides((current) => ({
       ...current,
@@ -175,6 +181,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         {/* Footer */}
         <div className="p-3 flex flex-col gap-2.5 border-t border-[var(--line)] relative">
           {!collapsed && <SidebarOfferCard />}
+
           {!collapsed ? (
             <div className="theme-seg">
               <button

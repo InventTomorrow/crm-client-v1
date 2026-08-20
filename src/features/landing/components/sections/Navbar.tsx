@@ -139,7 +139,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <PrimaryCta className="hidden lg:inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+            <PrimaryCta signedInTarget="dashboard" className="hidden lg:inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
               Get Started
             </PrimaryCta>
             <button
@@ -222,7 +222,7 @@ export default function Navbar() {
                   </motion.div>
                 ))}
                 <div className="p-2 pt-1">
-                  <PrimaryCta className="w-full justify-center h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:bg-brand-green-hover">
+                  <PrimaryCta signedInTarget="dashboard" className="w-full justify-center h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:bg-brand-green-hover">
                     Get Started
                   </PrimaryCta>
                 </div>

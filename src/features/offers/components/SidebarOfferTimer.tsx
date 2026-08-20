@@ -19,7 +19,7 @@ export function SidebarOfferTimer({ offer, subtitle }: SidebarOfferTimerProps) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-3 py-2.5 text-brand-amber-dark dark:text-brand-amber-light">
       <div className="flex items-center gap-1.5 text-[12px] font-semibold">
-        <Timer size={12} className="shrink-0" />
+        <Timer size={12} className="clock-pulse shrink-0" />
         Save {offer.discountPercent}% on any plan
       </div>
       <div className="flex flex-col gap-0.5">

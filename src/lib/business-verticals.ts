@@ -1,6 +1,11 @@
-import { Megaphone, ShoppingBag, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import {
+  Megaphone,
+  ShoppingBag,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react";
 
-export type BusinessVertical = 'ECOMMERCE' | 'RESTAURANT' | 'MARKETING_AGENCY';
+export type BusinessVertical = "ECOMMERCE" | "RESTAURANT" | "MARKETING_AGENCY";
 
 /**
  * What a workspace can do, derived from its vertical. Nav items and route
@@ -9,14 +14,14 @@ export type BusinessVertical = 'ECOMMERCE' | 'RESTAURANT' | 'MARKETING_AGENCY';
  * Mirrors the server's vertical registry.
  */
 export type VerticalCapability =
-  | 'CATALOG_PRODUCTS'
-  | 'CATALOG_MENU'
-  | 'CATALOG_SERVICES'
-  | 'ORDERS'
-  | 'QUALIFICATION'
-  | 'BOOKINGS'
-  | 'FOLLOW_UPS'
-  | 'RESOURCES';
+  | "CATALOG_PRODUCTS"
+  | "CATALOG_MENU"
+  | "CATALOG_SERVICES"
+  | "ORDERS"
+  | "QUALIFICATION"
+  | "BOOKINGS"
+  | "FOLLOW_UPS"
+  | "RESOURCES";
 
 export interface BusinessVerticalOption {
   value: BusinessVertical;
@@ -29,55 +34,61 @@ export interface BusinessVerticalOption {
 // editor — one list, one place to add a future vertical.
 export const BUSINESS_VERTICALS: BusinessVerticalOption[] = [
   {
-    value: 'ECOMMERCE',
-    title: 'Online store / retail',
-    description: 'You sell products — browsing, stock, pricing, and order tracking.',
+    value: "MARKETING_AGENCY",
+    title: "Marketing agency",
+    description:
+      "You sell services, packages, lead qualification, and booked calls.",
+    icon: Megaphone,
+  },
+  {
+    value: "ECOMMERCE",
+    title: "Online Store / Retail",
+    description:
+      "You sell products, browsing, stock, pricing, and order tracking.",
     icon: ShoppingBag,
   },
   {
-    value: 'RESTAURANT',
-    title: 'Restaurant / food service',
-    description: 'You take food orders — menu browsing, dishes, and order tracking.',
+    value: "RESTAURANT",
+    title: "Restaurant / Food Service",
+    description:
+      "You take food orders, menu browsing, dishes, and order tracking.",
     icon: UtensilsCrossed,
-  },
-  {
-    value: 'MARKETING_AGENCY',
-    title: 'Marketing agency',
-    description: 'You sell services — packages, lead qualification, and booked calls.',
-    icon: Megaphone,
   },
 ];
 
 /** Tuple form for Zod enums — derived from the list above so schemas can't drift from it. */
-export const BUSINESS_VERTICAL_VALUES = BUSINESS_VERTICALS.map((v) => v.value) as [
-  BusinessVertical,
-  ...BusinessVertical[],
-];
+export const BUSINESS_VERTICAL_VALUES = BUSINESS_VERTICALS.map(
+  (v) => v.value,
+) as [BusinessVertical, ...BusinessVertical[]];
 
 const BUSINESS_VERTICAL_SHORT_LABELS: Record<BusinessVertical, string> = {
-  ECOMMERCE: 'Retail',
-  RESTAURANT: 'Restaurant',
-  MARKETING_AGENCY: 'Agency',
+  ECOMMERCE: "Retail",
+  RESTAURANT: "Restaurant",
+  MARKETING_AGENCY: "Agency",
 };
 
 const VERTICAL_CAPABILITIES: Record<BusinessVertical, VerticalCapability[]> = {
-  ECOMMERCE: ['CATALOG_PRODUCTS', 'ORDERS'],
-  RESTAURANT: ['CATALOG_MENU', 'ORDERS'],
+  ECOMMERCE: ["CATALOG_PRODUCTS", "ORDERS"],
+  RESTAURANT: ["CATALOG_MENU", "ORDERS"],
   MARKETING_AGENCY: [
-    'CATALOG_SERVICES',
-    'QUALIFICATION',
-    'BOOKINGS',
-    'FOLLOW_UPS',
-    'RESOURCES',
+    "CATALOG_SERVICES",
+    "QUALIFICATION",
+    "BOOKINGS",
+    "FOLLOW_UPS",
+    "RESOURCES",
   ],
 };
 
 /** Short label for compact UI (workspace switcher, tenant tabs) — the full title is too long for a badge. */
-export function getBusinessVerticalShortLabel(businessVertical: BusinessVertical): string {
+export function getBusinessVerticalShortLabel(
+  businessVertical: BusinessVertical,
+): string {
   return BUSINESS_VERTICAL_SHORT_LABELS[businessVertical];
 }
 
-export function capabilitiesFor(businessVertical: BusinessVertical): VerticalCapability[] {
+export function capabilitiesFor(
+  businessVertical: BusinessVertical,
+): VerticalCapability[] {
   return VERTICAL_CAPABILITIES[businessVertical] ?? [];
 }
 

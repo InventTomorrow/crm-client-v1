@@ -66,9 +66,9 @@
   /* Energy / offer accent. Deeper than the old #F97316, which could not carry
      white text or read on a tint at 12–13px. -dark is the on-tint text shade,
      -light the dark-mode one. */
-  --color-brand-amber: #C2410C;
-  --color-brand-amber-dark: #9A3412;
-  --color-brand-amber-light: #FDBA74;
+  --color-brand-amber: #D4520E;
+  --color-brand-amber-dark: #B04309;
+  --color-brand-amber-light: #FEC89A;
 
   /* Landing page shadows */
   --shadow-card: 0 1px 2px rgba(20, 64, 58, 0.04), 0 4px 16px rgba(20, 64, 58, 0.04);
@@ -498,6 +498,17 @@ html.dark .ch-fb { background: rgba(59,130,246,0.18); color: #93C5FD; }
   50%     { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
 }
 .pulse-hot { animation: pulseHot 1.8s infinite; }
+
+/* Ticking-clock icon for trial and offer deadlines */
+@keyframes clockPulse {
+  0%, 100% { transform: scale(1);    opacity: 1;   }
+  50%      { transform: scale(1.18); opacity: 0.6; }
+}
+.clock-pulse { animation: clockPulse 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-pulse { animation: none; }
+}
 
 /* scrim & overlays */
 .scrim {

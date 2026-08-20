@@ -1,5 +1,5 @@
 "use client";
-import { Clock, Tag } from "lucide-react";
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -41,7 +41,7 @@ export function OfferDialog({
       <DialogContent className="max-w-md overflow-hidden p-0 sm:max-w-lg">
         <div className="bg-brand-amber px-6 pb-7 pt-8 text-center text-white">
           <div className="mx-auto mb-3 flex w-fit items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider">
-            <Tag className="h-3.5 w-3.5" />
+            <Clock className="clock-pulse h-3.5 w-3.5" />
             Limited time
           </div>
           <div className="text-6xl font-extrabold leading-none tracking-tight">

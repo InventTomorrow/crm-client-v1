@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, ArrowRight, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Clock, Zap } from "lucide-react";
 import Link from "next/link";
 import { useSubscription } from "@/features/billing/hooks/useBilling";
 import { SidebarOfferTimer } from "@/features/offers/components/SidebarOfferTimer";
@@ -127,7 +127,7 @@ export function SidebarOfferCard() {
     const days = daysUntil(subscription.trialEndsAt);
     return (
       <PromptCard
-        icon={<Zap size={12} className="shrink-0" />}
+        icon={<Clock size={12} className="clock-pulse shrink-0" />}
         title={
           days !== null
             ? `Free trial ends in ${days} day${days === 1 ? "" : "s"}`

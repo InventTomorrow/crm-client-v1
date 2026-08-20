@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, X, Zap } from "lucide-react";
+import { ArrowRight, Clock, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { ActiveOffer } from "../types";
@@ -45,7 +45,7 @@ export function OfferTopBanner({ offer, ctaHref }: OfferTopBannerProps) {
 
   return (
     <div className="relative flex items-center justify-center gap-3 bg-brand-amber px-10 py-2 text-white">
-      <Zap className="hidden h-4 w-4 shrink-0 sm:block" />
+      <Clock className="clock-pulse hidden h-4 w-4 shrink-0 sm:block" />
       <p className="text-[13px] font-medium">
         <span className="font-semibold">Save {offer.discountPercent}% on any plan</span>
         <span className="hidden sm:inline">: {offer.title}</span>

@@ -141,7 +141,7 @@ export default async function BlogPostPage({
                 AsaanRabta gives your team one shared WhatsApp inbox, a lead
                 pipeline, and AI replies in Urdu and English.
               </p>
-              <PrimaryCta className="mt-6 inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+              <PrimaryCta signedInTarget="dashboard" className="mt-6 inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
                 Get started free
               </PrimaryCta>
             </aside>

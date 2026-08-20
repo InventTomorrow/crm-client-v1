@@ -10,31 +10,49 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * Where every landing CTA points — signup, for everyone.
+ * Where a landing CTA points when nobody is signed in.
  *
- * Deliberately session-blind: a stale cookie from a half-finished account used
- * to send "Get Started" straight into the wizard, which reads as the landing
- * page being broken. Login and the post-register flow already route by
- * onboarding state (see resolveAuthLanding), so nothing is lost by keeping
- * this link fixed.
+ * Also where a half-finished account is sent: a stale cookie from an abandoned
+ * signup used to drop "Get Started" straight into the wizard, which reads as the
+ * landing page being broken. Login and the post-register flow already route by
+ * onboarding state (see resolveAuthLanding), so nothing is lost.
  */
 const CTA_HREF = "/auth/register";
+
+/** Which app screen a CTA sends a fully signed-in user to. */
+export type SignedInTarget = "dashboard" | "inbox";
+
+const SIGNED_IN_CTA: Record<SignedInTarget, { href: string; label: string }> = {
+  dashboard: { href: "/dashboard", label: "Dashboard" },
+  inbox: { href: "/inbox", label: "Inbox" },
+};
+
+/** Resolves the signed-in destination, or null while the CTA should stay a signup link. */
+function useSignedInCta(target: SignedInTarget) {
+  const { user } = useMe();
+  if (!user || !hasFinishedOnboarding(user)) return null;
+  return SIGNED_IN_CTA[target];
+}
 
 /** Primary pill button used across the landing page. */
 export function PrimaryCta({
   children,
   className,
+  signedInTarget = "inbox",
 }: {
   children: ReactNode;
   className?: string;
+  signedInTarget?: SignedInTarget;
 }) {
+  const signedInCta = useSignedInCta(signedInTarget);
+
   return (
     <Button
       asChild
       variant="ghost"
       className={cn("hover:text-white", className)}
     >
-      <Link href={CTA_HREF}>{children}</Link>
+      <Link href={signedInCta?.href ?? CTA_HREF}>{signedInCta?.label ?? children}</Link>
     </Button>
   );
 }
@@ -95,16 +113,25 @@ export function PlanCta({
   );
 }
 
-/** Inline text link variant (e.g. "Connect WhatsApp" in body copy). */
+/**
+ * Inline text link variant (e.g. "Connect WhatsApp" in body copy).
+ *
+ * Only the destination changes for a signed-in user — the wording is part of a
+ * sentence, so swapping it for "Inbox" would break the copy.
+ */
 export function CtaTextLink({
   children,
   className,
+  signedInTarget = "inbox",
 }: {
   children: ReactNode;
   className?: string;
+  signedInTarget?: SignedInTarget;
 }) {
+  const signedInCta = useSignedInCta(signedInTarget);
+
   return (
-    <Link href={CTA_HREF} className={className}>
+    <Link href={signedInCta?.href ?? CTA_HREF} className={className}>
       {children}
     </Link>
   );

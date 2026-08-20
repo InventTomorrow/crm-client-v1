@@ -33,8 +33,6 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [replaceTenantId, setReplaceTenantId] = useState<string | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
   const { user } = useMe();
-  // Mirrors the server-side cap on POST /tenants so the limit is visible
-  // before submitting, not as a 403 after.
   const { data: workspaceAllowance } = useWorkspaceAllowance();
   const workspaceLimitReached = workspaceAllowance?.canCreate === false;
 

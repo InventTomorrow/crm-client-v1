@@ -1,6 +1,5 @@
 "use client";
 
-import { OfferHeroPill } from "@/features/offers/components/OfferHeroPill";
 import type { ActiveOffer } from "@/features/offers/types";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
@@ -85,14 +84,14 @@ export default function Hero({ offer }: { offer: ActiveOffer | null }) {
           </Button>
         </motion.div>
 
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.85 }}
           className="flex justify-center text-center"
         >
           <OfferHeroPill offer={offer} />
-        </motion.div>
+        </motion.div> */}
 
         <motion.div
           initial={{ opacity: 0, y: 60, rotateX: 10 }}
