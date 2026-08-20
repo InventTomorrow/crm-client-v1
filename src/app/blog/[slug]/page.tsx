@@ -1,5 +1,6 @@
 import { fetchBlogPost, fetchBlogSlugs } from "@/features/blog/blog.api";
 import { blogTagPath, postMetaDescription, postMetaTitle } from "@/features/blog/blog.utils";
+import Image from "next/image";
 import ArticleBody from "@/features/blog/components/ArticleBody";
 import ArticleHeader from "@/features/blog/components/ArticleHeader";
 import RelatedPosts from "@/features/blog/components/RelatedPosts";
@@ -131,6 +132,39 @@ export default async function BlogPostPage({
 
             <div className="mt-8 border-t border-brand-mint-2 pt-6">
               <ShareRow url={canonicalUrl} title={post.title} />
+            </div>
+
+            {/* About Author Section */}
+            <div id="about-author" className="mt-10 rounded-3xl border border-brand-mint-2 bg-brand-mint/30 p-6 sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                {post.author?.avatarUrl ? (
+                  <Image
+                    src={post.author.avatarUrl}
+                    alt={post.author.name}
+                    width={80}
+                    height={80}
+                    className="size-20 shrink-0 rounded-full border-2 border-brand-mint-2 object-cover"
+                  />
+                ) : (
+                  <div className="flex size-20 shrink-0 items-center justify-center rounded-full bg-brand-mint font-bold text-brand-green text-2xl border-2 border-brand-mint-2">
+                    {post.authorName.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-brand-green">Written by</span>
+                    <h3 className="w-full text-xl font-bold text-brand-dark sm:w-auto">{post.authorName}</h3>
+                    {post.author?.title && (
+                      <span className="rounded-full bg-brand-mint px-3 py-0.5 text-xs font-semibold text-brand-green">
+                        {post.author.title}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-[15px] leading-relaxed text-brand-text">
+                    {post.author?.bio || `${post.authorName} writes about WhatsApp marketing, CRM strategies, and business automation.`}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <aside className="mt-12 rounded-3xl bg-brand-mint px-7 py-9 sm:px-10">

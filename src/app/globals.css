@@ -95,6 +95,24 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .toc-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-brand-green, #16A572) 30%, transparent) transparent;
+  }
+  .toc-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .toc-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .toc-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-brand-green, #16A572) 30%, transparent);
+    border-radius: 999px;
+  }
+  .toc-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--color-brand-green, #16A572) 60%, transparent);
+  }
 }
 
 :root {

@@ -33,7 +33,7 @@ export default function TableOfContents({ entries }: { entries: TocEntry[] }) {
       <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text-soft">
         On this page
       </p>
-      <ul className="mt-4 space-y-1 border-l border-brand-mint-2">
+      <ul className="mt-4 space-y-1 border-l border-brand-mint-2 max-h-[calc(100vh-200px)] overflow-y-auto w-75 pr-1 toc-scrollbar">
         {entries.map((entry) => (
           <li key={entry.id}>
             <a

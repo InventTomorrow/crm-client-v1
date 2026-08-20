@@ -5,6 +5,15 @@ export interface BlogCategoryRef {
   slug: string;
 }
 
+export interface BlogAuthorRef {
+  id: string;
+  name: string;
+  slug: string;
+  title: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+}
+
 export interface BlogPostCard {
   id: string;
   slug: string;
@@ -16,6 +25,7 @@ export interface BlogPostCard {
   readingMinutes: number;
   publishedAt: string | null;
   authorName: string;
+  author?: BlogAuthorRef | null;
   isFeatured: boolean;
   category: BlogCategoryRef;
 }

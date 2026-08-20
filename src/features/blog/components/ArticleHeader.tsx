@@ -41,8 +41,32 @@ export default function ArticleHeader({ post }: { post: BlogPostDetail }) {
         {post.excerpt}
       </p>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] text-brand-text-soft">
-        <span className="font-medium text-brand-dark">{post.authorName}</span>
+      <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 text-[14px] text-brand-text-soft">
+        <div className="flex items-center gap-2">
+          {post.author?.avatarUrl ? (
+            <Image
+              src={post.author.avatarUrl}
+              alt={post.author.name}
+              width={32}
+              height={32}
+              className="size-8 rounded-full border border-brand-mint-2 object-cover"
+            />
+          ) : null}
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-brand-dark">{post.authorName}</span>
+            {post.author?.title && (
+              <span className="text-xs text-brand-text-soft">({post.author.title})</span>
+            )}
+          </div>
+        </div>
+
+        <a
+          href="#about-author"
+          className="inline-flex items-center gap-1 rounded-full bg-brand-mint/60 px-3 py-1 text-xs font-semibold text-brand-green transition-colors hover:bg-brand-mint hover:text-brand-green-hover"
+        >
+          About Author
+        </a>
+
         {post.publishedAt && (
           <>
             <span className="size-1 rounded-full bg-brand-mint-2" aria-hidden />
