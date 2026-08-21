@@ -120,7 +120,7 @@ export function InventoryView() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-4">
+      <div data-tour="page-list" className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-4">
         <StatCard
           label="Total products"
           value={products.length}
@@ -174,7 +174,7 @@ export function InventoryView() {
         <div>
           <div className="card flex flex-col gap-2.5 mb-3 p-[10px]">
             {/* Row 1: search + view toggle + add */}
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div data-tour="page-actions" className="flex flex-wrap items-center gap-2.5">
               <div className="relative w-full sm:min-w-[200px] sm:flex-[1_1_220px] sm:w-auto">
                 <Search
                   size={13}

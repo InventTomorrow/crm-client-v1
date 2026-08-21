@@ -231,7 +231,7 @@ export function OrdersView() {
               : "Manage your orders"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div data-tour="page-actions" className="flex items-center gap-2">
           <RefreshButton
             onRefresh={refreshOrders}
             isRefreshing={isRefreshing}
@@ -247,7 +247,10 @@ export function OrdersView() {
 
       {/* Summary cards */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+        <div
+          data-tour="page-list"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5"
+        >
           <StatCard
             label="Total revenue"
             value={formatMoney(summary.revenue ?? 0)}

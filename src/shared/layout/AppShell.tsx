@@ -1,6 +1,8 @@
 "use client";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
 import { AppOfferSurfaces } from "@/features/offers/components/AppOfferSurfaces";
+import { TourProvider } from "@/features/tour/components/TourProvider";
+import { WorkspaceTourStarter } from "@/features/tour/components/WorkspaceTourStarter";
 import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
 import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
 import { useAppStore } from "@/lib/appStore";
@@ -33,6 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGate>
+      <TourProvider>
       <div className="app-shell">
         {/* AppSidebar reads `?section=` to light the active Settings tab. */}
         <Suspense>
@@ -65,7 +68,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Toaster richColors position="top-right" />
         <WorkspaceSwitchingOverlay />
         <WelcomeDemoDialog />
+        <WorkspaceTourStarter />
       </div>
+      </TourProvider>
     </AuthGate>
   );
 }

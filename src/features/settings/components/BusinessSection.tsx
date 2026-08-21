@@ -97,7 +97,7 @@ export function BusinessSection() {
         Describe your business and add common Q&amp;A — the chatbot uses these to answer questions about you.
       </p>
 
-      <div className="card p-[22px] flex flex-col gap-3">
+      <div data-tour="business-category" className="card p-[22px] flex flex-col gap-3">
         <div>
           <h4 className="text-[13.5px] font-semibold">Business category</h4>
           <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
@@ -141,7 +141,7 @@ export function BusinessSection() {
           className="flex flex-col gap-3.5"
         >
           {/* Description + generate */}
-          <div className="card p-[22px] flex flex-col gap-3">
+          <div data-tour="business-description" className="card p-[22px] flex flex-col gap-3">
             <FormField
               control={form.control}
               name="businessDescription"
@@ -203,7 +203,7 @@ export function BusinessSection() {
           </div>
 
           {/* Q&A editor */}
-          <div className="card p-[22px] flex flex-col gap-3">
+          <div data-tour="business-qa" className="card p-[22px] flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-[13.5px] font-semibold">Custom Q&amp;A</h4>
@@ -279,7 +279,7 @@ export function BusinessSection() {
           </div>
 
           {/* Support contact */}
-          <div className="card p-[22px] flex flex-col gap-3">
+          <div data-tour="business-support" className="card p-[22px] flex flex-col gap-3">
             <div>
               <h4 className="text-[13.5px] font-semibold">Support Contact</h4>
               <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">

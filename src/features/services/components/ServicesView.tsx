@@ -57,7 +57,7 @@ export function ServicesView() {
   }
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div data-tour="page-actions" className="flex flex-wrap items-center gap-2">
       {/* <ServicesQuickNav services={allServices} /> */}
 
       <SearchField
@@ -170,7 +170,10 @@ export function ServicesView() {
 
       {allServices.length > 0 && (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div
+            data-tour="page-list"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          >
             {allServices.map((service) => (
               <ServiceCard
                 key={service.id}

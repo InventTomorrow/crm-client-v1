@@ -114,7 +114,7 @@ export function BookingsView() {
           Calls the bot and your team have booked.
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div data-tour="page-actions" className="flex flex-wrap items-center gap-2">
         <RefreshButton
           onRefresh={refreshBookings}
           isRefreshing={isRefreshing}

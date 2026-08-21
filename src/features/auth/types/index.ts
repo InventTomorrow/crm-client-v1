@@ -116,6 +116,8 @@ export interface UserResponse {
   avatarUrl: string | null;
   onboardingStatus: OnboardingStatus;
   isTester: boolean;
+  /** Ids of the in-app tours this user has finished or skipped. */
+  completedTours: string[];
   memberships: Array<{
     id: string;
     role: { id: string; name: string };

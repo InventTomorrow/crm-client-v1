@@ -70,7 +70,7 @@ export function ResourcesView() {
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div data-tour="page-actions" className="flex items-center gap-2">
         <RefreshButton
           onRefresh={() => resourcesQuery.refetch()}
           isRefreshing={resourcesQuery.isFetching}

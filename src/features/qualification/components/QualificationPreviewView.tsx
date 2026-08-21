@@ -36,7 +36,7 @@ export function QualificationPreviewView() {
   const goToEditor = () => router.push('/qualification/edit');
 
   const header = (
-    <div className="flex flex-wrap items-start justify-between gap-3">
+    <div data-tour="page-actions" className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-[18px] font-semibold text-[var(--ink)]">Bot questions</h1>
