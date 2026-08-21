@@ -24,7 +24,6 @@ import {
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/Input";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/NativeSelect";
-import { Textarea } from "@/shared/ui/Textarea";
 import { useSubmitSubscription } from "./hooks";
 import { ReceiptUploadField } from "./ReceiptUploadField";
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from "./types";
@@ -34,20 +33,18 @@ import {
   type SubscriptionCheckoutFormInput,
 } from "./validation";
 
-type SectionId = "details" | "payment" | "note";
+type SectionId = "details" | "payment";
 type FormFieldName = keyof SubscriptionCheckoutFormInput;
 
 /** Fields owned by each accordion section — drives per-section status + error reveal. */
 const SECTION_FIELDS: Record<SectionId, FormFieldName[]> = {
   details: ["customerName", "customerEmail", "customerPhone", "businessName"],
-  payment: ["paymentMethod", "paymentAmount", "paymentReference", "receiptUrl"],
-  note: ["customerNote"],
+  payment: ["paymentMethod", "paymentAmount", "receiptUrl"],
 };
 
 const SECTION_REQUIRED_FIELDS: Record<SectionId, FormFieldName[]> = {
   details: ["customerName", "customerEmail", "customerPhone"],
   payment: ["paymentMethod", "paymentAmount", "receiptUrl"],
-  note: [],
 };
 
 export function SubscriptionCheckoutForm({
@@ -65,8 +62,7 @@ export function SubscriptionCheckoutForm({
   const requiresPayment = plan.price > 0;
   const emailLocked = Boolean(prefill.customerEmail);
 
-  // Optional note starts collapsed; the two required sections stay open so no
-  // required field is ever hidden behind a closed panel.
+  // Both sections carry required fields, so neither starts collapsed.
   const [openSections, setOpenSections] = useState<string[]>([
     "details",
     "payment",
@@ -80,10 +76,8 @@ export function SubscriptionCheckoutForm({
       customerPhone: prefill.customerPhone ?? "",
       businessName: "",
       paymentMethod: "BANK_TRANSFER",
-      paymentReference: "",
       paymentAmount: planPayableAmount(plan),
       receiptUrl: "",
-      customerNote: "",
     },
   });
 
@@ -122,11 +116,9 @@ export function SubscriptionCheckoutForm({
         customerPhone: formValues.customerPhone,
         businessName: formValues.businessName || undefined,
         paymentMethod: formValues.paymentMethod,
-        paymentReference: formValues.paymentReference || undefined,
         paymentAmount: Number(formValues.paymentAmount),
         currency: plan.currency,
         receiptUrl: formValues.receiptUrl || undefined,
-        customerNote: formValues.customerNote || undefined,
       },
       { onSuccess: onSubmitted },
     );
@@ -284,23 +276,6 @@ export function SubscriptionCheckoutForm({
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="paymentReference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Transaction reference{" "}
-                        <span className="text-[var(--ink-mute)]">(optional)</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. HBL-77120" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FieldSeparator />
 
                 <FormField
@@ -331,36 +306,6 @@ export function SubscriptionCheckoutForm({
                 </span>
               </div>
             )}
-          </CheckoutSection>
-
-          <CheckoutSection
-            id="note"
-            step={3}
-            title="Additional note"
-            hint="Anything we should know"
-            status={getSectionStatus("note")}
-          >
-            <FieldGroup>
-              <FormField
-                control={form.control}
-                name="customerNote"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Note <span className="text-[var(--ink-mute)]">(optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={3}
-                        placeholder="Anything we should know?"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FieldGroup>
           </CheckoutSection>
         </Accordion>
 

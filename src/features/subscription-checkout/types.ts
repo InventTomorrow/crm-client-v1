@@ -9,11 +9,26 @@ export interface SubscriptionCheckoutPrefill {
   customerPhone: string | null;
 }
 
+/** A bank / wallet account the customer transfers the plan price into. */
+export interface PublicPaymentAccount {
+  id: string;
+  label: string;
+  method: PaymentMethod;
+  accountTitle: string;
+  accountNumber: string;
+  bankName: string | null;
+  iban: string | null;
+  branchCode: string | null;
+  instructions: string | null;
+}
+
 /** GET /subscribe/:token — public, unauthenticated. */
 export interface PublicSubscriptionLink {
   plan: Plan;
   prefill: SubscriptionCheckoutPrefill;
   supportContact: SupportContact;
+  /** Only the accounts an admin left active, in their configured order. */
+  paymentAccounts: PublicPaymentAccount[];
 }
 
 export const PAYMENT_METHODS = [
@@ -41,12 +56,10 @@ export interface SubmitSubscriptionPayload {
   customerPhone: string;
   businessName?: string;
   paymentMethod: PaymentMethod;
-  paymentReference?: string;
   paymentAmount: number;
   currency: string;
   /** Omitted for free/trial plans — the server enforces it for paid ones. */
   receiptUrl?: string;
-  customerNote?: string;
 }
 
 export interface SubmitSubscriptionResult {

@@ -15,14 +15,16 @@ import { Button } from "@/shared/ui/Button";
 import { formatPlanPrice, formatPlanPeriod } from "@/features/billing/utils/planFormat";
 import { formatPlanLimit } from "@/features/billing/utils/planLimits";
 import { usePublicSubscriptionLink } from "./hooks";
+import { PaymentAccountsCard } from "./PaymentAccountsCard";
 import { SubmissionSuccess } from "./SubmissionSuccess";
 import { SubscriptionCheckoutForm } from "./SubscriptionCheckoutForm";
 
 /* ─── Plan sidebar ─────────────────────────────────────────────────────────── */
 
-function PlanSidebar({ plan, supportContact }: {
+function PlanSidebar({ plan, supportContact, paymentAccounts }: {
   plan: import("@/features/billing/types").Plan;
   supportContact: import("./types").SupportContact;
+  paymentAccounts: import("./types").PublicPaymentAccount[];
 }) {
   const hasChannel = Boolean(
     supportContact.supportPhone ||
@@ -86,6 +88,14 @@ function PlanSidebar({ plan, supportContact }: {
           <FeatureRow icon={<BadgeCheck size={14} />} label="Voice messages" value={formatPlanLimit(plan.maxVoiceMessages)} muted />
         </div>
       </div>
+
+      {/* Where to pay — only meaningful once there is something to pay */}
+      {plan.price > 0 && (
+        <PaymentAccountsCard
+          accounts={paymentAccounts}
+          amountLabel={formatPlanPrice(plan)}
+        />
+      )}
 
       {/* Support block */}
       {(hasChannel || supportContact.paymentInstructions) && (
@@ -237,7 +247,7 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
     );
   }
 
-  const { plan, supportContact } = data;
+  const { plan, supportContact, paymentAccounts } = data;
 
   return (
     <div className="mx-auto w-full max-w-[1020px] px-4 py-8 md:py-12">
@@ -257,7 +267,11 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
 
         {/* LEFT — plan details (sticky on desktop) */}
         <div className="md:sticky md:top-8">
-          <PlanSidebar plan={plan} supportContact={supportContact} />
+          <PlanSidebar
+            plan={plan}
+            supportContact={supportContact}
+            paymentAccounts={paymentAccounts ?? []}
+          />
         </div>
 
         {/* RIGHT — form (or success state) */}

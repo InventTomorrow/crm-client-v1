@@ -43,25 +43,6 @@ const baseSchema = z.object({
 
   paymentMethod: z.enum(PAYMENT_METHODS, { message: "Select how you paid" }),
 
-  /** Optional — if entered: 3–120 alphanumeric/dash/underscore chars */
-  paymentReference: z
-    .string()
-    .trim()
-    .refine(
-      (v) => v === "" || v.length >= 3,
-      "Reference must be at least 3 characters",
-    )
-    .refine(
-      (v) => v === "" || /^[\w\-/]+$/.test(v),
-      "Reference can only contain letters, digits, hyphens, slashes, or underscores",
-    )
-    .refine(
-      (v) => v.length <= 120,
-      "Reference must be 120 characters or fewer",
-    )
-    .optional()
-    .or(z.literal("")),
-
   /** Coerced number; must be ≥ 0 */
   paymentAmount: z.coerce
     .number({ message: "Enter the amount you paid" })
@@ -71,21 +52,6 @@ const baseSchema = z.object({
   /** Set by the receipt uploader once the file lands. Required only for paid
    *  plans — see subscriptionCheckoutSchema below. */
   receiptUrl: z.string().optional().or(z.literal("")),
-
-  /** Optional — if entered: 5–500 chars */
-  customerNote: z
-    .string()
-    .trim()
-    .refine(
-      (v) => v === "" || v.length >= 5,
-      "Note must be at least 5 characters",
-    )
-    .refine(
-      (v) => v.length <= 500,
-      "Note must be 500 characters or fewer",
-    )
-    .optional()
-    .or(z.literal("")),
 });
 
 /**
