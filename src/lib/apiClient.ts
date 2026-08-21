@@ -9,6 +9,8 @@ export const apiClient = axios.create({
   baseURL: `${apiOrigin}/api/v1`,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
+  // Nothing may hang a UI forever — WhatsApp sends are the slowest path we have.
+  timeout: 120_000,
 });
 
 let isLoggingOut = false;

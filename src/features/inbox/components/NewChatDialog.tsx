@@ -4,7 +4,8 @@ import {
 } from "@/features/channels/whatsapp/services/whatsapp.service";
 import { useLeads } from "@/features/leads/hooks/useLeads";
 import type { Lead } from "@/features/leads/types";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
   Dialog,
@@ -13,13 +14,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
-import { AlertCircle, Check, Loader2, Phone, Search, Send, UserPlus } from "lucide-react";
+import { Input } from "@/shared/ui/Input";
+import { Label } from "@/shared/ui/Label";
+import { Textarea } from "@/shared/ui/Textarea";
+import {
+  AlertCircle,
+  Check,
+  Loader2,
+  Phone,
+  Search,
+  Send,
+  UserPlus,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useStartConversation } from "../hooks/useConversations";
-import { Button } from "@/shared/ui/Button";
-import { Input } from "@/shared/ui/Input";
-import { Textarea } from "@/shared/ui/Textarea";
-import { Label } from "@/shared/ui/Label";
 
 function describeUnreachableNumber(result: CheckNumberResult): string {
   const phoneSuffix = result.phone ? ` (${result.phone})` : "";
@@ -63,8 +71,10 @@ export function NewChatDialog({
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
-  const [isValidating, setIsValidating] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const isBusy = isVerifying || startChat.isPending;
 
   const reset = () => {
     setMode("lead");
@@ -74,11 +84,12 @@ export function NewChatDialog({
     setName("");
     setMessage("");
     setValidationError(null);
-    setIsValidating(false);
+    setIsVerifying(false);
+    startChat.reset();
   };
 
   const close = () => {
-    if (startChat.isPending || isValidating) return;
+    if (isBusy) return;
     reset();
     onClose();
   };
@@ -102,54 +113,49 @@ export function NewChatDialog({
   const canSubmit = waConnected && targetReady && !!message.trim();
 
   const submit = async () => {
-    if (!canSubmit || startChat.isPending || isValidating) return;
+    if (!canSubmit || isBusy) return;
     setValidationError(null);
-    setIsValidating(true);
+    setIsVerifying(true);
 
+    let checkRes: CheckNumberResult;
     try {
-      const checkRes = await checkWhatsAppNumber(
-        mode === "lead"
-          ? { leadId: selectedLeadId! }
-          : { phone: phone.trim() },
-      );
-
-      if (!checkRes.exists) {
-        setIsValidating(false);
-        setValidationError(describeUnreachableNumber(checkRes));
-        return;
-      }
-
-      startChat.mutate(
-        mode === "lead"
-          ? { leadId: selectedLeadId!, message: message.trim() }
-          : {
-              phone: phone.trim(),
-              name: name.trim() || undefined,
-              message: message.trim(),
-            },
-        {
-          onSuccess: (conv) => {
-            setIsValidating(false);
-            onStarted(conv.id);
-            reset();
-            onClose();
-          },
-          onError: (err: any) => {
-            setIsValidating(false);
-            const msg =
-              err?.response?.data?.message ||
-              err?.message ||
-              "Failed to start chat.";
-            setValidationError(msg);
-          },
-        },
+      checkRes = await checkWhatsAppNumber(
+        mode === "lead" ? { leadId: selectedLeadId! } : { phone: phone.trim() },
       );
     } catch {
-      setIsValidating(false);
       setValidationError(
         "Failed to verify WhatsApp registration. Please try again.",
       );
+      return;
+    } finally {
+      setIsVerifying(false);
     }
+
+    if (!checkRes.exists) {
+      setValidationError(describeUnreachableNumber(checkRes));
+      return;
+    }
+
+    startChat.mutate(
+      mode === "lead"
+        ? { leadId: selectedLeadId!, message: message.trim() }
+        : {
+            phone: phone.trim(),
+            name: name.trim() || undefined,
+            message: message.trim(),
+          },
+      {
+        onSuccess: (conv) => {
+          onStarted(conv.id);
+          reset();
+          onClose();
+        },
+        onError: (error) =>
+          setValidationError(
+            extractErrorMessage(error, "Failed to start chat."),
+          ),
+      },
+    );
   };
 
   return (
@@ -307,23 +313,22 @@ export function NewChatDialog({
         </div>
 
         <div className="px-5 py-3.5 border-t border-[var(--line)] flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={close}
-            disabled={startChat.isPending || isValidating}
-          >
+          <Button variant="outline" onClick={close} disabled={isBusy}>
             Cancel
           </Button>
-          <Button
-            onClick={submit}
-            disabled={!canSubmit || startChat.isPending || isValidating}
-          >
-            {isValidating ? (
-              <><Loader2 size={13} className="animate-spin" /> Verifying number…</>
+          <Button onClick={submit} disabled={!canSubmit || isBusy}>
+            {isVerifying ? (
+              <>
+                <Loader2 size={13} className="animate-spin" /> Verifying number…
+              </>
             ) : startChat.isPending ? (
-              <><Loader2 size={13} className="animate-spin" /> Starting…</>
+              <>
+                <Loader2 size={13} className="animate-spin" /> Starting…
+              </>
             ) : (
-              <><Send size={13} /> Start chat</>
+              <>
+                <Send size={13} /> Start chat
+              </>
             )}
           </Button>
         </div>
