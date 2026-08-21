@@ -67,7 +67,11 @@ export function ChatbotSection() {
   return (
     <>
       <h2 className="text-[20px] font-semibold">Chatbot</h2>
-      <form onSubmit={handleSubmit((d) => save(d, { onSuccess: () => reset(d) }))} className="card p-[22px] flex flex-col gap-5">
+      <form
+        data-tour="settings-chatbot"
+        onSubmit={handleSubmit((d) => save(d, { onSuccess: () => reset(d) }))}
+        className="card p-[22px] flex flex-col gap-5"
+      >
         {/* AI toggle */}
         <div className="flex items-center justify-between">
           <div>

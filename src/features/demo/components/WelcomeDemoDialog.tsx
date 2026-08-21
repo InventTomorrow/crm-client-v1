@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { useWelcomeDialogStore } from "@/features/tour/stores/welcomeDialogStore";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,6 +21,9 @@ import { Button } from "@/shared/ui/Button";
 export function WelcomeDemoDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const setWelcomeDialogOpen = useWelcomeDialogStore(
+    (state) => state.setWelcomeDialogOpen,
+  );
 
   useEffect(() => {
     if (
@@ -28,12 +32,15 @@ export function WelcomeDemoDialog() {
     ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(true);
+      // Holds the dashboard tour back until this closes.
+      setWelcomeDialogOpen(true);
     }
-  }, []);
+  }, [setWelcomeDialogOpen]);
 
   const dismiss = () => {
     localStorage.removeItem(SHOW_DEMO_FLAG);
     setOpen(false);
+    setWelcomeDialogOpen(false);
   };
 
   return (

@@ -152,6 +152,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
 
         {/* Nav items */}
         <nav
+          data-tour="sidebar-nav"
           className={cn(
             "flex flex-col gap-0.5 flex-1",
             collapsed ? "px-[10px] py-1" : "px-3 py-1",

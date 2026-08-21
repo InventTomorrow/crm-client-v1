@@ -14,7 +14,7 @@ export function ChannelsView() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div data-tour="page-content" className="grid gap-4 md:grid-cols-2">
         <WhatsAppCard />
         <OrderApiCard />
       </div>

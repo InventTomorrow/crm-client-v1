@@ -48,7 +48,7 @@ export function MenuCardsView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div data-tour="page-actions" className="flex items-center gap-2">
           <Button
             variant="outline"
             size="lg"
@@ -106,7 +106,10 @@ export function MenuCardsView() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div
+          data-tour="page-list"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+        >
           {menuCards.map((menuCard, index) => (
             <div key={menuCard.id} className="card group overflow-hidden p-0">
               <div className="relative aspect-3/4 bg-[var(--surface-2)]">

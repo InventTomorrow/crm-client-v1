@@ -103,6 +103,7 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
       {/* Desktop search */}
       <Button
         onClick={() => setSearchOpen(true)}
+        data-tour="global-search"
         className="hide-mobile topbar-search-btn mr-1 flex min-w-[280px] cursor-pointer items-center gap-2.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-3 py-[7px] text-[12.5px] text-[var(--ink-mute)]"
       >
         <Search size={13} />

@@ -54,7 +54,7 @@ export function MenuView() {
           onFilterCategoryIdChange={setFilterCategoryId}
           categories={categories}
         />
-        <div className="flex items-center gap-2 flex-wrap">
+        <div data-tour="page-actions" className="flex items-center gap-2 flex-wrap">
           <RefreshButton
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
@@ -89,7 +89,10 @@ export function MenuView() {
         <MenuEmptyState onAdd={() => router.push("/menu/new")} />
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div
+            data-tour="page-list"
+            className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3"
+          >
             {menuItems.map((menuItem) => (
               <MenuItemCard
                 key={menuItem.id}

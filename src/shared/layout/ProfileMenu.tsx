@@ -1,5 +1,7 @@
 "use client";
 import { useLogout, useMe } from "@/features/auth/hooks/useAuth";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { tourIdFor } from "@/features/tour/steps/workspaceSteps";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -7,6 +9,7 @@ import { Spinner } from "@/shared/ui/Motion";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
+  Compass,
   Lock,
   Moon,
   PlayCircle,
@@ -16,6 +19,7 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useNextStep } from "nextstepjs";
 
 function ProfRow({
   icon: Icon,
@@ -67,7 +71,10 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
   const { theme, toggleTheme } = useAppStore();
   const { user } = useMe();
   const logout = useLogout();
+  const { tenant } = useCurrentTenant();
+  const { startNextStep } = useNextStep();
   const isLoggingOut = logout.isPending;
+  const tourId = tourIdFor(tenant?.businessVertical);
 
   const profileName = user
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
@@ -77,6 +84,14 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
   const go = (path: string) => {
     router.push(path);
     onClose();
+  };
+
+  // The guide opens on dashboard elements, so land there before it starts.
+  const replayWorkspaceTour = () => {
+    if (!tourId) return;
+    router.push("/dashboard");
+    onClose();
+    setTimeout(() => startNextStep(tourId), 300);
   };
 
   return (
@@ -155,6 +170,12 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
           disabled={isLoggingOut}
         />
         {/* <ProfRow icon={Link}      label="Keyboard shortcuts" sub="⌘K · ?" disabled={isLoggingOut} /> */}
+        <ProfRow
+          icon={Compass}
+          label="Take a tour"
+          onClick={replayWorkspaceTour}
+          disabled={isLoggingOut || !tourId}
+        />
         <ProfRow
           icon={PlayCircle}
           label="Watch Demo"

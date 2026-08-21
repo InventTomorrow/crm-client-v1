@@ -744,6 +744,7 @@ export function InboxView() {
     <div className="inbox-layout flex h-full gap-3 p-3">
       {/* ── Conversation List ── */}
       <div
+        data-tour="page-list"
         className={`card inbox-list w-[320px] shrink-0 flex flex-col overflow-hidden border border-[var(--ink-mute)]/20 ${mobPane === "list" ? "mob-on" : ""}`}
       >
         <div className="px-3.5 pt-3 pb-2 space-y-2.5 ring ring-[var(--ink-mute)]/20">

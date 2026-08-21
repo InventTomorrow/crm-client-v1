@@ -189,7 +189,7 @@ export function LeadsView() {
             Track and convert your pipeline
           </div>
         </div>
-        <div className="flex gap-2 items-center">
+        <div data-tour="page-actions" className="flex gap-2 items-center">
           <RefreshButton
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
@@ -211,7 +211,7 @@ export function LeadsView() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div data-tour="page-list" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="Total leads" value={leads.length} Icon={Users} />
         <StatCard label="Hot leads" value={hot} Icon={Flame} accent="#EF4444" />
         <StatCard
