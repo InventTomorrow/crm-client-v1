@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/shared/ui/Select";
 import { StatCard } from "@/shared/ui/StatCard";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search, Wallet } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -219,7 +219,7 @@ export function OrdersView() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl">
+    <div className="w-full p-4">
       <div className="flex items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-[22px] font-semibold text-[var(--ink)]">
@@ -246,8 +246,14 @@ export function OrdersView() {
       </div>
 
       {/* Summary cards */}
-      {summary && summary.byStatus.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      {summary && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+          <StatCard
+            label="Total revenue"
+            value={formatMoney(summary.revenue ?? 0)}
+            hint={`${summary.total} order${summary.total === 1 ? "" : "s"} · excludes cancelled`}
+            Icon={Wallet}
+          />
           {summary.byStatus.slice(0, 4).map((s) => (
             <StatCard
               key={s.status}

@@ -1,5 +1,5 @@
 "use client";
-import { cn } from "@/lib/utils";
+import { cn, pkr } from "@/lib/utils";
 import {
   ChartContainer,
   ChartLegend,
@@ -52,6 +52,7 @@ const KPI_ICONS: Record<string, LucideIcon> = {
   closed: CheckCircle2,
   orders: ShoppingBag,
   revenue: Wallet,
+  lifetimeRevenue: Wallet,
   appointments: CalendarClock,
   completedAppointments: CalendarCheck,
   cancelledAppointments: CalendarX,
@@ -103,8 +104,8 @@ function FunnelChart({ data }: { data: FunnelStage[] }) {
 // ──────────────────── KPI Card ────────────────────
 function KpiTile({ kpi }: { kpi: KpiCard }) {
   const value =
-    kpi.key === "revenue"
-      ? kpi.value.toLocaleString()
+    kpi.key === "lifetimeRevenue"
+      ? pkr(kpi.value)
       : kpi.key === "aiResolution"
         ? `${kpi.value}%`
         : kpi.value.toLocaleString();
@@ -267,6 +268,10 @@ export function AnalyticsView() {
 
   const onPreset = (r: RangePreset) => setRange(r);
 
+  // The server decides per vertical whether this workspace closes on orders;
+  // a revenue KPI in the payload is that signal.
+  const tracksOrders = data?.kpis.some((k) => k.key === "revenue") ?? false;
+
   return (
     <div className="scroll overflow-y-auto h-full p-[18px]">
       {/* Header */}
@@ -308,8 +313,21 @@ export function AnalyticsView() {
         <AnalyticsSkeleton />
       ) : (
         <>
-          {/* KPIs */}
+          {/* KPIs — the lifetime total leads, since it is the one figure the
+              range presets don't move. */}
           <div className="grid gap-3 mb-4 grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+            {tracksOrders && (
+              <KpiTile
+                kpi={{
+                  key: "lifetimeRevenue",
+                  label: "Total revenue (all time)",
+                  value: data.lifetimeRevenue,
+                  delta: null,
+                  up: false,
+                  lowerIsBetter: false,
+                }}
+              />
+            )}
             {data.kpis.map((k) => (
               <KpiTile key={k.key} kpi={k} />
             ))}

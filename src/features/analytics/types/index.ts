@@ -60,6 +60,8 @@ export const analyticsOverviewSchema = z.object({
   series: z.array(dailyPointSchema),
   funnel: z.array(funnelStageSchema),
   aiHandoff: aiHandoffSchema,
+  /** All-time booked revenue — unaffected by the selected range. */
+  lifetimeRevenue: z.number().default(0),
 });
 
 export type KpiCard = z.infer<typeof kpiCardSchema>;
