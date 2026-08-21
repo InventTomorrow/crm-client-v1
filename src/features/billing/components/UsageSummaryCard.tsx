@@ -50,8 +50,9 @@ export function UsageSummaryCard() {
   if (isError || !usage) return null;
 
   const resetDate = fmtResetDate(usage.periodEnd);
-  const nearingLimit = usage.metrics.some(
-    (m) => m.limit > 0 && m.used / m.limit >= WARN_AT,
+  const metrics = usage.metrics ?? [];
+  const nearingLimit = metrics.some(
+    (m) => (m.limit ?? 0) > 0 && (m.used ?? 0) / m.limit >= WARN_AT,
   );
 
   return (
@@ -73,15 +74,13 @@ export function UsageSummaryCard() {
       </div>
 
       <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-2">
-        {usage.metrics.map((metric) => {
-          const unlimited = isUnlimitedLimit(metric.limit);
-          const exhausted =
-            !unlimited && metric.limit > 0 && metric.used >= metric.limit;
+        {metrics.map((metric) => {
+          const used = metric.used ?? 0;
+          const limit = metric.limit ?? 0;
+          const unlimited = isUnlimitedLimit(limit);
+          const exhausted = !unlimited && limit > 0 && used >= limit;
           const warning =
-            !unlimited &&
-            !exhausted &&
-            metric.limit > 0 &&
-            metric.used / metric.limit >= WARN_AT;
+            !unlimited && !exhausted && limit > 0 && used / limit >= WARN_AT;
           return (
             <div key={metric.key}>
               <div className="flex items-baseline justify-between gap-2">
@@ -97,18 +96,16 @@ export function UsageSummaryCard() {
                         : "text-[var(--ink)]"
                   }`}
                 >
-                  {metric.used.toLocaleString("en-PK")} /{" "}
-                  {unlimited
-                    ? "Unlimited"
-                    : metric.limit.toLocaleString("en-PK")}
+                  {used.toLocaleString("en-PK")} /{" "}
+                  {unlimited ? "Unlimited" : limit.toLocaleString("en-PK")}
                 </span>
               </div>
               <Progress
-                value={unlimited ? 0 : pct(metric.used, metric.limit)}
+                value={unlimited ? 0 : pct(used, limit)}
                 aria-label={
                   unlimited
-                    ? `${metric.label}: ${metric.used} used of unlimited`
-                    : `${metric.label}: ${metric.used} of ${metric.limit} used`
+                    ? `${metric.label}: ${used} used of unlimited`
+                    : `${metric.label}: ${used} of ${limit} used`
                 }
                 className={`mt-1 h-1 ${
                   exhausted

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { AnalyticsOverview, CustomRange, RangePreset } from '../types';
+import { analyticsOverviewSchema, type AnalyticsOverview, type CustomRange, type RangePreset } from '../types';
 
 export interface OverviewParams {
   range: RangePreset;
@@ -15,5 +15,6 @@ export async function getAnalyticsOverview({ range, custom }: OverviewParams) {
     '/analytics/overview',
     { params },
   );
-  return res.data.data;
+  // Parsed, not cast — an older API build missing a numeric field would crash the render.
+  return analyticsOverviewSchema.parse(res.data.data);
 }

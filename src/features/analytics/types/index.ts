@@ -7,12 +7,16 @@ export interface CustomRange {
   to?: Date;
 }
 
+/** Every rendered number goes through this — a missing or null count falls back
+ * to 0 instead of throwing at `.toLocaleString()` during render. */
+const countSchema = z.number().catch(0);
+
 export const kpiCardSchema = z.object({
   key: z.string(),
   label: z.string(),
-  value: z.number(),
-  delta: z.number().nullable(),
-  up: z.boolean(),
+  value: countSchema,
+  delta: z.number().nullable().catch(null),
+  up: z.boolean().catch(false),
   lowerIsBetter: z.boolean().default(false),
 });
 
@@ -28,11 +32,11 @@ export const dailyMetricSchema = z.enum([
 
 export const dailyPointSchema = z.object({
   date: z.string(),
-  leads: z.number(),
-  orders: z.number(),
-  completedOrders: z.number(),
-  appointments: z.number(),
-  completedAppointments: z.number(),
+  leads: countSchema,
+  orders: countSchema,
+  completedOrders: countSchema,
+  appointments: countSchema,
+  completedAppointments: countSchema,
 });
 
 export const analyticsChartSchema = z.object({
@@ -43,25 +47,25 @@ export const analyticsChartSchema = z.object({
 
 export const funnelStageSchema = z.object({
   label: z.string(),
-  value: z.number(),
+  value: countSchema,
 });
 
 export const aiHandoffSchema = z.object({
-  handled: z.number(),
-  escalated: z.number(),
-  resolved: z.number(),
-  resolutionRate: z.number(),
+  handled: countSchema,
+  escalated: countSchema,
+  resolved: countSchema,
+  resolutionRate: countSchema,
 });
 
 export const analyticsOverviewSchema = z.object({
   window: z.object({ from: z.string(), to: z.string() }),
-  kpis: z.array(kpiCardSchema),
+  kpis: z.array(kpiCardSchema).catch([]),
   chart: analyticsChartSchema,
-  series: z.array(dailyPointSchema),
-  funnel: z.array(funnelStageSchema),
-  aiHandoff: aiHandoffSchema,
+  series: z.array(dailyPointSchema).catch([]),
+  funnel: z.array(funnelStageSchema).catch([]),
+  aiHandoff: aiHandoffSchema.catch({ handled: 0, escalated: 0, resolved: 0, resolutionRate: 0 }),
   /** All-time booked revenue — unaffected by the selected range. */
-  lifetimeRevenue: z.number().default(0),
+  lifetimeRevenue: countSchema,
 });
 
 export type KpiCard = z.infer<typeof kpiCardSchema>;

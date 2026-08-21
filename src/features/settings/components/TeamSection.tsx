@@ -878,7 +878,7 @@ function MembersTab() {
   );
 
   const toolbar = (
-    <>
+    <div className="flex flex-wrap items-center gap-2">
       <div className="relative min-w-[220px] flex-[1_1_280px]">
         <Search
           size={15}
@@ -906,29 +906,37 @@ function MembersTab() {
           </div>
         )}
       </div>
-      <div className="seg">
-        <button
-          className={roleFilter === "all" ? "on" : ""}
-          onClick={() => setRoleFilter("all")}
-        >
-          All roles
-        </button>
-        {ROLE_ORDER.map((r) => (
-          <button
-            key={r}
-            className={roleFilter === r ? "on" : ""}
-            onClick={() => setRoleFilter(r)}
-          >
-            {r}
-          </button>
-        ))}
+      <div
+        role="tablist"
+        aria-label="Filter members by role"
+        className="flex flex-wrap items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] p-1"
+      >
+        {(["all", ...ROLE_ORDER] as const).map((r) => {
+          const isSelected = roleFilter === r;
+          return (
+            <button
+              key={r}
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => setRoleFilter(r)}
+              className={cn(
+                "rounded-[7px] px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150",
+                isSelected
+                  ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
+                  : "text-[var(--ink-mute)] hover:bg-[var(--surface)] hover:text-[var(--ink)]",
+              )}
+            >
+              {r === "all" ? "All roles" : r}
+            </button>
+          );
+        })}
       </div>
       {canInvite && (
-        <Button onClick={() => setShowInvite(true)}>
+        <Button className="ml-auto h-10" onClick={() => setShowInvite(true)}>
           <UserPlus className="size-3.5" /> Invite member
         </Button>
       )}
-    </>
+    </div>
   );
 
   return (
