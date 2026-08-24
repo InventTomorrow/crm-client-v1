@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { Plan } from "@/features/billing/types";
-import { formatPlanPrice, planPayableAmount } from "@/features/billing/utils/planFormat";
+import { formatAmount } from "@/features/billing/utils/planFormat";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -36,30 +36,37 @@ import {
 type SectionId = "details" | "payment";
 type FormFieldName = keyof SubscriptionCheckoutFormInput;
 
-/** Fields owned by each accordion section — drives per-section status + error reveal. */
+/** Fields owned by each accordion section — drives per-section status + error
+ *  reveal. `paymentAmount` is fixed by the link and has no control, so it is
+ *  deliberately absent: revealing a section for it would point at nothing. */
 const SECTION_FIELDS: Record<SectionId, FormFieldName[]> = {
   details: ["customerName", "customerEmail", "customerPhone", "businessName"],
-  payment: ["paymentMethod", "paymentAmount", "receiptUrl"],
+  payment: ["paymentMethod", "receiptUrl"],
 };
 
 const SECTION_REQUIRED_FIELDS: Record<SectionId, FormFieldName[]> = {
   details: ["customerName", "customerEmail", "customerPhone"],
-  payment: ["paymentMethod", "paymentAmount", "receiptUrl"],
+  payment: ["paymentMethod", "receiptUrl"],
 };
 
 export function SubscriptionCheckoutForm({
   token,
   plan,
+  amountDue,
   prefill,
   onSubmitted,
 }: {
   token: string;
   plan: Plan;
+  /** Total the link is quoted at — every period of it, not just the first. */
+  amountDue: number;
   prefill: SubscriptionCheckoutPrefill;
   onSubmitted: () => void;
 }) {
   const submit = useSubmitSubscription(token);
   const requiresPayment = plan.price > 0;
+  // Every price the form quotes is the link's total, not one period of it.
+  const dueLabel = formatAmount(amountDue, plan.currency);
   const emailLocked = Boolean(prefill.customerEmail);
 
   // Both sections carry required fields, so neither starts collapsed.
@@ -76,7 +83,7 @@ export function SubscriptionCheckoutForm({
       customerPhone: prefill.customerPhone ?? "",
       businessName: "",
       paymentMethod: "BANK_TRANSFER",
-      paymentAmount: planPayableAmount(plan),
+      paymentAmount: amountDue,
       receiptUrl: "",
     },
   });
@@ -224,57 +231,43 @@ export function SubscriptionCheckoutForm({
             title={requiresPayment ? "Payment details" : "Payment"}
             hint={
               requiresPayment
-                ? `How you sent ${formatPlanPrice(plan)}`
+                ? `How you sent ${dueLabel}`
                 : "Nothing to pay on this plan"
             }
             status={getSectionStatus("payment")}
           >
             {requiresPayment ? (
               <FieldGroup>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>How did you pay? *</FormLabel>
-                        <FormControl>
-                          <NativeSelect size="lg" {...field}>
-                            {PAYMENT_METHODS.map((method) => (
-                              <NativeSelectOption key={method} value={method}>
-                                {PAYMENT_METHOD_LABELS[method]}
-                              </NativeSelectOption>
-                            ))}
-                          </NativeSelect>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="paymentAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Amount paid *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            inputMode="decimal"
-                            min={0}
-                            name={field.name}
-                            ref={field.ref}
-                            onBlur={field.onBlur}
-                            disabled={field.disabled}
-                            value={String(field.value ?? "")}
-                            onChange={(e) => field.onChange(e.target.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* The amount is fixed by the link, so it is shown rather than
+                    asked for — a typo here used to fail the server's check. */}
+                <div className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2.5">
+                  <span className="text-[12.5px] text-[var(--ink-mute)]">
+                    Amount to transfer
+                  </span>
+                  <span className="text-[15px] font-semibold text-[var(--ink)]">
+                    {dueLabel}
+                  </span>
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>How did you pay? *</FormLabel>
+                      <FormControl>
+                        <NativeSelect size="lg" {...field}>
+                          {PAYMENT_METHODS.map((method) => (
+                            <NativeSelectOption key={method} value={method}>
+                              {PAYMENT_METHOD_LABELS[method]}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FieldSeparator />
 
@@ -319,7 +312,7 @@ export function SubscriptionCheckoutForm({
           ) : (
             <CheckCircle2 size={14} />
           )}
-          Submit for approval · {formatPlanPrice(plan)}
+          Submit for approval · {dueLabel}
         </Button>
 
         <p className="text-center text-[11px] text-[var(--ink-mute)]">
