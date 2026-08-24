@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { CalendarClock, Loader2 } from 'lucide-react';
 import { formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Subscription, SubscriptionStatus } from '../types';
@@ -46,6 +47,9 @@ export function CurrentSubscriptionCard({
   isReactivating,
 }: Props) {
   const plan = subscription.plan;
+  // A trial has no gateway subscription behind it, so it never renews — it
+  // simply stops on its last day. Nothing to cancel, and no renewal to promise.
+  const isTrial = Boolean(plan?.isTrial);
   // A gateway checkout in flight has no providerSubscriptionId yet — Safepay
   // hasn't confirmed it, so there's nothing the cancel endpoint can act on.
   const isPendingGatewayCheckout =
@@ -55,6 +59,7 @@ export function CurrentSubscriptionCard({
   // cancelledAt set, so gate strictly on cancelledAt rather than status alone.
   const canCancel =
     (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING') &&
+    !isTrial &&
     !subscription.cancelledAt &&
     !scheduledChange &&
     !isPendingGatewayCheckout &&
@@ -83,10 +88,19 @@ export function CurrentSubscriptionCard({
         {/* Dates sit beside the plan on wide screens so the label and its value
             never end up at opposite edges of the viewport. */}
         <div className="flex flex-wrap items-start gap-x-8 gap-y-4 sm:gap-x-10">
-          <Field label="Renews on" value={fmtDate(subscription.currentPeriodEnd)} />
+          <Field
+            label={isTrial ? 'Trial ends' : 'Renews on'}
+            value={fmtDate(subscription.currentPeriodEnd)}
+          />
           <Field label="Started" value={fmtDate(subscription.currentPeriodStart)} />
           {subscription.cancelledAt && (
             <Field label="Cancelled on" value={fmtDate(subscription.cancelledAt)} />
+          )}
+
+          {isTrial && (
+            <Link href="/pricing" className="btn btn-outline shrink-0">
+              Upgrade
+            </Link>
           )}
 
           {canCancel && (
