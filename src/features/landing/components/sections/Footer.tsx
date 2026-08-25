@@ -6,6 +6,7 @@ import Logo from "../Logo";
 import NewsletterForm from "./NewsletterForm";
 
 const SUPPORT_EMAIL = "support@asaanrabta.com";
+const INFO_EMAIL = "info@asaancaption.com";
 
 const SOCIAL_LINKS = [
   {
@@ -101,7 +102,16 @@ export default function Footer() {
                     className="inline-flex items-center gap-2 text-brand-text text-[14px] transition-colors hover:text-brand-green"
                   >
                     <Mail className="size-4 text-brand-green" />
-                    Email us
+                    {SUPPORT_EMAIL}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={`mailto:${INFO_EMAIL}`}
+                    className="inline-flex items-center gap-2 text-brand-text text-[14px] transition-colors hover:text-brand-green"
+                  >
+                    <Mail className="size-4 text-brand-green" />
+                    {INFO_EMAIL}
                   </Link>
                 </li>
                 <li>
