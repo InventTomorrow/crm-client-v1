@@ -11,8 +11,8 @@ export const SITE_DESCRIPTION =
 
 export const SITE_LOCALE = "en_US";
 
-// TODO: update this email  -  create the support mailbox
-export const SUPPORT_EMAIL = "info@asaanrabta.com";
+export const SUPPORT_EMAIL = "support@asaanrabta.com";
+export const INFO_EMAIL = "info@asaanrabta.com";
 
 // Public social profiles — feed JSON-LD `sameAs` and any footer social icons.
 // Add full profile URLs here as they go live (e.g. "https://www.facebook.com/asaanrabta").
