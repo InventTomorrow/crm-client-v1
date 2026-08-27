@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+/** Mirrors `PractitionerVisibility` on the server. */
+export const PRACTITIONER_VISIBILITIES = ['HIDDEN', 'LISTED', 'BOOKABLE'] as const;
+export type PractitionerVisibility = (typeof PRACTITIONER_VISIBILITIES)[number];
+
 export const MEETING_TYPES = ['PHONE', 'VIDEO', 'IN_PERSON', 'ANY'] as const;
 export type MeetingType = (typeof MEETING_TYPES)[number];
 
@@ -82,6 +86,12 @@ export const bookingConfigFormSchema = z
     reminderMessage: z.string(),
     reminderLeadMinutes: z.number().int().min(0).max(10080),
     assignedStaffIds: z.array(z.string()),
+    /**
+     * Healthcare only. Whether the assistant may show practitioner profiles,
+     * and whether it may book against their own calendars. A per-practitioner
+     * override may narrow this but never widen it.
+     */
+    practitionerVisibility: z.enum(PRACTITIONER_VISIBILITIES).default('HIDDEN'),
     isActive: z.boolean(),
   })
   // Mirrors the server: a window shorter than the meeting offers nothing at all.

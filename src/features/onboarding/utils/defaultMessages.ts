@@ -16,6 +16,11 @@ const TEMPLATES: Record<BusinessVertical, (workspace: string) => { greetingMessa
     escalationMessage: `Let me connect you with someone from the ${workspace} team — please hold on a moment.`,
     fallbackMessage: `Sorry, I didn't quite catch that. Could you rephrase — or tell me a bit about your business?`,
   }),
+  HEALTHCARE: (workspace) => ({
+    greetingMessage: `Assalam-o-Alaikum 👋 Welcome to ${workspace}. Please tell me how we can help — you can describe the requirement in your own words.`,
+    escalationMessage: `Let me arrange for our team to assist you — please allow us a little time to get back to you.`,
+    fallbackMessage: `Sorry, I didn't quite catch that. Could you rephrase — or tell me a bit about the patient and what care is needed?`,
+  }),
 };
 
 /** Personalized starter messages seeded with the workspace name, flavored by business vertical. */

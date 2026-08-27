@@ -5,6 +5,7 @@ export const TOUR_IDS = [
   "workspace-ecommerce-v1",
   "workspace-restaurant-v1",
   "workspace-agency-v1",
+  "workspace-healthcare-v1",
 ] as const;
 export type TourId = (typeof TOUR_IDS)[number];
 
@@ -12,6 +13,7 @@ export const TOUR_ID_BY_VERTICAL: Record<BusinessVertical, TourId> = {
   ECOMMERCE: "workspace-ecommerce-v1",
   RESTAURANT: "workspace-restaurant-v1",
   MARKETING_AGENCY: "workspace-agency-v1",
+  HEALTHCARE: "workspace-healthcare-v1",
 };
 
 /** Below this width the sidebar is replaced by MobileDock, so most targets are absent. */

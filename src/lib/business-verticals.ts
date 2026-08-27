@@ -1,11 +1,16 @@
 import {
   Megaphone,
   ShoppingBag,
+  Stethoscope,
   UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
 
-export type BusinessVertical = "ECOMMERCE" | "RESTAURANT" | "MARKETING_AGENCY";
+export type BusinessVertical =
+  | "ECOMMERCE"
+  | "RESTAURANT"
+  | "MARKETING_AGENCY"
+  | "HEALTHCARE";
 
 /**
  * What a workspace can do, derived from its vertical. Nav items and route
@@ -17,11 +22,14 @@ export type VerticalCapability =
   | "CATALOG_PRODUCTS"
   | "CATALOG_MENU"
   | "CATALOG_SERVICES"
+  | "CATALOG_CLINICAL"
   | "ORDERS"
   | "QUALIFICATION"
   | "BOOKINGS"
   | "FOLLOW_UPS"
-  | "RESOURCES";
+  | "RESOURCES"
+  | "PRACTITIONERS"
+  | "CLINIC_COVERAGE";
 
 export interface BusinessVerticalOption {
   value: BusinessVertical;
@@ -54,6 +62,13 @@ export const BUSINESS_VERTICALS: BusinessVerticalOption[] = [
       "You take food orders, menu browsing, dishes, and order tracking.",
     icon: UtensilsCrossed,
   },
+  {
+    value: "HEALTHCARE",
+    title: "Healthcare / Clinic",
+    description:
+      "You handle patient enquiries, coverage areas, practitioners, and appointments.",
+    icon: Stethoscope,
+  },
 ];
 
 /** Tuple form for Zod enums — derived from the list above so schemas can't drift from it. */
@@ -65,6 +80,7 @@ const BUSINESS_VERTICAL_SHORT_LABELS: Record<BusinessVertical, string> = {
   ECOMMERCE: "Retail",
   RESTAURANT: "Restaurant",
   MARKETING_AGENCY: "Agency",
+  HEALTHCARE: "Clinic",
 };
 
 const VERTICAL_CAPABILITIES: Record<BusinessVertical, VerticalCapability[]> = {
@@ -76,6 +92,15 @@ const VERTICAL_CAPABILITIES: Record<BusinessVertical, VerticalCapability[]> = {
     "BOOKINGS",
     "FOLLOW_UPS",
     "RESOURCES",
+  ],
+  HEALTHCARE: [
+    "CATALOG_CLINICAL",
+    "QUALIFICATION",
+    "BOOKINGS",
+    "FOLLOW_UPS",
+    "RESOURCES",
+    "PRACTITIONERS",
+    "CLINIC_COVERAGE",
   ],
 };
 

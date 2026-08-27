@@ -19,6 +19,7 @@ import {
   qualificationFormSchema,
   type QualificationFormData,
 } from "../types";
+import { useQualificationCopy } from "../utils/qualificationCopy";
 
 type QualificationFormInput = z.input<typeof qualificationFormSchema>;
 
@@ -39,6 +40,7 @@ export function ScoringRulesBuilder({
   disabled = false,
 }: ScoringRulesBuilderProps) {
   const { fields, append, remove } = fieldArray;
+  const copy = useQualificationCopy();
   const questions = useWatch({ control: form.control, name: "questions" });
 
   // Rules point at a question by fieldName, so only named questions can be scored.
@@ -67,8 +69,7 @@ export function ScoringRulesBuilder({
             Scoring rules
           </h2>
           <p className="text-xs text-[var(--ink-mute)]">
-            Each matching rule adds its score. The total decides the lead&apos;s
-            temperature.
+            {copy.scoringSummary}
           </p>
         </div>
         <Button
@@ -97,7 +98,7 @@ export function ScoringRulesBuilder({
       ) : (
         fields.length === 0 && (
           <p className="rounded-xl border border-dashed border-[var(--line)] px-4 py-6 text-center text-xs text-[var(--ink-mute)]">
-            No rules yet. Without them every lead scores zero and lands as cold.
+            {copy.noScoringRules}
           </p>
         )
       )}

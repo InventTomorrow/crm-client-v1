@@ -170,6 +170,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               pathname={pathname}
               collapsed={collapsed}
               badge={badgeFor(item.href)}
+              businessVertical={tenant?.businessVertical}
               expanded={isSectionExpanded(item)}
               onToggleExpanded={() => toggleSection(item.href)}
               onNavigate={onCloseMobile}
