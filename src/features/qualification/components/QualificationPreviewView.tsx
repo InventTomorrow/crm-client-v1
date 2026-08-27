@@ -1,9 +1,13 @@
-'use client';
-import { Badge } from '@/shared/ui/Badge';
-import { Button } from '@/shared/ui/Button';
-import { PreviewDetailRow, PreviewEmptyHint, PreviewPanel } from '@/shared/ui/PreviewPanel';
-import { Skeleton } from '@/shared/ui/Skeleton';
-import { StatCard } from '@/shared/ui/StatCard';
+"use client";
+import { Badge } from "@/shared/ui/Badge";
+import { Button } from "@/shared/ui/Button";
+import {
+  PreviewDetailRow,
+  PreviewEmptyHint,
+  PreviewPanel,
+} from "@/shared/ui/PreviewPanel";
+import { Skeleton } from "@/shared/ui/Skeleton";
+import { StatCard } from "@/shared/ui/StatCard";
 import {
   Calculator,
   Gauge,
@@ -12,9 +16,10 @@ import {
   Pencil,
   Target,
   Users,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useQualificationFormQuery } from '../hooks/useQualification';
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useQualificationFormQuery } from "../hooks/useQualification";
+import { useQualificationCopy } from "../utils/qualificationCopy";
 import {
   countRequiredQuestions,
   describeScoringRule,
@@ -23,30 +28,36 @@ import {
   getQualificationBands,
   getScoringGroupsByQuestion,
   isQualificationConfigured,
-} from '../utils/qualificationPreview';
-import { QualificationEmptyState } from './QualificationEmptyState';
-import { QualificationQuestionsPreview } from './QualificationQuestionsPreview';
+} from "../utils/qualificationPreview";
+import { QualificationEmptyState } from "./QualificationEmptyState";
+import { QualificationQuestionsPreview } from "./QualificationQuestionsPreview";
 
 /** Read-only view of the single qualification form. There is only ever one per workspace, so this
  * is the landing page for the section — the editor sits behind the Edit action. */
 export function QualificationPreviewView() {
   const router = useRouter();
+  const copy = useQualificationCopy();
   const { data: savedForm, isLoading, isError } = useQualificationFormQuery();
 
-  const goToEditor = () => router.push('/qualification/edit');
+  const goToEditor = () => router.push("/qualification/edit");
 
   const header = (
-    <div data-tour="page-actions" className="flex flex-wrap items-start justify-between gap-3">
+    <div
+      data-tour="page-actions"
+      className="flex flex-wrap items-start justify-between gap-3"
+    >
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-[18px] font-semibold text-[var(--ink)]">Bot questions</h1>
+          <h1 className="text-[18px] font-semibold text-[var(--ink)]">
+            {copy.pageTitle}
+          </h1>
           {savedForm && isQualificationConfigured(savedForm) && (
             <>
               <Badge
-                variant={savedForm.isActive ? 'default' : 'secondary'}
+                variant={savedForm.isActive ? "default" : "secondary"}
                 className="text-[10px]"
               >
-                {savedForm.isActive ? 'Active' : 'Paused'}
+                {savedForm.isActive ? "Active" : "Paused"}
               </Badge>
               {savedForm.version > 0 && (
                 <Badge variant="outline" className="text-[10px]">
@@ -57,7 +68,7 @@ export function QualificationPreviewView() {
           )}
         </div>
         <p className="text-[12px] text-[var(--ink-mute)]">
-          What the bot asks a new lead, and how their answers score them.
+          {copy.pageDescription}
         </p>
       </div>
 
@@ -101,7 +112,8 @@ export function QualificationPreviewView() {
 
   const bands = getQualificationBands(savedForm);
   const maxScore = getMaxAchievableScore(savedForm);
-  const { groups: scoringGroups, orphanedRules } = getScoringGroupsByQuestion(savedForm);
+  const { groups: scoringGroups, orphanedRules } =
+    getScoringGroupsByQuestion(savedForm);
   const mappedLeadFields = getMappedLeadFields(savedForm);
   const requiredCount = countRequiredQuestions(savedForm);
 
@@ -119,13 +131,21 @@ export function QualificationPreviewView() {
         <StatCard
           label="Scoring rules"
           value={savedForm.scoringRules.length}
-          hint={savedForm.scoringRules.length === 0 ? 'Every lead scores zero' : undefined}
+          hint={
+            savedForm.scoringRules.length === 0
+              ? "Every lead scores zero"
+              : undefined
+          }
           Icon={Calculator}
         />
         <StatCard
           label="Max score"
           value={maxScore}
-          hint={maxScore >= savedForm.hotThreshold ? 'Hot is reachable' : 'Hot is unreachable'}
+          hint={
+            maxScore >= savedForm.hotThreshold
+              ? "Hot is reachable"
+              : "Hot is unreachable"
+          }
           Icon={Target}
         />
         <StatCard
@@ -160,12 +180,10 @@ export function QualificationPreviewView() {
           <PreviewPanel
             Icon={Calculator}
             title="Scoring"
-            description="Each matching rule adds its score. The total decides the lead's temperature."
+            description={copy.scoringSummary}
           >
             {savedForm.scoringRules.length === 0 ? (
-              <PreviewEmptyHint>
-                No rules yet — every lead totals zero and lands as cold.
-              </PreviewEmptyHint>
+              <PreviewEmptyHint>{copy.noScoringRules}</PreviewEmptyHint>
             ) : (
               <div className="flex flex-col gap-3">
                 {scoringGroups.map((group) => (
@@ -182,8 +200,13 @@ export function QualificationPreviewView() {
                           key={`${rule.operator}-${rule.value}-${ruleIndex}`}
                           className="flex items-center gap-2 text-[12px] text-[var(--ink-soft)]"
                         >
-                          <ListChecks size={12} className="shrink-0 text-[var(--accent)]" />
-                          <span className="min-w-0">{describeScoringRule(rule)}</span>
+                          <ListChecks
+                            size={12}
+                            className="shrink-0 text-[var(--accent)]"
+                          />
+                          <span className="min-w-0">
+                            {describeScoringRule(rule)}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -192,8 +215,9 @@ export function QualificationPreviewView() {
 
                 {orphanedRules.length > 0 && (
                   <p className="rounded-xl border border-dashed border-destructive/40 px-4 py-3 text-[11.5px] text-destructive">
-                    {orphanedRules.length} rule{orphanedRules.length === 1 ? '' : 's'} point at a
-                    question that no longer exists and will never match.
+                    {orphanedRules.length} rule
+                    {orphanedRules.length === 1 ? "" : "s"} point at a question
+                    that no longer exists and will never match.
                   </p>
                 )}
               </div>
@@ -220,7 +244,9 @@ export function QualificationPreviewView() {
                     />
                     {band.label}
                   </span>
-                  <span className="text-[11.5px] text-[var(--ink-mute)]">{band.range}</span>
+                  <span className="text-[11.5px] text-[var(--ink-mute)]">
+                    {band.range}
+                  </span>
                 </div>
               ))}
             </div>
@@ -228,12 +254,13 @@ export function QualificationPreviewView() {
 
           <PreviewPanel
             Icon={Users}
-            title="Saved to the lead"
-            description="Answers written straight onto the lead record."
+            title={copy.mappedFieldsTitle}
+            description={copy.mappedFieldsDescription}
           >
             {mappedLeadFields.length === 0 ? (
               <PreviewEmptyHint>
-                No answers are mapped — they stay on the qualification record only.
+                No answers are mapped — they stay on the qualification record
+                only.
               </PreviewEmptyHint>
             ) : (
               <div className="flex flex-col gap-2">

@@ -6,7 +6,12 @@ import { useInboxUnreadCount } from '@/features/inbox/hooks/useConversations';
 import { useLeadsCount } from '@/features/leads/hooks/useLeads';
 import { usePermissions } from '@/features/auth/hooks/usePermissions';
 import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
-import { hasCapability, type VerticalCapability } from '@/lib/business-verticals';
+import {
+  hasCapability,
+  type BusinessVertical,
+  type VerticalCapability,
+} from '@/lib/business-verticals';
+import { navLabelFor } from './navItems';
 
 const DOCK_ITEMS: {
   href: string;
@@ -15,6 +20,8 @@ const DOCK_ITEMS: {
   perm?: string;
   /** Restricts this item to workspaces whose vertical has this capability; omit to show for all. */
   capability?: VerticalCapability;
+  /** Per-vertical label override — see navLabelFor. */
+  labelByVertical?: Partial<Record<BusinessVertical, string>>;
 }[] = [
   { href: '/dashboard', label: 'Home',  Icon: LayoutDashboard, perm: 'reports:view' },
   { href: '/inbox',     label: 'Inbox', Icon: Inbox,        perm: 'conversations:view' },
@@ -48,7 +55,7 @@ export function MobileDock() {
           return (
             <Link key={it.href} href={it.href} className={`dock-item no-underline ${active ? 'active' : ''}`}>
               <it.Icon size={18} />
-              <span className="dock-lbl">{it.label}</span>
+              <span className="dock-lbl">{navLabelFor(it, tenant?.businessVertical)}</span>
               {!!badge && <span className="dock-badge">{badge > 99 ? '99+' : badge}</span>}
             </Link>
           );

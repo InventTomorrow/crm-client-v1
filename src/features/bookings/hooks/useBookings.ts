@@ -64,6 +64,8 @@ const INITIAL_CONFIG_VALUES: BookingConfigFormInput = {
   reminderMessage: '',
   reminderLeadMinutes: 60,
   assignedStaffIds: [],
+  // Clinics opt in explicitly; every other vertical stays on the shared calendar.
+  practitionerVisibility: 'HIDDEN',
   isActive: true,
 };
 
