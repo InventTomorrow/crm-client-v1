@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/apiClient';
 import type {
   Practitioner,
+  PractitionerAssistantPreview,
   PractitionerFilters,
   PractitionerFormValues,
   PractitionerTimeOff,
@@ -25,6 +26,15 @@ export async function getPractitioner(practitionerId: string) {
   const res = await apiClient.get<{ success: true; data: Practitioner }>(
     `/practitioners/${practitionerId}`,
   );
+  return res.data.data;
+}
+
+/** How this practitioner resolves against the clinic-wide visibility setting. */
+export async function getPractitionerPreview(practitionerId: string) {
+  const res = await apiClient.get<{
+    success: true;
+    data: PractitionerAssistantPreview;
+  }>(`/practitioners/${practitionerId}/preview`);
   return res.data.data;
 }
 

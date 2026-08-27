@@ -205,6 +205,24 @@ export interface Practitioner {
   updatedAt: string;
 }
 
+/**
+ * Mirrors `GET /practitioners/:id/preview`. The server resolves the stored
+ * setting against the clinic-wide ceiling, so `effectiveVisibility` is what the
+ * assistant actually honours — which is not always what the form field says.
+ */
+export interface PractitionerAssistantPreview {
+  workspaceVisibility: PractitionerVisibility;
+  overrideVisibility: PractitionerVisibility | null;
+  effectiveVisibility: PractitionerVisibility;
+  /** May the assistant name this person at all? */
+  mentionable: boolean;
+  /** May it offer their own calendar? */
+  bookable: boolean;
+  /** The line sent under their photo. */
+  caption: string;
+  hasPhoto: boolean;
+}
+
 export interface PractitionerTimeOff {
   id: string;
   tenantId: string;

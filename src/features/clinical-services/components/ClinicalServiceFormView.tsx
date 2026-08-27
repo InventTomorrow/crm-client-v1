@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Banknote,
   Clock,
+  ClipboardList,
   Eye,
   ListChecks,
   Loader2,
@@ -24,6 +25,7 @@ import {
 } from "../utils/clinicalServiceSectionSummaries";
 
 import { ClinicalServiceBasicsFields } from "./sections/ClinicalServiceBasicsFields";
+import { ClinicalServiceIntakeFields } from "./sections/ClinicalServiceIntakeFields";
 import { ClinicalServicePricingFields } from "./sections/ClinicalServicePricingFields";
 import { ClinicalServiceSafetyFields } from "./sections/ClinicalServiceSafetyFields";
 import { ClinicalServiceScopeFields } from "./sections/ClinicalServiceScopeFields";
@@ -51,6 +53,14 @@ const SECTIONS: {
     description:
       "The assistant answers every scope question from these lists and nothing else.",
     Fields: ClinicalServiceScopeFields,
+  },
+  {
+    id: "intake",
+    Icon: ClipboardList,
+    title: "Intake questions",
+    description:
+      "What the assistant asks a family before handing the case to a coordinator.",
+    Fields: ClinicalServiceIntakeFields,
   },
   {
     id: "pricing",
@@ -114,7 +124,7 @@ export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
 
   return (
     <div className="scroll h-full overflow-y-auto">
-      <div className="w-full p-4 md:p-8">
+      <div className="mx-auto w-full max-w-4xl p-4 md:p-8">
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -154,7 +164,9 @@ export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
                   isEmpty={summaries[id] === NOTHING_FILLED_IN}
                   hasError={erroredSections.includes(id)}
                 >
-                  <Fields form={form} isSaving={isSaving} />
+                  <div className="flex flex-col divide-y divide-[var(--line)] [&>*+*]:pt-5 [&>*]:pb-5 [&>*:last-child]:pb-0">
+                    <Fields form={form} isSaving={isSaving} />
+                  </div>
                 </FormAccordionSection>
               ))}
             </Accordion>

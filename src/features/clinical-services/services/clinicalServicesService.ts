@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/apiClient";
 import type {
   ClinicalService,
+  ClinicalServiceAssistantPreview,
   ClinicalServiceFilters,
   ClinicalServiceFormValues,
 } from "../types";
@@ -22,6 +23,15 @@ export async function getClinicalService(serviceId: string) {
   const res = await apiClient.get<{ success: true; data: ClinicalService }>(
     `/clinical-services/${serviceId}`,
   );
+  return res.data.data;
+}
+
+/** What the assistant would say about this service, rendered by the server. */
+export async function getClinicalServicePreview(serviceId: string) {
+  const res = await apiClient.get<{
+    success: true;
+    data: ClinicalServiceAssistantPreview;
+  }>(`/clinical-services/${serviceId}/preview`);
   return res.data.data;
 }
 
