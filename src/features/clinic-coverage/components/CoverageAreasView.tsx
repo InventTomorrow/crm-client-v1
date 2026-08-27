@@ -19,17 +19,15 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import {
   useClinicLocations,
+  useCoverageCells,
   useCoverageRows,
   useDeleteClinicLocation,
-  useDeleteCoverageRow,
-  useUpsertCoverageRow,
 } from '../hooks/useClinicCoverage';
 import {
   areaKey,
   COVERAGE_META,
   type ClinicLocation,
   type CoverageArea,
-  type CoverageLevel,
 } from '../types';
 import { ClinicLocationFormDialog } from './ClinicLocationFormDialog';
 import { CoverageCsvImportDialog } from './CoverageCsvImportDialog';
@@ -47,8 +45,6 @@ export function CoverageAreasView() {
   const coverageQuery = useCoverageRows();
   const servicesQuery = useClinicalServices({ isActive: true });
 
-  const upsertRow = useUpsertCoverageRow();
-  const deleteRow = useDeleteCoverageRow();
   const deleteLocation = useDeleteClinicLocation();
 
   const locations = useMemo(
@@ -76,41 +72,7 @@ export function CoverageAreasView() {
     (location) => location.isActive && location.handlesEmergencies,
   );
 
-  const handleCellChange = ({
-    service,
-    area,
-    coverage,
-  }: {
-    service: { id: string };
-    area: CoverageArea;
-    coverage: CoverageLevel | 'UNKNOWN';
-  }) => {
-    const existing = rows.find(
-      (row) =>
-        row.clinicalServiceId === service.id &&
-        areaKey(row.city, row.area) === areaKey(area.city, area.area),
-    );
-
-    // "Not set" means no row at all — the assistant then reports coverage as
-    // unconfirmed rather than reading a stored "no".
-    if (coverage === 'UNKNOWN') {
-      if (existing) deleteRow.mutate(existing.id);
-      return;
-    }
-
-    upsertRow.mutate({
-      clinicalServiceId: service.id,
-      city: area.city,
-      area: area.area,
-      coverage,
-      priceMin: existing?.priceMin ?? null,
-      priceMax: existing?.priceMax ?? null,
-      currency: existing?.currency ?? 'PKR',
-      leadTimeNote: existing?.leadTimeNote ?? null,
-      notes: existing?.notes ?? null,
-      isActive: true,
-    });
-  };
+  const { setCell, cellStatus } = useCoverageCells(rows);
 
   const openCreateLocation = () => {
     setLocationBeingEdited(null);
@@ -204,8 +166,8 @@ export function CoverageAreasView() {
                 services={services}
                 areas={areas}
                 rows={rows}
-                onChange={handleCellChange}
-                disabled={upsertRow.isPending || deleteRow.isPending}
+                cellStatus={cellStatus}
+                onChange={setCell}
               />
               <div className="flex flex-wrap gap-3 text-xs">
                 {(

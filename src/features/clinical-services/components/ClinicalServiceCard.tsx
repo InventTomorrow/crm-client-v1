@@ -1,7 +1,8 @@
 "use client";
 import { Button } from "@/shared/ui/Button";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Clock, EyeOff, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
 import {
   formatServicePrice,
   SERVICE_TYPE_LABELS,
@@ -140,10 +141,18 @@ export function ClinicalServiceCard({
       )}
 
       <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--line)] pt-3">
-        <Button size="sm" variant="outline" onClick={() => onEdit(service)}>
-          <Pencil className="size-3.5" />
-          Edit
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/clinical-services/${service.id}`}>
+              <Eye className="size-3.5" />
+              Preview
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEdit(service)}>
+            <Pencil className="size-3.5" />
+            Edit
+          </Button>
+        </div>
         <Button
           size="icon-sm"
           variant="ghost"

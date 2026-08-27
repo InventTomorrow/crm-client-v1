@@ -2,6 +2,7 @@
 import { Label } from '@/shared/ui/Label';
 import { cn } from '@/lib/utils';
 import { Lock } from 'lucide-react';
+import Link from 'next/link';
 import {
   isVisibilityAllowed,
   PRACTITIONER_VISIBILITIES,
@@ -10,40 +11,55 @@ import {
 } from '../types';
 
 interface PractitionerVisibilitySelectProps {
-  /** null means "inherit the clinic default". */
+  /** null means "inherit the clinic default" — only reachable in override mode. */
   value: PractitionerVisibility | null;
   onChange: (visibility: PractitionerVisibility | null) => void;
-  workspaceDefault: PractitionerVisibility;
+  /**
+   * The clinic-wide ceiling, which puts this control in OVERRIDE mode: an
+   * "inherit" row appears and anything wider than the ceiling is locked.
+   *
+   * Omit it to edit the ceiling ITSELF — no inherit row, nothing locked.
+   */
+  workspaceDefault?: PractitionerVisibility;
   disabled?: boolean;
+  label?: string;
 }
 
 /**
- * Per-practitioner visibility.
+ * The three visibility levels, as a list of explained choices.
  *
- * Options wider than the clinic-wide setting are disabled, mirroring the
- * server's rule that an override may only narrow: switching the clinic to
- * "Don't show" has to hide everyone, so the UI must not be able to express
- * something the server would clamp anyway.
+ * Used twice: once for the clinic-wide setting on booking settings, and once
+ * per practitioner. The per-practitioner use disables anything wider than the
+ * clinic setting, mirroring the server's rule that an override may only narrow
+ * — switching the clinic to "Don't show" has to hide everyone, so the UI must
+ * not be able to express something the server would clamp anyway.
  */
 export function PractitionerVisibilitySelect({
   value,
   onChange,
   workspaceDefault,
   disabled,
+  label = 'Patient visibility',
 }: PractitionerVisibilitySelectProps) {
+  const isOverrideMode = workspaceDefault !== undefined;
+
   const options: {
     key: string;
     visibility: PractitionerVisibility | null;
     label: string;
     description: string;
   }[] = [
-    {
-      key: 'INHERIT',
-      visibility: null,
-      label: `Use the clinic setting (${VISIBILITY_META[workspaceDefault].label})`,
-      description:
-        'Follows whatever the clinic-wide setting is, now and later.',
-    },
+    ...(workspaceDefault
+      ? [
+          {
+            key: 'INHERIT',
+            visibility: null,
+            label: `Use the clinic setting (${VISIBILITY_META[workspaceDefault].label})`,
+            description:
+              'Follows whatever the clinic-wide setting is, now and later.',
+          },
+        ]
+      : []),
     ...PRACTITIONER_VISIBILITIES.map((visibility) => ({
       key: visibility,
       visibility,
@@ -52,12 +68,19 @@ export function PractitionerVisibilitySelect({
     })),
   ];
 
+  const hasLockedOption =
+    isOverrideMode &&
+    PRACTITIONER_VISIBILITIES.some(
+      (visibility) => !isVisibilityAllowed(workspaceDefault, visibility),
+    );
+
   return (
     <div className="space-y-2">
-      <Label>Patient visibility</Label>
+      <Label>{label}</Label>
       <div className="space-y-2">
         {options.map((option) => {
           const isBlocked =
+            isOverrideMode &&
             option.visibility !== null &&
             !isVisibilityAllowed(workspaceDefault, option.visibility);
           const isSelected = value === option.visibility;
@@ -88,6 +111,21 @@ export function PractitionerVisibilitySelect({
           );
         })}
       </div>
+
+      {/* Without this the locked rows are a dead end: the setting that locked
+          them lives on another page, and nothing here says which. */}
+      {hasLockedOption && (
+        <p className="text-muted-foreground text-xs">
+          To unlock the wider options, raise the clinic-wide setting in{' '}
+          <Link
+            href="/bookings/availability"
+            className="text-primary underline"
+          >
+            booking settings
+          </Link>
+          .
+        </p>
+      )}
     </div>
   );
 }

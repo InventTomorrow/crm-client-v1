@@ -20,8 +20,12 @@ import {
   Clock,
   MessageSquare,
   SlidersHorizontal,
+  Stethoscope,
 } from "lucide-react";
 import { useWatch } from "react-hook-form";
+import { hasCapability } from "@/lib/business-verticals";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { PractitionerVisibilitySelect } from "@/features/practitioners/components/PractitionerVisibilitySelect";
 import { useBookingConfigForm } from "../hooks/useBookings";
 import { MEETING_TYPES, MEETING_TYPE_LABELS } from "../types";
 import { WeekdayPicker } from "./WeekdayPicker";
@@ -62,6 +66,11 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
     control: form.control,
     name: "bufferMinutes",
   });
+
+  const { tenant } = useCurrentTenant();
+  const isClinical = Boolean(
+    tenant && hasCapability(tenant.businessVertical, "PRACTITIONERS"),
+  );
 
   if (isLoading) {
     return (
@@ -466,6 +475,36 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
             )}
           />
         </FormSection>
+
+        {/* Healthcare only — every other vertical books against one shared
+            calendar and has no practitioners to expose. */}
+        {isClinical && (
+          <FormSection
+            title="Practitioners"
+            description="Whether the assistant may name your practitioners, and whether it may book them."
+            Icon={Stethoscope}
+          >
+            <FormField
+              control={form.control}
+              name="practitionerVisibility"
+              render={({ field }) => (
+                <FormItem>
+                  <PractitionerVisibilitySelect
+                    value={field.value ?? "HIDDEN"}
+                    onChange={field.onChange}
+                    disabled={isSaving}
+                  />
+                  <FormDescription>
+                    This is the ceiling for the whole clinic. A practitioner may
+                    be set narrower than this, never wider — so moving it down
+                    to &ldquo;Don&apos;t show&rdquo; genuinely hides everyone.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+        )}
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isSaving}>

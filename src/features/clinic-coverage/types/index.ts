@@ -58,6 +58,9 @@ export interface ClinicLocation {
   updatedAt: string;
 }
 
+/** What the grid is currently doing to one cell, when it is doing anything. */
+export type CoverageCellStatus = 'saving' | 'error';
+
 export interface ClinicalServiceCoverage {
   id: string;
   tenantId: string;

@@ -13,7 +13,13 @@ export const NOTHING_FILLED_IN = "Not filled in yet";
 
 /** Every section of the clinical service form, in the order it is rendered. */
 export type ClinicalServiceSectionId =
-  "basics" | "scope" | "pricing" | "terms" | "safety" | "visibility";
+  | "basics"
+  | "scope"
+  | "intake"
+  | "pricing"
+  | "terms"
+  | "safety"
+  | "visibility";
 
 /**
  * Which fields each section owns.
@@ -35,6 +41,7 @@ export const SECTION_FIELDS: Record<
     "fullDescription",
   ],
   scope: ["includedActivities", "excludedActivities", "conditionsTreated"],
+  intake: ["intakeFieldKeys"],
   pricing: [
     "pricingModel",
     "currency",
@@ -95,6 +102,18 @@ function summariseScope(values: ClinicalServiceFormInput): string {
  * Reads the way the assistant would: an on-enquiry service reports that it is
  * unquotable rather than showing whatever figure is still sitting in state.
  */
+/**
+ * Counts only the opt-in questions. The seven core fields are always collected,
+ * so reporting "7 questions" on an untouched service would read as configuration
+ * that had been done rather than the baseline it is.
+ */
+function summariseIntake(values: ClinicalServiceFormInput): string {
+  const extra = count(values.intakeFieldKeys);
+  return extra === 0
+    ? "Core questions only"
+    : `Core questions + ${plural(extra, "extra")}`;
+}
+
 function summarisePricing(values: ClinicalServiceFormInput): string {
   const money = (amount: unknown) =>
     `${DEFAULT_CURRENCY} ${Number(amount).toLocaleString()}`;
@@ -168,6 +187,7 @@ const SUMMARISERS: Record<
 > = {
   basics: summariseBasics,
   scope: summariseScope,
+  intake: summariseIntake,
   pricing: summarisePricing,
   terms: summariseTerms,
   safety: summariseSafety,

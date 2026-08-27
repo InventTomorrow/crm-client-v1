@@ -1,4 +1,5 @@
 "use client";
+import { extractErrorMessage } from "@/lib/utils";
 import {
   useInfiniteQuery,
   useMutation,
@@ -6,11 +7,11 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { extractErrorMessage } from "@/lib/utils";
 import {
   createClinicalService,
   deleteClinicalService,
   getClinicalService,
+  getClinicalServicePreview,
   getClinicalServices,
   updateClinicalService,
   type CreateClinicalServicePayload,
@@ -28,6 +29,8 @@ const clinicalServiceKeys = {
     ["clinical-services", "paged", filters] as const,
   detail: (serviceId: string) =>
     ["clinical-services", "detail", serviceId] as const,
+  preview: (serviceId: string) =>
+    ["clinical-services", "preview", serviceId] as const,
 };
 
 function invalidateClinicalServices(
@@ -95,6 +98,15 @@ export function useClinicalService(serviceId: string | undefined) {
   return useQuery({
     queryKey: clinicalServiceKeys.detail(serviceId ?? ""),
     queryFn: () => getClinicalService(serviceId!),
+    enabled: Boolean(serviceId),
+  });
+}
+
+/** The assistant-facing rendering of one service, for the preview panel. */
+export function useClinicalServicePreview(serviceId: string | undefined) {
+  return useQuery({
+    queryKey: clinicalServiceKeys.preview(serviceId ?? ""),
+    queryFn: () => getClinicalServicePreview(serviceId!),
     enabled: Boolean(serviceId),
   });
 }

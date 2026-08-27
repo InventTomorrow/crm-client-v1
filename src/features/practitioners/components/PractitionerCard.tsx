@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CalendarOff,
   Clock,
+  Eye,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -146,6 +147,12 @@ export function PractitionerCard({
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-[var(--line)] pt-3">
+        <Button size="sm" variant="outline" asChild>
+          <Link href={`/practitioners/${practitioner.id}`}>
+            <Eye className="size-3.5" />
+            Preview
+          </Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(practitioner)}>
           <Pencil className="size-3.5" />
           Edit

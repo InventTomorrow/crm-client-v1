@@ -12,6 +12,7 @@ import {
   createPractitioner,
   deletePractitioner,
   getPractitioner,
+  getPractitionerPreview,
   getPractitioners,
   getPractitionerTimeOff,
   removePractitionerTimeOff,
@@ -29,6 +30,8 @@ const practitionerKeys = {
     ['practitioners', 'list', filters] as const,
   detail: (practitionerId: string) =>
     ['practitioners', 'detail', practitionerId] as const,
+  preview: (practitionerId: string) =>
+    ['practitioners', 'preview', practitionerId] as const,
   timeOff: (practitionerId: string) =>
     ['practitioners', practitionerId, 'time-off'] as const,
 };
@@ -64,6 +67,15 @@ export function usePractitioner(practitionerId: string | undefined) {
   return useQuery({
     queryKey: practitionerKeys.detail(practitionerId ?? ''),
     queryFn: () => getPractitioner(practitionerId!),
+    enabled: Boolean(practitionerId),
+  });
+}
+
+/** How the assistant resolves this practitioner, for the preview panel. */
+export function usePractitionerPreview(practitionerId: string | undefined) {
+  return useQuery({
+    queryKey: practitionerKeys.preview(practitionerId ?? ''),
+    queryFn: () => getPractitionerPreview(practitionerId!),
     enabled: Boolean(practitionerId),
   });
 }
