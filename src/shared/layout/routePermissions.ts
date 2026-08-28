@@ -50,6 +50,10 @@ const ROUTE_CAPABILITIES: { prefix: string; capability: VerticalCapability }[] =
   { prefix: "/coverage-areas", capability: "CLINIC_COVERAGE" },
   { prefix: "/qualification", capability: "QUALIFICATION" },
   { prefix: "/bookings", capability: "BOOKINGS" },
+  // The two healthcare-only booking pages — the sidebar hides them elsewhere,
+  // but the route has to refuse the wrong vertical on a typed URL too.
+  { prefix: "/bookings/clinical", capability: "CATALOG_CLINICAL" },
+  { prefix: "/bookings/doctors", capability: "PRACTITIONERS" },
   { prefix: "/resources", capability: "RESOURCES" },
   { prefix: "/channels/order-api", capability: "ORDERS" },
 ];

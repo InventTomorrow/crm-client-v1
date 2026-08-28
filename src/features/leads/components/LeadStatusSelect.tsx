@@ -2,7 +2,7 @@
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { LeadStatus } from "../types";
-import { STATUS_META } from "../types";
+import { useLeadVocabulary } from "../utils/leadVocabulary";
 
 // ──────────────────── Status Select ────────────────────
 export default function LeadStatusSelect({
@@ -14,7 +14,8 @@ export default function LeadStatusSelect({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const statusMeta = STATUS_META[value];
+  const { statusMeta: statusMetaByStatus } = useLeadVocabulary();
+  const statusMeta = statusMetaByStatus[value];
 
   useEffect(() => {
     if (!open) return;
@@ -50,7 +51,7 @@ export default function LeadStatusSelect({
       </button>
       {open && (
         <div className="card-2 fade-up absolute left-0 top-[calc(100%+4px)] z-[200] p-1 min-w-[140px] bg-[var(--surface)]">
-          {Object.entries(STATUS_META).map(([k, v]) => (
+          {Object.entries(statusMetaByStatus).map(([k, v]) => (
             <button
               key={k}
               onClick={() => {

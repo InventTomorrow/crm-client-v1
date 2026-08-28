@@ -28,7 +28,7 @@ import { Check, Loader2, Plus, X } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { Lead } from "../types";
-import { STATUS_META } from "../types";
+import { useLeadVocabulary } from "../utils/leadVocabulary";
 import { leadFormSchema, type LeadFormData } from "../validations.lead";
 import {
   describeConflict,
@@ -53,6 +53,7 @@ export default function LeadFormDialog({
   onSubmit: (data: LeadFormData) => void;
   isSaving?: boolean;
 }) {
+  const vocabulary = useLeadVocabulary();
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
@@ -123,12 +124,14 @@ export default function LeadFormDialog({
         <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-4 border-b border-[var(--line)]">
           <div>
             <DialogTitle className="text-[16px] font-semibold">
-              {mode === "edit" ? "Edit lead" : "Add new lead"}
+              {mode === "edit"
+                ? `Edit ${vocabulary.singular}`
+                : `Add new ${vocabulary.singular}`}
             </DialogTitle>
             <DialogDescription className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
               {mode === "edit"
-                ? "Update this lead's information."
-                : "Manually create a lead — channel sync will fill the rest."}
+                ? `Update this ${vocabulary.singular}'s information.`
+                : `Manually create a ${vocabulary.singular} — channel sync will fill the rest.`}
             </DialogDescription>
           </div>
           <Button
@@ -244,7 +247,7 @@ export default function LeadFormDialog({
                     <FormLabel>Status</FormLabel>
                     <FormControl>
                       <div className="flex gap-1.5 flex-wrap">
-                        {Object.entries(STATUS_META).map(([k, v]) => (
+                        {Object.entries(vocabulary.statusMeta).map(([k, v]) => (
                           <button
                             key={k}
                             type="button"
@@ -292,7 +295,9 @@ export default function LeadFormDialog({
                 ) : (
                   <>
                     {mode === "edit" ? <Check size={13} /> : <Plus size={13} />}{" "}
-                    {mode === "edit" ? "Save changes" : "Add lead"}
+                    {mode === "edit"
+                      ? "Save changes"
+                      : `Add ${vocabulary.singular}`}
                   </>
                 )}
               </Button>

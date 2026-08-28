@@ -40,7 +40,10 @@ export function SidebarNavItem({
 }: SidebarNavItemProps) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
   const visibleChildren = (item.children ?? []).filter(
-    (child) => canAccess(child.perm) && canUseCapability(child.capability),
+    (child) =>
+      canAccess(child.perm) &&
+      canUseCapability(child.capability) &&
+      !(businessVertical && child.hiddenForVerticals?.includes(businessVertical)),
   );
 
   // Collapsed rail has no room for a submenu — the parent link still reaches the section.

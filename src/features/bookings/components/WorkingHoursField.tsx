@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@/shared/ui/Button';
-import { Input } from '@/shared/ui/Input';
+import { TimePicker } from '@/shared/ui/TimePicker';
 import { Plus, X } from 'lucide-react';
 import { minutesBetween, type BookingWindow } from '../types';
 import { describeWindowSlots } from '../utils/appointmentFormat';
@@ -55,20 +55,20 @@ export function WorkingHoursField({
                 className="flex flex-col gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    type="time"
-                    className="w-[130px]"
+                  <TimePicker
+                    className="w-[140px]"
+                    aria-label="Window start time"
                     value={window.startTime}
                     disabled={disabled}
-                    onChange={(event) => updateWindow(index, { startTime: event.target.value })}
+                    onChange={(startTime) => updateWindow(index, { startTime })}
                   />
                   <span className="text-[12px] text-[var(--ink-mute)]">to</span>
-                  <Input
-                    type="time"
-                    className="w-[130px]"
+                  <TimePicker
+                    className="w-[140px]"
+                    aria-label="Window end time"
                     value={window.endTime}
                     disabled={disabled}
-                    onChange={(event) => updateWindow(index, { endTime: event.target.value })}
+                    onChange={(endTime) => updateWindow(index, { endTime })}
                   />
 
                   <button

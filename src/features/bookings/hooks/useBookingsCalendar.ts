@@ -1,7 +1,7 @@
 'use client';
 import type { EventInput } from '@fullcalendar/core';
 import { useMemo, useState } from 'react';
-import type { Appointment } from '../types';
+import type { Appointment, AppointmentFilters } from '../types';
 import { toLocalDateKey } from '../utils/appointmentFormat';
 import { dayCountBetween } from '../utils/calendarGrid';
 import { useAppointmentsList, useAvailabilityQuery } from './useBookings';
@@ -26,21 +26,29 @@ function toEventEnd(appointment: Appointment): string {
  * slots behind them as background shading, so an empty patch of the grid reads as
  * bookable rather than merely blank.
  */
-export function useBookingsCalendar(timezone: string) {
+export function useBookingsCalendar(
+  timezone: string,
+  /** The page's own narrowing — a booking type, one doctor, one service. */
+  filters: AppointmentFilters = {},
+) {
   const [visibleRange, setVisibleRange] = useState<VisibleRange | null>(null);
 
   const availability = useAvailabilityQuery(
     {
       from: visibleRange ? toLocalDateKey(visibleRange.start.toISOString(), timezone) : undefined,
       days: visibleRange ? dayCountBetween(visibleRange.start, visibleRange.end) : 7,
+      // Open slots have to come from the same calendar the list is showing, or a
+      // doctor's page would shade the whole clinic's free time as theirs.
+      ...(filters.practitionerId ? { practitionerId: filters.practitionerId } : {}),
+      ...(filters.clinicalServiceId ? { clinicalServiceId: filters.clinicalServiceId } : {}),
     },
     { enabled: visibleRange !== null },
   );
 
   const { appointments, isLoading: isLoadingAppointments } = useAppointmentsList(
     visibleRange
-      ? { from: visibleRange.start.toISOString(), to: visibleRange.end.toISOString() }
-      : {},
+      ? { ...filters, from: visibleRange.start.toISOString(), to: visibleRange.end.toISOString() }
+      : filters,
   );
 
   const events = useMemo<EventInput[]>(() => {

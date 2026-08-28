@@ -34,6 +34,8 @@ export interface NavChild {
   perm?: string;
   /** Restricts this child to workspaces whose vertical has this capability; omit to show for all. */
   capability?: VerticalCapability;
+  /** Verticals that do not get this child — the page still exists, it is just redundant there. */
+  hiddenForVerticals?: BusinessVertical[];
   /** Per-vertical label override — the same page, named the way that trade names it. */
   labelByVertical?: Partial<Record<BusinessVertical, string>>;
   /** Optional leading icon — sections without one render label-only children. */
@@ -62,7 +64,14 @@ export const NAV_ITEMS: NavItem[] = [
     perm: "dashboard:view",
   },
   { href: "/inbox", label: "Inbox", Icon: Inbox, perm: "conversations:view" },
-  { href: "/leads", label: "Leads", Icon: Users, perm: "leads:view" },
+  {
+    href: "/leads",
+    label: "Leads",
+    // A clinic tracks patients through intake, not leads through a sales pipeline.
+    labelByVertical: { HEALTHCARE: "Patients" },
+    Icon: Users,
+    perm: "leads:view",
+  },
   {
     href: "/orders",
     label: "Orders",
@@ -137,7 +146,20 @@ export const NAV_ITEMS: NavItem[] = [
     perm: "bookings:view",
     capability: "BOOKINGS",
     children: [
-      { href: "/bookings", label: "Appointments" },
+      // A clinic's appointments are all reachable from the two pages below, so the
+      // combined list is only a duplicate there.
+      { href: "/bookings", label: "Appointments", hiddenForVerticals: ["HEALTHCARE"] },
+      // A clinic books two different calendars — its own, and each doctor's.
+      {
+        href: "/bookings/clinical",
+        label: "Clinical bookings",
+        capability: "CATALOG_CLINICAL",
+      },
+      {
+        href: "/bookings/doctors",
+        label: "Doctor bookings",
+        capability: "PRACTITIONERS",
+      },
       {
         href: "/bookings/availability",
         label: "Availability",

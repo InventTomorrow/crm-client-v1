@@ -13,6 +13,7 @@ import {
 } from "@/shared/ui/DropdownMenu";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
+import { useLeadVocabulary } from "../../utils/leadVocabulary";
 import LeadStatusSelect from "../LeadStatusSelect";
 import {
   Archive,
@@ -54,6 +55,7 @@ export default function TableView({
   onBulkDelete: (rows: Lead[]) => void;
   onExport: (rows: Lead[]) => void;
 }) {
+  const vocabulary = useLeadVocabulary();
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
 
   const columns: ColumnDef<Lead, unknown>[] = useMemo(
@@ -204,7 +206,7 @@ export default function TableView({
       selectable
       onDeleteSelected={onBulkDelete}
       onExport={onExport}
-      emptyMessage="No matching leads."
+      emptyMessage={`No matching ${vocabulary.plural}.`}
       defaultPageSize={20}
       className="flex-1 min-h-0"
     />

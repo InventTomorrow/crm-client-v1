@@ -2,6 +2,7 @@
 import type { EventClickArg, EventContentArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import luxonPlugin from '@fullcalendar/luxon3';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -9,8 +10,14 @@ import { cn } from '@/lib/utils';
 import { Spinner } from '@/shared/ui/Spinner';
 import { useState } from 'react';
 import { useBookingsCalendar } from '../hooks/useBookingsCalendar';
-import type { Appointment, AppointmentStatus, BookingWindow } from '../types';
+import type {
+  Appointment,
+  AppointmentFilters,
+  AppointmentStatus,
+  BookingWindow,
+} from '../types';
 import { APPOINTMENT_STATUS_LABELS } from '../types';
+import { appointmentSubtitle } from '../utils/appointmentFormat';
 import { deriveCalendarTimeBounds, toSlotDuration } from '../utils/calendarGrid';
 import { AppointmentDetailSheet } from './AppointmentDetailSheet';
 
@@ -18,8 +25,10 @@ interface BookingsCalendarProps {
   timezone: string;
   durationMinutes: number;
   workingHours: BookingWindow[];
-  /** Opens the direct-entry dialog on the picked instant. */
-  onCreateAtSlot: (startsAt: string) => void;
+  /** Opens the direct-entry dialog on the picked instant. Omit to make the grid read-only. */
+  onCreateAtSlot?: (startsAt: string) => void;
+  /** Narrows the grid to one booking type, doctor or service — the page's own filters. */
+  filters?: AppointmentFilters;
 }
 
 /** Dot colour per status — the same swatches the legend shows. Cancelled never reaches the grid. */
@@ -41,25 +50,56 @@ const LEGEND_ITEMS: { label: string; swatchClassName: string }[] = [
 ];
 
 /**
- * Event body: status dot plus who the call is with, kept to one line in a slot.
+ * Event body: status dot plus who the call is with, kept to one line in a slot, and
+ * expanded into a real row in the agenda — that view has the width for the doctor,
+ * the service and the phone number the grid has to drop.
+ *
  * Deliberately not a component — FullCalendar *calls* the content generator rather
  * than mounting it, so anything hook-shaped (including the React Compiler's memo
  * cache) would run outside a renderer and throw.
  */
-function renderAppointmentEvent({ event, timeText }: EventContentArg) {
+function renderAppointmentEvent({ event, timeText, view }: EventContentArg) {
   const appointment = event.extendedProps.appointment as Appointment | undefined;
   // Open-slot background and select-mirror events carry no appointment — let FullCalendar render them.
   if (!appointment) return true;
 
+  const subtitle = appointmentSubtitle(appointment);
+
+  if (view.type.startsWith('list')) {
+    return (
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+        <span
+          className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT_CLASSES[appointment.status])}
+        />
+        <span className="truncate text-[13px] font-medium text-[var(--ink)]">
+          {event.title}
+        </span>
+        {subtitle && (
+          <span className="truncate text-[12px] text-[var(--ink-mute)]">{subtitle}</span>
+        )}
+        <span className="ml-auto shrink-0 text-[11px] font-medium text-[var(--ink-mute)]">
+          {APPOINTMENT_STATUS_LABELS[appointment.status]}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-w-0 items-center gap-1.5 px-1 py-0.5">
-      <span
-        className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT_CLASSES[appointment.status])}
-      />
-      <span className="truncate text-[11px] font-medium">{event.title}</span>
-      <span className="ml-auto hidden shrink-0 text-[10px] opacity-80 sm:inline">
-        {timeText}
-      </span>
+    <div className="flex min-w-0 flex-col gap-0.5 px-1 py-0.5">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span
+          className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT_CLASSES[appointment.status])}
+        />
+        <span className="truncate text-[11px] font-medium">{event.title}</span>
+        <span className="ml-auto hidden shrink-0 text-[10px] opacity-80 sm:inline">
+          {timeText}
+        </span>
+      </div>
+      {subtitle && (
+        <span className="fc-event-subtitle truncate pl-3.5 text-[10px] opacity-75">
+          {subtitle}
+        </span>
+      )}
     </div>
   );
 }
@@ -74,11 +114,13 @@ export function BookingsCalendar({
   durationMinutes,
   workingHours,
   onCreateAtSlot,
+  filters,
 }: BookingsCalendarProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const { events, isLoading, setVisibleRange } = useBookingsCalendar(timezone);
+  const { events, isLoading, setVisibleRange } = useBookingsCalendar(timezone, filters);
 
   const { slotMinTime, slotMaxTime } = deriveCalendarTimeBounds(workingHours);
+  const isBookable = typeof onCreateAtSlot === 'function';
 
   const openAppointment = (clickInfo: EventClickArg) => {
     const appointment = clickInfo.event.extendedProps.appointment as Appointment | undefined;
@@ -95,15 +137,31 @@ export function BookingsCalendar({
 
       <div className="bookings-calendar">
         <FullCalendar
-          plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin, luxonPlugin]}
+          plugins={[timeGridPlugin, dayGridPlugin, listPlugin, interactionPlugin, luxonPlugin]}
           timeZone={timezone}
           initialView="timeGridWeek"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'timeGridDay,timeGridWeek,dayGridMonth',
+            right: 'listWeek,timeGridDay,timeGridWeek,dayGridMonth',
           }}
-          buttonText={{ today: 'Today', day: 'Day', week: 'Week', month: 'Month' }}
+          buttonText={{
+            today: 'Today',
+            day: 'Day',
+            week: 'Week',
+            month: 'Month',
+            list: 'Agenda',
+          }}
+          views={{
+            listWeek: {
+              buttonText: 'Agenda',
+              // The agenda is the readable version of the list — a fortnight of it
+              // is more useful than the same seven days the week grid already shows.
+              duration: { days: 14 },
+              listDayFormat: { weekday: 'long', day: 'numeric', month: 'short' },
+              listDaySideFormat: false,
+            },
+          }}
           height="auto"
           firstDay={1}
           allDaySlot={false}
@@ -116,10 +174,10 @@ export function BookingsCalendar({
           slotLabelFormat={{ hour: 'numeric', minute: '2-digit', omitZeroMinute: true }}
           eventTimeFormat={{ hour: 'numeric', minute: '2-digit', meridiem: 'short' }}
           dayMaxEvents={3}
-          selectable
-          selectMirror
+          selectable={isBookable}
+          selectMirror={isBookable}
           selectOverlap={false}
-          select={(selection) => onCreateAtSlot(selection.start.toISOString())}
+          select={(selection) => onCreateAtSlot?.(selection.start.toISOString())}
           events={events}
           eventContent={renderAppointmentEvent}
           eventClick={openAppointment}
@@ -129,7 +187,10 @@ export function BookingsCalendar({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--line)] pt-2 text-[11px] text-[var(--ink-mute)]">
-        <span>Times in {timezone.replace('_', ' ')} · click an open slot to book it</span>
+        <span>
+          Times in {timezone.replace('_', ' ')}
+          {isBookable ? ' · click an open slot to book it' : ' · shaded time is still open'}
+        </span>
         <span className="ml-auto flex flex-wrap items-center gap-3">
           {LEGEND_ITEMS.map((item) => (
             <span key={item.label} className="flex items-center gap-1.5">

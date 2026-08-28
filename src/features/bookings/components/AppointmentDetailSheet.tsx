@@ -10,8 +10,10 @@ import {
 import {
   CalendarClock,
   CalendarX2,
+  ClipboardList,
   Clock,
   Phone,
+  Stethoscope,
   StickyNote,
   User,
 } from 'lucide-react';
@@ -123,6 +125,36 @@ export function AppointmentDetailSheet({
                 <span className="ml-1.5 text-[11.5px] text-[var(--ink-mute)]">via lead</span>
               )}
             </DetailRow>
+
+            {appointment.practitioner && (
+              <DetailRow icon={Stethoscope} label="Doctor">
+                <span className="text-[13px] font-medium text-[var(--ink)]">
+                  {appointment.practitioner.title
+                    ? `${appointment.practitioner.title} ${appointment.practitioner.fullName}`
+                    : appointment.practitioner.fullName}
+                </span>
+                {(appointment.practitioner.designation ??
+                  appointment.practitioner.specialties[0]) && (
+                  <p className="text-[11.5px] text-[var(--ink-mute)]">
+                    {appointment.practitioner.designation ??
+                      appointment.practitioner.specialties[0]}
+                  </p>
+                )}
+              </DetailRow>
+            )}
+
+            {appointment.clinicalService && (
+              <DetailRow icon={ClipboardList} label="Service">
+                <span className="text-[13px] text-[var(--ink)]">
+                  {appointment.clinicalService.name}
+                </span>
+                {appointment.clinicalService.category && (
+                  <p className="text-[11.5px] text-[var(--ink-mute)]">
+                    {appointment.clinicalService.category}
+                  </p>
+                )}
+              </DetailRow>
+            )}
 
             {appointment.notes && (
               <DetailRow icon={StickyNote} label="Notes">

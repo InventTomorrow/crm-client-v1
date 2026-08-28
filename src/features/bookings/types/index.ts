@@ -120,6 +120,30 @@ export interface AppointmentLeadSummary {
   phone: string | null;
 }
 
+/**
+ * Which calendar an appointment sits on. Mirrors the server: CLINIC rows name a
+ * service and no practitioner, PRACTITIONER rows name a doctor. Healthcare books
+ * both; every other vertical only ever produces CLINIC-shaped rows.
+ */
+export const BOOKING_TYPES = ['CLINIC', 'PRACTITIONER'] as const;
+export type BookingType = (typeof BOOKING_TYPES)[number];
+
+/** The doctor an appointment was booked with, resolved server-side from its id. */
+export interface AppointmentPractitionerSummary {
+  id: string;
+  fullName: string;
+  title: string | null;
+  designation: string | null;
+  specialties: string[];
+  photoUrl: string | null;
+}
+
+export interface AppointmentClinicalServiceSummary {
+  id: string;
+  name: string;
+  category: string | null;
+}
+
 export interface Appointment {
   id: string;
   tenantId: string;
@@ -132,10 +156,15 @@ export interface Appointment {
   durationMinutes: number;
   status: AppointmentStatus;
   staffId: string | null;
+  /** Healthcare, doctor bookings only — null on every clinic-calendar row. */
+  practitionerId: string | null;
+  clinicalServiceId: string | null;
   notes: string | null;
   cancelReason: string | null;
   createdAt: string;
   lead?: AppointmentLeadSummary | null;
+  practitioner?: AppointmentPractitionerSummary | null;
+  clinicalService?: AppointmentClinicalServiceSummary | null;
 }
 
 export type SlotUnavailableReason = 'BOOKED' | 'TOO_SOON' | 'DAY_FULL';
@@ -173,6 +202,9 @@ export interface AppointmentFilters {
   leadId?: string;
   from?: string;
   to?: string;
+  bookingType?: BookingType;
+  practitionerId?: string;
+  clinicalServiceId?: string;
 }
 
 /** Manual booking taken by a human from the CRM, rather than by the bot. */

@@ -1,7 +1,6 @@
 'use client';
 import { useClinicalServices } from '@/features/clinical-services/hooks/useClinicalServices';
 import { Alert, AlertDescription } from '@/shared/ui/Alert';
-import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { SearchField } from '@/shared/ui/SearchField';
@@ -10,12 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/Tabs';
 import {
   HelpCircle,
   MapPin,
-  Pencil,
   Plus,
   SearchX,
   Siren,
   Table2,
-  Trash2,
   Upload,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -35,6 +32,7 @@ import { ClinicLocationFormDialog } from './ClinicLocationFormDialog';
 import { CoverageCsvImportDialog } from './CoverageCsvImportDialog';
 import { CoverageGrid } from './CoverageGrid';
 import { CoverageHelpSheet } from './CoverageHelpSheet';
+import { CoverageLocationBoard } from './CoverageLocationBoard';
 import { CoverageLegend } from './CoverageLegend';
 
 type CoverageTab = 'grid' | 'locations';
@@ -81,6 +79,12 @@ export function CoverageAreasView() {
     }
     return [...byKey.values()];
   }, [locations]);
+
+  // The denominator for every branch's rollup — active services only.
+  const serviceIds = useMemo(
+    () => services.map((service) => service.id),
+    [services],
+  );
 
   const emergencyLocations = locations.filter(
     (location) => location.isActive && location.handlesEmergencies,
@@ -157,7 +161,7 @@ export function CoverageAreasView() {
             </TabsTrigger>
             <TabsTrigger value="locations" className="gap-2 px-3">
               <MapPin className="size-4" />
-              Locations
+              Locations by city
               <TabCount value={locations.length} />
             </TabsTrigger>
           </TabsList>
@@ -261,60 +265,18 @@ export function CoverageAreasView() {
             visibleLocations.length === 0 &&
             noMatches('locations')}
 
-          {visibleLocations.map((location) => (
-            <div
-              key={location.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
-            >
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">
-                    {location.branchName || location.city}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
-                    {location.area
-                      ? `${location.area}, ${location.city}`
-                      : location.city}
-                  </span>
-                  {location.handlesEmergencies && (
-                    <Badge variant="secondary" className="gap-1 font-normal">
-                      <Siren className="size-3" />
-                      Emergencies
-                    </Badge>
-                  )}
-                  {!location.isActive && (
-                    <Badge variant="outline">Inactive</Badge>
-                  )}
-                </div>
-                {location.contactPhone && (
-                  <p className="text-muted-foreground text-xs">
-                    {location.contactPhone}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setLocationBeingEdited(location);
-                    setIsLocationFormOpen(true);
-                  }}
-                >
-                  <Pencil className="size-3.5" />
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive"
-                  onClick={() => setLocationPendingDeletion(location)}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
+          {visibleLocations.length > 0 && (
+            <CoverageLocationBoard
+              locations={visibleLocations}
+              rows={rows}
+              serviceIds={serviceIds}
+              onEdit={(location) => {
+                setLocationBeingEdited(location);
+                setIsLocationFormOpen(true);
+              }}
+              onDelete={setLocationPendingDeletion}
+            />
+          )}
         </TabsContent>
       </Tabs>
 

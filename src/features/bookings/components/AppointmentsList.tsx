@@ -22,6 +22,11 @@ interface AppointmentsListProps {
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
   toolbar?: React.ReactNode;
+  /** Healthcare doctor bookings — who the appointment is with. */
+  showPractitioner?: boolean;
+  /** Healthcare — the clinical service the appointment was booked for. */
+  showClinicalService?: boolean;
+  emptyMessage?: string;
 }
 
 /** "Today" / "Tomorrow" for the near days, otherwise "Fri, 7 Aug". */
@@ -44,15 +49,86 @@ function formatDayLabel(isoInstant: string, timezone: string): string {
   });
 }
 
+/** "Dr. Ayesha Khan" — the title only when the practitioner has one on file. */
+function formatPractitionerName(
+  practitioner: NonNullable<Appointment['practitioner']>,
+): string {
+  return practitioner.title
+    ? `${practitioner.title} ${practitioner.fullName}`
+    : practitioner.fullName;
+}
+
 export function AppointmentsList({
   appointments,
   timezone,
   isLoading,
   toolbar,
+  showPractitioner = false,
+  showClinicalService = false,
+  emptyMessage = 'No appointments found.',
 }: AppointmentsListProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
-  const columns: ColumnDef<Appointment, unknown>[] = useMemo(
+  const practitionerColumn: ColumnDef<Appointment, unknown> = useMemo(
+    () => ({
+      id: 'practitioner',
+      accessorFn: (appointment) => appointment.practitioner?.fullName ?? '',
+      header: 'Doctor',
+      enableSorting: true,
+      cell: ({ row }) => {
+        const { practitioner } = row.original;
+        if (!practitioner) {
+          return <span className="text-[12px] text-[var(--ink-mute)]/60">Clinic</span>;
+        }
+
+        return (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <CRMAvatar name={practitioner.fullName} src={practitioner.photoUrl} size={30} />
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-[13px] font-medium leading-tight text-[var(--ink)]">
+                {formatPractitionerName(practitioner)}
+              </span>
+              <span className="truncate text-[11.5px] leading-tight text-[var(--ink-mute)]">
+                {practitioner.designation ?? practitioner.specialties[0] ?? 'Practitioner'}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    }),
+    [],
+  );
+
+  const clinicalServiceColumn: ColumnDef<Appointment, unknown> = useMemo(
+    () => ({
+      id: 'clinicalService',
+      accessorFn: (appointment) => appointment.clinicalService?.name ?? '',
+      header: 'Service',
+      enableSorting: true,
+      cell: ({ row }) => {
+        const { clinicalService } = row.original;
+        if (!clinicalService) {
+          return <span className="text-[12px] text-[var(--ink-mute)]/60">—</span>;
+        }
+
+        return (
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-[13px] leading-tight text-[var(--ink)]">
+              {clinicalService.name}
+            </span>
+            {clinicalService.category && (
+              <span className="truncate text-[11.5px] leading-tight text-[var(--ink-mute)]">
+                {clinicalService.category}
+              </span>
+            )}
+          </div>
+        );
+      },
+    }),
+    [],
+  );
+
+  const columns = useMemo<ColumnDef<Appointment, unknown>[]>(
     () => [
       {
         id: 'scheduledAt',
@@ -112,6 +188,8 @@ export function AppointmentsList({
           );
         },
       },
+      ...(showPractitioner ? [practitionerColumn] : []),
+      ...(showClinicalService ? [clinicalServiceColumn] : []),
       {
         id: 'status',
         accessorFn: (appointment) => APPOINTMENT_STATUS_LABELS[appointment.status],
@@ -165,7 +243,13 @@ export function AppointmentsList({
         ),
       },
     ],
-    [timezone],
+    [
+      timezone,
+      showPractitioner,
+      showClinicalService,
+      practitionerColumn,
+      clinicalServiceColumn,
+    ],
   );
 
   return (
@@ -175,7 +259,7 @@ export function AppointmentsList({
         columns={columns}
         isLoading={isLoading}
         toolbar={toolbar}
-        emptyMessage="No appointments found."
+        emptyMessage={emptyMessage}
         defaultPageSize={20}
         onRowClick={(appointment) => setSelectedAppointment(appointment)}
       />

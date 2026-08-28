@@ -9,6 +9,7 @@ import { extractErrorMessage } from '@/lib/utils';
 import { useParseCsv, useBulkCreateLeads } from '../hooks/useLeads';
 import { useLeadPhoneConflicts, type PhoneConflict } from '../hooks/useLeadPhoneConflicts';
 import { Button } from '@/shared/ui/Button';
+import { statusLabelForEnum, useLeadVocabulary, type LeadVocabulary } from '../utils/leadVocabulary';
 
 // Backend enum values (sent as-is to /leads/import/commit)
 const CHANNELS = ['WHATSAPP', 'INSTAGRAM', 'MESSENGER'] as const;
@@ -52,7 +53,8 @@ const fieldInput = 'input text-[12.5px] py-1.5';
 
 function EditPanel({
   item, conflict, onSave, onDelete,
-}: { item: LeadItem; conflict: PhoneConflict | null; onSave: (l: LeadItem) => void; onDelete: () => void }) {
+  vocabulary,
+}: { item: LeadItem; conflict: PhoneConflict | null; onSave: (l: LeadItem) => void; onDelete: () => void; vocabulary: LeadVocabulary }) {
   const [draft, setDraft] = useState<LeadItem>(item);
   useEffect(() => { setDraft(item); }, [item]);
 
@@ -65,7 +67,7 @@ function EditPanel({
   return (
     <div className="flex flex-col gap-2.5 h-full">
       <div className="text-[12px] font-semibold text-[var(--ink-mute)] uppercase tracking-wide mb-0.5">
-        Edit lead
+        Edit {vocabulary.singular}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -104,7 +106,7 @@ function EditPanel({
         <div className="flex flex-col gap-1.5">
           <label className={fieldLabel}>Status</label>
           <select className={fieldInput} value={draft.status} onChange={(e) => set('status', e.target.value as LeadItem['status'])}>
-            {STATUSES.map((s) => <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>)}
+            {STATUSES.map((s) => <option key={s} value={s}>{statusLabelForEnum(vocabulary, s)}</option>)}
           </select>
         </div>
       </div>
@@ -131,12 +133,12 @@ function EditPanel({
   );
 }
 
-// ── Lead mini-card ─────────────────────────────────────────
+// ── Import mini-card ───────────────────────────────────────
 function BulkCard({
-  item, index, active, conflict, onClick, onRemove,
-}: { item: LeadItem; index: number; active: boolean; conflict: PhoneConflict | null; onClick: () => void; onRemove: () => void }) {
+  item, index, active, conflict, onClick, onRemove, vocabulary,
+}: { item: LeadItem; index: number; active: boolean; conflict: PhoneConflict | null; onClick: () => void; onRemove: () => void; vocabulary: LeadVocabulary }) {
   const bad = !hasContact(item) || Boolean(conflict?.blocking);
-  const display = item.name?.trim() || item.phone?.trim() || item.email?.trim() || `Lead ${index + 1}`;
+  const display = item.name?.trim() || item.phone?.trim() || item.email?.trim() || `${vocabulary.singularTitle} ${index + 1}`;
   const st = STATUS_TINT[item.status] ?? STATUS_TINT.PROSPECT;
   return (
     <div
@@ -170,6 +172,7 @@ function BulkCard({
 
 // ── Main Dialog ────────────────────────────────────────────
 export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const vocabulary = useLeadVocabulary();
   const [items, setItems] = useState<LeadItem[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -210,8 +213,8 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
           status: (STATUSES as readonly string[]).includes(p.status) ? p.status : 'PROSPECT',
         }));
         addItems(mapped);
-        toast.success(`${mapped.length} lead${mapped.length !== 1 ? 's' : ''} imported`);
-        // Flag rows whose phone already belongs to a lead before the user hits save.
+        toast.success(`${mapped.length} ${mapped.length === 1 ? vocabulary.singular : vocabulary.plural} imported`);
+        // Flag rows whose phone already belongs to an existing record before the user hits save.
         await verifyPhones(mapped.flatMap((lead) => (lead.phone ? [lead.phone] : [])));
       } catch (err) {
         toast.error(extractErrorMessage(err) || 'Failed to parse CSV');
@@ -246,7 +249,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
       // Re-check: rows edited since the last verification may have picked up a conflict.
       const clear = await verifyPhones(items.flatMap((item) => (item.phone ? [item.phone] : [])));
       if (!clear) {
-        toast.error('Some leads already exist — fix the highlighted rows.');
+        toast.error(`Some ${vocabulary.plural} already exist — fix the highlighted rows.`);
         return;
       }
       await bulkCreate.mutateAsync(items);
@@ -260,7 +263,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
         {/* Header */}
         <DialogHeader className="flex-shrink-0 flex-row items-start justify-between gap-2 px-5 py-3.5 border-b border-[var(--line)]">
           <div>
-            <DialogTitle className="text-[16px] font-semibold">Bulk import leads</DialogTitle>
+            <DialogTitle className="text-[16px] font-semibold">Bulk import {vocabulary.plural}</DialogTitle>
             <DialogDescription className="text-[11.5px] mt-0.5 text-[var(--ink-mute)]">
               Upload a CSV or add manually. Select a card to edit, then save all.
             </DialogDescription>
@@ -298,7 +301,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
           <div className="flex flex-col flex-1 min-w-0 border-r border-[var(--line)] overflow-hidden">
             <div className="flex items-center justify-between px-5 py-2 border-b border-[var(--line)]">
               <span className="text-[12px] text-[var(--ink-soft)]">
-                {items.length === 0 ? 'No leads yet' : `${items.length} lead${items.length > 1 ? 's' : ''}`}
+                {items.length === 0 ? `No ${vocabulary.plural} yet` : `${items.length} ${items.length === 1 ? vocabulary.singular : vocabulary.plural}`}
               </span>
               <Button variant="outline" size="sm" onClick={addBlank}>
                 <Plus size={11} /> Add
@@ -312,6 +315,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                   conflict={conflicts[i] ?? null}
                   onClick={() => setSelectedIdx(i)}
                   onRemove={() => removeItem(i)}
+                  vocabulary={vocabulary}
                 />
               ))}
               {items.length === 0 && (
@@ -320,7 +324,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                   className="flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[120px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                 >
                   <Plus size={18} />
-                  <span className="text-[11.5px] font-medium">Add lead</span>
+                  <span className="text-[11.5px] font-medium">Add {vocabulary.singular}</span>
                 </button>
               )}
             </div>
@@ -336,12 +340,13 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                   conflict={conflicts[selectedIdx] ?? null}
                   onSave={(data) => updateItem(selectedIdx, data)}
                   onDelete={() => removeItem(selectedIdx)}
+                  vocabulary={vocabulary}
                 />
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[var(--ink-mute)] p-6 text-center">
                 <UserRound size={28} className="opacity-30" />
-                <span className="text-[12.5px]">Select a lead card to edit it</span>
+                <span className="text-[12.5px]">Select a {vocabulary.singular} card to edit it</span>
               </div>
             )}
           </div>
@@ -351,23 +356,23 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
         <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--line)] flex-shrink-0">
           <span className={`text-[12px] flex items-center gap-1.5 ${valid ? 'text-[var(--ink-soft)]' : 'text-[#B45309]'}`}>
             {bulkCreate.isPending
-              ? <><Loader2 size={12} className="animate-spin text-[var(--accent)]" /> Saving {items.length} lead{items.length === 1 ? '' : 's'}…</>
+              ? <><Loader2 size={12} className="animate-spin text-[var(--accent)]" /> Saving {items.length} {items.length === 1 ? vocabulary.singular : vocabulary.plural}…</>
               : isVerifying
-                ? <><Loader2 size={12} className="animate-spin text-[var(--accent)]" /> Checking for existing leads…</>
+                ? <><Loader2 size={12} className="animate-spin text-[var(--accent)]" /> Checking for existing {vocabulary.plural}…</>
                 : items.length > 0
                   ? valid
                     ? <><Check size={12} className="text-[#15803D]" /> All {items.length} ready to save</>
                     : hasBlockingConflict
-                      ? 'Some leads already exist — fix the highlighted cards'
-                      : 'Some leads need a name, phone, or email — click a card to edit'
-                  : 'Drop a CSV or click "Add lead" to begin'}
+                      ? `Some ${vocabulary.plural} already exist — fix the highlighted cards`
+                      : `Some ${vocabulary.plural} need a name, phone, or email — click a card to edit`
+                  : `Drop a CSV or click "Add ${vocabulary.singular}" to begin`}
           </span>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} disabled={bulkCreate.isPending}>Cancel</Button>
             <Button disabled={!valid || bulkCreate.isPending || isVerifying} onClick={handleSaveAll}>
               {bulkCreate.isPending
                 ? <><Loader2 size={13} className="animate-spin" /> Saving…</>
-                : <><Check size={13} /> Save {items.length || ''} lead{items.length === 1 ? '' : 's'}</>}
+                : <><Check size={13} /> Save {items.length || ''} {items.length === 1 ? vocabulary.singular : vocabulary.plural}</>}
             </Button>
           </div>
         </div>

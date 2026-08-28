@@ -36,7 +36,15 @@ export interface BulkImportResult {
   failed: number;
 }
 
-export const STATUS_META: Record<string, { label: string; color: string; tint: string }> = {
+export interface LeadStatusMeta {
+  label: string;
+  color: string;
+  tint: string;
+}
+
+/** Default (non-healthcare) status vocabulary. Read it through `useLeadVocabulary`
+ * rather than directly, so a clinic sees its own labels. */
+export const STATUS_META: Record<string, LeadStatusMeta> = {
   prospect: { label: 'Prospect', color: '#94A3B8', tint: 'rgba(148,163,184,0.10)' },
   cold:     { label: 'Cold',     color: '#38BDF8', tint: 'rgba(56,189,248,0.10)' },
   warm:     { label: 'Warm',     color: '#F59E0B', tint: 'rgba(245,158,11,0.10)' },

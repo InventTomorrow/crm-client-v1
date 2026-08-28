@@ -21,7 +21,8 @@ import {
 import { Input } from '@/shared/ui/Input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/Popover';
 import { Textarea } from '@/shared/ui/Textarea';
-import { CalendarDays, Clock, Loader2 } from 'lucide-react';
+import { TimePicker } from '@/shared/ui/TimePicker';
+import { CalendarDays, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useWatch } from 'react-hook-form';
 import { useQuickAppointmentForm } from '../hooks/useQuickAppointmentForm';
@@ -153,19 +154,11 @@ export function QuickAppointmentDialog({
                     <FormItem className="flex flex-col">
                       <FormLabel>Start time</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Clock
-                            size={14}
-                            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
-                          />
-                          <Input
-                            type="time"
-                            step={300}
-                            className="pl-9"
-                            disabled={isBooking}
-                            {...field}
-                          />
-                        </div>
+                        <TimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isBooking}
+                        />
                       </FormControl>
                       <FormDescription>Runs for {durationMinutes} min.</FormDescription>
                       <FormMessage />

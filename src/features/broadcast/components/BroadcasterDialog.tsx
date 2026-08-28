@@ -1,10 +1,7 @@
 import { useUploadAttachment } from "@/features/inbox/hooks/useConversations";
 import { useLeads } from "@/features/leads/hooks/useLeads";
-import {
-  STATUS_META,
-  type Lead,
-  type LeadStatus,
-} from "@/features/leads/types";
+import { type Lead, type LeadStatus } from "@/features/leads/types";
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
 import { cn } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
@@ -31,13 +28,7 @@ import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 
 type StatusFilter = "all" | LeadStatus;
-const FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "prospect", label: "Prospect" },
-  { id: "cold", label: "Cold" },
-  { id: "warm", label: "Warm" },
-  { id: "hot", label: "Hot" },
-];
+const FILTER_STATUSES: LeadStatus[] = ["prospect", "cold", "warm", "hot"];
 
 export function BroadcasterDialog({
   open,
@@ -46,6 +37,8 @@ export function BroadcasterDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const vocabulary = useLeadVocabulary();
+
   // Navigation & Reset
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
@@ -80,6 +73,17 @@ export function BroadcasterDialog({
     }
     // eslint-disable-next-react-hooks/exhaustive-deps
   }, [open]);
+
+  const filters: { id: StatusFilter; label: string }[] = useMemo(
+    () => [
+      { id: "all", label: "All" },
+      ...FILTER_STATUSES.map((status) => ({
+        id: status,
+        label: vocabulary.statusMeta[status].label,
+      })),
+    ],
+    [vocabulary],
+  );
 
   // Recipient Selection Logic
   const filtered = useMemo(() => {
@@ -153,7 +157,7 @@ export function BroadcasterDialog({
 
   const handleNextStep2 = () => {
     if (selectedCount === 0) {
-      toast.error("Please select at least one lead.");
+      toast.error(`Please select at least one ${vocabulary.singular}.`);
       return;
     }
     setStep(3);
@@ -329,7 +333,7 @@ export function BroadcasterDialog({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]" size={16} />
                 <Input
                   type="text"
-                  placeholder="Search leads by name, phone, or email..."
+                  placeholder={`Search ${vocabulary.plural} by name, phone, or email...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -337,8 +341,8 @@ export function BroadcasterDialog({
               </div>
               
               <div className="flex items-center gap-1.5 flex-wrap">
-                {FILTERS.map((f) => {
-                  const meta = f.id !== "all" ? STATUS_META[f.id] : null;
+                {filters.map((f) => {
+                  const meta = f.id !== "all" ? vocabulary.statusMeta[f.id] : null;
                   const active = statusFilter === f.id;
                   return (
                     <button
@@ -393,12 +397,12 @@ export function BroadcasterDialog({
                   <div className="w-10 h-10 rounded-full bg-[var(--surface-2)] flex items-center justify-center">
                     <Search size={18} className="text-[var(--ink-soft)]" />
                   </div>
-                  No leads found matching your criteria.
+                  No {vocabulary.plural} found matching your criteria.
                 </div>
               )}
               {filtered.map((l: Lead) => {
                 const checked = selected.has(l.id);
-                const st = STATUS_META[l.status];
+                const st = vocabulary.statusMeta[l.status];
                 return (
                   <label
                     key={l.id}
@@ -507,7 +511,7 @@ export function BroadcasterDialog({
                   <div>
                     <div className="text-[12px] text-[var(--ink-soft)] mb-1 flex items-center justify-between">
                       <span>Recipients</span>
-                      <span className="font-semibold text-[var(--accent)]">{selectedCount} leads selected</span>
+                      <span className="font-semibold text-[var(--accent)]">{selectedCount} {vocabulary.plural} selected</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {Array.from(selected).slice(0, 5).map(id => {
