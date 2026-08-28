@@ -31,20 +31,6 @@ import { MEETING_TYPES, MEETING_TYPE_LABELS } from "../types";
 import { WeekdayPicker } from "./WeekdayPicker";
 import { WorkingHoursField } from "./WorkingHoursField";
 
-const COMMON_TIMEZONES = [
-  "Asia/Karachi",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Europe/London",
-  "America/New_York",
-  "America/Los_Angeles",
-];
-
-const timezoneOptions = COMMON_TIMEZONES.map((timezone) => ({
-  id: timezone,
-  label: timezone.replace("_", " "),
-}));
-
 const meetingTypeOptions = MEETING_TYPES.map((meetingType) => ({
   id: meetingType,
   label: MEETING_TYPE_LABELS[meetingType],
@@ -194,30 +180,21 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
           description="Slots are generated from these days and times — never stored, so editing here updates every future day at once."
           Icon={Clock}
         >
+          {/* Fixed server-side: every calendar, slot key and spoken time resolves
+              the same zone, so this is shown rather than chosen. */}
           <FormField
             control={form.control}
             name="timezone"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
-                <FormControl>
-                  <AutoCompleteSelect
-                    items={timezoneOptions}
-                    selected={
-                      field.value
-                        ? { id: field.value, label: field.value.replace("_", " ") }
-                        : null
-                    }
-                    onSelect={(item) => item && field.onChange(item.id)}
-                    placeholder="Pick a timezone"
-                    disabled={isSaving}
-                  />
-                </FormControl>
+                <div className="flex h-9 items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-[13px] text-[var(--ink-soft)]">
+                  {field.value.replace("_", " ")}
+                </div>
                 <FormDescription>
-                  The times below are read in this zone. Leads see their own
-                  local time.
+                  Every calendar runs on this zone. The times below are read in
+                  it, and leads see their own local time.
                 </FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />

@@ -255,6 +255,9 @@ export function useBookingConfigForm(options?: { onSaved?: () => void }) {
       reminderMessage: savedConfig.reminderMessage,
       reminderLeadMinutes: savedConfig.reminderLeadMinutes,
       assignedStaffIds: savedConfig.assignedStaffIds,
+      // Omitting this would clear the field, and the schema default would then
+      // write HIDDEN back over whatever the clinic just saved.
+      practitionerVisibility: savedConfig.practitionerVisibility ?? 'HIDDEN',
       isActive: savedConfig.isActive,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
