@@ -4,14 +4,17 @@ import { Alert, AlertDescription } from '@/shared/ui/Alert';
 import { Badge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { SearchField } from '@/shared/ui/SearchField';
 import { Skeleton } from '@/shared/ui/Skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/Tabs';
 import {
-  Info,
+  HelpCircle,
   MapPin,
   Pencil,
   Plus,
+  SearchX,
   Siren,
+  Table2,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -23,17 +26,28 @@ import {
   useCoverageRows,
   useDeleteClinicLocation,
 } from '../hooks/useClinicCoverage';
+import { areaKey, type ClinicLocation, type CoverageArea } from '../types';
 import {
-  areaKey,
-  COVERAGE_META,
-  type ClinicLocation,
-  type CoverageArea,
-} from '../types';
+  filterClinicLocations,
+  filterCoverageGrid,
+} from '../utils/filterCoverage';
 import { ClinicLocationFormDialog } from './ClinicLocationFormDialog';
 import { CoverageCsvImportDialog } from './CoverageCsvImportDialog';
 import { CoverageGrid } from './CoverageGrid';
+import { CoverageHelpSheet } from './CoverageHelpSheet';
+import { CoverageLegend } from './CoverageLegend';
+
+type CoverageTab = 'grid' | 'locations';
+
+const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
+  grid: 'Search a service, city or area…',
+  locations: 'Search a branch, address, city or phone…',
+};
 
 export function CoverageAreasView() {
+  const [activeTab, setActiveTab] = useState<CoverageTab>('grid');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isLocationFormOpen, setIsLocationFormOpen] = useState(false);
   const [locationBeingEdited, setLocationBeingEdited] =
     useState<ClinicLocation | null>(null);
@@ -74,15 +88,31 @@ export function CoverageAreasView() {
 
   const { setCell, cellStatus } = useCoverageCells(rows);
 
+  const visibleGrid = filterCoverageGrid({ services, areas, searchTerm });
+  const visibleLocations = filterClinicLocations(locations, searchTerm);
+
+  const isLoading = locationsQuery.isLoading || servicesQuery.isLoading;
+  const hasGridData = services.length > 0 && areas.length > 0;
+
   const openCreateLocation = () => {
     setLocationBeingEdited(null);
     setIsLocationFormOpen(true);
   };
 
-  const isLoading = locationsQuery.isLoading || servicesQuery.isLoading;
+  const clearSearch = () => setSearchTerm('');
+
+  const noMatches = (label: string) => (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-14 text-center">
+      <SearchX className="text-muted-foreground size-7" />
+      <p className="text-sm font-medium">No {label} match “{searchTerm.trim()}”</p>
+      <Button size="sm" variant="outline" onClick={clearSearch}>
+        Clear search
+      </Button>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Coverage areas</h1>
@@ -92,6 +122,17 @@ export function CoverageAreasView() {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* The explainer is read once, so it lives here rather than taking a
+              permanent block above the grid. */}
+          <Button
+            variant="outline"
+            size="icon"
+            title="How coverage works"
+            aria-label="How coverage works"
+            onClick={() => setIsHelpOpen(true)}
+          >
+            <HelpCircle className="size-4" />
+          </Button>
           <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <Upload className="size-4" />
             Import
@@ -103,29 +144,37 @@ export function CoverageAreasView() {
         </div>
       </div>
 
-      {/* The distinction the whole feature turns on. */}
-      <Alert>
-        <Info className="size-4" />
-        <AlertDescription>
-          Coverage tells the assistant the clinic <strong>operates</strong>{' '}
-          somewhere. It is never a promise that staff are free — the assistant
-          always says a coordinator will confirm, and anything other than
-          &ldquo;Available&rdquo; is handed to a human.
-        </AlertDescription>
-      </Alert>
+      <Tabs
+        value={activeTab}
+        onValueChange={(nextTab) => setActiveTab(nextTab as CoverageTab)}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList className="h-9 p-1">
+            <TabsTrigger value="grid" className="gap-2 px-3">
+              <Table2 className="size-4" />
+              Service coverage
+              <TabCount value={services.length} />
+            </TabsTrigger>
+            <TabsTrigger value="locations" className="gap-2 px-3">
+              <MapPin className="size-4" />
+              Locations
+              <TabCount value={locations.length} />
+            </TabsTrigger>
+          </TabsList>
 
-      <Tabs defaultValue="grid">
-        <TabsList>
-          <TabsTrigger value="grid">Service coverage</TabsTrigger>
-          <TabsTrigger value="locations">
-            Locations ({locations.length})
-          </TabsTrigger>
-        </TabsList>
+          <SearchField
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            placeholder={SEARCH_PLACEHOLDER[activeTab]}
+            aria-label="Search coverage"
+            className="min-w-[260px]"
+          />
+        </div>
 
-        <TabsContent value="grid" className="space-y-3 pt-4">
+        <TabsContent value="grid" className="space-y-4 pt-4">
           {isLoading && <Skeleton className="h-64 w-full" />}
 
-          {!isLoading && (services.length === 0 || areas.length === 0) && (
+          {!isLoading && !hasGridData && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">
               <MapPin className="text-muted-foreground size-8" />
               <div className="space-y-1">
@@ -160,27 +209,21 @@ export function CoverageAreasView() {
             </div>
           )}
 
-          {!isLoading && services.length > 0 && areas.length > 0 && (
+          {!isLoading &&
+            hasGridData &&
+            visibleGrid.services.length === 0 &&
+            noMatches('services or areas')}
+
+          {!isLoading && hasGridData && visibleGrid.services.length > 0 && (
             <>
               <CoverageGrid
-                services={services}
-                areas={areas}
+                services={visibleGrid.services}
+                areas={visibleGrid.areas}
                 rows={rows}
                 cellStatus={cellStatus}
                 onChange={setCell}
               />
-              <div className="flex flex-wrap gap-3 text-xs">
-                {(
-                  ['AVAILABLE', 'LIMITED', 'UNAVAILABLE', 'UNKNOWN'] as const
-                ).map((level) => (
-                  <span key={level} className="text-muted-foreground">
-                    <strong className="text-foreground">
-                      {COVERAGE_META[level].label}
-                    </strong>{' '}
-                    — {COVERAGE_META[level].description}
-                  </span>
-                ))}
-              </div>
+              <CoverageLegend className="max-w-2xl" />
             </>
           )}
         </TabsContent>
@@ -190,10 +233,12 @@ export function CoverageAreasView() {
             <Alert>
               <Siren className="size-4" />
               <AlertDescription>
-                No location handles emergencies. If the clinic&apos;s emergency
-                policy is set to direct patients to a branch, it will safely
-                fall back to telling them to go to the nearest emergency
-                department instead.
+                <p>
+                  No location handles emergencies. If the clinic&apos;s emergency
+                  policy is set to direct patients to a branch, it will safely
+                  fall back to telling them to go to the nearest emergency
+                  department instead.
+                </p>
               </AlertDescription>
             </Alert>
           )}
@@ -211,7 +256,12 @@ export function CoverageAreasView() {
             </div>
           )}
 
-          {locations.map((location) => (
+          {!locationsQuery.isLoading &&
+            locations.length > 0 &&
+            visibleLocations.length === 0 &&
+            noMatches('locations')}
+
+          {visibleLocations.map((location) => (
             <div
               key={location.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
@@ -268,6 +318,8 @@ export function CoverageAreasView() {
         </TabsContent>
       </Tabs>
 
+      <CoverageHelpSheet open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+
       <ClinicLocationFormDialog
         open={isLocationFormOpen}
         onOpenChange={setIsLocationFormOpen}
@@ -298,5 +350,14 @@ export function CoverageAreasView() {
         }}
       />
     </div>
+  );
+}
+
+/** How many rows or locations sit behind a tab, without leaving the label. */
+function TabCount({ value }: Readonly<{ value: number }>) {
+  return (
+    <span className="bg-muted-foreground/15 rounded-full px-1.5 py-px text-[10px] font-medium tabular-nums">
+      {value}
+    </span>
   );
 }

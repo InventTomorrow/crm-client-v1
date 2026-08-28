@@ -16,6 +16,7 @@ import {
   type CoverageLevel,
   type ResolvedCoverageLevel,
 } from '../types';
+import { COVERAGE_CELL_TONE } from '../utils/coverageTone';
 
 interface CoverageGridProps {
   services: ClinicalService[];
@@ -29,13 +30,6 @@ interface CoverageGridProps {
     coverage: CoverageLevel | 'UNKNOWN';
   }) => void;
 }
-
-const CELL_TONE: Record<ResolvedCoverageLevel, string> = {
-  AVAILABLE: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-  LIMITED: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-  UNAVAILABLE: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',
-  UNKNOWN: 'text-muted-foreground',
-};
 
 /**
  * Service × city/area coverage.
@@ -110,7 +104,7 @@ export function CoverageGrid({
                     key={areaKey(area.city, area.area)}
                     className={cn(
                       'relative border-r p-1.5 align-middle last:border-r-0',
-                      CELL_TONE[level],
+                      COVERAGE_CELL_TONE[level],
                       status === 'error' &&
                         'ring-destructive bg-destructive/5 ring-1 ring-inset',
                     )}

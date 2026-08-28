@@ -248,7 +248,9 @@ export function useCoverageCells(rows: ClinicalServiceCoverage[]) {
       (row) => coverageCellKey(row.clinicalServiceId, row) === cellKey,
     );
 
-    const settle = (error: unknown) =>
+    // onSettled hands back (data, error) — reading the first argument as the
+    // error marked every successful save as failed.
+    const settle = (_data: unknown, error: unknown) =>
       markCell(cellKey, error ? 'error' : null);
 
     markCell(cellKey, 'saving');
