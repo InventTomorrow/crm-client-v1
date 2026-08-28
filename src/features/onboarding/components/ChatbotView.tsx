@@ -29,13 +29,14 @@ const PERSONALITIES = [
 export function ChatbotView() {
   const { mutate: save, isPending } = useSaveChatbot();
   const { data: status } = useOnboardingStatus();
-  const workspaceName = status?.workspaceName?.trim();
+  // The bot speaks to customers, so it introduces the business — not the workspace.
+  const businessName = status?.businessName?.trim();
   const businessVertical = status?.businessVertical ?? 'ECOMMERCE';
 
   const form = useForm<SaveChatbotData>({
     resolver: zodResolver(saveChatbotSchema),
     defaultValues: {
-      ...getDefaultMessages(workspaceName || 'our store', businessVertical),
+      ...getDefaultMessages(businessName || 'our store', businessVertical),
       aiPersonality: 'CASUAL',
       aiEnabled: true,
     },
@@ -43,17 +44,17 @@ export function ChatbotView() {
 
   const { isDirty } = form.formState;
 
-  // Re-seed the messages with the real workspace name + vertical once they load —
+  // Re-seed the messages with the real business name + vertical once they load —
   // only while the owner hasn't started editing.
   useEffect(() => {
-    if (workspaceName && !isDirty) {
+    if (businessName && !isDirty) {
       form.reset({
-        ...getDefaultMessages(workspaceName, businessVertical),
+        ...getDefaultMessages(businessName, businessVertical),
         aiPersonality: 'CASUAL',
         aiEnabled: true,
       });
     }
-  }, [workspaceName, businessVertical, isDirty, form]);
+  }, [businessName, businessVertical, isDirty, form]);
 
   const aiEnabled = form.watch('aiEnabled');
 

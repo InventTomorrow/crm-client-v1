@@ -46,8 +46,13 @@ function invalidatePractitioners(
  * The listing screen's source. The endpoint returns a bare array, so a full page
  * is the signal that another cursor exists — a short page means the end.
  */
-export function useInfinitePractitioners(filters: PractitionerFilters = {}) {
+export function useInfinitePractitioners(
+  filters: PractitionerFilters = {},
+  /** Held back where the caller only needs the list once something is open. */
+  options?: { enabled?: boolean },
+) {
   return useInfiniteQuery({
+    enabled: options?.enabled ?? true,
     queryKey: practitionerKeys.list(filters),
     queryFn: ({ pageParam }) =>
       getPractitioners({

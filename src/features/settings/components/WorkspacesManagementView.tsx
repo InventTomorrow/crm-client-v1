@@ -65,16 +65,24 @@ const PALETTE = [
 // ─────────────────────────────────────────────────────────────
 function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [businessVertical, setBusinessVertical] =
     useState<BusinessVertical | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
 
-  const canCreate = !!name.trim() && !!businessVertical;
+  const canCreate =
+    name.trim().length >= 2 &&
+    businessName.trim().length >= 2 &&
+    !!businessVertical;
 
   const handleCreate = () => {
     if (!canCreate || !businessVertical) return;
     createTenant(
-      { name: name.trim(), businessVertical },
+      {
+        name: name.trim(),
+        businessName: businessName.trim(),
+        businessVertical,
+      },
       { onSuccess: () => onClose() },
     );
   };
@@ -120,6 +128,26 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                 if (e.key === "Enter") handleCreate();
               }}
             />
+            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
+              Internal label for your team — can&apos;t be changed later.
+            </p>
+          </div>
+          <div>
+            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
+              Business name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="e.g. Karachi Karahi"
+              disabled={isPending}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+              }}
+            />
+            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
+              What customers see — editable later in Business settings.
+            </p>
           </div>
           <div>
             <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">

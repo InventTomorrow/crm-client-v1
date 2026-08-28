@@ -1,11 +1,11 @@
-'use client';
-import { cn } from '@/lib/utils';
-import { Button } from '@/shared/ui/Button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/Popover';
-import { Clock } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+"use client";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/Popover";
+import { Clock } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type Meridiem = 'AM' | 'PM';
+type Meridiem = "AM" | "PM";
 
 interface TimePickerProps {
   /** 24-hour "HH:mm" — the same value an `<input type="time">` carries. */
@@ -17,17 +17,17 @@ interface TimePickerProps {
   placeholder?: string;
   className?: string;
   id?: string;
-  'aria-label'?: string;
+  "aria-label"?: string;
   /** Passed through by shadcn's FormControl, so the trigger keeps the field's wiring. */
-  'aria-describedby'?: string;
-  'aria-invalid'?: boolean;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }
 
 /** The time a picker with nothing selected starts from when the first column is touched. */
-const FALLBACK_TIME = { hour12: 9, minute: 0, meridiem: 'AM' as Meridiem };
+const FALLBACK_TIME = { hour12: 9, minute: 0, meridiem: "AM" as Meridiem };
 
 const HOURS = Array.from({ length: 12 }, (_, index) => index + 1);
-const MERIDIEMS: Meridiem[] = ['AM', 'PM'];
+const MERIDIEMS: Meridiem[] = ["AM", "PM"];
 
 interface TimeParts {
   hour12: number;
@@ -43,20 +43,20 @@ function parseTime(value: string): TimeParts | null {
   return {
     hour12: hour24 % 12 || 12,
     minute: Number(match[2]),
-    meridiem: hour24 < 12 ? 'AM' : 'PM',
+    meridiem: hour24 < 12 ? "AM" : "PM",
   };
 }
 
 function toTimeValue({ hour12, minute, meridiem }: TimeParts): string {
-  const hour24 = meridiem === 'PM' ? (hour12 % 12) + 12 : hour12 % 12;
-  return `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  const hour24 = meridiem === "PM" ? (hour12 % 12) + 12 : hour12 % 12;
+  return `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 /** "14:30" → "2:30 PM". Exported so labels elsewhere read the same as the picker. */
 export function formatTimeLabel(value: string): string {
   const parts = parseTime(value);
-  if (!parts) return '';
-  return `${parts.hour12}:${String(parts.minute).padStart(2, '0')} ${parts.meridiem}`;
+  if (!parts) return "";
+  return `${parts.hour12}:${String(parts.minute).padStart(2, "0")} ${parts.meridiem}`;
 }
 
 /** One scrollable column of options, keeping the selected row in view when it opens. */
@@ -76,7 +76,7 @@ function TimeColumn<T extends number | string>({
   const selectedRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    selectedRef.current?.scrollIntoView({ block: 'center' });
+    selectedRef.current?.scrollIntoView({ block: "center" });
     // Only on mount: scrolling on every change would fight the user's own scrolling.
   }, []);
 
@@ -97,11 +97,11 @@ function TimeColumn<T extends number | string>({
             aria-selected={isSelected}
             onClick={() => onSelect(option)}
             className={cn(
-              'shrink-0 rounded-md px-2 py-1.5 text-[12.5px] tabular-nums transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
+              "shrink-0 rounded-md px-2 py-1.5 text-[12.5px] tabular-nums transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
               isSelected
-                ? 'bg-[var(--accent)] font-medium text-[var(--bg)]'
-                : 'text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]',
+                ? "bg-[var(--accent)] font-medium text-[var(--bg)]"
+                : "text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
             )}
           >
             {formatOption ? formatOption(option) : option}
@@ -124,12 +124,12 @@ export function TimePicker({
   onChange,
   minuteStep = 5,
   disabled,
-  placeholder = 'Pick a time',
+  placeholder = "Pick a time",
   className,
   id,
-  'aria-label': ariaLabel,
-  'aria-describedby': ariaDescribedBy,
-  'aria-invalid': ariaInvalid,
+  "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
 }: TimePickerProps) {
   const [open, setOpen] = useState(false);
   const parts = parseTime(value);
@@ -161,8 +161,8 @@ export function TimePicker({
           aria-describedby={ariaDescribedBy}
           aria-invalid={ariaInvalid}
           className={cn(
-            'h-9 w-full justify-start px-3 text-[12.5px] font-normal tabular-nums',
-            !parts && 'text-[var(--ink-mute)]',
+            "h-9 w-full justify-start px-3 text-[12.5px] font-normal tabular-nums",
+            !parts && "text-[var(--ink-mute)]",
             className,
           )}
         >
@@ -186,7 +186,7 @@ export function TimePicker({
               options={minutes}
               selected={parts?.minute ?? null}
               onSelect={(minute) => commit({ minute })}
-              formatOption={(minute) => String(minute).padStart(2, '0')}
+              formatOption={(minute) => String(minute).padStart(2, "0")}
             />
             <TimeColumn
               label="AM or PM"

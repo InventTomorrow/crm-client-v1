@@ -1723,7 +1723,7 @@ export function InboxView() {
           >
             <div className="flex items-center justify-between mb-0.5">
               <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-                Lead Information
+                {leadVocabulary.singularTitle} information
               </p>
               <ChevronRight size={13} className="text-[var(--ink-mute)]" />
             </div>

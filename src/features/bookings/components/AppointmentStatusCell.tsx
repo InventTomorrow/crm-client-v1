@@ -1,28 +1,29 @@
-'use client';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/shared/ui/Badge';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+"use client";
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/shared/ui/Badge";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/shared/ui/DropdownMenu';
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import { useUpdateAppointmentStatus } from '../hooks/useBookings';
+} from "@/shared/ui/DropdownMenu";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { useUpdateAppointmentStatus } from "../hooks/useBookings";
 import {
   APPOINTMENT_STATUS_LABELS,
   type Appointment,
   type AppointmentStatus,
-} from '../types';
+} from "../types";
 import {
   APPOINTMENT_STATUS_ICONS,
   APPOINTMENT_STATUS_VARIANTS,
-  CONFIRMED_TRANSITIONS,
+  confirmedTransitions,
   NEXT_STATUSES,
-} from '../utils/appointmentFormat';
-import { CancelAppointmentDialog } from './CancelAppointmentDialog';
+} from "../utils/appointmentFormat";
+import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 
 function StatusBadge({
   status,
@@ -36,13 +37,15 @@ function StatusBadge({
     <Badge
       variant={APPOINTMENT_STATUS_VARIANTS[status]}
       className={cn(
-        'gap-1 whitespace-nowrap text-[10px]',
-        interactive && 'cursor-pointer transition-opacity hover:opacity-85',
+        "gap-1 whitespace-nowrap text-[10px]",
+        interactive && "cursor-pointer transition-opacity hover:opacity-85",
       )}
     >
       <StatusIcon size={10} />
       {APPOINTMENT_STATUS_LABELS[status]}
-      {interactive && <ChevronDown size={9} strokeWidth={2.4} className="opacity-70" />}
+      {interactive && (
+        <ChevronDown size={9} strokeWidth={2.4} className="opacity-70" />
+      )}
     </Badge>
   );
 }
@@ -52,10 +55,18 @@ function StatusBadge({
  * legally make are offered; cancelling routes through the reason dialog rather
  * than flipping silently, since that message goes out to the customer.
  */
-export function AppointmentStatusCell({ appointment }: { appointment: Appointment }) {
-  const [pendingStatus, setPendingStatus] = useState<AppointmentStatus | null>(null);
+export function AppointmentStatusCell({
+  appointment,
+}: {
+  appointment: Appointment;
+}) {
+  const [pendingStatus, setPendingStatus] = useState<AppointmentStatus | null>(
+    null,
+  );
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const updateStatus = useUpdateAppointmentStatus();
+  const vocabulary = useLeadVocabulary();
+  const transitionCopy = confirmedTransitions(vocabulary);
 
   const selectableStatuses = NEXT_STATUSES[appointment.status];
 
@@ -65,8 +76,8 @@ export function AppointmentStatusCell({ appointment }: { appointment: Appointmen
   }
 
   const selectStatus = (status: AppointmentStatus) => {
-    if (status === 'CANCELLED') return setIsCancelOpen(true);
-    if (CONFIRMED_TRANSITIONS[status]) return setPendingStatus(status);
+    if (status === "CANCELLED") return setIsCancelOpen(true);
+    if (transitionCopy[status]) return setPendingStatus(status);
     updateStatus.mutate({ appointmentId: appointment.id, status });
   };
 
@@ -83,13 +94,16 @@ export function AppointmentStatusCell({ appointment }: { appointment: Appointmen
             <StatusBadge status={appointment.status} interactive />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" onClick={(event) => event.stopPropagation()}>
+        <DropdownMenuContent
+          align="start"
+          onClick={(event) => event.stopPropagation()}
+        >
           {selectableStatuses.map((status) => {
             const StatusIcon = APPOINTMENT_STATUS_ICONS[status];
             return (
               <DropdownMenuItem
                 key={status}
-                variant={status === 'CANCELLED' ? 'destructive' : 'default'}
+                variant={status === "CANCELLED" ? "destructive" : "default"}
                 disabled={updateStatus.isPending}
                 onSelect={() => selectStatus(status)}
               >
@@ -108,10 +122,12 @@ export function AppointmentStatusCell({ appointment }: { appointment: Appointmen
         title={
           pendingStatus
             ? `Mark as ${APPOINTMENT_STATUS_LABELS[pendingStatus].toLowerCase()}?`
-            : ''
+            : ""
         }
-        description={pendingStatus ? CONFIRMED_TRANSITIONS[pendingStatus] : undefined}
-        confirmLabel={pendingStatus ? APPOINTMENT_STATUS_LABELS[pendingStatus] : 'Confirm'}
+        description={pendingStatus ? transitionCopy[pendingStatus] : undefined}
+        confirmLabel={
+          pendingStatus ? APPOINTMENT_STATUS_LABELS[pendingStatus] : "Confirm"
+        }
         onConfirm={() => {
           if (!pendingStatus) return;
           updateStatus.mutate(
@@ -122,7 +138,11 @@ export function AppointmentStatusCell({ appointment }: { appointment: Appointmen
       />
 
       {isCancelOpen && (
-        <CancelAppointmentDialog appointment={appointment} open onOpenChange={setIsCancelOpen} />
+        <CancelAppointmentDialog
+          appointment={appointment}
+          open
+          onOpenChange={setIsCancelOpen}
+        />
       )}
     </>
   );

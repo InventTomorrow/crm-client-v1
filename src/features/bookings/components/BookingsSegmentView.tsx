@@ -17,6 +17,7 @@ import {
   CalendarRange,
   CalendarX2,
   ListFilter,
+  Plus,
   Rows3,
   X,
 } from "lucide-react";
@@ -38,6 +39,7 @@ import {
 import { APPOINTMENT_STATUS_ICONS } from "../utils/appointmentFormat";
 import { AppointmentsList } from "./AppointmentsList";
 import { BookingsCalendar } from "./BookingsCalendar";
+import { QuickAppointmentDialog } from "./QuickAppointmentDialog";
 
 const ALL_STATUSES = "ALL";
 const DEFAULT_TIMEZONE = "Asia/Karachi";
@@ -99,6 +101,11 @@ export function BookingsSegmentView({
   const [statusFilter, setStatusFilter] = useState<
     AppointmentStatus | typeof ALL_STATUSES
   >(ALL_STATUSES);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  // Set when the dialog was opened from a calendar slot rather than the header button.
+  const [addDialogStartsAt, setAddDialogStartsAt] = useState<string | null>(
+    null,
+  );
 
   const { data: config } = useBookingConfigQuery();
   const { data: statusCounts } = useBookingStatsQuery(bookingType);
@@ -116,6 +123,17 @@ export function BookingsSegmentView({
   const durationMinutes = config?.durationMinutes ?? DEFAULT_DURATION_MINUTES;
 
   const isFiltered = statusFilter !== ALL_STATUSES || hasExtraFilter;
+
+  // A clinic booking names no practitioner, so it is always takeable by hand — it
+  // holds only the clinic's own shared slot and blocks no doctor's calendar. A
+  // doctor booking needs a real practitioner, which only exists in BOOKABLE mode.
+  const booksByPractitioner = config?.practitionerVisibility === "BOOKABLE";
+  const canAddHere = bookingType === "CLINIC" || booksByPractitioner;
+
+  const openAddDialog = (startsAt: string | null) => {
+    setAddDialogStartsAt(startsAt);
+    setIsAddDialogOpen(true);
+  };
 
   const viewSwitch = (
     <div
@@ -221,6 +239,11 @@ export function BookingsSegmentView({
               {siblingLink.label}
             </Link>
           </Button>
+          {canAddHere && (
+            <Button size="lg" onClick={() => openAddDialog(null)}>
+              <Plus size={14} className="mr-1.5" /> Add appointment
+            </Button>
+          )}
         </div>
       </div>
 
@@ -261,6 +284,7 @@ export function BookingsSegmentView({
                 ? {}
                 : { status: statusFilter }),
             }}
+            {...(canAddHere ? { onCreateAtSlot: openAddDialog } : {})}
           />
         </div>
       ) : (
@@ -274,6 +298,22 @@ export function BookingsSegmentView({
           toolbar={filterBar}
         />
       )}
+
+      <QuickAppointmentDialog
+        open={isAddDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsAddDialogOpen(nextOpen);
+          if (!nextOpen) setAddDialogStartsAt(null);
+        }}
+        timezone={timezone}
+        durationMinutes={durationMinutes}
+        initialScheduledAt={addDialogStartsAt}
+        showPractitioner={bookingType === "PRACTITIONER"}
+        showClinicalService
+        requiresPractitioner={bookingType === "PRACTITIONER"}
+        initialPractitionerId={extraFilters?.practitionerId ?? null}
+        initialClinicalServiceId={extraFilters?.clinicalServiceId ?? null}
+      />
     </div>
   );
 }

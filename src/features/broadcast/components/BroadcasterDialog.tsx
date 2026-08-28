@@ -222,7 +222,7 @@ export function BroadcasterDialog({
             </DialogTitle>
             <DialogDescription className="text-[11.5px] mt-0.5 text-[var(--ink-mute)]">
               {step === 1
-                ? "Draft the message you want to blast to your leads."
+                ? `Draft the message you want to blast to your ${vocabulary.plural}.`
                 : step === 2
                   ? "Choose who should receive this announcement."
                   : "Review your broadcast before sending."}

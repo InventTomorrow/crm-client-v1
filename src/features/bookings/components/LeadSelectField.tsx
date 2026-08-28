@@ -1,10 +1,11 @@
-'use client';
-import { useSearchLeads } from '@/features/leads/hooks/useLeads';
-import { cn } from '@/lib/utils';
-import { Button } from '@/shared/ui/Button';
-import { Input } from '@/shared/ui/Input';
-import { Search, UserCheck } from 'lucide-react';
-import { useState } from 'react';
+"use client";
+import { useSearchLeads } from "@/features/leads/hooks/useLeads";
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import { Search, UserCheck } from "lucide-react";
+import { useState } from "react";
 
 interface LeadSelectFieldProps {
   selectedLeadId: string | null;
@@ -28,8 +29,9 @@ export function LeadSelectField({
   onClear,
   disabled = false,
 }: LeadSelectFieldProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const searchResults = useSearchLeads(searchTerm);
+  const vocabulary = useLeadVocabulary();
 
   if (selectedLeadId) {
     return (
@@ -38,10 +40,10 @@ export function LeadSelectField({
           <UserCheck size={14} className="shrink-0 text-[var(--accent)]" />
           <div className="min-w-0">
             <p className="truncate text-[12.5px] font-medium text-[var(--ink)]">
-              {selectedLeadName || 'Unnamed lead'}
+              {selectedLeadName || `Unnamed ${vocabulary.singular}`}
             </p>
             <p className="truncate text-[11px] text-[var(--ink-mute)]">
-              {selectedLeadPhone || 'No number on file'}
+              {selectedLeadPhone || "No number on file"}
             </p>
           </div>
         </div>
@@ -52,7 +54,7 @@ export function LeadSelectField({
           disabled={disabled}
           onClick={() => {
             onClear();
-            setSearchTerm('');
+            setSearchTerm("");
           }}
         >
           Change
@@ -86,18 +88,18 @@ export function LeadSelectField({
                 disabled={disabled}
                 onClick={() => {
                   onSelect(lead);
-                  setSearchTerm('');
+                  setSearchTerm("");
                 }}
                 className={cn(
-                  'w-full rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-left transition-colors',
-                  'hover:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
+                  "w-full rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-left transition-colors",
+                  "hover:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
                 )}
               >
                 <p className="truncate text-[12.5px] font-medium text-[var(--ink)]">
-                  {lead.name || 'Unnamed lead'}
+                  {lead.name || `Unnamed ${vocabulary.singular}`}
                 </p>
                 <p className="truncate text-[11px] text-[var(--ink-mute)]">
-                  {lead.phone ?? 'No number on file'}
+                  {lead.phone ?? "No number on file"}
                 </p>
               </button>
             </li>
@@ -109,8 +111,8 @@ export function LeadSelectField({
         !searchResults.isFetching &&
         searchResults.data?.length === 0 && (
           <p className="text-[11.5px] text-[var(--ink-mute)]">
-            No lead matches “{searchTerm.trim()}” — the booking will be saved against the
-            number below.
+            No {vocabulary.singular} matches “{searchTerm.trim()}” — the booking
+            will be saved against the number below.
           </p>
         )}
     </div>

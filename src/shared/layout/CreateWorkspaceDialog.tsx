@@ -27,6 +27,7 @@ type OwnedWorkspace = { id: string; name: string };
 /** Inline create-workspace flow shared by both sidebar workspace switchers. */
 export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [businessVertical, setBusinessVertical] =
     useState<BusinessVertical | null>(null);
   // At the cap the owner picks which current workspace gives up its slot.
@@ -47,7 +48,8 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
     }));
 
   const canCreate =
-    !!name.trim() &&
+    name.trim().length >= 2 &&
+    businessName.trim().length >= 2 &&
     !!businessVertical &&
     (!workspaceLimitReached || !!replaceTenantId);
 
@@ -56,6 +58,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
     createTenant(
       {
         name: name.trim(),
+        businessName: businessName.trim(),
         businessVertical,
         ...(workspaceLimitReached && replaceTenantId
           ? { replaceTenantId }
@@ -149,6 +152,29 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
               }}
               disabled={isPending}
             />
+            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
+              Internal label your team switches between. This can&apos;t be
+              changed later.
+            </p>
+          </div>
+
+          <div>
+            <Label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
+              Business name
+            </Label>
+            <Input
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="e.g. Karachi Karahi"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+              }}
+              disabled={isPending}
+            />
+            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
+              What customers see — chats, receipts and checkout. Editable any
+              time from Business settings.
+            </p>
           </div>
 
           <div>

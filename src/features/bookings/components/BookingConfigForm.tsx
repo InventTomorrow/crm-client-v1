@@ -1,4 +1,5 @@
 "use client";
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
 import { Button } from "@/shared/ui/Button";
 import {
   Form,
@@ -41,6 +42,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
   const { form, isLoading, isSaving, handleSubmit } = useBookingConfigForm({
     ...(onSaved ? { onSaved } : {}),
   });
+  const vocabulary = useLeadVocabulary();
 
   // The hours editor previews how many slots each window yields, which depends
   // on these two — so it has to re-render as they're typed.
@@ -72,7 +74,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         <FormSection
           title="The meeting"
-          description="What leads are booking, and how it happens."
+          description={`What ${vocabulary.plural} are booking, and how it happens.`}
           Icon={CalendarClock}
         >
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -108,17 +110,20 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       items={meetingTypeOptions}
                       selected={
                         field.value
-                          ? { id: field.value, label: MEETING_TYPE_LABELS[field.value] }
+                          ? {
+                              id: field.value,
+                              label: MEETING_TYPE_LABELS[field.value],
+                            }
                           : null
                       }
                       onSelect={(item) => item && field.onChange(item.id)}
-                      placeholder="Pick how the call happens"
+                      placeholder={`Pick how the ${vocabulary.bookingSingular} happens`}
                       disabled={isSaving}
                     />
                   </FormControl>
                   <FormDescription>
-                    How the meeting is held — the bot tells the lead this when
-                    confirming.
+                    How the meeting is held — the bot tells the{" "}
+                    {vocabulary.singular} this when confirming.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -279,7 +284,9 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
               name="bufferMinutes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Buffer between calls (minutes)</FormLabel>
+                  <FormLabel>
+                    Buffer between {vocabulary.bookingSingular}s (minutes)
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -419,7 +426,8 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                   />
                 </FormControl>
                 <FormDescription>
-                  Sent shortly before the call to cut no-shows.
+                  Sent shortly before the {vocabulary.bookingSingular} to cut
+                  no-shows.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

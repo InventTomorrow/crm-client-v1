@@ -45,8 +45,13 @@ function invalidateClinicalServices(
  * One wide page, for callers that need the whole active catalogue as a lookup
  * (the coverage grid). The listing screen uses the cursor-paged hook below.
  */
-export function useClinicalServices(filters: ClinicalServiceFilters = {}) {
+export function useClinicalServices(
+  filters: ClinicalServiceFilters = {},
+  /** Held back where the caller only needs the catalogue once something is open. */
+  options?: { enabled?: boolean },
+) {
   return useQuery({
+    enabled: options?.enabled ?? true,
     queryKey: clinicalServiceKeys.list(filters),
     queryFn: () => getClinicalServices({ ...filters, limit: 100 }),
   });

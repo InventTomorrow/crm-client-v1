@@ -19,7 +19,6 @@ const HEALTHCARE_STATUS_LABELS: Record<string, string> = {
 };
 
 export interface LeadVocabulary {
-  /** Lowercase, for mid-sentence copy: "Delete this patient permanently?" */
   singular: string;
   plural: string;
   /** Capitalised, for headings and buttons: "Add patient". */
@@ -31,6 +30,17 @@ export interface LeadVocabulary {
   urgentLabel: string;
   UrgentIcon: LucideIcon;
   statusMeta: Record<string, LeadStatusMeta>;
+  /** The person on the receiving end of a booking or order. A clinic serves
+   * patients, everyone else serves customers — separate from the pipeline word
+   * above, which stays "lead" outside healthcare. */
+  customerSingular: string;
+  customerSingularTitle: string;
+  customerPlural: string;
+  /** What a booked slot is called: an agency books a call, a clinic books an appointment. */
+  bookingSingular: string;
+  bookingSingularTitle: string;
+  /** The same word with its article, so copy never has to pick between "a" and "an". */
+  bookingSingularWithArticle: string;
 }
 
 const DEFAULT_VOCABULARY: LeadVocabulary = {
@@ -43,6 +53,12 @@ const DEFAULT_VOCABULARY: LeadVocabulary = {
   urgentLabel: "Hot leads",
   UrgentIcon: Flame,
   statusMeta: STATUS_META,
+  customerSingular: "customer",
+  customerSingularTitle: "Customer",
+  customerPlural: "customers",
+  bookingSingular: "call",
+  bookingSingularTitle: "Call",
+  bookingSingularWithArticle: "a call",
 };
 
 const HEALTHCARE_VOCABULARY: LeadVocabulary = {
@@ -54,6 +70,12 @@ const HEALTHCARE_VOCABULARY: LeadVocabulary = {
   pageSubtitle: "Track enquiries from first message to booked appointment",
   urgentLabel: "Ready to book",
   UrgentIcon: CalendarCheck,
+  customerSingular: "patient",
+  customerSingularTitle: "Patient",
+  customerPlural: "patients",
+  bookingSingular: "appointment",
+  bookingSingularTitle: "Appointment",
+  bookingSingularWithArticle: "an appointment",
   statusMeta: Object.fromEntries(
     Object.entries(STATUS_META).map(([status, meta]) => [
       status,

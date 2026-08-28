@@ -133,7 +133,7 @@ export function QualificationPreviewView() {
           value={savedForm.scoringRules.length}
           hint={
             savedForm.scoringRules.length === 0
-              ? "Every lead scores zero"
+              ? copy.noScoringRulesHint
               : undefined
           }
           Icon={Calculator}

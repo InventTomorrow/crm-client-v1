@@ -35,6 +35,8 @@ export interface QualificationCopy {
 
   scoringSummary: string;
   noScoringRules: string;
+  /** Stat-card hint shown while no scoring rule exists. */
+  noScoringRulesHint: string;
   mappedFieldsTitle: string;
   mappedFieldsDescription: string;
 }
@@ -72,6 +74,7 @@ const DEFAULT_COPY: QualificationCopy = {
   scoringSummary:
     "Each matching rule adds its score. The total decides the lead's temperature.",
   noScoringRules: "No rules yet — every lead totals zero and lands as cold.",
+  noScoringRulesHint: "Every lead scores zero",
   mappedFieldsTitle: "Saved to the lead",
   mappedFieldsDescription: "Answers written straight onto the lead record.",
 };
@@ -113,6 +116,7 @@ const COPY_BY_VERTICAL: Partial<
       "Each matching rule adds its score. The total decides how urgent the enquiry is.",
     noScoringRules:
       "No rules yet — every enquiry totals zero and lands as routine.",
+    noScoringRulesHint: "Every enquiry scores zero",
     mappedFieldsTitle: "Saved to the patient",
     mappedFieldsDescription:
       "Answers written straight onto the patient record.",

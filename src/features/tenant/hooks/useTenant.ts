@@ -97,6 +97,23 @@ export function useUpdateBusinessVertical() {
   });
 }
 
+/** Update the active workspace's customer-facing business name */
+export function useUpdateBusinessName() {
+  const queryClient = useQueryClient();
+  const { currentWorkspaceId } = useAppStore();
+
+  return useMutation({
+    mutationFn: (businessName: string) =>
+      updateTenant(currentWorkspaceId, { businessName }),
+    onSuccess: () => {
+      toast.success('Business name updated');
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
 /** Switch to an existing workspace */
 export function useSwitchWorkspace() {
   const queryClient = useQueryClient();
