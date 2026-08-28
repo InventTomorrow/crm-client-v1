@@ -1,7 +1,10 @@
 "use client";
 import { AuthFormError } from "@/features/auth/components/AuthFormError";
 import { useCreateWorkspace } from "@/features/auth/hooks/useAuth";
-import { createWorkspaceSchema, type CreateWorkspaceData } from "@/features/auth/types";
+import {
+  createWorkspaceSchema,
+  type CreateWorkspaceData,
+} from "@/features/auth/types";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import {
@@ -61,7 +64,7 @@ export function WorkspaceView() {
                       />
                       <Input
                         className="pl-8 h-10"
-                        placeholder="e.g. Karachi Karahi Co."
+                        placeholder="e.g. Evyln Enterprises"
                         autoFocus
                         {...field}
                       />
@@ -92,7 +95,7 @@ export function WorkspaceView() {
                       />
                       <Input
                         className="pl-8 h-10"
-                        placeholder="e.g. Karachi Karahi"
+                        placeholder="e.g. Evyln Enterprises"
                         {...field}
                       />
                     </div>
