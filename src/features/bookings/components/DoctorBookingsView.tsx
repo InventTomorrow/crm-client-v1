@@ -1,11 +1,11 @@
 "use client";
+import { useInfinitePractitioners } from "@/features/practitioners/hooks/usePractitioners";
+import { practitionerDisplayName } from "@/features/practitioners/types";
 import {
   AutoCompleteSelect,
   type AutoCompleteSelectOption,
 } from "@/shared/ui/AutoCompleteSelect";
 import { useMemo, useState } from "react";
-import { useInfinitePractitioners } from "@/features/practitioners/hooks/usePractitioners";
-import { practitionerDisplayName } from "@/features/practitioners/types";
 import { BookingsSegmentView } from "./BookingsSegmentView";
 
 /** Appointments booked with a named practitioner, on that doctor's own calendar. */
@@ -25,7 +25,8 @@ export function DoctorBookingsView() {
   );
 
   const selectedPractitioner =
-    practitionerOptions.find((option) => option.id === practitionerFilter) ?? null;
+    practitionerOptions.find((option) => option.id === practitionerFilter) ??
+    null;
 
   return (
     <BookingsSegmentView

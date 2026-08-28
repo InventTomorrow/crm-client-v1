@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import { BookingsView } from '@/features/bookings/components/BookingsView';
+import { BookingsView } from "@/features/bookings/components/BookingsView";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Bookings | AsaanRabta',
-  description: 'Calls your bot and your team have booked with leads',
+  title: "Bookings | AsaanRabta",
+  description: "Calls your bot and your team have booked with leads",
 };
 
 export default function BookingsPage() {

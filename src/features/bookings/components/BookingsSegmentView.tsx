@@ -147,7 +147,7 @@ export function BookingsSegmentView({
 
   // One bar for both views, so a filter does not move or vanish when the view flips.
   const filterBar = (
-    <div className="flex flex-row flex-wrap items-center gap-2">
+    <div className="flex flex-row items-center gap-2">
       <Select
         value={statusFilter}
         onValueChange={(nextStatus) =>
@@ -162,7 +162,7 @@ export function BookingsSegmentView({
             <ListFilter size={13} className="mr-1.5 text-[var(--ink-mute)]" />
             All statuses
           </SelectItem>
-          {APPOINTMENT_STATUSES.map((status) => {
+          {APPOINTMENT_STATUSES?.map((status) => {
             const StatusIcon = APPOINTMENT_STATUS_ICONS[status];
             return (
               <SelectItem key={status} value={status}>
