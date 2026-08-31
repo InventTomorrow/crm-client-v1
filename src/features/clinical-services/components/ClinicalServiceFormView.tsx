@@ -1,29 +1,26 @@
 "use client";
-import { Accordion } from "@/shared/ui/Accordion";
-import { Button } from "@/shared/ui/Button";
 import { Form } from "@/shared/ui/form";
-import { FormAccordionSection } from "@/shared/ui/FormAccordionSection";
+import { FormWizard, type WizardStep } from "@/shared/ui/FormWizard";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import {
-  ArrowLeft,
   Banknote,
-  Clock,
   ClipboardList,
+  Clock,
   Eye,
   ListChecks,
-  Loader2,
   ShieldAlert,
   Stethoscope,
   type LucideIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useClinicalServiceForm } from "../hooks/useClinicalServiceForm";
+import {
+  CLINICAL_SERVICE_STEP_ORDER,
+  useClinicalServiceWizard,
+} from "../hooks/useClinicalServiceWizard";
 import type { ClinicalServiceFormSectionProps } from "../types";
 import {
   NOTHING_FILLED_IN,
   type ClinicalServiceSectionId,
 } from "../utils/clinicalServiceSectionSummaries";
-
 import { ClinicalServiceBasicsFields } from "./sections/ClinicalServiceBasicsFields";
 import { ClinicalServiceIntakeFields } from "./sections/ClinicalServiceIntakeFields";
 import { ClinicalServicePricingFields } from "./sections/ClinicalServicePricingFields";
@@ -32,162 +29,122 @@ import { ClinicalServiceScopeFields } from "./sections/ClinicalServiceScopeField
 import { ClinicalServiceTermsFields } from "./sections/ClinicalServiceTermsFields";
 import { ClinicalServiceVisibilityFields } from "./sections/ClinicalServiceVisibilityFields";
 
-const SECTIONS: {
-  id: ClinicalServiceSectionId;
-  Icon: LucideIcon;
-  title: string;
-  description: string;
-  Fields: (props: ClinicalServiceFormSectionProps) => React.ReactNode;
-}[] = [
+const STEP_META: Record<
+  ClinicalServiceSectionId,
   {
-    id: "basics",
+    Icon: LucideIcon;
+    title: string;
+    description: string;
+    Fields: (props: ClinicalServiceFormSectionProps) => React.ReactNode;
+  }
+> = {
+  basics: {
     Icon: Stethoscope,
     title: "Basics",
     description: "What this service is called and how it is grouped.",
     Fields: ClinicalServiceBasicsFields,
   },
-  {
-    id: "scope",
+  scope: {
     Icon: ListChecks,
     title: "Clinical scope",
     description:
       "The assistant answers every scope question from these lists and nothing else.",
     Fields: ClinicalServiceScopeFields,
   },
-  {
-    id: "intake",
+  intake: {
     Icon: ClipboardList,
     title: "Intake questions",
     description:
       "What the assistant asks a family before handing the case to a coordinator.",
     Fields: ClinicalServiceIntakeFields,
   },
-  {
-    id: "pricing",
+  pricing: {
     Icon: Banknote,
     title: "Pricing",
     description:
       "What the assistant may quote, and the shift arrangements it may offer.",
     Fields: ClinicalServicePricingFields,
   },
-  {
-    id: "terms",
+  terms: {
     Icon: Clock,
     title: "Duration and terms",
     description: "Appointment length, minimum commitment and payment terms.",
     Fields: ClinicalServiceTermsFields,
   },
-  {
-    id: "safety",
+  safety: {
     Icon: ShieldAlert,
     title: "Staffing and safety",
     description:
       "Who may deliver this service, and what must always be said about it.",
     Fields: ClinicalServiceSafetyFields,
   },
-  {
-    id: "visibility",
+  visibility: {
     Icon: Eye,
     title: "Visibility",
     description:
       "Whether the assistant may volunteer this service, and how it is booked.",
     Fields: ClinicalServiceVisibilityFields,
   },
-];
+};
 
 export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
-  const router = useRouter();
   const {
     form,
-    isEditMode,
+    isCreating,
     isLoadingService,
     isSaving,
-    handleSubmit,
-    openSections,
-    setOpenSections,
+    stepIndex,
+    furthestStepIndex,
     summaries,
     erroredSections,
-  } = useClinicalServiceForm(serviceId);
+    goToStep,
+    goBack,
+    goNext,
+    backToList,
+    savedLabel,
+  } = useClinicalServiceWizard(serviceId);
 
-  const backToList = () => router.push("/clinical-services");
-
-  if (isEditMode && isLoadingService) {
+  if (isLoadingService) {
     return (
       <div className="flex w-full flex-col gap-4 p-4 md:p-8">
         <Skeleton className="h-9 w-56" />
-        {SECTIONS.map((section) => (
-          <Skeleton key={section.id} className="h-20 w-full rounded-xl" />
-        ))}
+        <Skeleton className="h-80 w-full rounded-xl" />
       </div>
     );
   }
 
+  const steps: WizardStep[] = CLINICAL_SERVICE_STEP_ORDER.map((id) => ({
+    id,
+    Icon: STEP_META[id].Icon,
+    title: STEP_META[id].title,
+    description: STEP_META[id].description,
+    summary: summaries[id],
+    isEmpty: summaries[id] === NOTHING_FILLED_IN,
+    hasError: erroredSections.includes(id),
+  }));
+
+  const CurrentFields = STEP_META[CLINICAL_SERVICE_STEP_ORDER[stepIndex]!].Fields;
+
   return (
-    <div className="scroll h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-4xl p-4 md:p-8">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-lg"
-            aria-label="Back to services"
-            onClick={backToList}
-          >
-            <ArrowLeft size={16} />
-          </Button>
-          <div>
-            <h1 className="text-[18px] font-semibold text-[var(--ink)]">
-              {isEditMode ? "Edit service" : "Add service"}
-            </h1>
-            <p className="text-[12px] text-[var(--ink-mute)]">
-              Clinical services
-            </p>
-          </div>
+    <Form {...form}>
+      <FormWizard
+        heading={isCreating ? "Add service" : "Edit service"}
+        subheading="Clinical services"
+        steps={steps}
+        currentStepIndex={stepIndex}
+        furthestStepIndex={furthestStepIndex}
+        onStepSelect={(nextStepIndex) => void goToStep(nextStepIndex)}
+        onBack={goBack}
+        onNext={() => void goNext()}
+        onCancel={backToList}
+        isSaving={isSaving}
+        submitLabel={isCreating ? "Add service" : "Save changes"}
+        savedLabel={savedLabel}
+      >
+        <div className="flex flex-col divide-y divide-[var(--line)] [&>*+*]:pt-5 [&>*]:pb-5 [&>*:last-child]:pb-0">
+          <CurrentFields form={form} isSaving={isSaving} />
         </div>
-
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-            <Accordion
-              type="multiple"
-              value={openSections}
-              onValueChange={setOpenSections}
-              className="gap-4"
-            >
-              {SECTIONS.map(({ id, Icon, title, description, Fields }) => (
-                <FormAccordionSection
-                  key={id}
-                  value={id}
-                  Icon={Icon}
-                  title={title}
-                  description={description}
-                  summary={summaries[id]}
-                  isEmpty={summaries[id] === NOTHING_FILLED_IN}
-                  hasError={erroredSections.includes(id)}
-                >
-                  <div className="flex flex-col divide-y divide-[var(--line)] [&>*+*]:pt-5 [&>*]:pb-5 [&>*:last-child]:pb-0">
-                    <Fields form={form} isSaving={isSaving} />
-                  </div>
-                </FormAccordionSection>
-              ))}
-            </Accordion>
-
-            <div className="flex justify-end gap-2 pb-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={backToList}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving && <Loader2 className="size-4 animate-spin" />}
-                {isEditMode ? "Save changes" : "Add service"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
-    </div>
+      </FormWizard>
+    </Form>
   );
 }

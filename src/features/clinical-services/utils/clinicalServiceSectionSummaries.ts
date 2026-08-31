@@ -103,15 +103,15 @@ function summariseScope(values: ClinicalServiceFormInput): string {
  * unquotable rather than showing whatever figure is still sitting in state.
  */
 /**
- * Counts only the opt-in questions. The seven core fields are always collected,
- * so reporting "7 questions" on an untouched service would read as configuration
- * that had been done rather than the baseline it is.
+ * Counts only what this service opts into. The always-asked questions are put to
+ * every enquiry, so folding them in would report the workspace baseline as
+ * configuration that had been done on this service.
  */
 function summariseIntake(values: ClinicalServiceFormInput): string {
   const extra = count(values.intakeFieldKeys);
   return extra === 0
-    ? "Core questions only"
-    : `Core questions + ${plural(extra, "extra")}`;
+    ? "Always-asked questions only"
+    : `Always-asked questions + ${plural(extra, "extra")}`;
 }
 
 function summarisePricing(values: ClinicalServiceFormInput): string {

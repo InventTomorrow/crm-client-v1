@@ -12,6 +12,7 @@ import {
 import { Input } from "@/shared/ui/Input";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import type { PractitionerFormSectionProps } from "../../types";
+import { PractitionerTitleAutocomplete } from "../PractitionerTitleAutocomplete";
 
 /** Free text on the server, so a value typed before this list still round-trips. */
 const GENDER_OPTIONS = ["Female", "Male", "Other"] as const;
@@ -30,7 +31,7 @@ export function PractitionerIdentityFields({
   return (
     <div className="grid gap-5 md:grid-cols-[1fr_150px] md:items-start">
       <div className="order-2 space-y-5 md:order-1">
-        <div className="grid gap-5 sm:grid-cols-[110px_1fr]">
+        <div className="grid gap-5 sm:grid-cols-[190px_1fr]">
           <FormField
             control={form.control}
             name="title"
@@ -38,11 +39,10 @@ export function PractitionerIdentityFields({
               <FormItem>
                 <FormLabel>Title</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Dr."
-                    disabled={isSaving}
-                    {...field}
+                  <PractitionerTitleAutocomplete
                     value={field.value ?? ""}
+                    onChange={field.onChange}
+                    disabled={isSaving}
                   />
                 </FormControl>
                 <FormMessage />
@@ -97,7 +97,7 @@ export function PractitionerIdentityFields({
                 <FormLabel>Registration number</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="PMDC / council number"
+                    placeholder="PMDC-45821-P"
                     disabled={isSaving}
                     {...field}
                     value={field.value ?? ""}

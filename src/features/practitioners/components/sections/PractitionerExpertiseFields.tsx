@@ -22,7 +22,7 @@ const LISTS = [
   {
     name: 'qualifications',
     label: 'Qualifications',
-    placeholder: 'MBBS',
+    placeholder: 'FCPS (Orthopaedics)',
     addLabel: 'Add qualification',
     emptyHint: 'Shown on the profile patients see.',
   },

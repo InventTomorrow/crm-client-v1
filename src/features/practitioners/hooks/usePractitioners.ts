@@ -111,6 +111,35 @@ export function useUpdatePractitioner(practitionerId: string) {
   });
 }
 
+/**
+ * Creates the row behind step one of the wizard. Silent on success: the record
+ * exists but is still a draft, so "Practitioner added" would be a lie.
+ */
+export function useCreatePractitionerDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreatePractitionerPayload) =>
+      createPractitioner(payload),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+    onSettled: () => invalidatePractitioners(queryClient),
+  });
+}
+
+/**
+ * The wizard's per-step save. Silent on success — a toast at every step would
+ * be noise — and the caller advances before this settles, so a failure has to
+ * announce itself and send the admin back to the step that did not save.
+ */
+export function useSavePractitionerStep(practitionerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdatePractitionerPayload) =>
+      updatePractitioner(practitionerId, payload),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+    onSettled: () => invalidatePractitioners(queryClient),
+  });
+}
+
 export function useDeletePractitioner() {
   const queryClient = useQueryClient();
   return useMutation({
