@@ -169,7 +169,7 @@ export function ScoringRulesBuilder({
                   <FormLabel>Value</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g. 100000"
+                      placeholder={copy.scoringValuePlaceholder}
                       disabled={disabled}
                       {...valueField}
                     />

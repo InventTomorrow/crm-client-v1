@@ -31,6 +31,8 @@ export interface QualificationCopy {
   dialogDescription: string;
   questionPlaceholder: string;
   optionPlaceholder: string;
+  /** Example answer a scoring rule is matched against. */
+  scoringValuePlaceholder: string;
   mapsToFieldLabel: string;
 
   scoringSummary: string;
@@ -69,6 +71,7 @@ const DEFAULT_COPY: QualificationCopy = {
     "What the bot asks, and how the lead's answer gets stored.",
   questionPlaceholder: "What's your monthly marketing budget?",
   optionPlaceholder: "e.g. Under 50k",
+  scoringValuePlaceholder: "e.g. 100000",
   mapsToFieldLabel: "Save to lead field",
 
   scoringSummary:
@@ -110,6 +113,7 @@ const COPY_BY_VERTICAL: Partial<
       "What the assistant asks, and how the patient's answer gets stored.",
     questionPlaceholder: "What is the main problem you need help with?",
     optionPlaceholder: "e.g. Less than a week",
+    scoringValuePlaceholder: "e.g. Severe pain",
     mapsToFieldLabel: "Save to patient field",
 
     scoringSummary:
