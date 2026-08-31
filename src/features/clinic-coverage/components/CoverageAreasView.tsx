@@ -6,8 +6,10 @@ import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { SearchField } from '@/shared/ui/SearchField';
 import { Skeleton } from '@/shared/ui/Skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/Tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/ToggleGroup';
 import {
   HelpCircle,
+  LayoutGrid,
   MapPin,
   Plus,
   SearchX,
@@ -28,14 +30,22 @@ import {
   filterClinicLocations,
   filterCoverageGrid,
 } from '../utils/filterCoverage';
+import { buildCoverageLookup } from '../utils/coverageLookup';
 import { ClinicLocationFormDialog } from './ClinicLocationFormDialog';
 import { CoverageCsvImportDialog } from './CoverageCsvImportDialog';
 import { CoverageGrid } from './CoverageGrid';
 import { CoverageHelpSheet } from './CoverageHelpSheet';
 import { CoverageLocationBoard } from './CoverageLocationBoard';
 import { CoverageLegend } from './CoverageLegend';
+import { CoverageServiceCards } from './CoverageServiceCards';
+import {
+  CoverageStatusDialog,
+  type CoverageCellTarget,
+} from './CoverageStatusDialog';
 
 type CoverageTab = 'grid' | 'locations';
+/** How the service × area coverage is laid out — same data, two shapes. */
+type CoverageViewMode = 'matrix' | 'cards';
 
 const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
   grid: 'Search a service, city or area…',
@@ -44,7 +54,10 @@ const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
 
 export function CoverageAreasView() {
   const [activeTab, setActiveTab] = useState<CoverageTab>('grid');
+  const [viewMode, setViewMode] = useState<CoverageViewMode>('matrix');
   const [searchTerm, setSearchTerm] = useState('');
+  const [cellBeingEdited, setCellBeingEdited] =
+    useState<CoverageCellTarget | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isLocationFormOpen, setIsLocationFormOpen] = useState(false);
   const [locationBeingEdited, setLocationBeingEdited] =
@@ -63,8 +76,11 @@ export function CoverageAreasView() {
     () => locationsQuery.data ?? [],
     [locationsQuery.data],
   );
-  const services = servicesQuery.data ?? [];
-  const rows = coverageQuery.data ?? [];
+  const services = useMemo(
+    () => servicesQuery.data ?? [],
+    [servicesQuery.data],
+  );
+  const rows = useMemo(() => coverageQuery.data ?? [], [coverageQuery.data]);
 
   // Grid columns come from the clinic's own location list, so the vocabulary is
   // theirs rather than whatever happens to exist in coverage rows.
@@ -91,6 +107,19 @@ export function CoverageAreasView() {
   );
 
   const { setCell, cellStatus } = useCoverageCells(rows);
+  const lookup = useMemo(() => buildCoverageLookup(rows), [rows]);
+
+  // The dialog names the branch behind a column, not just its city and area.
+  const locationByArea = useMemo(
+    () =>
+      new Map(
+        locations.map((location) => [
+          areaKey(location.city, location.area),
+          location,
+        ]),
+      ),
+    [locations],
+  );
 
   const visibleGrid = filterCoverageGrid({ services, areas, searchTerm });
   const visibleLocations = filterClinicLocations(locations, searchTerm);
@@ -153,7 +182,7 @@ export function CoverageAreasView() {
         onValueChange={(nextTab) => setActiveTab(nextTab as CoverageTab)}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList className="h-9 p-1">
+          <TabsList className="bg-muted h-9 border p-1 shadow-xs">
             <TabsTrigger value="grid" className="gap-2 px-3">
               <Table2 className="size-4" />
               Service coverage
@@ -166,13 +195,39 @@ export function CoverageAreasView() {
             </TabsTrigger>
           </TabsList>
 
-          <SearchField
-            value={searchTerm}
-            onValueChange={setSearchTerm}
-            placeholder={SEARCH_PLACEHOLDER[activeTab]}
-            aria-label="Search coverage"
-            className="min-w-[260px]"
-          />
+          <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+            {activeTab === 'grid' && (
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="lg"
+                spacing={0}
+                value={viewMode}
+                // Radix clears the value when the active item is pressed again.
+                onValueChange={(nextMode) =>
+                  nextMode && setViewMode(nextMode as CoverageViewMode)
+                }
+                aria-label="Coverage layout"
+              >
+                <ToggleGroupItem value="matrix" aria-label="Matrix">
+                  <Table2 className="size-4" />
+                  Matrix
+                </ToggleGroupItem>
+                <ToggleGroupItem value="cards" aria-label="Cards">
+                  <LayoutGrid className="size-4" />
+                  Cards
+                </ToggleGroupItem>
+              </ToggleGroup>
+            )}
+
+            <SearchField
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+              placeholder={SEARCH_PLACEHOLDER[activeTab]}
+              aria-label="Search coverage"
+              className="w-full sm:w-auto sm:min-w-[260px]"
+            />
+          </div>
         </div>
 
         <TabsContent value="grid" className="space-y-4 pt-4">
@@ -220,13 +275,23 @@ export function CoverageAreasView() {
 
           {!isLoading && hasGridData && visibleGrid.services.length > 0 && (
             <>
-              <CoverageGrid
-                services={visibleGrid.services}
-                areas={visibleGrid.areas}
-                rows={rows}
-                cellStatus={cellStatus}
-                onChange={setCell}
-              />
+              {viewMode === 'matrix' ? (
+                <CoverageGrid
+                  services={visibleGrid.services}
+                  areas={visibleGrid.areas}
+                  lookup={lookup}
+                  cellStatus={cellStatus}
+                  onEditCell={setCellBeingEdited}
+                />
+              ) : (
+                <CoverageServiceCards
+                  services={visibleGrid.services}
+                  areas={visibleGrid.areas}
+                  lookup={lookup}
+                  cellStatus={cellStatus}
+                  onEditCell={setCellBeingEdited}
+                />
+              )}
               <CoverageLegend className="max-w-2xl" />
             </>
           )}
@@ -279,6 +344,22 @@ export function CoverageAreasView() {
           )}
         </TabsContent>
       </Tabs>
+
+      <CoverageStatusDialog
+        target={cellBeingEdited}
+        location={
+          cellBeingEdited
+            ? (locationByArea.get(
+                areaKey(
+                  cellBeingEdited.area.city,
+                  cellBeingEdited.area.area,
+                ),
+              ) ?? null)
+            : null
+        }
+        onOpenChange={(isOpen) => !isOpen && setCellBeingEdited(null)}
+        onSubmit={setCell}
+      />
 
       <CoverageHelpSheet open={isHelpOpen} onOpenChange={setIsHelpOpen} />
 

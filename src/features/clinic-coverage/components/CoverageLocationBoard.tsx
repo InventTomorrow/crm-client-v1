@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Clock,
   ExternalLink,
+  MapPin,
   Pencil,
   Phone,
   Siren,
@@ -29,7 +30,11 @@ import {
   summarizeAreaCoverage,
   type AreaCoverageSummary,
 } from '../utils/coverageSummary';
-import { COVERAGE_DISPLAY_ORDER, COVERAGE_DOT_TONE } from '../utils/coverageTone';
+import {
+  COVERAGE_CHIP_TONE,
+  COVERAGE_DISPLAY_ORDER,
+  COVERAGE_DOT_TONE,
+} from '../utils/coverageTone';
 
 interface CoverageLocationBoardProps {
   locations: ClinicLocation[];
@@ -80,9 +85,14 @@ export function CoverageLocationBoard({
             key={city}
             open={isOpen}
             onOpenChange={() => toggleCity(city)}
-            className="rounded-lg border"
+            className="bg-card overflow-hidden rounded-xl border shadow-xs"
           >
-            <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 rounded-t-lg px-3 py-2.5 text-left transition-colors">
+            <CollapsibleTrigger
+              className={cn(
+                'bg-muted/40 hover:bg-muted/70 flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors',
+                isOpen && 'border-b',
+              )}
+            >
               <ChevronDown
                 className={cn(
                   'text-muted-foreground size-4 shrink-0 transition-transform',
@@ -104,7 +114,7 @@ export function CoverageLocationBoard({
             </CollapsibleTrigger>
 
             <CollapsibleContent>
-              <div className="divide-y border-t">
+              <div className="divide-y">
                 {cityLocations.map((location) => (
                   <LocationRow
                     key={location.id}
@@ -139,7 +149,12 @@ function LocationRow({
   onDelete: (location: ClinicLocation) => void;
 }>) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 p-3">
+    <div
+      className={cn(
+        'hover:bg-muted/30 flex flex-wrap items-start justify-between gap-3 p-3 transition-colors',
+        !location.isActive && 'bg-muted/20',
+      )}
+    >
       <div className="min-w-0 space-y-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium">
@@ -160,11 +175,18 @@ function LocationRow({
               24/7
             </Badge>
           )}
-          {!location.isActive && <Badge variant="outline">Inactive</Badge>}
+          {!location.isActive && (
+            <Badge variant="destructive" className="font-normal">
+              Inactive
+            </Badge>
+          )}
         </div>
 
         {location.addressLine && (
-          <p className="text-muted-foreground text-xs">{location.addressLine}</p>
+          <p className="text-muted-foreground flex items-center gap-1 text-xs">
+            <MapPin className="size-3 shrink-0" />
+            {location.addressLine}
+          </p>
         )}
 
         <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
@@ -190,7 +212,7 @@ function LocationRow({
         <CoverageRollup summary={summary} />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-1.5">
         <Button size="sm" variant="outline" onClick={() => onEdit(location)}>
           <Pencil className="size-3.5" />
           Edit
@@ -198,7 +220,7 @@ function LocationRow({
         <Button
           size="sm"
           variant="ghost"
-          className="text-destructive"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           aria-label={`Remove ${location.branchName || location.city}`}
           onClick={() => onDelete(location)}
         >
@@ -224,16 +246,21 @@ function CoverageRollup({ summary }: Readonly<{ summary: AreaCoverageSummary }>)
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs">
+    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
       {levels.map((level) => (
-        <span key={level} className="flex items-center gap-1.5">
+        <span
+          key={level}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium',
+            COVERAGE_CHIP_TONE[level],
+          )}
+        >
           <span
-            className={cn('size-2 rounded-full', COVERAGE_DOT_TONE[level])}
+            aria-hidden
+            className={cn('size-1.5 rounded-full', COVERAGE_DOT_TONE[level])}
           />
           <span className="tabular-nums">{summary[level]}</span>
-          <span className="text-muted-foreground">
-            {COVERAGE_META[level].label.toLowerCase()}
-          </span>
+          {COVERAGE_META[level].label.toLowerCase()}
         </span>
       ))}
       <span className="text-muted-foreground">
