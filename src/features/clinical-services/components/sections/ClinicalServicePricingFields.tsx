@@ -78,6 +78,7 @@ export function ClinicalServicePricingFields({
                     <Input
                       type="number"
                       inputMode="numeric"
+                      placeholder="3500"
                       disabled={isSaving}
                       {...field}
                       value={field.value ?? ""}
@@ -101,6 +102,7 @@ export function ClinicalServicePricingFields({
                       <Input
                         type="number"
                         inputMode="numeric"
+                        placeholder="2500"
                         disabled={isSaving}
                         {...field}
                         value={field.value ?? ""}
@@ -120,6 +122,7 @@ export function ClinicalServicePricingFields({
                       <Input
                         type="number"
                         inputMode="numeric"
+                        placeholder="8000"
                         disabled={isSaving}
                         {...field}
                         value={field.value ?? ""}
@@ -143,7 +146,7 @@ export function ClinicalServicePricingFields({
                     <Input
                       type="number"
                       inputMode="numeric"
-                      placeholder="Assessment"
+                      placeholder="5000"
                       disabled={isSaving}
                       {...field}
                       value={field.value ?? ""}

@@ -1,122 +1,115 @@
-'use client';
-import { useBookingConfigQuery } from '@/features/bookings/hooks/useBookings';
-import { Accordion } from '@/shared/ui/Accordion';
-import { Button } from '@/shared/ui/Button';
-import { Form } from '@/shared/ui/form';
-import { FormAccordionSection } from '@/shared/ui/FormAccordionSection';
-import { Skeleton } from '@/shared/ui/Skeleton';
+"use client";
+import { useBookingConfigQuery } from "@/features/bookings/hooks/useBookings";
+import { Form } from "@/shared/ui/form";
+import { FormWizard, type WizardStep } from "@/shared/ui/FormWizard";
+import { Skeleton } from "@/shared/ui/Skeleton";
 import {
-  ArrowLeft,
   CalendarClock,
   Eye,
-  GraduationCap,
-  Loader2,
-  UserRound,
   FileText,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { usePractitionerForm } from '../hooks/usePractitionerForm';
+  GraduationCap,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  PRACTITIONER_STEP_ORDER,
+  usePractitionerWizard,
+} from "../hooks/usePractitionerWizard";
 import {
   NOTHING_FILLED_IN,
   type PractitionerSectionId,
-} from '../utils/practitionerSectionSummaries';
-import { PractitionerExpertiseFields } from './sections/PractitionerExpertiseFields';
-import { PractitionerIdentityFields } from './sections/PractitionerIdentityFields';
-import { PractitionerProfileFields } from './sections/PractitionerProfileFields';
-import { PractitionerScheduleSection } from './sections/PractitionerScheduleSection';
-import { PractitionerVisibilityFields } from './sections/PractitionerVisibilityFields';
+} from "../utils/practitionerSectionSummaries";
+import { PractitionerExpertiseFields } from "./sections/PractitionerExpertiseFields";
+import { PractitionerIdentityFields } from "./sections/PractitionerIdentityFields";
+import { PractitionerProfileFields } from "./sections/PractitionerProfileFields";
+import { PractitionerScheduleSection } from "./sections/PractitionerScheduleSection";
+import { PractitionerVisibilityFields } from "./sections/PractitionerVisibilityFields";
 
-const SECTION_META: {
-  id: PractitionerSectionId;
-  Icon: typeof UserRound;
-  title: string;
-  description: string;
-}[] = [
-  {
-    id: 'identity',
+const STEP_META: Record<
+  PractitionerSectionId,
+  { Icon: LucideIcon; title: string; description: string }
+> = {
+  identity: {
     Icon: UserRound,
-    title: 'Identity',
-    description: 'Who this person is, and the photo patients see.',
+    title: "Identity",
+    description: "Who this person is, and the photo patients see.",
   },
-  {
-    id: 'expertise',
+  expertise: {
     Icon: GraduationCap,
-    title: 'Expertise',
+    title: "Expertise",
     description:
-      'What they treat and what they are qualified in — the assistant matches patients on these.',
+      "What they treat and what they are qualified in — the assistant matches patients on these.",
   },
-  {
-    id: 'profile',
+  profile: {
     Icon: FileText,
-    title: 'Profile and fee',
-    description: 'What patients read about them, and what a consultation costs.',
-  },
-  {
-    id: 'visibility',
-    Icon: Eye,
-    title: 'Visibility',
+    title: "Profile and fee",
     description:
-      'Whether the assistant may name this person, and whether it may book them.',
+      "What patients read about them, and what a consultation costs.",
   },
-  {
-    id: 'schedule',
+  schedule: {
     Icon: CalendarClock,
-    title: 'Schedule',
-    description: 'Their own hours, or the clinic hours when left blank.',
+    title: "Schedule",
+    description: "Their own hours, or the clinic hours when left blank.",
   },
-];
+  visibility: {
+    Icon: Eye,
+    title: "Visibility",
+    description:
+      "Whether the assistant may name this person, and whether it may book them.",
+  },
+};
 
 export function PractitionerFormView({
   practitionerId,
 }: {
   practitionerId?: string;
 }) {
-  const router = useRouter();
   const {
     form,
-    isEditMode,
+    isCreating,
     isLoadingPractitioner,
     isSaving,
-    handleSubmit,
-    openSections,
-    setOpenSections,
+    stepIndex,
+    furthestStepIndex,
     summaries,
     erroredSections,
-  } = usePractitionerForm(practitionerId);
+    goToStep,
+    goBack,
+    goNext,
+    backToList,
+    savedLabel,
+  } = usePractitionerWizard(practitionerId);
 
   const bookingConfigQuery = useBookingConfigQuery();
   const workspaceVisibility =
-    bookingConfigQuery.data?.practitionerVisibility ?? 'HIDDEN';
+    bookingConfigQuery.data?.practitionerVisibility ?? "HIDDEN";
   const clinicDefaults = {
     durationMinutes: bookingConfigQuery.data?.durationMinutes ?? 30,
     bufferMinutes: bookingConfigQuery.data?.bufferMinutes ?? 0,
     maxPerDay: bookingConfigQuery.data?.maxPerDay ?? 8,
   };
 
-  const backToList = () => router.push('/practitioners');
-
-  if (isEditMode && isLoadingPractitioner) {
+  if (isLoadingPractitioner) {
     return (
       <div className="flex w-full flex-col gap-4 p-4 md:p-8">
         <Skeleton className="h-9 w-56" />
-        {SECTION_META.map((section) => (
-          <Skeleton key={section.id} className="h-20 w-full rounded-xl" />
-        ))}
+        <Skeleton className="h-80 w-full rounded-xl" />
       </div>
     );
   }
 
-  const sectionBody: Record<PractitionerSectionId, React.ReactNode> = {
+  const steps: WizardStep[] = PRACTITIONER_STEP_ORDER.map((id) => ({
+    id,
+    ...STEP_META[id],
+    summary: summaries[id],
+    isEmpty: summaries[id] === NOTHING_FILLED_IN,
+    hasError: erroredSections.includes(id),
+  }));
+
+  const stepBody: Record<PractitionerSectionId, React.ReactNode> = {
     identity: <PractitionerIdentityFields form={form} isSaving={isSaving} />,
     expertise: <PractitionerExpertiseFields form={form} isSaving={isSaving} />,
     profile: <PractitionerProfileFields form={form} isSaving={isSaving} />,
-    visibility: (
-      <PractitionerVisibilityFields
-        form={form}
-        isSaving={isSaving}
-        workspaceVisibility={workspaceVisibility}
-      />
-    ),
     schedule: (
       <PractitionerScheduleSection
         form={form}
@@ -124,70 +117,33 @@ export function PractitionerFormView({
         clinicDefaults={clinicDefaults}
       />
     ),
+    visibility: (
+      <PractitionerVisibilityFields
+        form={form}
+        isSaving={isSaving}
+        workspaceVisibility={workspaceVisibility}
+      />
+    ),
   };
 
   return (
-    <div className="scroll h-full overflow-y-auto">
-      <div className="w-full p-4 md:p-8">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-lg"
-            aria-label="Back to practitioners"
-            onClick={backToList}
-          >
-            <ArrowLeft size={16} />
-          </Button>
-          <div>
-            <h1 className="text-[18px] font-semibold text-[var(--ink)]">
-              {isEditMode ? 'Edit practitioner' : 'Add practitioner'}
-            </h1>
-            <p className="text-[12px] text-[var(--ink-mute)]">Practitioners</p>
-          </div>
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-            <Accordion
-              type="multiple"
-              value={openSections}
-              onValueChange={setOpenSections}
-              className="gap-4"
-            >
-              {SECTION_META.map(({ id, Icon, title, description }) => (
-                <FormAccordionSection
-                  key={id}
-                  value={id}
-                  Icon={Icon}
-                  title={title}
-                  description={description}
-                  summary={summaries[id]}
-                  isEmpty={summaries[id] === NOTHING_FILLED_IN}
-                  hasError={erroredSections.includes(id)}
-                >
-                  {sectionBody[id]}
-                </FormAccordionSection>
-              ))}
-            </Accordion>
-
-            <div className="flex justify-end gap-2 pb-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={backToList}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving && <Loader2 className="size-4 animate-spin" />}
-                {isEditMode ? 'Save changes' : 'Add practitioner'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
-    </div>
+    <Form {...form}>
+      <FormWizard
+        heading={isCreating ? "Add practitioner" : "Edit practitioner"}
+        subheading="Practitioners"
+        steps={steps}
+        currentStepIndex={stepIndex}
+        furthestStepIndex={furthestStepIndex}
+        onStepSelect={(nextStepIndex) => void goToStep(nextStepIndex)}
+        onBack={goBack}
+        onNext={() => void goNext()}
+        onCancel={backToList}
+        isSaving={isSaving}
+        submitLabel={isCreating ? "Add practitioner" : "Save changes"}
+        savedLabel={savedLabel}
+      >
+        {stepBody[PRACTITIONER_STEP_ORDER[stepIndex]!]}
+      </FormWizard>
+    </Form>
   );
 }

@@ -1,64 +1,6 @@
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
-/**
- * Mirrors `CORE_INTAKE_FIELDS` on the server: asked on every clinical enquiry,
- * for every service. Listed here so the form can show what is already being
- * collected rather than implying intake starts empty — they are not editable.
- */
-export const CORE_INTAKE_FIELDS = [
-  { key: "clientName", question: "What is your name?" },
-  { key: "patientAge", question: "How old is the patient?" },
-  { key: "gender", question: "Is the patient male or female?" },
-  {
-    key: "condition",
-    question: "What is the patient's condition or diagnosis?",
-  },
-  {
-    key: "careType",
-    question:
-      "What type of care do you need — nursing, caregiver, physiotherapy, or something else?",
-  },
-  { key: "city", question: "Which city is the patient in?" },
-  { key: "area", question: "Which area of the city?" },
-] as const;
-
-/**
- * Mirrors `CONDITIONAL_INTAKE_FIELDS` on the server. The assistant asks one of
- * these only when the service it has matched names the key, which is what stops
- * a one-off consultation enquiry being interrogated about shift patterns.
- */
-export const CONDITIONAL_INTAKE_FIELDS = [
-  {
-    key: "dutyHours",
-    label: "Duty hours",
-    question: "How many hours of care are needed per day?",
-  },
-  {
-    key: "dayOrNight",
-    label: "Day or night shift",
-    question: "Would this be a day shift or a night shift?",
-  },
-  {
-    key: "startDate",
-    label: "Start date",
-    question: "When would you like the service to start?",
-  },
-  {
-    key: "mobility",
-    label: "Mobility",
-    question: "What is the patient's mobility like?",
-  },
-  {
-    key: "specialCare",
-    label: "Special care needs",
-    question: "Are there any special care requirements?",
-  },
-] as const;
-
-export const CONDITIONAL_INTAKE_FIELD_KEYS = CONDITIONAL_INTAKE_FIELDS.map(
-  (field) => field.key,
-) as unknown as [string, ...string[]];
 
 /**
  * Mirrors what `GET /clinical-services/:id/preview` returns — the server
@@ -96,9 +38,6 @@ export interface ClinicalServiceAssistantPreview {
   isPubliclyListed: boolean;
   isActive: boolean;
 }
-
-export type ConditionalIntakeFieldKey =
-  (typeof CONDITIONAL_INTAKE_FIELDS)[number]["key"];
 
 /** Mirrors `ClinicalServiceType` on the server. */
 export const CLINICAL_SERVICE_TYPES = [
@@ -242,9 +181,9 @@ export const clinicalServiceFormSchema = z
 
     requiresPractitioner: z.boolean().default(false),
     departmentKey: z.string().trim().optional(),
-    intakeFieldKeys: z
-      .array(z.enum(CONDITIONAL_INTAKE_FIELD_KEYS))
-      .default([]),
+    // Keys of the workspace's own intake questions, so there is no fixed set to
+    // validate against here — the server rejects one it does not own.
+    intakeFieldKeys: z.array(z.string().trim().min(1)).default([]),
 
     isPubliclyListed: z.boolean().default(true),
     isActive: z.boolean().default(true),
