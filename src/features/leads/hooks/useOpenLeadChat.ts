@@ -6,7 +6,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { Lead } from "../types";
 
 function describeUnreachableNumber(result: CheckNumberResult): string {
   const phoneSuffix = result.phone ? ` (${result.phone})` : "";
@@ -26,6 +25,11 @@ function describeUnreachableNumber(result: CheckNumberResult): string {
   }
 }
 
+/** Any record that points at a lead — a lead row, or an order carrying one. */
+interface LeadReference {
+  id: string;
+}
+
 /**
  * Verifies a lead's WhatsApp number here, before the inbox opens — the caller shows a
  * spinner on the clicked action, and the inbox trusts `verified=1` instead of re-checking.
@@ -37,7 +41,7 @@ export function useOpenLeadChat() {
     null,
   );
 
-  const openLeadChat = async (lead: Lead) => {
+  const openLeadChat = async (lead: LeadReference) => {
     if (verifyingLeadId) return;
     setVerifyingLeadId(lead.id);
     try {

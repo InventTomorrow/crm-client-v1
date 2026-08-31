@@ -1,4 +1,7 @@
-import type { VerticalCapability } from "@/lib/business-verticals";
+import type {
+  BusinessVertical,
+  VerticalCapability,
+} from "@/lib/business-verticals";
 import {
   Bell,
   Building2,
@@ -11,12 +14,14 @@ import {
   KeyRound,
   LayoutDashboard,
   LayoutGrid,
+  MapPin,
   Megaphone,
   MessageSquare,
   Package,
   PlayCircle,
   Settings,
   ShoppingCart,
+  Stethoscope,
   User,
   Users,
   UtensilsCrossed,
@@ -29,6 +34,10 @@ export interface NavChild {
   perm?: string;
   /** Restricts this child to workspaces whose vertical has this capability; omit to show for all. */
   capability?: VerticalCapability;
+  /** Verticals that do not get this child — the page still exists, it is just redundant there. */
+  hiddenForVerticals?: BusinessVertical[];
+  /** Per-vertical label override — the same page, named the way that trade names it. */
+  labelByVertical?: Partial<Record<BusinessVertical, string>>;
   /** Optional leading icon — sections without one render label-only children. */
   Icon?: typeof Inbox;
 }
@@ -40,6 +49,8 @@ export interface NavItem {
   perm?: string;
   /** Restricts this item to workspaces whose vertical has this capability; omit to show for all. */
   capability?: VerticalCapability;
+  /** Per-vertical label override — the same page, named the way that trade names it. */
+  labelByVertical?: Partial<Record<BusinessVertical, string>>;
   /** Sibling pages under this section. Only listed where a section has real destinations —
    * form routes like /services/new are reached from the page, not the sidebar. */
   children?: NavChild[];
@@ -53,7 +64,14 @@ export const NAV_ITEMS: NavItem[] = [
     perm: "dashboard:view",
   },
   { href: "/inbox", label: "Inbox", Icon: Inbox, perm: "conversations:view" },
-  { href: "/leads", label: "Leads", Icon: Users, perm: "leads:view" },
+  {
+    href: "/leads",
+    label: "Leads",
+    // A clinic tracks patients through intake, not leads through a sales pipeline.
+    labelByVertical: { HEALTHCARE: "Patients" },
+    Icon: Users,
+    perm: "leads:view",
+  },
   {
     href: "/orders",
     label: "Orders",
@@ -92,8 +110,31 @@ export const NAV_ITEMS: NavItem[] = [
     // ],
   },
   {
+    href: "/clinical-services",
+    label: "Services",
+    Icon: Stethoscope,
+    perm: "clinical_services:view",
+    capability: "CATALOG_CLINICAL",
+  },
+  {
+    href: "/practitioners",
+    label: "Practitioners",
+    Icon: Stethoscope,
+    perm: "practitioners:view",
+    capability: "PRACTITIONERS",
+  },
+  {
+    href: "/coverage-areas",
+    label: "Coverage areas",
+    Icon: MapPin,
+    perm: "clinic_coverage:view",
+    capability: "CLINIC_COVERAGE",
+  },
+  {
     href: "/qualification",
     label: "Bot questions",
+    // A clinic is running patient intake, not lead qualification.
+    labelByVertical: { HEALTHCARE: "Intake questions" },
     Icon: ClipboardList,
     perm: "qualification:view",
     capability: "QUALIFICATION",
@@ -105,8 +146,25 @@ export const NAV_ITEMS: NavItem[] = [
     perm: "bookings:view",
     capability: "BOOKINGS",
     children: [
-      { href: "/bookings", label: "Appointments" },
-      { href: "/bookings/availability", label: "Availability" },
+      // A clinic's appointments are all reachable from the two pages below, so the
+      // combined list is only a duplicate there.
+      { href: "/bookings", label: "Appointments", hiddenForVerticals: ["HEALTHCARE"] },
+      // A clinic books two different calendars — its own, and each doctor's.
+      {
+        href: "/bookings/clinical",
+        label: "Clinical bookings",
+        capability: "CATALOG_CLINICAL",
+      },
+      {
+        href: "/bookings/doctors",
+        label: "Doctor bookings",
+        capability: "PRACTITIONERS",
+      },
+      {
+        href: "/bookings/availability",
+        label: "Availability",
+        labelByVertical: { HEALTHCARE: "Clinic hours" },
+      },
     ],
   },
   {
@@ -195,6 +253,15 @@ export const NAV_ITEMS: NavItem[] = [
   // },
   { href: "/demo", label: "Demo", Icon: PlayCircle },
 ];
+
+/** The label to show for the active workspace's vertical, falling back to the default. */
+export function navLabelFor(
+  item: Pick<NavItem, "label" | "labelByVertical">,
+  businessVertical: BusinessVertical | undefined,
+): string {
+  if (!businessVertical) return item.label;
+  return item.labelByVertical?.[businessVertical] ?? item.label;
+}
 
 /** The child a pathname belongs to, by longest matching href — so /services/plans resolves to
  * "Plans & pricing" rather than to "All services", which also prefix-matches. */

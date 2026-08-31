@@ -34,6 +34,7 @@ export interface Plan {
   maxProducts: number | null;
   maxMenuItems: number | null;
   maxServices: number | null;
+  maxClinicalServices: number | null;
 
   maxMonthlyMessages: number;
   maxImageMessages: number;

@@ -1,31 +1,50 @@
-'use client';
-import { cn } from '@/lib/utils';
-import { Button } from '@/shared/ui/Button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/Tooltip';
-import { Copy, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
-import { useWatch } from 'react-hook-form';
-import type { z } from 'zod';
+"use client";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/Tooltip";
+import {
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
+import type { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
+import { useWatch } from "react-hook-form";
+import type { z } from "zod";
 import {
   QUESTION_INPUT_TYPE_LABELS,
   qualificationFormSchema,
   type QualificationFormData,
-} from '../types';
-import { deriveUniqueFieldName } from '../utils/fieldName';
-import { QuestionDialog, type QuestionDialogData } from './QuestionDialog';
+} from "../types";
+import { deriveUniqueFieldName } from "../utils/fieldName";
+import { useQualificationCopy } from "../utils/qualificationCopy";
+import {
+  mergeQuestionSuggestions,
+  suggestedQuestionsFor,
+} from "../utils/suggestedQuestions";
+import { QuestionDialog, type QuestionDialogData } from "./QuestionDialog";
 
 type QualificationFormInput = z.input<typeof qualificationFormSchema>;
-type QualificationQuestionInput = QualificationFormInput['questions'][number];
+type QualificationQuestionInput = QualificationFormInput["questions"][number];
 
 /** Three question cards plus the gaps between them. Past the third the list scrolls inside the
  * section rather than pushing the save bar further down the page — capped against the viewport
  * so the inner scroller can never itself be taller than the screen. */
-const VISIBLE_QUESTIONS_HEIGHT = 'max-h-[min(51rem,60vh)]';
+const VISIBLE_QUESTIONS_HEIGHT = "max-h-[min(51rem,60vh)]";
 
 interface QuestionBuilderProps {
   form: UseFormReturn<QualificationFormInput, unknown, QualificationFormData>;
-  fieldArray: UseFieldArrayReturn<QualificationFormInput, 'questions'>;
+  fieldArray: UseFieldArrayReturn<QualificationFormInput, "questions">;
   /** Field names already persisted — these are live storage keys and are never auto-rewritten. */
   savedFieldNames: Set<string>;
   disabled?: boolean;
@@ -41,7 +60,13 @@ interface QuestionIconButtonProps {
 
 /** Icon button with a tooltip that also stops the click from reaching the card
  * behind it — the card itself opens the edit dialog, so these actions must not. */
-function QuestionIconButton({ label, disabled, className, onClick, children }: QuestionIconButtonProps) {
+function QuestionIconButton({
+  label,
+  disabled,
+  className,
+  onClick,
+  children,
+}: QuestionIconButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -65,7 +90,9 @@ function QuestionIconButton({ label, disabled, className, onClick, children }: Q
   );
 }
 
-function toDialogData(question: QualificationQuestionInput): QuestionDialogData {
+function toDialogData(
+  question: QualificationQuestionInput,
+): QuestionDialogData {
   return {
     questionText: question.questionText,
     inputType: question.inputType,
@@ -82,16 +109,29 @@ export function QuestionBuilder({
   disabled = false,
 }: QuestionBuilderProps) {
   const { fields, append, remove, update, swap } = fieldArray;
-  const questions = useWatch({ control: form.control, name: 'questions' });
+  const questions = useWatch({ control: form.control, name: "questions" });
+  const { tenant } = useCurrentTenant();
+  const copy = useQualificationCopy();
   const listRef = useRef<HTMLDivElement>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
+  const suggestions = useMemo(
+    () =>
+      mergeQuestionSuggestions(
+        suggestedQuestionsFor(tenant?.businessVertical),
+        (questions ?? []).map(toDialogData),
+      ),
+    [tenant?.businessVertical, questions],
+  );
+
   function fieldNameFor(text: string, index: number, currentFieldName: string) {
     if (savedFieldNames.has(currentFieldName)) return currentFieldName;
-    const keysInUse = (form.getValues('questions') ?? [])
-      .map((question, questionIndex) => (questionIndex === index ? '' : question.fieldName))
+    const keysInUse = (form.getValues("questions") ?? [])
+      .map((question, questionIndex) =>
+        questionIndex === index ? "" : question.fieldName,
+      )
       .filter(Boolean);
     return deriveUniqueFieldName(text, index, keysInUse);
   }
@@ -101,7 +141,7 @@ export function QuestionBuilder({
   function scrollListToEnd() {
     requestAnimationFrame(() => {
       const list = listRef.current;
-      if (list) list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+      if (list) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
     });
   }
 
@@ -109,7 +149,7 @@ export function QuestionBuilder({
     const order = fields.length;
     append({
       order,
-      fieldName: fieldNameFor(data.questionText, order, ''),
+      fieldName: fieldNameFor(data.questionText, order, ""),
       questionText: data.questionText,
       inputType: data.inputType,
       options: data.options,
@@ -124,7 +164,11 @@ export function QuestionBuilder({
     const current = questions?.[editingIndex];
     update(editingIndex, {
       order: current?.order ?? editingIndex,
-      fieldName: fieldNameFor(data.questionText, editingIndex, current?.fieldName ?? ''),
+      fieldName: fieldNameFor(
+        data.questionText,
+        editingIndex,
+        current?.fieldName ?? "",
+      ),
       questionText: data.questionText,
       inputType: data.inputType,
       options: data.options,
@@ -139,7 +183,7 @@ export function QuestionBuilder({
     const order = fields.length;
     append({
       order,
-      fieldName: fieldNameFor(`${source.questionText} copy`, order, ''),
+      fieldName: fieldNameFor(`${source.questionText} copy`, order, ""),
       questionText: source.questionText,
       inputType: source.inputType,
       options: source.options ?? [],
@@ -156,7 +200,9 @@ export function QuestionBuilder({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-[var(--ink)]">Questions</h2>
+            <h2 className="text-sm font-semibold text-[var(--ink)]">
+              Questions
+            </h2>
             {fields.length > 0 && (
               <span className="text-[11px] text-[var(--ink-mute)]">
                 {fields.length} total
@@ -164,7 +210,8 @@ export function QuestionBuilder({
             )}
           </div>
           <p className="text-xs text-[var(--ink-mute)]">
-            Asked in order. The bot stops at the first unanswered required question.
+            Asked in order. The bot stops at the first unanswered required
+            question.
           </p>
         </div>
         <Button
@@ -180,9 +227,11 @@ export function QuestionBuilder({
 
       {fields.length === 0 && (
         <div className="rounded-xl border border-dashed border-[var(--line)] px-4 py-10 text-center">
-          <p className="text-sm font-medium text-[var(--ink)]">No questions yet</p>
+          <p className="text-sm font-medium text-[var(--ink)]">
+            {copy.emptyTitle}
+          </p>
           <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--ink-mute)]">
-            Add the questions the bot should ask before a lead counts as qualified.
+            {copy.builderEmptyHint}
           </p>
         </div>
       )}
@@ -190,8 +239,9 @@ export function QuestionBuilder({
       <div
         ref={listRef}
         className={cn(
-          'flex flex-col gap-2',
-          fields.length > 3 && `scroll-themed overflow-y-auto pr-1.5 ${VISIBLE_QUESTIONS_HEIGHT}`,
+          "flex flex-col gap-2",
+          fields.length > 3 &&
+            `scroll-themed overflow-y-auto pr-1.5 ${VISIBLE_QUESTIONS_HEIGHT}`,
         )}
       >
         {fields.map((field, index) => {
@@ -205,7 +255,7 @@ export function QuestionBuilder({
               onClick={() => !disabled && setEditingIndex(index)}
               onKeyDown={(event) => {
                 if (disabled) return;
-                if (event.key === 'Enter' || event.key === ' ') {
+                if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   setEditingIndex(index);
                 }
@@ -233,12 +283,17 @@ export function QuestionBuilder({
                 <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-mute)]">
                   Question {index + 1}
                 </span>
-                <p className="mt-0.5 truncate text-sm text-[var(--ink)]" title={question?.questionText}>
-                  {question?.questionText || 'Untitled question'}
+                <p
+                  className="mt-0.5 truncate text-sm text-[var(--ink)]"
+                  title={question?.questionText}
+                >
+                  {question?.questionText || "Untitled question"}
                 </p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--ink-mute)]">
                   <span className="rounded-full border border-[var(--line)] px-2 py-0.5">
-                    {question ? QUESTION_INPUT_TYPE_LABELS[question.inputType] : ''}
+                    {question
+                      ? QUESTION_INPUT_TYPE_LABELS[question.inputType]
+                      : ""}
                   </span>
                   {question?.isRequired && (
                     <span className="rounded-full border border-[var(--line)] px-2 py-0.5">
@@ -255,12 +310,14 @@ export function QuestionBuilder({
 
               <div className="flex shrink-0 items-center gap-0.5">
                 <QuestionIconButton
-                  label={copiedIndex === index ? 'Copied' : 'Copy question'}
+                  label={copiedIndex === index ? "Copied" : "Copy question"}
                   disabled={disabled}
                   onClick={() => handleCopy(index)}
                 >
                   {copiedIndex === index ? (
-                    <span className="text-[10px] text-[var(--ink-mute)]">Copied</span>
+                    <span className="text-[10px] text-[var(--ink-mute)]">
+                      Copied
+                    </span>
                   ) : (
                     <Copy size={13} />
                   )}
@@ -288,13 +345,19 @@ export function QuestionBuilder({
 
       <QuestionDialog
         open={isAdding}
+        suggestions={suggestions}
         onClose={() => setIsAdding(false)}
         onSubmit={handleAddSubmit}
       />
 
       <QuestionDialog
         open={editingIndex !== null && questions?.[editingIndex] != null}
-        initial={editingIndex !== null && questions?.[editingIndex] ? toDialogData(questions[editingIndex]) : null}
+        suggestions={suggestions}
+        initial={
+          editingIndex !== null && questions?.[editingIndex]
+            ? toDialogData(questions[editingIndex])
+            : null
+        }
         onClose={() => setEditingIndex(null)}
         onSubmit={handleEditSubmit}
       />

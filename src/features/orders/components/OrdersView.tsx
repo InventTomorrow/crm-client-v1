@@ -1,5 +1,6 @@
 "use client";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { useOpenLeadChat } from "@/features/leads/hooks/useOpenLeadChat";
 import { extractErrorMessage } from "@/lib/utils";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
@@ -65,6 +66,12 @@ export function OrdersView() {
   const [exportRows, setExportRows] = useState<OrderListItem[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
   const { can } = usePermissions();
+  const {
+    openLeadChat,
+    verifyingLeadId,
+    unreachableMessage,
+    dismissUnreachableMessage,
+  } = useOpenLeadChat();
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useOrders(filters);
@@ -87,6 +94,14 @@ export function OrdersView() {
       setFormOpen(true);
     },
     [setSelectedId],
+  );
+
+  // The inbox is keyed by lead, so an order without one has nothing to open.
+  const openCustomerChat = useCallback(
+    (order: OrderListItem) => {
+      if (order.lead) openLeadChat(order.lead);
+    },
+    [openLeadChat],
   );
 
   const loadAndEditOrder = useCallback(
@@ -196,17 +211,20 @@ export function OrdersView() {
         id: "actions",
         header: "",
         enableSorting: false,
-        size: 50,
+        size: 90,
         cell: ({ row }) => (
           <OrderRowActions
             order={row.original}
             onEdit={loadAndEditOrder}
             onDelete={setOrderPendingDeletion}
+            onOpenCustomerChat={openCustomerChat}
+            isOpeningChat={verifyingLeadId === row.original.lead?.id}
+            isAnyChatOpening={verifyingLeadId !== null}
           />
         ),
       },
     ],
-    [loadAndEditOrder],
+    [loadAndEditOrder, openCustomerChat, verifyingLeadId],
   );
 
   // The CSV is built client-side from rows already fetched, so hiding the
@@ -400,6 +418,17 @@ export function OrdersView() {
         defaultName={`orders_export_${new Date().toISOString().split("T")[0]}`}
         count={exportRows.length}
         title="Export orders"
+      />
+
+      <ConfirmDialog
+        open={!!unreachableMessage}
+        onClose={dismissUnreachableMessage}
+        onConfirm={dismissUnreachableMessage}
+        title="Number Not Registered"
+        description={unreachableMessage ?? undefined}
+        confirmLabel="Got it"
+        cancelLabel="Close"
+        destructive
       />
     </div>
   );

@@ -15,7 +15,7 @@ import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { Button } from "@/shared/ui/Button";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadsFilter, LeadStatus } from "../../types";
-import { STATUS_META } from "../../types";
+import { useLeadVocabulary } from "../../utils/leadVocabulary";
 import LeadStatusSelect from "../LeadStatusSelect";
 
 // ──────────────────── List View ────────────────────
@@ -45,12 +45,13 @@ export default function ListView({
   onRestore: (l: Lead) => void;
   onDelete: (l: Lead) => void;
 }) {
+  const vocabulary = useLeadVocabulary();
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
 
   return (
     <div className="scroll flex-1 min-h-0 overflow-y-auto flex flex-col gap-2">
       {filtered.map((l) => {
-        const statusMeta = STATUS_META[l.status];
+        const statusMeta = vocabulary.statusMeta[l.status];
         return (
           <div
             key={l.id}
@@ -96,7 +97,7 @@ export default function ListView({
               <Button
                 variant="ghost"
                 size="icon"
-                title="Edit lead"
+                title={`Edit ${vocabulary.singular}`}
                 onClick={() => onEdit(l)}
               >
                 <Pencil size={13} />
@@ -105,7 +106,7 @@ export default function ListView({
                 <Button
                   variant="ghost"
                   size="icon"
-                  title="Restore lead"
+                  title={`Restore ${vocabulary.singular}`}
                   onClick={() => onRestore(l)}
                 >
                   <ArchiveRestore size={13} />
@@ -114,7 +115,7 @@ export default function ListView({
                 <Button
                   variant="ghost"
                   size="icon"
-                  title="Archive lead"
+                  title={`Archive ${vocabulary.singular}`}
                   onClick={() => onArchive(l)}
                 >
                   <Archive size={13} />
@@ -148,7 +149,7 @@ export default function ListView({
       })}
       {filtered.length === 0 && (
         <div className="card p-10 text-center text-[var(--ink-mute)]">
-          No matching leads.
+          No matching {vocabulary.plural}.
         </div>
       )}
     </div>

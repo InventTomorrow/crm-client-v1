@@ -12,7 +12,6 @@ export interface SubscriptionCheckoutPrefill {
 /** A bank / wallet account the customer transfers the plan price into. */
 export interface PublicPaymentAccount {
   id: string;
-  label: string;
   method: PaymentMethod;
   accountTitle: string;
   accountNumber: string;
@@ -25,6 +24,10 @@ export interface PublicPaymentAccount {
 /** GET /subscribe/:token — public, unauthenticated. */
 export interface PublicSubscriptionLink {
   plan: Plan;
+  /** Plan periods this link sells — 2 on a monthly plan is two months. */
+  periodCount: number;
+  /** Total to transfer for every period, campaign price included. */
+  amountDue: number;
   prefill: SubscriptionCheckoutPrefill;
   supportContact: SupportContact;
   /** Only the accounts an admin left active, in their configured order. */
@@ -48,6 +51,10 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   CASH: "Cash",
   OTHER: "Other",
 };
+
+/** The account is listed under its bank; cash / other have none, so the method stands in. */
+export const accountDisplayName = (account: PublicPaymentAccount): string =>
+  account.bankName ?? PAYMENT_METHOD_LABELS[account.method] ?? account.method;
 
 /** POST /subscribe/:token/submit */
 export interface SubmitSubscriptionPayload {

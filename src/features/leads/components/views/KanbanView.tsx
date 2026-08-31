@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter } from "../../types";
-import { STATUS_META } from "../../types";
+import { useLeadVocabulary } from "../../utils/leadVocabulary";
 import LeadCard from "../LeadCard";
 import { Button } from "@/shared/ui/Button";
 
@@ -22,6 +22,7 @@ export default function KanbanView({
   onStatusChange: (id: string, s: LeadStatus) => void;
   onAddLead: (status: LeadStatus) => void;
 }) {
+  const vocabulary = useLeadVocabulary();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
@@ -51,7 +52,7 @@ export default function KanbanView({
 
   return (
     <div className="leads-kanban grid gap-3 flex-1 min-h-0 grid-cols-[repeat(5,minmax(220px,1fr))] overflow-x-auto">
-      {Object.entries(STATUS_META).map(([key, c]) => (
+      {Object.entries(vocabulary.statusMeta).map(([key, c]) => (
         <div
           key={key}
           className={cn(
@@ -83,7 +84,7 @@ export default function KanbanView({
             <Button
               variant="ghost"
               size="icon"
-              title={`Add ${c.label} lead`}
+              title={`Add ${c.label} ${vocabulary.singular}`}
               onClick={() => onAddLead(key as LeadStatus)}
             >
               <Plus size={13} />
@@ -111,7 +112,7 @@ export default function KanbanView({
             ))}
             {(grouped[key]?.length ?? 0) === 0 && (
               <div className="p-5 text-center text-[12px] rounded-[10px] border border-dashed text-[var(--ink-mute)] border-[var(--line)]">
-                Drop a lead here
+                {`Drop a ${vocabulary.singular} here`}
               </div>
             )}
           </div>

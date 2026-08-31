@@ -1,7 +1,9 @@
 "use client";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
+import { RefreshButton } from "@/shared/ui/RefreshButton";
 import {
   Select,
   SelectContent,
@@ -9,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
-import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { StatCard } from "@/shared/ui/StatCard";
 import {
@@ -24,7 +25,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useAppointmentsQuery,
   useBookingConfigQuery,
@@ -53,7 +54,11 @@ const DEFAULT_DURATION_MINUTES = 30;
 
 type BookingsViewMode = "table" | "calendar";
 
-const VIEW_MODES: { id: BookingsViewMode; label: string; Icon: typeof Rows3 }[] = [
+const VIEW_MODES: {
+  id: BookingsViewMode;
+  label: string;
+  Icon: typeof Rows3;
+}[] = [
   { id: "table", label: "Table", Icon: Rows3 },
   { id: "calendar", label: "Calendar", Icon: CalendarRange },
 ];
@@ -69,11 +74,26 @@ export function BookingsView() {
   const [isBookingSheetOpen, setIsBookingSheetOpen] = useState(false);
   const [isQuickDialogOpen, setIsQuickDialogOpen] = useState(false);
   // Set when the dialog was opened from a calendar slot rather than the header button.
-  const [quickDialogStartsAt, setQuickDialogStartsAt] = useState<string | null>(null);
+  const [quickDialogStartsAt, setQuickDialogStartsAt] = useState<string | null>(
+    null,
+  );
 
   const { data: config, isLoading: isLoadingConfig } = useBookingConfigQuery();
   const { data: statusCounts } = useBookingStatsQuery();
   const { refreshBookings, isRefreshing } = useRefreshBookings();
+  const { tenant } = useCurrentTenant();
+
+  // A clinic reads its appointments on the two dedicated pages; this combined list
+  // would only repeat them. Which one it lands on follows how the clinic schedules.
+  const isClinic = tenant?.businessVertical === "HEALTHCARE";
+  useEffect(() => {
+    if (!isClinic || isLoadingConfig) return;
+    router.replace(
+      config?.practitionerVisibility === "BOOKABLE"
+        ? "/bookings/doctors"
+        : "/bookings/clinical",
+    );
+  }, [isClinic, isLoadingConfig, config?.practitionerVisibility, router]);
 
   const appointmentsQuery = useAppointmentsQuery(
     statusFilter === ALL_STATUSES ? {} : { status: statusFilter },
@@ -114,7 +134,10 @@ export function BookingsView() {
           Calls the bot and your team have booked.
         </p>
       </div>
-      <div data-tour="page-actions" className="flex flex-wrap items-center gap-2">
+      <div
+        data-tour="page-actions"
+        className="flex flex-wrap items-center gap-2"
+      >
         <RefreshButton
           onRefresh={refreshBookings}
           isRefreshing={isRefreshing}
@@ -126,7 +149,11 @@ export function BookingsView() {
             <Settings2 size={14} className="mr-1.5" /> Availability
           </Button>
         )}
-        <Button size="lg" variant="outline" onClick={() => openQuickDialog(null)}>
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => openQuickDialog(null)}
+        >
           <Plus size={14} className="mr-1.5" /> Add appointment
         </Button>
         <Button size="lg" onClick={() => setIsBookingSheetOpen(true)}>
@@ -149,7 +176,7 @@ export function BookingsView() {
     />
   );
 
-  if (isLoadingConfig) {
+  if (isLoadingConfig || isClinic) {
     return (
       <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
         <Skeleton className="h-9 w-56" />
@@ -177,15 +204,20 @@ export function BookingsView() {
   }
 
   const viewSwitch = (
-    <div className="inline-flex items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5">
+    <div
+      role="tablist"
+      aria-label="View mode"
+      className="inline-flex h-9 items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5"
+    >
       {VIEW_MODES.map(({ id, label, Icon }) => (
         <button
           key={id}
           type="button"
-          aria-pressed={viewMode === id}
+          role="tab"
+          aria-selected={viewMode === id}
           onClick={() => setViewMode(id)}
           className={cn(
-            "flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+            "flex h-full items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
             viewMode === id
               ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm"
@@ -219,7 +251,9 @@ export function BookingsView() {
         <StatCard
           label="Cancelled"
           value={statusCounts?.CANCELLED ?? 0}
-          hint={statusCounts?.CANCELLED ? "Reschedule to win them back" : undefined}
+          hint={
+            statusCounts?.CANCELLED ? "Reschedule to win them back" : undefined
+          }
           Icon={CalendarX2}
         />
         <StatCard
@@ -250,28 +284,33 @@ export function BookingsView() {
           onLoadMore={() => appointmentsQuery.fetchNextPage()}
           toolbar={
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[12px] font-medium text-[var(--ink-mute)]">
-                Status:
-              </span>
               <Select
                 value={statusFilter}
                 onValueChange={(nextStatus) =>
-                  setStatusFilter(nextStatus as AppointmentStatus | typeof ALL_STATUSES)
+                  setStatusFilter(
+                    nextStatus as AppointmentStatus | typeof ALL_STATUSES,
+                  )
                 }
               >
-                <SelectTrigger className="h-8 w-[160px] text-[12px]">
+                <SelectTrigger className="h-9 w-[168px] text-[12.5px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL_STATUSES}>
-                    <ListFilter size={13} className="mr-1.5 text-[var(--ink-mute)]" />
+                    <ListFilter
+                      size={13}
+                      className="mr-1.5 text-[var(--ink-mute)]"
+                    />
                     All statuses
                   </SelectItem>
                   {APPOINTMENT_STATUSES.map((status) => {
                     const StatusIcon = APPOINTMENT_STATUS_ICONS[status];
                     return (
                       <SelectItem key={status} value={status}>
-                        <StatusIcon size={13} className="mr-1.5 text-[var(--ink-mute)]" />
+                        <StatusIcon
+                          size={13}
+                          className="mr-1.5 text-[var(--ink-mute)]"
+                        />
                         {APPOINTMENT_STATUS_LABELS[status]}
                       </SelectItem>
                     );

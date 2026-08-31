@@ -1,7 +1,10 @@
 "use client";
 import { AuthFormError } from "@/features/auth/components/AuthFormError";
 import { useCreateWorkspace } from "@/features/auth/hooks/useAuth";
-import { createWorkspaceSchema, type CreateWorkspaceData } from "@/features/auth/types";
+import {
+  createWorkspaceSchema,
+  type CreateWorkspaceData,
+} from "@/features/auth/types";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import {
@@ -13,7 +16,7 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, Loader2, Store } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { OnboardingShell } from "./OnboardingShell";
 
@@ -22,7 +25,7 @@ export function WorkspaceView() {
 
   const form = useForm<CreateWorkspaceData>({
     resolver: zodResolver(createWorkspaceSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", businessName: "" },
   });
 
   return (
@@ -32,7 +35,8 @@ export function WorkspaceView() {
           Create your workspace
         </h1>
         <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
-          Name your business — this is how it appears across the app.
+          Name the workspace your team works in, and the business your customers
+          see.
         </p>
       </div>
 
@@ -50,7 +54,7 @@ export function WorkspaceView() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">
-                    Workspace / business name
+                    Workspace name
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
@@ -60,12 +64,46 @@ export function WorkspaceView() {
                       />
                       <Input
                         className="pl-8 h-10"
-                        placeholder="e.g. Karachi Karahi Co."
+                        placeholder="e.g. Evyln Enterprises"
                         autoFocus
                         {...field}
                       />
                     </div>
                   </FormControl>
+                  <p className="text-[11px] text-[var(--ink-mute)]">
+                    Internal label for your team. This can&apos;t be changed
+                    later.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[12.5px] font-medium text-[var(--ink-soft)]">
+                    Business name
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Store
+                        size={13}
+                        className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
+                      />
+                      <Input
+                        className="pl-8 h-10"
+                        placeholder="e.g. Evyln Enterprises"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <p className="text-[11px] text-[var(--ink-mute)]">
+                    What customers see in chats and receipts. You can change it
+                    any time.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

@@ -1,7 +1,7 @@
 "use client";
 import { Building2, Check, Copy, Landmark, Smartphone, Wallet } from "lucide-react";
 import { useState } from "react";
-import { PAYMENT_METHOD_LABELS } from "./types";
+import { accountDisplayName, PAYMENT_METHOD_LABELS } from "./types";
 import type { PaymentMethod, PublicPaymentAccount } from "./types";
 
 const METHOD_ICON: Record<PaymentMethod, typeof Landmark> = {
@@ -62,11 +62,10 @@ function PaymentAccountRow({ account }: { account: PublicPaymentAccount }) {
         </span>
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
-            {account.label}
+            {accountDisplayName(account)}
           </p>
           <p className="truncate text-[11px] text-[var(--ink-mute)]">
             {PAYMENT_METHOD_LABELS[account.method] ?? account.method}
-            {account.bankName ? ` · ${account.bankName}` : ""}
           </p>
         </div>
       </div>

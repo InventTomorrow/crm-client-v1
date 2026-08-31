@@ -217,7 +217,7 @@ export function ResourceFormDialog({
               control={form.control}
               name="isActive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-4">
+                <FormItem className="flex flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-md">
                   <div className="min-w-0">
                     <FormLabel>Available to the bot</FormLabel>
                     <FormDescription>
@@ -245,7 +245,11 @@ export function ResourceFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" size="lg" disabled={isSaving || isUploading}>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSaving || isUploading}
+              >
                 {isSaving
                   ? "Saving…"
                   : editing

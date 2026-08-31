@@ -9,6 +9,7 @@ import {
   useUpdateBusinessProfile,
 } from '../hooks/useChatbotSettings';
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
+import { BusinessNameCard } from './BusinessNameCard';
 import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
 import { useUpdateBusinessVertical } from '@/features/tenant/hooks/useTenant';
 import { BUSINESS_VERTICALS, getBusinessVerticalShortLabel, type BusinessVertical } from '@/lib/business-verticals';
@@ -96,6 +97,8 @@ export function BusinessSection() {
       <p className="text-[12.5px] text-[var(--ink-mute)] -mt-2">
         Describe your business and add common Q&amp;A — the chatbot uses these to answer questions about you.
       </p>
+
+      <BusinessNameCard />
 
       <div data-tour="business-category" className="card p-[22px] flex flex-col gap-3">
         <div>

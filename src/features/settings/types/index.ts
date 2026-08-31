@@ -1,10 +1,10 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export type { UserProfile, NotifSettings } from '@/lib/mockData';
+export type { NotifSettings, UserProfile } from "@/lib/mockData";
 
 // ──────────────────── Profile form ────────────────────
 export const profileSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
+  firstName: z.string().min(1, "First name is required"),
   lastName: z.string().optional(),
   phone: z.string().optional(),
   avatarUrl: z.string().optional(),
@@ -13,17 +13,27 @@ export type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Chatbot config (mirrors server chatbot.dto) ────────────────────
 export const chatbotConfigSchema = z.object({
-  greetingMessage: z.string().min(1, 'Greeting message is required'),
-  escalationMessage: z.string().min(1, 'Escalation message is required'),
-  fallbackMessage: z.string().min(1, 'Fallback message is required'),
-  aiPersonality: z.enum(['FORMAL', 'CASUAL', 'PERSUASIVE']),
+  greetingMessage: z.string().min(1, "Greeting message is required"),
+  escalationMessage: z.string().min(1, "Escalation message is required"),
+  fallbackMessage: z.string().min(1, "Fallback message is required"),
+  aiPersonality: z.enum(["FORMAL", "CASUAL", "PERSUASIVE"]),
   aiEnabled: z.boolean(),
 });
 export type ChatbotConfigForm = z.infer<typeof chatbotConfigSchema>;
 
+// Mirrors the server's updateTenantSchema — the workspace name is not editable.
+export const businessIdentitySchema = z.object({
+  businessName: z
+    .string()
+    .trim()
+    .min(2, "Business name must be at least 2 characters")
+    .max(120),
+});
+export type BusinessIdentityForm = z.infer<typeof businessIdentitySchema>;
+
 export const businessFaqSchema = z.object({
-  question: z.string().min(1, 'Question is required').max(300),
-  answer: z.string().min(1, 'Answer is required').max(1000),
+  question: z.string().min(1, "Question is required").max(300),
+  answer: z.string().min(1, "Answer is required").max(1000),
 });
 export type BusinessFaq = z.infer<typeof businessFaqSchema>;
 
@@ -36,8 +46,8 @@ export const businessProfileSchema = z.object({
   supportEmail: z
     .string()
     .max(200)
-    .refine((v) => v === '' || z.string().email().safeParse(v).success, {
-      message: 'Enter a valid email',
+    .refine((v) => v === "" || z.string().email().safeParse(v).success, {
+      message: "Enter a valid email",
     }),
   shareSupportContactOnHandoff: z.boolean(),
   notifyOnEscalation: z.boolean(),
@@ -48,10 +58,10 @@ export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 // invitee sets their own name when they accept. city/phone are captured for
 // display and future use.
 export const inviteMemberSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Enter a valid email'),
-  roleId: z.string().min(1, 'Select a role'),
-  city: z.string().max(60).optional().or(z.literal('')),
-  phone: z.string().max(30).optional().or(z.literal('')),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  roleId: z.string().min(1, "Select a role"),
+  city: z.string().max(60).optional().or(z.literal("")),
+  phone: z.string().max(30).optional().or(z.literal("")),
 });
 export type InviteMemberForm = z.infer<typeof inviteMemberSchema>;
 
@@ -61,7 +71,7 @@ export interface ChatbotConfigResponse {
     greetingMessage: string;
     escalationMessage: string;
     fallbackMessage: string;
-    aiPersonality: 'FORMAL' | 'CASUAL' | 'PERSUASIVE';
+    aiPersonality: "FORMAL" | "CASUAL" | "PERSUASIVE";
     aiEnabled: boolean;
     businessDescription: string | null;
     businessInfoMessage: string | null;
@@ -76,12 +86,18 @@ export interface ChatbotConfigResponse {
 }
 
 export const CHANNELS_DATA = [
-  { ch: 'wa' as const, name: 'WhatsApp Business', acct: 'Scan QR to connect', status: 'disconnected', date: '' },
+  {
+    ch: "wa" as const,
+    name: "WhatsApp Business",
+    acct: "Scan QR to connect",
+    status: "disconnected",
+    date: "",
+  },
 ] as const;
 
 export const SYSTEM_STATS = [
-  { l: 'AI Latency',    v: '142ms',  ok: true },
-  { l: 'Uptime (30d)',  v: '99.98%', ok: true },
-  { l: 'Encryption',   v: 'AES-256', ok: true },
-  { l: 'Sync (Shopify)', v: 'Live',  ok: true },
+  { l: "AI Latency", v: "142ms", ok: true },
+  { l: "Uptime (30d)", v: "99.98%", ok: true },
+  { l: "Encryption", v: "AES-256", ok: true },
+  { l: "Sync (Shopify)", v: "Live", ok: true },
 ] as const;

@@ -4,10 +4,10 @@ import { z } from "zod";
  * Validates a Pakistani phone number (mobile or landline).
  *
  * Accepted formats (spaces, dashes, dots, and parentheses are stripped):
- *   Local mobile  : 03xx-xxxxxxx   → 11 digits starting with 03
- *   Intl (+92)    : +923xx-xxxxxxx → 12 digits after +
- *   Intl (0092)   : 00923xxxxxxxxx
- *   Landline (0xx): 0xx-xxxxxxx    → area code + 7 digits  (e.g. 042-1234567)
+ *   Local mobile   : 0300-1234567     → 03 + 9 digits
+ *   Intl mobile    : +92 300 1234567  / 0092… / 92…
+ *   Local landline : 042-35678901, 021-34567890, 0992-123456
+ *   Intl landline  : +92 42 35678901
  *
  * Valid mobile network prefixes (PTA-assigned as of 2024):
  *   030x, 031x → Jazz / Mobilink
@@ -17,16 +17,29 @@ import { z } from "zod";
  *   036x, 037x → SCOM / SCO (Gilgit-Baltistan)
  *   038x       → WiTribe / fixed-wireless (niche, included for completeness)
  */
-const PK_MOBILE_RE = /^(?:(?:\+|00)92|0)3[0-9]{9}$/; // 03xx + 8 digits (local)
-const PK_LANDLINE_RE = /^0[2-9][0-9]{7,8}$/; // 0xx-xxxxxxx / 0xxx-xxxxxxx
+const PK_MOBILE_RE = /^03[0-9]{9}$/; // 03 + 9 digits = 11 total
+// Area code + subscriber, 9–11 total. 03x is excluded: it is mobile-only.
+const PK_LANDLINE_RE = /^0[24-9][0-9]{7,9}$/;
 
-function normalizePKPhone(raw: string): string {
-  return raw.replace(/[\s\-.()+]/g, "");
+/**
+ * Reduces every accepted form to the national number with its leading 0, so one
+ * set of rules covers local and international input alike. The country code is
+ * only stripped when what follows cannot itself be a national number — a
+ * landline in the 092x range (Haripur) must not lose its leading digits.
+ */
+function toNationalPKPhone(raw: string): string {
+  const digits = raw.replace(/[\s\-.()+]/g, "");
+  // "0092" first: no national number has 0 as its second digit, so this can
+  // only ever be the international prefix.
+  if (digits.startsWith("0092")) return `0${digits.slice(4)}`;
+  if (digits.startsWith("0")) return digits; // already national
+  if (digits.startsWith("92")) return `0${digits.slice(2)}`;
+  return `0${digits}`;
 }
 
 function isValidPKPhone(raw: string): boolean {
-  const n = normalizePKPhone(raw);
-  return PK_MOBILE_RE.test(n) || PK_LANDLINE_RE.test(n);
+  const national = toNationalPKPhone(raw);
+  return PK_MOBILE_RE.test(national) || PK_LANDLINE_RE.test(national);
 }
 
 export const pkPhoneSchema = z

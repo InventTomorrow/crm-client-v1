@@ -1,18 +1,24 @@
 import type { BusinessVertical } from '@/lib/business-verticals';
 import type { Plan } from '../types';
 
-type CatalogLimitField = 'maxProducts' | 'maxMenuItems' | 'maxServices';
+type CatalogLimitField =
+  | 'maxProducts'
+  | 'maxMenuItems'
+  | 'maxServices'
+  | 'maxClinicalServices';
 
 const VERTICAL_CATALOG_FIELD: Record<BusinessVertical, CatalogLimitField> = {
   ECOMMERCE: 'maxProducts',
   RESTAURANT: 'maxMenuItems',
   MARKETING_AGENCY: 'maxServices',
+  HEALTHCARE: 'maxClinicalServices',
 };
 
 const CATALOG_LABEL: Record<CatalogLimitField, string> = {
   maxProducts: 'products',
   maxMenuItems: 'menu items',
   maxServices: 'services',
+  maxClinicalServices: 'clinical services',
 };
 
 /**

@@ -49,9 +49,14 @@ describe("registerSchema", () => {
 });
 
 describe("createWorkspaceSchema", () => {
-  it("requires at least 2 characters", () => {
-    expect(createWorkspaceSchema.safeParse({ name: "A" }).success).toBe(false);
-    expect(createWorkspaceSchema.safeParse({ name: "My Shop" }).success).toBe(true);
+  it("requires at least 2 characters for both names", () => {
+    expect(createWorkspaceSchema.safeParse({ name: "A", businessName: "My Shop" }).success).toBe(false);
+    expect(createWorkspaceSchema.safeParse({ name: "My Shop", businessName: "A" }).success).toBe(false);
+    expect(createWorkspaceSchema.safeParse({ name: "My Shop", businessName: "My Shop" }).success).toBe(true);
+  });
+
+  it("requires a business name alongside the workspace name", () => {
+    expect(createWorkspaceSchema.safeParse({ name: "My Shop" }).success).toBe(false);
   });
 });
 

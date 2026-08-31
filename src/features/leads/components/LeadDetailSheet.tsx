@@ -32,7 +32,8 @@ import {
 import NextLink from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Lead, STATUS_META } from "../types";
+import { Lead } from "../types";
+import { useLeadVocabulary } from "../utils/leadVocabulary";
 
 const ORDER_STATUS_COLOR: Record<string, string> = {
   PENDING: "#F59E0B",
@@ -74,6 +75,7 @@ export default function LeadDetailSheet({
   isDeleting?: boolean;
 }) {
   // All hooks must run before the early return below — call them unconditionally.
+  const vocabulary = useLeadVocabulary();
   const { data: orders, isLoading: ordersLoading } = useLeadOrders(lead?.id);
   const generateCheckout = useGenerateCheckout();
   const sendReceipt = useSendReceipt();
@@ -127,7 +129,8 @@ export default function LeadDetailSheet({
   };
 
   if (!lead) return null;
-  const statusMeta = STATUS_META[lead.status] ?? STATUS_META.prospect;
+  const statusMeta =
+    vocabulary.statusMeta[lead.status] ?? vocabulary.statusMeta.prospect;
 
   return (
     <>
@@ -172,10 +175,10 @@ export default function LeadDetailSheet({
         </div>
 
         <div className="scroll flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-          {/* Lead info */}
+          {/* Contact info */}
           <div className="flex flex-col gap-2">
             <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-              Lead Information
+              {vocabulary.singularTitle} information
             </p>
             <div className="card p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px]">
               {lead.phone && (
@@ -361,7 +364,7 @@ export default function LeadDetailSheet({
                   variant="outline"
                   size="icon"
                   onClick={() => onRestore(lead)}
-                  title="Restore lead"
+                  title={`Restore ${vocabulary.singular}`}
                 >
                   <ArchiveRestore size={14} />
                 </Button>
@@ -370,7 +373,7 @@ export default function LeadDetailSheet({
                   variant="outline"
                   size="icon"
                   onClick={() => onArchive(lead)}
-                  title="Archive lead"
+                  title={`Archive ${vocabulary.singular}`}
                 >
                   <Archive size={14} />
                 </Button>

@@ -58,7 +58,7 @@ import { useWAStatus } from "../../channels/whatsapp/hooks/useWhatsApp";
 import { checkWhatsAppNumber } from "../../channels/whatsapp/services/whatsapp.service";
 import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
 import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
-import { STATUS_META } from "../../leads/types";
+import { useLeadVocabulary } from "../../leads/utils/leadVocabulary";
 import { OrderForm } from "../../orders/components/OrderForm";
 import { useCreateOrder, useLeadOrders } from "../../orders/hooks/useOrders";
 import {
@@ -104,6 +104,7 @@ import { NewChatDialog } from "./NewChatDialog";
 import { ChatListSkeleton, MessageSkeleton } from "./Skeletons";
 
 export function InboxView() {
+  const leadVocabulary = useLeadVocabulary();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -1658,7 +1659,9 @@ export function InboxView() {
               <EscalationBadge status={activeConv.escalationStatus} />
               {(() => {
                 const status = leadDetail?.status ?? "prospect";
-                const meta = STATUS_META[status] ?? STATUS_META.prospect;
+                const meta =
+                  leadVocabulary.statusMeta[status] ??
+                  leadVocabulary.statusMeta.prospect;
                 if (!leadDetail) {
                   return (
                     <span
@@ -1720,7 +1723,7 @@ export function InboxView() {
           >
             <div className="flex items-center justify-between mb-0.5">
               <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-                Lead Information
+                {leadVocabulary.singularTitle} information
               </p>
               <ChevronRight size={13} className="text-[var(--ink-mute)]" />
             </div>

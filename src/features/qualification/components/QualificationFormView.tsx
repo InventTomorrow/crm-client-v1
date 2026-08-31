@@ -1,7 +1,7 @@
-'use client';
-import { useFormWizard } from '@/shared/hooks/useFormWizard';
-import { Badge } from '@/shared/ui/Badge';
-import { Button } from '@/shared/ui/Button';
+"use client";
+import { useFormWizard } from "@/shared/hooks/useFormWizard";
+import { Badge } from "@/shared/ui/Badge";
+import { Button } from "@/shared/ui/Button";
 import {
   Form,
   FormControl,
@@ -10,24 +10,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/shared/ui/form';
-import { FormSection } from '@/shared/ui/FormSection';
-import { FormWizardNav } from '@/shared/ui/FormWizardNav';
-import { Input } from '@/shared/ui/Input';
-import { Skeleton } from '@/shared/ui/Skeleton';
-import { Switch } from '@/shared/ui/Switch';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useWatch } from 'react-hook-form';
-import { useQualificationForm } from '../hooks/useQualification';
-import { QUALIFICATION_FORM_STEPS } from '../utils/qualificationFormSections';
-import { QuestionBuilder } from './QuestionBuilder';
-import { ScoringRulesBuilder } from './ScoringRulesBuilder';
+} from "@/shared/ui/form";
+import { FormSection } from "@/shared/ui/FormSection";
+import { FormWizardNav } from "@/shared/ui/FormWizardNav";
+import { Input } from "@/shared/ui/Input";
+import { Skeleton } from "@/shared/ui/Skeleton";
+import { Switch } from "@/shared/ui/Switch";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useWatch } from "react-hook-form";
+import { useQualificationForm } from "../hooks/useQualification";
+import { useQualificationCopy } from "../utils/qualificationCopy";
+import { buildQualificationFormSteps } from "../utils/qualificationFormSections";
+import { QuestionBuilder } from "./QuestionBuilder";
+import { ScoringRulesBuilder } from "./ScoringRulesBuilder";
 
 export function QualificationFormView() {
   const router = useRouter();
-  const returnToPreview = () => router.push('/qualification');
+  const copy = useQualificationCopy();
+  const steps = useMemo(() => buildQualificationFormSteps(copy), [copy]);
+  const returnToPreview = () => router.push("/qualification");
 
   const {
     form,
@@ -40,15 +43,21 @@ export function QualificationFormView() {
     submitForm,
   } = useQualificationForm({ onSaved: returnToPreview });
 
-  const hotThreshold = useWatch({ control: form.control, name: 'hotThreshold' });
-  const warmThreshold = useWatch({ control: form.control, name: 'warmThreshold' });
+  const hotThreshold = useWatch({
+    control: form.control,
+    name: "hotThreshold",
+  });
+  const warmThreshold = useWatch({
+    control: form.control,
+    name: "warmThreshold",
+  });
 
   // Always an edit of a saved config, so sections open freely — but Save still waits for the
   // two that genuinely gate a working form (questions, thresholds).
   const wizard = useFormWizard({
     form,
-    steps: QUALIFICATION_FORM_STEPS,
-    navigation: 'free',
+    steps,
+    navigation: "free",
     gateSubmitOnCompletion: true,
   });
 
@@ -57,7 +66,9 @@ export function QualificationFormView() {
   // isSaving covers both buttons at once — track which one was actually clicked so
   // only that button shows the spinner. Cleared as soon as the save settles, by
   // noticing the isSaving transition during render rather than in an effect.
-  const [pendingAction, setPendingAction] = useState<'next' | 'quit' | null>(null);
+  const [pendingAction, setPendingAction] = useState<"next" | "quit" | null>(
+    null,
+  );
   const [wasSaving, setWasSaving] = useState(isSaving);
   if (isSaving !== wasSaving) {
     setWasSaving(isSaving);
@@ -65,12 +76,12 @@ export function QualificationFormView() {
   }
 
   function handleSaveAndQuit() {
-    setPendingAction('quit');
+    setPendingAction("quit");
     submitForm(returnToPreview);
   }
 
   function handleSaveAndNext() {
-    setPendingAction('next');
+    setPendingAction("next");
     submitForm(wizard.goToNextStep);
   }
 
@@ -92,15 +103,17 @@ export function QualificationFormView() {
             type="button"
             variant="ghost"
             size="icon-lg"
-            aria-label="Back to bot questions"
+            aria-label={copy.backLabel}
             onClick={returnToPreview}
           >
             <ArrowLeft size={16} />
           </Button>
           <div>
-            <h1 className="text-[18px] font-semibold text-[var(--ink)]">Bot questions</h1>
+            <h1 className="text-[18px] font-semibold text-[var(--ink)]">
+              {copy.pageTitle}
+            </h1>
             <p className="text-[12px] text-[var(--ink-mute)]">
-              What the bot asks a new lead, and how their answers score them.
+              {copy.pageDescription}
             </p>
           </div>
         </div>
@@ -131,7 +144,7 @@ export function QualificationFormView() {
               title={activeStep.title}
               description={activeStep.description}
             >
-              {activeStep.id === 'status' && (
+              {activeStep.id === "status" && (
                 <FormField
                   control={form.control}
                   name="isActive"
@@ -141,7 +154,7 @@ export function QualificationFormView() {
                         <div>
                           <FormLabel>Active</FormLabel>
                           <p className="mt-0.5 text-xs text-[var(--ink-mute)]">
-                            While off, leads still arrive — they just come in unscored.
+                            {copy.statusToggleHint}
                           </p>
                         </div>
                         <FormControl>
@@ -158,7 +171,7 @@ export function QualificationFormView() {
                 />
               )}
 
-              {activeStep.id === 'questions' && (
+              {activeStep.id === "questions" && (
                 <>
                   <QuestionBuilder
                     form={form}
@@ -178,7 +191,7 @@ export function QualificationFormView() {
                 </>
               )}
 
-              {activeStep.id === 'scoring' && (
+              {activeStep.id === "scoring" && (
                 <ScoringRulesBuilder
                   form={form}
                   fieldArray={scoringRuleFields}
@@ -186,7 +199,7 @@ export function QualificationFormView() {
                 />
               )}
 
-              {activeStep.id === 'thresholds' && (
+              {activeStep.id === "thresholds" && (
                 <>
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <FormField
@@ -200,7 +213,9 @@ export function QualificationFormView() {
                               type="number"
                               disabled={isSaving}
                               {...field}
-                              onChange={(event) => field.onChange(Number(event.target.value))}
+                              onChange={(event) =>
+                                field.onChange(Number(event.target.value))
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -219,10 +234,14 @@ export function QualificationFormView() {
                               type="number"
                               disabled={isSaving}
                               {...field}
-                              onChange={(event) => field.onChange(Number(event.target.value))}
+                              onChange={(event) =>
+                                field.onChange(Number(event.target.value))
+                              }
                             />
                           </FormControl>
-                          <FormDescription>Anything below this scores as cold.</FormDescription>
+                          <FormDescription>
+                            Anything below this scores as cold.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -232,14 +251,21 @@ export function QualificationFormView() {
                   {/* Reads the thresholds back as the three bands they actually produce */}
                   <div className="flex flex-wrap gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3 text-xs">
                     <span className="text-[var(--ink-mute)]">Bands:</span>
-                    <span className="text-[var(--ink)]">Cold &lt; {warmThreshold}</span>
+                    <span className="text-[var(--ink)]">
+                      Cold &lt; {warmThreshold}
+                    </span>
                     <span className="text-[var(--ink-mute)]">·</span>
                     <span className="text-[var(--ink)]">
                       Warm {warmThreshold}–
-                      {Math.max(Number(hotThreshold) - 1, Number(warmThreshold))}
+                      {Math.max(
+                        Number(hotThreshold) - 1,
+                        Number(warmThreshold),
+                      )}
                     </span>
                     <span className="text-[var(--ink-mute)]">·</span>
-                    <span className="text-[var(--ink)]">Hot ≥ {hotThreshold}</span>
+                    <span className="text-[var(--ink)]">
+                      Hot ≥ {hotThreshold}
+                    </span>
                   </div>
                 </>
               )}
@@ -271,12 +297,13 @@ export function QualificationFormView() {
                 }
                 onClick={handleSaveAndQuit}
               >
-                {pendingAction === 'quit' ? (
+                {pendingAction === "quit" ? (
                   <>
-                    <Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…
+                    <Loader2 size={14} className="mr-1.5 animate-spin" />{" "}
+                    Saving…
                   </>
                 ) : (
-                  'Save and quit'
+                  "Save and quit"
                 )}
               </Button>
 
@@ -292,9 +319,10 @@ export function QualificationFormView() {
                   }
                   onClick={handleSaveAndNext}
                 >
-                  {pendingAction === 'next' ? (
+                  {pendingAction === "next" ? (
                     <>
-                      <Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…
+                      <Loader2 size={14} className="mr-1.5 animate-spin" />{" "}
+                      Saving…
                     </>
                   ) : (
                     <>

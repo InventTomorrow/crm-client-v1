@@ -26,6 +26,7 @@ import {
   bookingConfigFormSchema,
   type AppointmentFilters,
   type AppointmentStatus,
+  type BookingType,
   type BookingConfigFormData,
   type BookingConfigFormInput,
   type CreateAppointmentFormData,
@@ -36,9 +37,21 @@ const PAGE_SIZE = 20;
 const bookingKeys = {
   all: ['bookings'] as const,
   config: ['bookings', 'config'] as const,
-  stats: ['bookings', 'stats'] as const,
-  availability: (from: string | undefined, days: number) =>
-    ['bookings', 'availability', from ?? 'today', days] as const,
+  stats: (bookingType?: BookingType) =>
+    ['bookings', 'stats', bookingType ?? 'all'] as const,
+  availability: (
+    from: string | undefined,
+    days: number,
+    scope: { practitionerId?: string; clinicalServiceId?: string } = {},
+  ) =>
+    [
+      'bookings',
+      'availability',
+      from ?? 'today',
+      days,
+      scope.practitionerId ?? 'any-practitioner',
+      scope.clinicalServiceId ?? 'any-service',
+    ] as const,
   appointments: (filters: AppointmentFilters) =>
     ['bookings', 'appointments', filters] as const,
 };
@@ -64,6 +77,8 @@ const INITIAL_CONFIG_VALUES: BookingConfigFormInput = {
   reminderMessage: '',
   reminderLeadMinutes: 60,
   assignedStaffIds: [],
+  // Clinics opt in explicitly; every other vertical stays on the shared calendar.
+  practitionerVisibility: 'HIDDEN',
   isActive: true,
 };
 
@@ -74,20 +89,28 @@ export function useBookingConfigQuery() {
   });
 }
 
-export function useBookingStatsQuery() {
+export function useBookingStatsQuery(bookingType?: BookingType) {
   return useQuery({
-    queryKey: bookingKeys.stats,
-    queryFn: getBookingStats,
+    queryKey: bookingKeys.stats(bookingType),
+    queryFn: () => getBookingStats(bookingType ? { bookingType } : {}),
   });
 }
 
 export function useAvailabilityQuery(
-  params: { from?: string; days?: number },
+  params: {
+    from?: string;
+    days?: number;
+    practitionerId?: string;
+    clinicalServiceId?: string;
+  },
   options?: { enabled?: boolean },
 ) {
   const days = params.days ?? 14;
   return useQuery({
-    queryKey: bookingKeys.availability(params.from, days),
+    queryKey: bookingKeys.availability(params.from, days, {
+      practitionerId: params.practitionerId,
+      clinicalServiceId: params.clinicalServiceId,
+    }),
     queryFn: () => getAvailability({ ...params, days }),
     enabled: options?.enabled ?? true,
   });
@@ -253,6 +276,9 @@ export function useBookingConfigForm(options?: { onSaved?: () => void }) {
       reminderMessage: savedConfig.reminderMessage,
       reminderLeadMinutes: savedConfig.reminderLeadMinutes,
       assignedStaffIds: savedConfig.assignedStaffIds,
+      // Omitting this would clear the field, and the schema default would then
+      // write HIDDEN back over whatever the clinic just saved.
+      practitionerVisibility: savedConfig.practitionerVisibility ?? 'HIDDEN',
       isActive: savedConfig.isActive,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

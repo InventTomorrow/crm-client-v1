@@ -6,7 +6,10 @@ import type { BusinessVertical } from '@/lib/business-verticals';
 
 export interface Tenant {
   id: string;
+  /** Internal workspace label — fixed at creation, never editable. */
   name: string;
+  /** Customer-facing trading name, editable from Business settings. Null on workspaces created before the split. */
+  businessName?: string | null;
   type: 'INDIVIDUAL' | 'ORGANIZATION';
   status: 'ACTIVE' | 'SUSPENDED' | 'CHURNED';
   businessVertical: BusinessVertical;
@@ -39,6 +42,7 @@ export interface WorkspaceStats {
 
 export interface CreateTenantPayload {
   name: string;
+  businessName: string;
   businessVertical: BusinessVertical;
   /** At the workspace cap: this workspace is scheduled for deletion (60-day grace) to free the slot. */
   replaceTenantId?: string;

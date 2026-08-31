@@ -1,4 +1,5 @@
 "use client";
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
 import { Button } from "@/shared/ui/Button";
 import {
   Form,
@@ -20,26 +21,16 @@ import {
   Clock,
   MessageSquare,
   SlidersHorizontal,
+  Stethoscope,
 } from "lucide-react";
 import { useWatch } from "react-hook-form";
+import { hasCapability } from "@/lib/business-verticals";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { PractitionerVisibilitySelect } from "@/features/practitioners/components/PractitionerVisibilitySelect";
 import { useBookingConfigForm } from "../hooks/useBookings";
 import { MEETING_TYPES, MEETING_TYPE_LABELS } from "../types";
 import { WeekdayPicker } from "./WeekdayPicker";
 import { WorkingHoursField } from "./WorkingHoursField";
-
-const COMMON_TIMEZONES = [
-  "Asia/Karachi",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Europe/London",
-  "America/New_York",
-  "America/Los_Angeles",
-];
-
-const timezoneOptions = COMMON_TIMEZONES.map((timezone) => ({
-  id: timezone,
-  label: timezone.replace("_", " "),
-}));
 
 const meetingTypeOptions = MEETING_TYPES.map((meetingType) => ({
   id: meetingType,
@@ -51,6 +42,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
   const { form, isLoading, isSaving, handleSubmit } = useBookingConfigForm({
     ...(onSaved ? { onSaved } : {}),
   });
+  const vocabulary = useLeadVocabulary();
 
   // The hours editor previews how many slots each window yields, which depends
   // on these two — so it has to re-render as they're typed.
@@ -62,6 +54,11 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
     control: form.control,
     name: "bufferMinutes",
   });
+
+  const { tenant } = useCurrentTenant();
+  const isClinical = Boolean(
+    tenant && hasCapability(tenant.businessVertical, "PRACTITIONERS"),
+  );
 
   if (isLoading) {
     return (
@@ -77,7 +74,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         <FormSection
           title="The meeting"
-          description="What leads are booking, and how it happens."
+          description={`What ${vocabulary.plural} are booking, and how it happens.`}
           Icon={CalendarClock}
         >
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -113,17 +110,20 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                       items={meetingTypeOptions}
                       selected={
                         field.value
-                          ? { id: field.value, label: MEETING_TYPE_LABELS[field.value] }
+                          ? {
+                              id: field.value,
+                              label: MEETING_TYPE_LABELS[field.value],
+                            }
                           : null
                       }
                       onSelect={(item) => item && field.onChange(item.id)}
-                      placeholder="Pick how the call happens"
+                      placeholder={`Pick how the ${vocabulary.bookingSingular} happens`}
                       disabled={isSaving}
                     />
                   </FormControl>
                   <FormDescription>
-                    How the meeting is held — the bot tells the lead this when
-                    confirming.
+                    How the meeting is held — the bot tells the{" "}
+                    {vocabulary.singular} this when confirming.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -185,30 +185,21 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
           description="Slots are generated from these days and times — never stored, so editing here updates every future day at once."
           Icon={Clock}
         >
+          {/* Fixed server-side: every calendar, slot key and spoken time resolves
+              the same zone, so this is shown rather than chosen. */}
           <FormField
             control={form.control}
             name="timezone"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
-                <FormControl>
-                  <AutoCompleteSelect
-                    items={timezoneOptions}
-                    selected={
-                      field.value
-                        ? { id: field.value, label: field.value.replace("_", " ") }
-                        : null
-                    }
-                    onSelect={(item) => item && field.onChange(item.id)}
-                    placeholder="Pick a timezone"
-                    disabled={isSaving}
-                  />
-                </FormControl>
+                <div className="flex h-9 items-center rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 text-[13px] text-[var(--ink-soft)]">
+                  {field.value.replace("_", " ")}
+                </div>
                 <FormDescription>
-                  The times below are read in this zone. Leads see their own
-                  local time.
+                  Every calendar runs on this zone. The times below are read in
+                  it, and leads see their own local time.
                 </FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -293,7 +284,9 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
               name="bufferMinutes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Buffer between calls (minutes)</FormLabel>
+                  <FormLabel>
+                    Buffer between {vocabulary.bookingSingular}s (minutes)
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -433,7 +426,8 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                   />
                 </FormControl>
                 <FormDescription>
-                  Sent shortly before the call to cut no-shows.
+                  Sent shortly before the {vocabulary.bookingSingular} to cut
+                  no-shows.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -466,6 +460,36 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
             )}
           />
         </FormSection>
+
+        {/* Healthcare only — every other vertical books against one shared
+            calendar and has no practitioners to expose. */}
+        {isClinical && (
+          <FormSection
+            title="Practitioners"
+            description="Whether the assistant may name your practitioners, and whether it may book them."
+            Icon={Stethoscope}
+          >
+            <FormField
+              control={form.control}
+              name="practitionerVisibility"
+              render={({ field }) => (
+                <FormItem>
+                  <PractitionerVisibilitySelect
+                    value={field.value ?? "HIDDEN"}
+                    onChange={field.onChange}
+                    disabled={isSaving}
+                  />
+                  <FormDescription>
+                    This is the ceiling for the whole clinic. A practitioner may
+                    be set narrower than this, never wider — so moving it down
+                    to &ldquo;Don&apos;t show&rdquo; genuinely hides everyone.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+        )}
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isSaving}>

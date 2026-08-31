@@ -265,7 +265,10 @@ export function FileUpload({
             {uploading && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40">
                 <Loader2Icon
-                  className={cn("animate-spin text-white", thumbnail ? "size-4" : "size-8")}
+                  className={cn(
+                    "animate-spin text-white",
+                    thumbnail ? "size-4" : "size-8",
+                  )}
                 />
                 {!thumbnail && (
                   <span className="text-sm font-medium text-white">
@@ -279,7 +282,10 @@ export function FileUpload({
           </div>
         ) : thumbnail ? (
           <div
-            className={cn("flex w-full cursor-pointer items-center justify-center", compactHeight)}
+            className={cn(
+              "flex w-full cursor-pointer items-center justify-center",
+              compactHeight,
+            )}
             onClick={openFileDialog}
           >
             <CloudUploadIcon className="text-primary size-4" />

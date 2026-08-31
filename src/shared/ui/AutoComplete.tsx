@@ -2,6 +2,7 @@
 
 import { Autocomplete as AutocompletePrimitive } from "@base-ui/react/autocomplete";
 import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/shared/ui/ScrollArea";
@@ -97,7 +98,10 @@ function AutocompletePositioner({
   return (
     <AutocompletePrimitive.Positioner
       data-slot="autocomplete-positioner"
-      className={cn("z-50 outline-none", className)}
+      // Above the dialog layer, not level with it. The popup portals to body as
+      // a SIBLING of a dialog, so at a shared z-50 the modal overlay takes the
+      // pointer events and the list paints on top while being unclickable.
+      className={cn("z-[60] outline-none", className)}
       {...props}
     />
   );
@@ -185,6 +189,34 @@ export interface AutocompleteContentProps extends React.ComponentProps<
   showBackdrop?: boolean;
 }
 
+/** Modal layers a popup must portal *into* rather than alongside — see below. */
+const MODAL_CONTENT_SELECTOR =
+  "[data-slot=dialog-content],[data-slot=alert-dialog-content],[data-slot=sheet-content],[data-slot=drawer-content]";
+
+/**
+ * The modal ancestor to portal into, or null when there is none.
+ *
+ * Radix's modal layers set `pointer-events: none` on <body> and re-enable it only
+ * inside their own subtree, so a popup portalled to the body paints above the
+ * dialog while taking no pointer events at all — the cursor falls straight
+ * through to whatever sits underneath. A click there also reads as an
+ * interact-outside and closes the dialog. Portalling into the layer's own content
+ * node avoids both, and Base UI's positioner still places the popup against the
+ * viewport.
+ */
+function useModalPortalContainer() {
+  const probeRef = React.useRef<HTMLSpanElement>(null);
+  const [container, setContainer] = React.useState<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    setContainer(
+      probeRef.current?.closest<HTMLElement>(MODAL_CONTENT_SELECTOR) ?? null,
+    );
+  }, []);
+
+  return { probeRef, container };
+}
+
 function AutocompleteContent({
   className,
   children,
@@ -196,30 +228,35 @@ function AutocompleteContent({
   anchor,
   ...props
 }: AutocompleteContentProps) {
+  const { probeRef, container } = useModalPortalContainer();
+
   return (
-    <AutocompletePortal>
-      {showBackdrop && <AutocompleteBackdrop />}
-      <AutocompletePositioner
-        align={align}
-        sideOffset={sideOffset}
-        alignOffset={alignOffset}
-        side={side}
-        anchor={anchor}
-      >
-        <div className="relative flex max-h-full">
-          <AutocompletePrimitive.Popup
-            data-slot="autocomplete-popup"
-            className={cn(
-              "bg-popover text-popover-foreground rounded-lg shadow-md ring-foreground/10 flex max-h-[min(var(--available-height),24rem)] w-(--anchor-width) max-w-(--available-width) origin-(--transform-origin) scroll-pt-2 scroll-pb-2 flex-col overscroll-contain py-0.5 ring-1 transition-[scale,opacity] has-data-starting-style:scale-98 has-data-starting-style:opacity-0 has-data-[side=none]:scale-100 has-data-[side=none]:transition-none",
-              className,
-            )}
-            {...props}
-          >
-            {children}
-          </AutocompletePrimitive.Popup>
-        </div>
-      </AutocompletePositioner>
-    </AutocompletePortal>
+    <>
+      <span ref={probeRef} hidden aria-hidden />
+      <AutocompletePortal container={container ?? undefined}>
+        {showBackdrop && <AutocompleteBackdrop />}
+        <AutocompletePositioner
+          align={align}
+          sideOffset={sideOffset}
+          alignOffset={alignOffset}
+          side={side}
+          anchor={anchor}
+        >
+          <div className="relative flex max-h-full">
+            <AutocompletePrimitive.Popup
+              data-slot="autocomplete-popup"
+              className={cn(
+                "bg-popover text-popover-foreground rounded-lg shadow-md ring-foreground/10 flex max-h-[min(var(--available-height),24rem)] w-(--anchor-width) max-w-(--available-width) origin-(--transform-origin) scroll-pt-2 scroll-pb-2 flex-col overscroll-contain py-0.5 ring-1 transition-[scale,opacity] has-data-starting-style:scale-98 has-data-starting-style:opacity-0 has-data-[side=none]:scale-100 has-data-[side=none]:transition-none",
+                className,
+              )}
+              {...props}
+            >
+              {children}
+            </AutocompletePrimitive.Popup>
+          </div>
+        </AutocompletePositioner>
+      </AutocompletePortal>
+    </>
   );
 }
 

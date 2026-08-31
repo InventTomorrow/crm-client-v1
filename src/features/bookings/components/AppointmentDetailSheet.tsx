@@ -1,28 +1,31 @@
-'use client';
+"use client";
 
-import { Badge } from '@/shared/ui/Badge';
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
+import { Badge } from "@/shared/ui/Badge";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/shared/ui/Sheet';
+} from "@/shared/ui/Sheet";
 import {
   CalendarClock,
   CalendarX2,
+  ClipboardList,
   Clock,
   Phone,
+  Stethoscope,
   StickyNote,
   User,
-} from 'lucide-react';
-import { APPOINTMENT_STATUS_LABELS, type Appointment } from '../types';
+} from "lucide-react";
+import { APPOINTMENT_STATUS_LABELS, type Appointment } from "../types";
 import {
   APPOINTMENT_STATUS_ICONS,
   APPOINTMENT_STATUS_VARIANTS,
   formatSlotDate,
   formatSlotTime,
-} from '../utils/appointmentFormat';
-import { AppointmentStatusActions } from './AppointmentStatusActions';
+} from "../utils/appointmentFormat";
+import { AppointmentStatusActions } from "./AppointmentStatusActions";
 
 interface AppointmentDetailSheetProps {
   appointment: Appointment | null;
@@ -61,15 +64,21 @@ export function AppointmentDetailSheet({
   open,
   onOpenChange,
 }: AppointmentDetailSheetProps) {
+  const vocabulary = useLeadVocabulary();
   if (!appointment) return null;
 
   const StatusIcon = APPOINTMENT_STATUS_ICONS[appointment.status];
-  const name = appointment.customerName ?? appointment.lead?.name ?? 'Unnamed lead';
+  const name =
+    appointment.customerName ??
+    appointment.lead?.name ??
+    `Unnamed ${vocabulary.customerSingular}`;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]">
-
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
+      >
         {/* Header */}
         <SheetHeader className="border-b border-[var(--line)] px-5 py-4">
           <div className="flex items-start justify-between gap-3 pr-8">
@@ -96,10 +105,12 @@ export function AppointmentDetailSheet({
 
         {/* Body */}
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-5">
-
           {/* Time slot box — simple, neutral */}
           <div className="flex items-center gap-3 self-start rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
-            <CalendarClock size={16} className="shrink-0 text-[var(--ink-mute)]" />
+            <CalendarClock
+              size={16}
+              className="shrink-0 text-[var(--ink-mute)]"
+            />
             <div className="flex flex-col">
               <span className="text-[11px] text-[var(--ink-mute)]">
                 {formatSlotDate(appointment.scheduledAt, timezone)}
@@ -117,12 +128,46 @@ export function AppointmentDetailSheet({
           <div className="h-px bg-[var(--line-soft)]" />
 
           <div className="flex flex-col gap-4">
-            <DetailRow icon={User} label="Customer">
-              <span className="text-[13px] font-medium text-[var(--ink)]">{name}</span>
+            <DetailRow icon={User} label={vocabulary.customerSingularTitle}>
+              <span className="text-[13px] font-medium text-[var(--ink)]">
+                {name}
+              </span>
               {appointment.lead && (
-                <span className="ml-1.5 text-[11.5px] text-[var(--ink-mute)]">via lead</span>
+                <span className="ml-1.5 text-[11.5px] text-[var(--ink-mute)]">
+                  via {vocabulary.singular}
+                </span>
               )}
             </DetailRow>
+
+            {appointment.practitioner && (
+              <DetailRow icon={Stethoscope} label="Doctor">
+                <span className="text-[13px] font-medium text-[var(--ink)]">
+                  {appointment.practitioner.title
+                    ? `${appointment.practitioner.title} ${appointment.practitioner.fullName}`
+                    : appointment.practitioner.fullName}
+                </span>
+                {(appointment.practitioner.designation ??
+                  appointment.practitioner.specialties[0]) && (
+                  <p className="text-[11.5px] text-[var(--ink-mute)]">
+                    {appointment.practitioner.designation ??
+                      appointment.practitioner.specialties[0]}
+                  </p>
+                )}
+              </DetailRow>
+            )}
+
+            {appointment.clinicalService && (
+              <DetailRow icon={ClipboardList} label="Service">
+                <span className="text-[13px] text-[var(--ink)]">
+                  {appointment.clinicalService.name}
+                </span>
+                {appointment.clinicalService.category && (
+                  <p className="text-[11.5px] text-[var(--ink-mute)]">
+                    {appointment.clinicalService.category}
+                  </p>
+                )}
+              </DetailRow>
+            )}
 
             {appointment.notes && (
               <DetailRow icon={StickyNote} label="Notes">
@@ -149,7 +194,6 @@ export function AppointmentDetailSheet({
           </p>
           <AppointmentStatusActions appointment={appointment} wrap />
         </div>
-
       </SheetContent>
     </Sheet>
   );

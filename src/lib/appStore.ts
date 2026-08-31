@@ -1,11 +1,14 @@
-'use client';
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+"use client";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import {
-  type Lead, type Notification, type Workspace, type UserProfile,
+  type Lead,
+  type Notification,
+  type Workspace,
+  type UserProfile,
   type NotifSettings,
   INITIAL_NOTIF_SETTINGS,
-} from '@/lib/mockData';
+} from "@/lib/mockData";
 
 interface AppState {
   // Layout (not persisted)
@@ -24,10 +27,10 @@ interface AppState {
   authTransition: boolean;
 
   // Persisted UI
-  theme: 'light' | 'dark';
-  leadsView: 'kanban' | 'list' | 'table';
-  servicesView: 'grid' | 'table';
-  inventoryView: 'grid' | 'list';
+  theme: "light" | "dark";
+  leadsView: "kanban" | "list" | "table";
+  servicesView: "grid" | "table";
+  inventoryView: "grid" | "list";
 
   // Persisted data
   notifications: Notification[];
@@ -40,13 +43,13 @@ interface AppState {
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setMobileMenuOpen: (open: boolean) => void;
-  setTheme: (t: 'light' | 'dark') => void;
+  setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
   setEscalatingLead: (lead: Lead | null) => void;
   setHotLead: (lead: Lead | null) => void;
-  setLeadsView: (v: 'kanban' | 'list' | 'table') => void;
-  setServicesView: (v: 'grid' | 'table') => void;
-  setInventoryView: (v: 'grid' | 'list') => void;
+  setLeadsView: (v: "kanban" | "list" | "table") => void;
+  setServicesView: (v: "grid" | "table") => void;
+  setInventoryView: (v: "grid" | "list") => void;
   markNotificationRead: (id: string) => void;
   markAllRead: () => void;
   setCurrentWorkspace: (id: string) => void;
@@ -67,21 +70,30 @@ export const useAppStore = create<AppState>()(
       isSwitchingWorkspace: false,
       switchingToWorkspaceName: null,
       authTransition: false,
-      theme: 'light',
-      leadsView: 'kanban',
-      servicesView: 'grid',
-      inventoryView: 'grid',
+      theme: "light",
+      leadsView: "kanban",
+      servicesView: "grid",
+      inventoryView: "grid",
       notifications: [],
       workspaces: [],
-      currentWorkspaceId: '',
-      profile: { name: '', email: '', phone: '', business: '', city: '', timezone: '' },
+      currentWorkspaceId: "",
+      profile: {
+        name: "",
+        email: "",
+        phone: "",
+        business: "",
+        city: "",
+        timezone: "",
+      },
       notifSettings: INITIAL_NOTIF_SETTINGS,
 
-      toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      toggleSidebar: () =>
+        set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
       setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
+      toggleTheme: () =>
+        set((s) => ({ theme: s.theme === "light" ? "dark" : "light" })),
       setEscalatingLead: (escalatingLead) => set({ escalatingLead }),
       setHotLead: (hotLead) => set({ hotLead }),
       setLeadsView: (leadsView) => set({ leadsView }),
@@ -89,24 +101,32 @@ export const useAppStore = create<AppState>()(
       setInventoryView: (inventoryView) => set({ inventoryView }),
 
       markNotificationRead: (id) =>
-        set(s => ({ notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n) })),
+        set((s) => ({
+          notifications: s.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n,
+          ),
+        })),
       markAllRead: () =>
-        set(s => ({ notifications: s.notifications.map(n => ({ ...n, read: true })) })),
+        set((s) => ({
+          notifications: s.notifications.map((n) => ({ ...n, read: true })),
+        })),
 
       setCurrentWorkspace: (currentWorkspaceId) => set({ currentWorkspaceId }),
-      setWorkspaceSwitching: (switching, name) => set({
-        isSwitchingWorkspace: switching,
-        switchingToWorkspaceName: switching ? (name ?? null) : null,
-      }),
+      setWorkspaceSwitching: (switching, name) =>
+        set({
+          isSwitchingWorkspace: switching,
+          switchingToWorkspaceName: switching ? (name ?? null) : null,
+        }),
       setAuthTransition: (authTransition) => set({ authTransition }),
-      addWorkspace: (ws) => set(s => ({ workspaces: [...s.workspaces, ws] })),
+      addWorkspace: (ws) => set((s) => ({ workspaces: [...s.workspaces, ws] })),
 
-      updateProfile: (p) => set(s => ({ profile: { ...s.profile, ...p } })),
+      updateProfile: (p) => set((s) => ({ profile: { ...s.profile, ...p } })),
 
-      updateNotifSettings: (s) => set(st => ({ notifSettings: { ...st.notifSettings, ...s } })),
+      updateNotifSettings: (s) =>
+        set((st) => ({ notifSettings: { ...st.notifSettings, ...s } })),
     }),
     {
-      name: 'sf:app',
+      name: "sf:app",
       partialize: (state) => ({
         theme: state.theme,
         leadsView: state.leadsView,
@@ -119,6 +139,6 @@ export const useAppStore = create<AppState>()(
         notifSettings: state.notifSettings,
         sidebarCollapsed: state.sidebarCollapsed,
       }),
-    }
-  )
+    },
+  ),
 );

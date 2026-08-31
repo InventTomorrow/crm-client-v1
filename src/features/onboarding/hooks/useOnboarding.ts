@@ -11,6 +11,7 @@ async function getOnboardingStatus() {
   return res.data.data as {
     onboardingStep: 'CATEGORY' | 'CHANNEL' | 'CHATBOT' | 'DONE';
     workspaceName: string;
+    businessName: string;
     businessVertical: BusinessVertical;
     inventoryTier: string | null;
     channels: Array<{ channel: string; status: string }>;

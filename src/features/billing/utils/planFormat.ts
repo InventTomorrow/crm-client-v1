@@ -20,6 +20,23 @@ export function formatPlanPeriod(duration: PlanDuration, customDurationDays: num
   return `/ ${DURATION_LABEL[duration]}`;
 }
 
+/** Durations whose label is one countable unit ("month" → "2 months"). The
+ *  rest are already spans ("7 days"), so they multiply instead. */
+const PLURALISABLE_DURATIONS: PlanDuration[] = ['MONTHLY', 'QUARTERLY', 'ANNUAL'];
+
+/** "2 months", "1 year", "2 × 7 days" — the span a multi-period link sells. */
+export function formatPeriodCount(
+  count: number,
+  duration: PlanDuration,
+  customDurationDays: number | null,
+): string {
+  const unit = formatPlanPeriod(duration, customDurationDays).replace('/ ', '');
+  if (!PLURALISABLE_DURATIONS.includes(duration)) {
+    return count === 1 ? unit : `${count} × ${unit}`;
+  }
+  return `${count} ${unit}${count === 1 ? '' : 's'}`;
+}
+
 const DURATION_TAB_LABEL: Record<PlanDuration, string> = {
   DAYS_3: '3 days',
   DAYS_7: '7 days',

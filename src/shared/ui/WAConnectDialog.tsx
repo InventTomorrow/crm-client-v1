@@ -53,10 +53,9 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
       }
       aria-label="WhatsApp connection"
       className={cn(
-        "relative inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] transition-all duration-200",
-        // The phone label keeps its flex slot when hidden — drop the gap too, or
-        // the icon sits off-centre in the circle.
-        showsPhone ? "gap-1.5 px-3" : "w-9 gap-0 px-0",
+        // Size stays fixed on hover — resizing the button shifts the whole top-bar
+        // flex row under the cursor and makes hover flicker on and off.
+        "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] transition-colors duration-200",
         isConnected && "text-[var(--accent-2)] hover:bg-[var(--accent-soft)]",
         isPending && "text-[var(--warning)] hover:bg-[var(--warning)]/10",
         !isConnected &&
@@ -75,10 +74,11 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
         <path d="M11.996 1.998C6.478 1.998 2 6.476 2 11.994c0 1.762.461 3.416 1.268 4.853L2 22l5.294-1.247a9.95 9.95 0 0 0 4.702 1.19c5.518 0 9.996-4.477 9.996-9.995 0-5.518-4.478-9.95-9.996-9.95zm0 18.19a8.187 8.187 0 0 1-4.18-1.148l-.3-.178-3.115.733.779-3.023-.196-.31A8.153 8.153 0 0 1 3.81 11.994c0-4.516 3.672-8.187 8.186-8.187s8.187 3.671 8.187 8.187c0 4.515-3.673 8.187-8.187 8.187z" />
       </svg>
 
+      {/* Floats outside the button box so it never affects layout or hover state */}
       <span
         className={cn(
-          "overflow-hidden whitespace-nowrap text-[11.5px] font-medium transition-all duration-200 relative z-10",
-          showsPhone ? "max-w-[120px] opacity-100" : "max-w-0 opacity-0",
+          "pointer-events-none absolute top-1/2 right-full mr-1.5 z-20 -translate-y-1/2 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2 py-1 text-[11.5px] font-medium text-[var(--ink)] shadow-sm transition-opacity duration-200",
+          showsPhone ? "opacity-100" : "opacity-0",
         )}
       >
         +{phone}
@@ -86,11 +86,10 @@ export function WAStatusButton({ onClick }: { onClick: () => void }) {
 
       <span
         className={cn(
-          "absolute top-0.5 right-0.5 w-2 h-2 rounded-full border-[1.5px] border-[var(--surface)] transition-opacity duration-150",
+          "absolute top-0.5 right-0.5 w-2 h-2 rounded-full border-[1.5px] border-[var(--surface)]",
           isConnected && "bg-[var(--accent-2)]",
           isPending && "bg-[var(--warning)] animate-pulse",
           !isConnected && !isPending && "bg-[var(--ink-mute)] opacity-50",
-          showsPhone && "opacity-0",
         )}
       />
     </button>

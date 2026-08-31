@@ -10,9 +10,10 @@ export async function createTenant(data: CreateTenantPayload): Promise<Tenant> {
   return res.data.data;
 }
 
+/** The workspace name is immutable — the server accepts only these fields. */
 export async function updateTenant(
   id: string,
-  data: { businessVertical: BusinessVertical },
+  data: { businessVertical?: BusinessVertical; businessName?: string },
 ): Promise<Tenant> {
   const res = await apiClient.put<{ success: true; data: Tenant }>(
     `/tenants/${id}`,

@@ -3,6 +3,7 @@ import {
   BadgeCheck,
   Building2,
   CheckCircle2,
+  CalendarDays,
   Crown,
   Loader2,
   MessageCircle,
@@ -12,7 +13,12 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/shared/ui/Button";
-import { formatPlanPrice, formatPlanPeriod } from "@/features/billing/utils/planFormat";
+import {
+  formatAmount,
+  formatPeriodCount,
+  formatPlanPeriod,
+  formatPlanPrice,
+} from "@/features/billing/utils/planFormat";
 import { formatPlanLimit } from "@/features/billing/utils/planLimits";
 import { usePublicSubscriptionLink } from "./hooks";
 import { PaymentAccountsCard } from "./PaymentAccountsCard";
@@ -21,11 +27,18 @@ import { SubscriptionCheckoutForm } from "./SubscriptionCheckoutForm";
 
 /* ─── Plan sidebar ─────────────────────────────────────────────────────────── */
 
-function PlanSidebar({ plan, supportContact, paymentAccounts }: {
+function PlanSidebar({ plan, periodCount, amountDue, supportContact, paymentAccounts }: {
   plan: import("@/features/billing/types").Plan;
+  periodCount: number;
+  amountDue: number;
   supportContact: import("./types").SupportContact;
   paymentAccounts: import("./types").PublicPaymentAccount[];
 }) {
+  // A single-period link reads as a rate ("Rs. 2,999 / mo"); a multi-period one
+  // is a one-off purchase, so it leads with the total instead.
+  const isMultiPeriod = periodCount > 1;
+  const dueLabel = formatAmount(amountDue, plan.currency);
+  const spanLabel = formatPeriodCount(periodCount, plan.duration, plan.customDurationDays);
   const hasChannel = Boolean(
     supportContact.supportPhone ||
     supportContact.supportWhatsapp ||
@@ -56,12 +69,20 @@ function PlanSidebar({ plan, supportContact, paymentAccounts }: {
               <h2 className="mt-1 text-[22px] font-bold leading-tight text-white">
                 {plan.name}
               </h2>
-              {plan.isTrial && (
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
-                  <Zap size={10} />
-                  Trial
-                </span>
-              )}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {plan.isTrial && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+                    <Zap size={10} />
+                    Trial
+                  </span>
+                )}
+                {isMultiPeriod && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-0.5 text-[11px] font-bold text-accent">
+                    <CalendarDays size={11} />
+                    {spanLabel}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
               <Crown size={18} className="text-white" />
@@ -70,12 +91,20 @@ function PlanSidebar({ plan, supportContact, paymentAccounts }: {
 
           <div className="mt-4 flex items-end gap-1">
             <span className="text-[28px] font-bold leading-none text-white">
-              {formatPlanPrice(plan)}
+              {isMultiPeriod ? dueLabel : formatPlanPrice(plan)}
             </span>
             <span className="mb-0.5 text-[13px] text-white/60">
-              / {formatPlanPeriod(plan.duration, plan.customDurationDays)}
+              {isMultiPeriod
+                ? "total"
+                : `/ ${formatPlanPeriod(plan.duration, plan.customDurationDays)}`}
             </span>
           </div>
+          {isMultiPeriod && (
+            <p className="mt-1 text-[11.5px] text-white/60">
+              {formatPlanPrice(plan)}{" "}
+              {formatPlanPeriod(plan.duration, plan.customDurationDays)} × {periodCount}
+            </p>
+          )}
         </div>
 
         {/* Feature rows */}
@@ -93,7 +122,7 @@ function PlanSidebar({ plan, supportContact, paymentAccounts }: {
       {plan.price > 0 && (
         <PaymentAccountsCard
           accounts={paymentAccounts}
-          amountLabel={formatPlanPrice(plan)}
+          amountLabel={dueLabel}
         />
       )}
 
@@ -247,7 +276,7 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
     );
   }
 
-  const { plan, supportContact, paymentAccounts } = data;
+  const { plan, periodCount, amountDue, supportContact, paymentAccounts } = data;
 
   return (
     <div className="mx-auto w-full max-w-[1020px] px-4 py-8 md:py-12">
@@ -269,6 +298,8 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
         <div className="md:sticky md:top-8">
           <PlanSidebar
             plan={plan}
+            periodCount={periodCount}
+            amountDue={amountDue}
             supportContact={supportContact}
             paymentAccounts={paymentAccounts ?? []}
           />
@@ -282,6 +313,7 @@ export function SubscriptionCheckoutView({ token }: { token: string }) {
             <SubscriptionCheckoutForm
               token={token}
               plan={plan}
+              amountDue={amountDue}
               prefill={data.prefill}
               onSubmitted={() => setIsSubmitted(true)}
             />

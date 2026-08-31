@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { CRMAvatar } from '@/shared/ui/CRMAvatar';
-import { DataTable, type ColumnDef } from '@/shared/ui/DataTable';
-import { APPOINTMENT_STATUS_LABELS, type Appointment } from '../types';
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
+import { CRMAvatar } from "@/shared/ui/CRMAvatar";
+import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
+import { APPOINTMENT_STATUS_LABELS, type Appointment } from "../types";
 import {
   formatSlotTime,
   isPastAppointment,
   toLocalDateKey,
-} from '../utils/appointmentFormat';
-import { AppointmentDetailSheet } from './AppointmentDetailSheet';
-import { AppointmentStatusActions } from './AppointmentStatusActions';
-import { AppointmentStatusCell } from './AppointmentStatusCell';
+} from "../utils/appointmentFormat";
+import { AppointmentDetailSheet } from "./AppointmentDetailSheet";
+import { AppointmentStatusActions } from "./AppointmentStatusActions";
+import { AppointmentStatusCell } from "./AppointmentStatusCell";
 
 interface AppointmentsListProps {
   appointments: Appointment[];
@@ -22,26 +23,41 @@ interface AppointmentsListProps {
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
   toolbar?: React.ReactNode;
+  /** Healthcare doctor bookings — who the appointment is with. */
+  showPractitioner?: boolean;
+  /** Healthcare — the clinical service the appointment was booked for. */
+  showClinicalService?: boolean;
+  emptyMessage?: string;
 }
 
 /** "Today" / "Tomorrow" for the near days, otherwise "Fri, 7 Aug". */
 function formatDayLabel(isoInstant: string, timezone: string): string {
   const dateKey = toLocalDateKey(isoInstant, timezone);
   const todayKey = toLocalDateKey(new Date().toISOString(), timezone);
-  if (dateKey === todayKey) return 'Today';
+  if (dateKey === todayKey) return "Today";
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  if (dateKey === toLocalDateKey(tomorrow.toISOString(), timezone)) return 'Tomorrow';
+  if (dateKey === toLocalDateKey(tomorrow.toISOString(), timezone))
+    return "Tomorrow";
 
   const sameYear = dateKey.slice(0, 4) === todayKey.slice(0, 4);
-  return new Date(isoInstant).toLocaleDateString('en-GB', {
+  return new Date(isoInstant).toLocaleDateString("en-GB", {
     timeZone: timezone,
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    ...(sameYear ? {} : { year: 'numeric' }),
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...(sameYear ? {} : { year: "numeric" }),
   });
+}
+
+/** "Dr. Ayesha Khan" — the title only when the practitioner has one on file. */
+function formatPractitionerName(
+  practitioner: NonNullable<Appointment["practitioner"]>,
+): string {
+  return practitioner.title
+    ? `${practitioner.title} ${practitioner.fullName}`
+    : practitioner.fullName;
 }
 
 export function AppointmentsList({
@@ -49,24 +65,102 @@ export function AppointmentsList({
   timezone,
   isLoading,
   toolbar,
+  showPractitioner = false,
+  showClinicalService = false,
+  emptyMessage = "No appointments found.",
 }: AppointmentsListProps) {
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+  const vocabulary = useLeadVocabulary();
 
-  const columns: ColumnDef<Appointment, unknown>[] = useMemo(
+  const practitionerColumn: ColumnDef<Appointment, unknown> = useMemo(
+    () => ({
+      id: "practitioner",
+      accessorFn: (appointment) => appointment.practitioner?.fullName ?? "",
+      header: "Doctor",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const { practitioner } = row.original;
+        if (!practitioner) {
+          return (
+            <span className="text-[12px] text-[var(--ink-mute)]/60">
+              Clinic
+            </span>
+          );
+        }
+
+        return (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <CRMAvatar
+              name={practitioner.fullName}
+              src={practitioner.photoUrl}
+              size={30}
+            />
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-[13px] font-medium leading-tight text-[var(--ink)]">
+                {formatPractitionerName(practitioner)}
+              </span>
+              <span className="truncate text-[11.5px] leading-tight text-[var(--ink-mute)]">
+                {practitioner.designation ??
+                  practitioner.specialties[0] ??
+                  "Practitioner"}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    }),
+    [],
+  );
+
+  const clinicalServiceColumn: ColumnDef<Appointment, unknown> = useMemo(
+    () => ({
+      id: "clinicalService",
+      accessorFn: (appointment) => appointment.clinicalService?.name ?? "",
+      header: "Service",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const { clinicalService } = row.original;
+        if (!clinicalService) {
+          return (
+            <span className="text-[12px] text-[var(--ink-mute)]/60">—</span>
+          );
+        }
+
+        return (
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-[13px] leading-tight text-[var(--ink)]">
+              {clinicalService.name}
+            </span>
+            {clinicalService.category && (
+              <span className="truncate text-[11.5px] leading-tight text-[var(--ink-mute)]">
+                {clinicalService.category}
+              </span>
+            )}
+          </div>
+        );
+      },
+    }),
+    [],
+  );
+
+  const columns = useMemo<ColumnDef<Appointment, unknown>[]>(
     () => [
       {
-        id: 'scheduledAt',
+        id: "scheduledAt",
         accessorFn: (appointment) => appointment.scheduledAt,
-        header: 'When',
+        header: "When",
         enableSorting: true,
         cell: ({ row }) => {
           const appointment = row.original;
           const isPast = isPastAppointment(appointment);
           const dayLabel = formatDayLabel(appointment.scheduledAt, timezone);
-          const isNearDay = dayLabel === 'Today' || dayLabel === 'Tomorrow';
+          const isNearDay = dayLabel === "Today" || dayLabel === "Tomorrow";
 
           return (
-            <div className={cn('flex flex-col gap-0.5', isPast && 'opacity-55')}>
+            <div
+              className={cn("flex flex-col gap-0.5", isPast && "opacity-55")}
+            >
               <span className="text-[13px] font-semibold tabular-nums leading-tight text-[var(--ink)]">
                 {formatSlotTime(appointment.scheduledAt, timezone)}
                 <span className="ml-1.5 text-[11px] font-normal text-[var(--ink-mute)]">
@@ -75,10 +169,10 @@ export function AppointmentsList({
               </span>
               <span
                 className={cn(
-                  'text-[11.5px] leading-tight',
+                  "text-[11.5px] leading-tight",
                   isNearDay && !isPast
-                    ? 'font-medium text-[var(--accent)]'
-                    : 'text-[var(--ink-mute)]',
+                    ? "font-medium text-[var(--accent)]"
+                    : "text-[var(--ink-mute)]",
                 )}
               >
                 {dayLabel}
@@ -88,10 +182,12 @@ export function AppointmentsList({
         },
       },
       {
-        id: 'customer',
+        id: "customer",
         accessorFn: (appointment) =>
-          appointment.customerName ?? appointment.lead?.name ?? appointment.customerPhone,
-        header: 'Customer',
+          appointment.customerName ??
+          appointment.lead?.name ??
+          appointment.customerPhone,
+        header: vocabulary.customerSingularTitle,
         enableSorting: true,
         cell: ({ row }) => {
           const appointment = row.original;
@@ -105,17 +201,20 @@ export function AppointmentsList({
                   {name ?? appointment.customerPhone}
                 </span>
                 <span className="truncate text-[11.5px] leading-tight text-[var(--ink-mute)]">
-                  {name ? appointment.customerPhone : 'No name on file'}
+                  {name ? appointment.customerPhone : "No name on file"}
                 </span>
               </div>
             </div>
           );
         },
       },
+      ...(showPractitioner ? [practitionerColumn] : []),
+      ...(showClinicalService ? [clinicalServiceColumn] : []),
       {
-        id: 'status',
-        accessorFn: (appointment) => APPOINTMENT_STATUS_LABELS[appointment.status],
-        header: 'Status',
+        id: "status",
+        accessorFn: (appointment) =>
+          APPOINTMENT_STATUS_LABELS[appointment.status],
+        header: "Status",
         enableSorting: true,
         cell: ({ row }) => (
           // Stop the row-click handler from opening the sheet behind the menu
@@ -125,16 +224,19 @@ export function AppointmentsList({
         ),
       },
       {
-        id: 'notes',
-        accessorFn: (appointment) => appointment.notes || appointment.cancelReason || '',
-        header: 'Notes',
+        id: "notes",
+        accessorFn: (appointment) =>
+          appointment.notes || appointment.cancelReason || "",
+        header: "Notes",
         enableSorting: false,
         cell: ({ row }) => {
           const appointment = row.original;
           if (appointment.cancelReason) {
             return (
               <p className="max-w-[260px] truncate text-[12px] text-[var(--ink-mute)]">
-                <span className="font-medium text-destructive">Cancelled — </span>
+                <span className="font-medium text-destructive">
+                  Cancelled —{" "}
+                </span>
                 {appointment.cancelReason}
               </p>
             );
@@ -146,26 +248,41 @@ export function AppointmentsList({
               </p>
             );
           }
-          return <span className="text-[12px] text-[var(--ink-mute)]/60">—</span>;
+          return (
+            <span className="text-[12px] text-[var(--ink-mute)]/60">—</span>
+          );
         },
       },
       {
-        id: '__actions',
+        id: "__actions",
         // Fixed pixel size — tanstack-table won't ever auto-resize it
         size: 56,
         minSize: 56,
         maxSize: 56,
-        header: '',
+        header: "",
         enableSorting: false,
         cell: ({ row }) => (
           // Stop the row-click handler from also triggering when an action is clicked
-          <div className="flex justify-end pr-1" onClick={(e) => e.stopPropagation()}>
-            <AppointmentStatusActions appointment={row.original} layout="menu" />
+          <div
+            className="flex justify-end pr-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <AppointmentStatusActions
+              appointment={row.original}
+              layout="menu"
+            />
           </div>
         ),
       },
     ],
-    [timezone],
+    [
+      timezone,
+      showPractitioner,
+      showClinicalService,
+      practitionerColumn,
+      clinicalServiceColumn,
+      vocabulary.customerSingularTitle,
+    ],
   );
 
   return (
@@ -175,7 +292,7 @@ export function AppointmentsList({
         columns={columns}
         isLoading={isLoading}
         toolbar={toolbar}
-        emptyMessage="No appointments found."
+        emptyMessage={emptyMessage}
         defaultPageSize={20}
         onRowClick={(appointment) => setSelectedAppointment(appointment)}
       />

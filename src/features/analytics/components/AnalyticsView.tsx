@@ -33,18 +33,27 @@ import {
   YAxis,
 } from "recharts";
 import { UsageSummaryCard } from "@/features/billing/components/UsageSummaryCard";
+import {
+  useLeadVocabulary,
+  type LeadVocabulary,
+} from "@/features/leads/utils/leadVocabulary";
 import { useAnalyticsOverview } from "../hooks/useAnalyticsOverview";
 import type { AiHandoff, FunnelStage, KpiCard, RangePreset } from "../types";
 
 const PRESETS: RangePreset[] = ["3d", "7d", "30d", "90d"];
 
-const chartConfig = {
-  leads: { label: "Leads", color: "var(--accent)" },
-  orders: { label: "Orders", color: "var(--accent-2)" },
-  completedOrders: { label: "Completed", color: "#7C3AED" },
-  appointments: { label: "Appointments", color: "var(--accent-2)" },
-  completedAppointments: { label: "Calls completed", color: "#7C3AED" },
-} satisfies ChartConfig;
+function chartConfigFor(vocabulary: LeadVocabulary): ChartConfig {
+  return {
+    leads: { label: vocabulary.pluralTitle, color: "var(--accent)" },
+    orders: { label: "Orders", color: "var(--accent-2)" },
+    completedOrders: { label: "Completed", color: "#7C3AED" },
+    appointments: { label: "Appointments", color: "var(--accent-2)" },
+    completedAppointments: {
+      label: `${vocabulary.bookingSingularTitle}s completed`,
+      color: "#7C3AED",
+    },
+  };
+}
 
 const KPI_ICONS: Record<string, LucideIcon> = {
   newLeads: UserPlus,
@@ -180,7 +189,7 @@ function Bar({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-md bg-[var(--line)] dark:bg-white/10',
+        "animate-pulse rounded-md bg-[var(--line)] dark:bg-white/10",
         className,
       )}
     />
@@ -262,6 +271,8 @@ function AnalyticsSkeleton() {
 // ──────────────────── AnalyticsView (root) ────────────────────
 export function AnalyticsView() {
   const [range, setRange] = useState<RangePreset>("30d");
+  const vocabulary = useLeadVocabulary();
+  const chartConfig = chartConfigFor(vocabulary);
 
   const { data, isLoading, isFetching, refetch, dataUpdatedAt } =
     useAnalyticsOverview(range);

@@ -112,6 +112,16 @@ export default function Footer() {
                   >
                     <Mail className="size-4 text-brand-green" />
                     {INFO_EMAIL}
+                    {SUPPORT_EMAIL}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={`mailto:${INFO_EMAIL}`}
+                    className="inline-flex items-center gap-2 text-brand-text text-[14px] transition-colors hover:text-brand-green"
+                  >
+                    <Mail className="size-4 text-brand-green" />
+                    {INFO_EMAIL}
                   </Link>
                 </li>
                 <li>

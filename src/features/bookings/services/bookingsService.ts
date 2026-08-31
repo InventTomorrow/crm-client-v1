@@ -6,6 +6,7 @@ import type {
   AppointmentStatusCounts,
   Availability,
   BookingConfig,
+  BookingType,
   BookingConfigFormData,
   CreateAppointmentFormData,
 } from '../types';
@@ -25,7 +26,14 @@ export async function upsertBookingConfig(payload: BookingConfigFormData) {
   return res.data.data;
 }
 
-export async function getAvailability(params: { from?: string; days?: number; staffId?: string }) {
+export async function getAvailability(params: {
+  from?: string;
+  days?: number;
+  staffId?: string;
+  /** Healthcare — narrows the grid to one practitioner's own calendar. */
+  practitionerId?: string;
+  clinicalServiceId?: string;
+}) {
   const res = await apiClient.get<{ success: true; data: Availability }>(
     '/bookings/availability',
     { params },
@@ -79,9 +87,10 @@ export async function deleteAppointment(appointmentId: string) {
   return { appointmentId };
 }
 
-export async function getBookingStats() {
+export async function getBookingStats(params: { bookingType?: BookingType } = {}) {
   const res = await apiClient.get<{ success: true; data: AppointmentStatusCounts }>(
     '/bookings/stats',
+    { params },
   );
   return res.data.data;
 }

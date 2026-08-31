@@ -1,4 +1,4 @@
-import type { Lead } from "../types";
+import type { Lead, LeadStatusMeta } from "../types";
 import { STATUS_META } from "../types";
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -8,7 +8,10 @@ const CHANNEL_LABEL: Record<string, string> = {
   tk: "TikTok",
 };
 
-function toCsv(rows: Lead[]): string {
+function toCsv(
+  rows: Lead[],
+  statusMeta: Record<string, LeadStatusMeta>,
+): string {
   const headers = ["Name", "Phone", "Email", "City", "Channel", "Status"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [headers.join(",")];
@@ -20,7 +23,7 @@ function toCsv(rows: Lead[]): string {
         l.email ?? "",
         l.city,
         CHANNEL_LABEL[l.channel] ?? l.channel,
-        STATUS_META[l.status]?.label ?? l.status,
+        statusMeta[l.status]?.label ?? l.status,
       ]
         .map(esc)
         .join(","),
@@ -29,9 +32,14 @@ function toCsv(rows: Lead[]): string {
   return lines.join("\n");
 }
 
-/** Builds a CSV from the given leads and triggers a browser download. */
-export function downloadLeadsCsv(rows: Lead[], filename?: string) {
-  const csv = toCsv(rows);
+/** Builds a CSV from the given leads and triggers a browser download. Status
+ * labels come from the caller so a clinic exports its own vocabulary. */
+export function downloadLeadsCsv(
+  rows: Lead[],
+  filename?: string,
+  statusMeta: Record<string, LeadStatusMeta> = STATUS_META,
+) {
+  const csv = toCsv(rows, statusMeta);
   const url = URL.createObjectURL(
     new Blob([csv], { type: "text/csv;charset=utf-8;" }),
   );

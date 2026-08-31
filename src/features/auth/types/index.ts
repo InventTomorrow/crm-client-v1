@@ -24,7 +24,8 @@ export const registerSchema = z.object({
 });
 
 export const createWorkspaceSchema = z.object({
-  name: z.string().min(2, 'Workspace name must be at least 2 characters'),
+  name: z.string().min(2, 'Workspace name must be at least 2 characters').max(60),
+  businessName: z.string().min(2, 'Business name must be at least 2 characters').max(120),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -121,7 +122,7 @@ export interface UserResponse {
   memberships: Array<{
     id: string;
     role: { id: string; name: string };
-    tenant: { id: string; name: string; type: string; businessVertical: BusinessVertical; deletedAt?: string | null };
+    tenant: { id: string; name: string; businessName?: string | null; type: string; businessVertical: BusinessVertical; deletedAt?: string | null };
     isActive?: boolean;
   }>;
   // Active-membership convenience fields (resolved server-side from the JWT tenant)

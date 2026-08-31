@@ -1,6 +1,7 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import {
   useCreateTenant,
   useDeleteTenant,
@@ -12,13 +13,13 @@ import {
 } from "@/features/tenant/hooks/useTenant";
 import type { WorkspaceStats } from "@/features/tenant/types";
 import { useAppStore } from "@/lib/appStore";
-import { BUSINESS_VERTICALS, type BusinessVertical } from "@/lib/business-verticals";
-import { cn } from "@/lib/utils";
-import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import {
-  buildWorkspaceCardTiles,
-  getBusinessCategoryBadge,
-} from "../utils/workspaceCardStats";
+  BUSINESS_VERTICALS,
+  type BusinessVertical,
+} from "@/lib/business-verticals";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
+import { Checkbox } from "@/shared/ui/Checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,24 +27,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { Input } from "@/shared/ui/Input";
+import { Label } from "@/shared/ui/Label";
 import {
   AlertTriangle,
   ArrowRightLeft,
   Building2,
   Check,
   Crown,
-  LogOut,
   Loader2,
+  LogOut,
   Plus,
   Shield,
   Trash2,
   UserMinus,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/shared/ui/Button";
-import { Input } from "@/shared/ui/Input";
-import { Checkbox } from "@/shared/ui/Checkbox";
-import { Label } from "@/shared/ui/Label";
+import {
+  buildWorkspaceCardTiles,
+  getBusinessCategoryBadge,
+} from "../utils/workspaceCardStats";
 
 // ─────────────────────────────────────────────────────────────
 // Colour palette
@@ -62,14 +65,26 @@ const PALETTE = [
 // ─────────────────────────────────────────────────────────────
 function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
-  const [businessVertical, setBusinessVertical] = useState<BusinessVertical | null>(null);
+  const [businessName, setBusinessName] = useState("");
+  const [businessVertical, setBusinessVertical] =
+    useState<BusinessVertical | null>(null);
   const { mutate: createTenant, isPending } = useCreateTenant();
 
-  const canCreate = !!name.trim() && !!businessVertical;
+  const canCreate =
+    name.trim().length >= 2 &&
+    businessName.trim().length >= 2 &&
+    !!businessVertical;
 
   const handleCreate = () => {
     if (!canCreate || !businessVertical) return;
-    createTenant({ name: name.trim(), businessVertical }, { onSuccess: () => onClose() });
+    createTenant(
+      {
+        name: name.trim(),
+        businessName: businessName.trim(),
+        businessVertical,
+      },
+      { onSuccess: () => onClose() },
+    );
   };
 
   return (
@@ -113,12 +128,32 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                 if (e.key === "Enter") handleCreate();
               }}
             />
+            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
+              Internal label for your team — can&apos;t be changed later.
+            </p>
+          </div>
+          <div>
+            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
+              Business name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="e.g. Karachi Karahi"
+              disabled={isPending}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+              }}
+            />
+            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
+              What customers see — editable later in Business settings.
+            </p>
           </div>
           <div>
             <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
               Business type <span className="text-red-500">*</span>
             </Label>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {BUSINESS_VERTICALS.map((vertical, index) => (
                 <VerticalCard
                   key={vertical.value}
@@ -147,9 +182,13 @@ function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
           </Button>
           <Button onClick={handleCreate} disabled={!canCreate || isPending}>
             {isPending ? (
-              <><Loader2 size={13} className="animate-spin" /> Creating…</>
+              <>
+                <Loader2 size={13} className="animate-spin" /> Creating…
+              </>
             ) : (
-              <><Plus size={13} /> Create workspace</>
+              <>
+                <Plus size={13} /> Create workspace
+              </>
             )}
           </Button>
         </div>
@@ -205,8 +244,8 @@ function DeleteConfirmDialog({
           <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed">
             <strong className="text-[var(--ink)]">{workspaceName}</strong> will
             be scheduled for deletion. You can restore it within{" "}
-            <strong className="text-[var(--ink)]">60 days</strong>; after that it
-            and all its leads, messages, inventory, and team members are
+            <strong className="text-[var(--ink)]">60 days</strong>; after that
+            it and all its leads, messages, inventory, and team members are
             permanently removed.
           </p>
           <div>
@@ -229,7 +268,10 @@ function DeleteConfirmDialog({
               checked={removeMembers}
               onCheckedChange={(v) => setRemoveMembers(!!v)}
             />
-            <Label htmlFor="remove-members" className="text-[12.5px] text-[var(--ink-soft)] leading-snug cursor-pointer">
+            <Label
+              htmlFor="remove-members"
+              className="text-[12.5px] text-[var(--ink-soft)] leading-snug cursor-pointer"
+            >
               Also remove all team members now. They lose access immediately;
               the owner keeps it so the workspace can still be restored.
             </Label>
@@ -245,9 +287,13 @@ function DeleteConfirmDialog({
             disabled={typed !== workspaceName || isPending}
           >
             {isPending ? (
-              <><Loader2 size={13} className="animate-spin" /> Deleting…</>
+              <>
+                <Loader2 size={13} className="animate-spin" /> Deleting…
+              </>
             ) : (
-              <><Trash2 size={13} /> Delete workspace</>
+              <>
+                <Trash2 size={13} /> Delete workspace
+              </>
             )}
           </Button>
         </div>
@@ -308,11 +354,19 @@ function LeaveConfirmDialog({
           <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isPending}
+          >
             {isPending ? (
-              <><Loader2 size={13} className="animate-spin" /> Leaving…</>
+              <>
+                <Loader2 size={13} className="animate-spin" /> Leaving…
+              </>
             ) : (
-              <><LogOut size={13} /> Leave workspace</>
+              <>
+                <LogOut size={13} /> Leave workspace
+              </>
             )}
           </Button>
         </div>
@@ -360,7 +414,10 @@ function WorkspaceCard({
   const short = membership.tenant.name.substring(0, 2).toUpperCase();
   const isOwner = membership.role.name.toLowerCase() === "owner";
   const category = getBusinessCategoryBadge(membership.tenant.businessVertical);
-  const tiles = buildWorkspaceCardTiles(membership.tenant.businessVertical, stats);
+  const tiles = buildWorkspaceCardTiles(
+    membership.tenant.businessVertical,
+    stats,
+  );
 
   // Pending deletion: compute days left in the 60-day grace window.
   const pendingDelete = !!membership.tenant.deletedAt;
@@ -461,9 +518,13 @@ function WorkspaceCard({
               disabled={isRestoring}
             >
               {isRestoring ? (
-                <><Loader2 size={13} className="animate-spin" /> Restoring…</>
+                <>
+                  <Loader2 size={13} className="animate-spin" /> Restoring…
+                </>
               ) : (
-                <><ArrowRightLeft size={13} /> Restore workspace</>
+                <>
+                  <ArrowRightLeft size={13} /> Restore workspace
+                </>
               )}
             </Button>
           ) : (

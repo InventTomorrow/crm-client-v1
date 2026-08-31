@@ -6,8 +6,11 @@ import {
 } from '@/shared/ui/Collapsible';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import type { VerticalCapability } from '@/lib/business-verticals';
-import { findActiveChildHref, type NavItem } from './navItems';
+import type {
+  BusinessVertical,
+  VerticalCapability,
+} from '@/lib/business-verticals';
+import { findActiveChildHref, navLabelFor, type NavItem } from './navItems';
 
 interface SidebarNavItemProps {
   item: NavItem;
@@ -19,6 +22,8 @@ interface SidebarNavItemProps {
   onNavigate: () => void;
   canAccess: (perm?: string) => boolean;
   canUseCapability: (capability?: VerticalCapability) => boolean;
+  /** Drives per-vertical label overrides — see navLabelFor. */
+  businessVertical?: BusinessVertical | undefined;
 }
 
 export function SidebarNavItem({
@@ -31,10 +36,14 @@ export function SidebarNavItem({
   onNavigate,
   canAccess,
   canUseCapability,
+  businessVertical,
 }: SidebarNavItemProps) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
   const visibleChildren = (item.children ?? []).filter(
-    (child) => canAccess(child.perm) && canUseCapability(child.capability),
+    (child) =>
+      canAccess(child.perm) &&
+      canUseCapability(child.capability) &&
+      !(businessVertical && child.hiddenForVerticals?.includes(businessVertical)),
   );
 
   // Collapsed rail has no room for a submenu — the parent link still reaches the section.
@@ -70,7 +79,9 @@ export function SidebarNavItem({
               active ? 'text-[var(--accent)]' : 'text-[var(--ink-mute)]',
             )}
           />
-          {!collapsed && <span className="flex-1">{item.label}</span>}
+          {!collapsed && (
+            <span className="flex-1">{navLabelFor(item, businessVertical)}</span>
+          )}
           {!collapsed && !!badge && (
             <span
               className={cn(
@@ -89,7 +100,7 @@ export function SidebarNavItem({
         {showChildren && (
           <button
             type="button"
-            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${item.label}`}
+            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${navLabelFor(item, businessVertical)}`}
             aria-expanded={expanded}
             onClick={onToggleExpanded}
             className="absolute right-1.5 flex h-6 w-6 items-center justify-center rounded-md text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
@@ -132,7 +143,7 @@ export function SidebarNavItem({
                       )}
                     />
                   )}
-                  <span className="truncate">{child.label}</span>
+                  <span className="truncate">{navLabelFor(child, businessVertical)}</span>
                 </Link>
               );
             })}

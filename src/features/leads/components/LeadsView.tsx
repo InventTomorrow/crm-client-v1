@@ -12,7 +12,6 @@ import { StatCard } from "@/shared/ui/StatCard";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
   Download,
-  Flame,
   Grid2x2,
   Layers,
   Loader2,
@@ -35,6 +34,7 @@ import {
 } from "../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
 import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
+import { useLeadVocabulary } from "../utils/leadVocabulary";
 import type { LeadFormData } from "../validations.lead";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog from "./LeadFormDialog";
@@ -45,6 +45,7 @@ import TableView from "./views/TableView";
 
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
+  const vocabulary = useLeadVocabulary();
   const [archived, setArchived] = useState(false);
   const {
     data,
@@ -184,9 +185,9 @@ export function LeadsView() {
       {/* Header */}
       <div className="page-header flex items-center justify-between gap-3.5 flex-wrap">
         <div>
-          <h2 className="text-[20px] font-semibold">Leads pipeline</h2>
+          <h2 className="text-[20px] font-semibold">{vocabulary.pageTitle}</h2>
           <div className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
-            Track and convert your pipeline
+            {vocabulary.pageSubtitle}
           </div>
         </div>
         <div data-tour="page-actions" className="flex gap-2 items-center">
@@ -204,7 +205,7 @@ export function LeadsView() {
               <Layers size={13} /> Import
             </Button>
             <Button onClick={() => openCreate()}>
-              <Plus size={13} /> Add lead
+              <Plus size={13} /> Add {vocabulary.singular}
             </Button>
           </PermissionGuard>
         </div>
@@ -212,8 +213,17 @@ export function LeadsView() {
 
       {/* Stats */}
       <div data-tour="page-list" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard label="Total leads" value={leads.length} Icon={Users} />
-        <StatCard label="Hot leads" value={hot} Icon={Flame} accent="#EF4444" />
+        <StatCard
+          label={`Total ${vocabulary.plural}`}
+          value={leads.length}
+          Icon={Users}
+        />
+        <StatCard
+          label={vocabulary.urgentLabel}
+          value={hot}
+          Icon={vocabulary.UrgentIcon}
+          accent="#EF4444"
+        />
         <StatCard
           label="Projected value"
           value={pkr(totalValue)}
@@ -230,7 +240,7 @@ export function LeadsView() {
           />
           <Input
             className="pl-8"
-            placeholder="Search leads..."
+            placeholder={`Search ${vocabulary.plural}...`}
             value={filter.search}
             onChange={(e) =>
               setFilter((f) => ({ ...f, search: e.target.value }))
@@ -297,7 +307,7 @@ export function LeadsView() {
 
       {isLoading && (
         <div className="flex-1 flex items-center justify-center text-[var(--ink-mute)]">
-          Loading leads…
+          Loading {vocabulary.plural}…
         </div>
       )}
 
@@ -376,7 +386,7 @@ export function LeadsView() {
             {isFetchingNextPage ? (
               <Loader2 size={13} className="animate-spin" />
             ) : null}
-            Load more leads
+            Load more {vocabulary.plural}
           </Button>
         </div>
       )}
@@ -409,19 +419,21 @@ export function LeadsView() {
       <ExportDialog
         open={exportOpen}
         onClose={() => setExportOpen(false)}
-        onConfirm={(name) => downloadLeadsCsv(exportRows, name)}
-        defaultName={`leads_export_${new Date().toISOString().split("T")[0]}`}
+        onConfirm={(name) =>
+          downloadLeadsCsv(exportRows, name, vocabulary.statusMeta)
+        }
+        defaultName={`${vocabulary.plural}_export_${new Date().toISOString().split("T")[0]}`}
         count={exportRows.length}
-        title="Export leads"
+        title={`Export ${vocabulary.plural}`}
       />
       <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title="Delete lead permanently?"
+        title={`Delete ${vocabulary.singular} permanently?`}
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone — archive the lead instead if you may need any of it.`
+            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone — archive the ${vocabulary.singular} instead if you may need any of it.`
             : undefined
         }
         confirmLabel="Delete permanently"
@@ -441,9 +453,9 @@ export function LeadsView() {
         open={bulkDeleteTargets.length > 0}
         onClose={() => setBulkDeleteTargets([])}
         onConfirm={confirmBulkDelete}
-        title={`Delete ${bulkDeleteTargets.length} lead${bulkDeleteTargets.length === 1 ? "" : "s"}?`}
-        description="The selected leads will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone."
-        confirmLabel="Delete leads"
+        title={`Delete ${bulkDeleteTargets.length} ${bulkDeleteTargets.length === 1 ? vocabulary.singular : vocabulary.plural}?`}
+        description={`The selected ${vocabulary.plural} will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone.`}
+        confirmLabel={`Delete ${vocabulary.plural}`}
         loading={deleteLead.isPending}
       />
     </div>
