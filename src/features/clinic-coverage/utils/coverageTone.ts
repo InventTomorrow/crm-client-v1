@@ -8,12 +8,13 @@ export const COVERAGE_DISPLAY_ORDER: ResolvedCoverageLevel[] = [
   'UNKNOWN',
 ];
 
-/** Grid cell fill — soft enough that a full column stays readable. */
-export const COVERAGE_CELL_TONE: Record<ResolvedCoverageLevel, string> = {
-  AVAILABLE: 'bg-success-soft text-success-foreground',
-  LIMITED: 'bg-warning-soft text-warning-foreground',
-  UNAVAILABLE: 'bg-destructive-soft text-destructive-foreground',
-  UNKNOWN: 'text-muted-foreground',
+/** Status pill fill — soft enough that a full column of them stays readable. */
+export const COVERAGE_CHIP_TONE: Record<ResolvedCoverageLevel, string> = {
+  AVAILABLE: 'bg-success-soft text-success-foreground border-success/25',
+  LIMITED: 'bg-warning-soft text-warning-foreground border-warning/25',
+  UNAVAILABLE:
+    'bg-destructive-soft text-destructive-foreground border-destructive/25',
+  UNKNOWN: 'bg-muted text-muted-foreground border-border',
 };
 
 /** Solid dot for the legend and the help sheet. */
