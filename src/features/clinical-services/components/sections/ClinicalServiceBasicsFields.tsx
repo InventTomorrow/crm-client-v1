@@ -141,6 +141,7 @@ export function ClinicalServiceBasicsFields({
             <FormControl>
               <Textarea
                 rows={4}
+                placeholder="Who the service is for, what a typical visit covers, and what the family should arrange beforehand."
                 disabled={isSaving}
                 {...field}
                 value={field.value ?? ""}

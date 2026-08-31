@@ -27,7 +27,7 @@ export function PractitionerProfileFields({
             <FormControl>
               <Textarea
                 rows={4}
-                placeholder="A short description patients will see."
+                placeholder="Consultant physiotherapist with 12 years in post-surgical and sports rehabilitation. Treats knee, shoulder and spine cases."
                 disabled={isSaving}
                 {...field}
                 value={field.value ?? ''}

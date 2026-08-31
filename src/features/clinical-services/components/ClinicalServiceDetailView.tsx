@@ -15,12 +15,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useIntakeQuestions } from "@/features/intake-questions/hooks/useIntakeQuestions";
 import { useClinicalServicePreview } from "../hooks/useClinicalServices";
-import {
-  CONDITIONAL_INTAKE_FIELDS,
-  CORE_INTAKE_FIELDS,
-  SERVICE_TYPE_LABELS,
-} from "../types";
+import { SERVICE_TYPE_LABELS } from "../types";
 
 function Panel({
   title,
@@ -86,6 +83,7 @@ export function ClinicalServiceDetailView({
 }: Readonly<{ serviceId: string }>) {
   const router = useRouter();
   const { data: preview, isLoading, isError } = useClinicalServicePreview(serviceId);
+  const { data: intakeQuestions = [] } = useIntakeQuestions();
 
   if (isLoading) {
     return (
@@ -110,8 +108,10 @@ export function ClinicalServiceDetailView({
   }
 
   const { summary, pricing, shiftOptions } = preview;
-  const askedFields = CONDITIONAL_INTAKE_FIELDS.filter((field) =>
-    preview.intakeFieldKeys.includes(field.key),
+  // Always-asked questions plus the ones this service opts into, in pool order.
+  const askedQuestions = intakeQuestions.filter(
+    (question) =>
+      question.askAlways || preview.intakeFieldKeys.includes(question.key),
   );
 
   return (
@@ -242,22 +242,24 @@ export function ClinicalServiceDetailView({
             description="Collected before the case reaches a coordinator."
           >
             <ol className="space-y-1.5">
-              {CORE_INTAKE_FIELDS.map((field) => (
-                <li key={field.key} className="flex items-start gap-2 text-sm">
-                  <MessageCircle className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
-                  <span>{field.question}</span>
-                </li>
-              ))}
-              {askedFields.map((field) => (
-                <li key={field.key} className="flex items-start gap-2 text-sm">
-                  <ClipboardList className="text-primary mt-0.5 size-3.5 shrink-0" />
-                  <span>{field.question}</span>
+              {askedQuestions.map((question) => (
+                <li
+                  key={question.id}
+                  className="flex items-start gap-2 text-sm"
+                >
+                  {question.askAlways ? (
+                    <MessageCircle className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+                  ) : (
+                    <ClipboardList className="text-primary mt-0.5 size-3.5 shrink-0" />
+                  )}
+                  <span>{question.questionText}</span>
                 </li>
               ))}
             </ol>
-            {askedFields.length === 0 && (
+            {askedQuestions.length === 0 && (
               <p className="text-muted-foreground mt-3 text-xs">
-                No extra questions configured for this service.
+                No intake questions are configured, so the assistant asks
+                nothing before handing the enquiry over.
               </p>
             )}
           </Panel>
