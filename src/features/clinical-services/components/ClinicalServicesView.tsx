@@ -135,7 +135,10 @@ export function ClinicalServicesView() {
   );
 
   const header = (
-    <div className="flex flex-wrap items-start justify-between gap-3">
+    <div
+      data-tour="page-actions"
+      className="flex flex-wrap items-start justify-between gap-3"
+    >
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-[var(--ink)]">Services</h1>
         <p className="text-sm text-[var(--ink-mute)]">

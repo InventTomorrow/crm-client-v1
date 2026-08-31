@@ -71,7 +71,10 @@ export function PractitionersView() {
     router.push(`/practitioners/${practitioner.id}/edit`);
 
   const header = (
-    <div className="flex flex-wrap items-start justify-between gap-3">
+    <div
+      data-tour="page-actions"
+      className="flex flex-wrap items-start justify-between gap-3"
+    >
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-[var(--ink)]">
           Practitioners

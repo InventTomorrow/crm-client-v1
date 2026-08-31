@@ -146,7 +146,10 @@ export function CoverageAreasView() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div
+        data-tour="page-actions"
+        className="flex flex-wrap items-start justify-between gap-3"
+      >
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Coverage areas</h1>
           <p className="text-muted-foreground text-sm">

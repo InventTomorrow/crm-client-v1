@@ -168,7 +168,7 @@ export function ClinicalServicePricingFields({
             <FormLabel>Pricing note</FormLabel>
             <FormControl>
               <Input
-                placeholder="Final price depends on city, area and requirement."
+                placeholder="Final price depends on the consultant seen and any tests advised."
                 disabled={isSaving}
                 {...field}
                 value={field.value ?? ""}

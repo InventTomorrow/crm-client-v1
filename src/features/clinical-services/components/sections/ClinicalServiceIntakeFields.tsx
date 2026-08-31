@@ -116,7 +116,7 @@ export function ClinicalServiceIntakeFields({
                   autoFocus
                   value={editor.draftText}
                   onChange={(event) => editor.setDraftText(event.target.value)}
-                  placeholder="e.g. Is there a ventilator at home?"
+                  placeholder="e.g. Are you currently taking any medication?"
                   disabled={editor.isCreating}
                 />
                 <label className="flex items-center gap-2 text-xs">
