@@ -24,7 +24,7 @@ export function ClinicalServiceSafetyFields({
           <FormItem>
             <EditableListField
               label="Required staff qualifications"
-              placeholder="ICU-trained nurse"
+              placeholder="MBBS, FCPS (Cardiology)"
               addLabel="Add qualification"
               emptyHint="The assistant will never propose a less-qualified alternative for this service."
               values={field.value ?? []}
@@ -45,7 +45,7 @@ export function ClinicalServiceSafetyFields({
             <FormControl>
               <Textarea
                 rows={3}
-                placeholder="Tracheostomy care must be handled only by ICU-qualified nurses."
+                placeholder="Patients on blood thinners must be reviewed by the consultant before this procedure."
                 disabled={isSaving}
                 {...field}
                 value={field.value ?? ""}

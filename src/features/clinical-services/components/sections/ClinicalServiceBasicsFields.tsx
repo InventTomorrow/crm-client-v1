@@ -33,7 +33,7 @@ export function ClinicalServiceBasicsFields({
               <FormLabel>Service name</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Home Nursing"
+                  placeholder="Cardiology consultation"
                   disabled={isSaving}
                   {...field}
                 />
@@ -122,7 +122,7 @@ export function ClinicalServiceBasicsFields({
             <FormLabel>Short description</FormLabel>
             <FormControl>
               <Input
-                placeholder="Qualified nurses deployed to the patient's home."
+                placeholder="A 30-minute appointment with a consultant cardiologist."
                 disabled={isSaving}
                 {...field}
               />
@@ -141,7 +141,7 @@ export function ClinicalServiceBasicsFields({
             <FormControl>
               <Textarea
                 rows={4}
-                placeholder="Who the service is for, what a typical visit covers, and what the family should arrange beforehand."
+                placeholder="Who the service is for, what a typical appointment covers, and what the patient should bring or prepare beforehand."
                 disabled={isSaving}
                 {...field}
                 value={field.value ?? ""}

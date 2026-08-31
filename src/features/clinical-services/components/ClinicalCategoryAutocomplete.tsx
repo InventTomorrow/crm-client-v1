@@ -11,11 +11,6 @@ interface ClinicalCategoryAutocompleteProps {
   disabled?: boolean;
 }
 
-/**
- * Category is free text on the API, so this suggests what the catalogue already
- * uses while still allowing a new one — which keeps spellings consistent
- * without locking the list.
- */
 export function ClinicalCategoryAutocomplete({
   value,
   onChange,
@@ -42,7 +37,7 @@ export function ClinicalCategoryAutocomplete({
         onChange(category);
         return { id: category, label: category };
       }}
-      placeholder="e.g. Nursing, Physiotherapy, Elderly care"
+      placeholder="e.g. Cardiology, Physiotherapy, Dermatology"
       emptyLabel="No categories yet — type to add one."
       disabled={disabled}
     />

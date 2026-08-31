@@ -5,8 +5,8 @@ import type { ClinicalServiceFormSectionProps } from "../../types";
 
 /**
  * The scope boundary. These two lists are the entire basis for every scope
- * answer the assistant gives, which is what stops it promising a medical
- * procedure from a non-medical carer.
+ * answer the assistant gives, which is what stops it promising a procedure the
+ * clinic does not perform under this service.
  */
 export function ClinicalServiceScopeFields({
   form,
@@ -21,9 +21,9 @@ export function ClinicalServiceScopeFields({
           <FormItem>
             <EditableListField
               label="This service includes"
-              placeholder="Bathing and grooming"
+              placeholder="Consultation and physical examination"
               addLabel="Add activity"
-              emptyHint="What staff will do under this service."
+              emptyHint="What the clinic actually does under this service."
               values={field.value ?? []}
               onChange={field.onChange}
               disabled={isSaving}
@@ -40,9 +40,9 @@ export function ClinicalServiceScopeFields({
           <FormItem>
             <EditableListField
               label="This service does NOT include"
-              placeholder="Household laundry"
+              placeholder="Lab tests and imaging"
               addLabel="Add exclusion"
-              emptyHint="The assistant will refuse these however the family phrases the request."
+              emptyHint="The assistant will refuse these however the patient phrases the request."
               values={field.value ?? []}
               onChange={field.onChange}
               disabled={isSaving}
@@ -59,9 +59,9 @@ export function ClinicalServiceScopeFields({
           <FormItem>
             <EditableListField
               label="Conditions treated"
-              placeholder="Post-stroke recovery"
+              placeholder="Hypertension"
               addLabel="Add condition"
-              emptyHint="Helps the assistant match a described situation to this service."
+              emptyHint="Helps the assistant match a described symptom to this service."
               values={field.value ?? []}
               onChange={field.onChange}
               disabled={isSaving}

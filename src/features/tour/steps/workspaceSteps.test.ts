@@ -11,6 +11,11 @@ describe('buildWorkspaceTour', () => {
       const tour = buildWorkspaceTour({ businessVertical, can: allowAll });
       expect(tour!.steps.length).toBeLessThan(15);
     });
+
+    // A clinic owns three catalogue pages the others don't — services,
+    // practitioners and coverage — so its walkthrough runs a little longer.
+    const clinicTour = buildWorkspaceTour({ businessVertical: 'HEALTHCARE', can: allowAll });
+    expect(clinicTour!.steps.length).toBeLessThan(18);
   });
 
   it('never anchors a step to a list that is empty on day one', () => {
@@ -53,6 +58,42 @@ describe('buildWorkspaceTour', () => {
     expect(contents.some((c) => c.includes('working hours'))).toBe(true);
     expect(contents.some((c) => c.includes('Brochures, portfolios'))).toBe(true);
     expect(contents.some((c) => c.includes('printed menu'))).toBe(false);
+  });
+
+  it('gives a clinic its services, practitioners and coverage instead of a catalogue', () => {
+    const tour = buildWorkspaceTour({ businessVertical: 'HEALTHCARE', can: allowAll });
+
+    expect(tour?.tour).toBe('workspace-healthcare-v1');
+    const contents = tour!.steps.map((step) => String(step.content));
+    expect(contents.some((c) => c.includes('scope and pricing questions'))).toBe(true);
+    expect(contents.some((c) => c.includes('asks for a named doctor'))).toBe(true);
+    expect(contents.some((c) => c.includes('outside your coverage'))).toBe(true);
+    expect(contents.some((c) => c.includes('services and packages'))).toBe(false);
+    expect(contents.some((c) => c.includes('printed menu'))).toBe(false);
+  });
+
+  it('covers every page a clinic workspace actually has', () => {
+    const tour = buildWorkspaceTour({ businessVertical: 'HEALTHCARE', can: allowAll });
+    const routes = new Set(
+      tour!.steps.flatMap((step) => (step.nextRoute ? [step.nextRoute] : [])),
+    );
+
+    ['/clinical-services', '/practitioners', '/coverage-areas', '/qualification'].forEach(
+      (route) => expect(routes).toContain(route),
+    );
+  });
+
+  it('keeps the clinic pages out of every other vertical', () => {
+    const clinicRoutes = ['/clinical-services', '/practitioners', '/coverage-areas'];
+
+    (['RESTAURANT', 'ECOMMERCE', 'MARKETING_AGENCY'] as const).forEach((businessVertical) => {
+      const tour = buildWorkspaceTour({ businessVertical, can: allowAll });
+      const routes = new Set(
+        tour!.steps.flatMap((step) => (step.nextRoute ? [step.nextRoute] : [])),
+      );
+
+      clinicRoutes.forEach((route) => expect(routes).not.toContain(route));
+    });
   });
 
   it('covers every page an agency workspace actually has', () => {
