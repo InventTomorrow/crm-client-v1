@@ -199,6 +199,14 @@ export function WAConnectPanel({
     disconnectMut.mutate();
   };
 
+  // Escape hatch for a failed connect: clears the stored pairing server-side and
+  // starts a fresh one, so credentials the server can no longer use don't leave
+  // the tenant retrying the same dead session.
+  const handleResetPairing = () => {
+    setStarting(true);
+    disconnectMut.mutate(undefined, { onSuccess: () => connectMut.mutate() });
+  };
+
   // Drop the "starting" shimmer as soon as the stream produces something real.
   useEffect(() => {
     if (
@@ -493,6 +501,22 @@ export function WAConnectPanel({
               ? "Retry Connection"
               : "Generate QR Code"}
           </Button>
+          {connectionError && !qrExpired && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetPairing}
+              disabled={disconnectMut.isPending || connectMut.isPending}
+              className="flex items-center gap-1.5 text-[var(--ink-mute)]"
+            >
+              {disconnectMut.isPending ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <Power size={11} />
+              )}
+              Reset and link a new device
+            </Button>
+          )}
         </>
       )}
 
