@@ -36,6 +36,11 @@ interface FormWizardProps {
   isSaving: boolean;
   /** Label for the final step's button, e.g. "Add practitioner". */
   submitLabel: string;
+  /**
+   * Saves the whole form from any step and leaves. Omitted while the record is
+   * still being created, where the steps must be walked in order.
+   */
+  onSaveAll?: () => void;
   /** Shown beside the footer buttons once a step has been persisted. */
   savedLabel: string | null;
   children: React.ReactNode;
@@ -133,6 +138,7 @@ export function FormWizard({
   onCancel,
   isSaving,
   submitLabel,
+  onSaveAll,
   savedLabel,
   children,
 }: FormWizardProps) {
@@ -161,6 +167,17 @@ export function FormWizard({
             </h1>
             <p className="text-[12px] text-[var(--ink-mute)]">{subheading}</p>
           </div>
+          {onSaveAll && (
+            <Button
+              type="button"
+              className="ml-auto"
+              onClick={onSaveAll}
+              disabled={isSaving}
+            >
+              {isSaving && <Loader2 className="size-4 animate-spin" />}
+              {submitLabel}
+            </Button>
+          )}
         </div>
 
         <div className="mt-6 grid gap-6 md:grid-cols-[264px_minmax(0,1fr)] md:items-start lg:gap-8">
