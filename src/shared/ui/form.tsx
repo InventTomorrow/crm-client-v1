@@ -83,9 +83,22 @@ function FormDescription({ className, ...props }: React.HTMLAttributes<HTMLParag
   );
 }
 
+/** Array and object fields keep their message on a nested entry, never on the root. */
+function resolveErrorMessage(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const { message } = error as { message?: unknown };
+  if (typeof message === 'string' && message.length > 0) return message;
+  for (const [key, nested] of Object.entries(error)) {
+    if (key === 'ref' || key === 'types') continue;
+    const nestedMessage = resolveErrorMessage(nested);
+    if (nestedMessage) return nestedMessage;
+  }
+  return undefined;
+}
+
 function FormMessage({ className, children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   const { error } = useFormField();
-  const body = error ? String(error.message) : children;
+  const body = resolveErrorMessage(error) ?? children;
   if (!body) return null;
   return (
     <p

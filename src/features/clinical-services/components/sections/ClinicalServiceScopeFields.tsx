@@ -3,11 +3,6 @@ import { EditableListField } from "@/shared/ui/EditableListField";
 import { FormField, FormItem, FormMessage } from "@/shared/ui/form";
 import type { ClinicalServiceFormSectionProps } from "../../types";
 
-/**
- * The scope boundary. These two lists are the entire basis for every scope
- * answer the assistant gives, which is what stops it promising a procedure the
- * clinic does not perform under this service.
- */
 export function ClinicalServiceScopeFields({
   form,
   isSaving,
