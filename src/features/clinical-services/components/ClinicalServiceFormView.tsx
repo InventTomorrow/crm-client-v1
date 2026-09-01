@@ -100,6 +100,7 @@ export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
     goToStep,
     goBack,
     goNext,
+    saveAll,
     backToList,
     savedLabel,
   } = useClinicalServiceWizard(serviceId);
@@ -139,6 +140,7 @@ export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
         onCancel={backToList}
         isSaving={isSaving}
         submitLabel={isCreating ? "Add service" : "Save changes"}
+        onSaveAll={isCreating ? undefined : () => void saveAll()}
         savedLabel={savedLabel}
       >
         <div className="flex flex-col divide-y divide-[var(--line)] [&>*+*]:pt-5 [&>*]:pb-5 [&>*:last-child]:pb-0">
