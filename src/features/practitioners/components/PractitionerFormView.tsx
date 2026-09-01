@@ -76,6 +76,7 @@ export function PractitionerFormView({
     goToStep,
     goBack,
     goNext,
+    saveAll,
     backToList,
     savedLabel,
   } = usePractitionerWizard(practitionerId);
@@ -140,6 +141,7 @@ export function PractitionerFormView({
         onCancel={backToList}
         isSaving={isSaving}
         submitLabel={isCreating ? "Add practitioner" : "Save changes"}
+        onSaveAll={isCreating ? undefined : () => void saveAll()}
         savedLabel={savedLabel}
       >
         {stepBody[PRACTITIONER_STEP_ORDER[stepIndex]!]}

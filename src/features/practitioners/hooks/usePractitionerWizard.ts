@@ -250,7 +250,10 @@ export function usePractitionerWizard(practitionerId?: string) {
     if (stepIndex > 0) void goToStep(stepIndex - 1);
   }, [stepIndex, goToStep]);
 
-  /** The final step writes the whole form, so a rail jump cannot leave a gap. */
+  /**
+   * Writes the whole form and returns to the list — used by the final step, so
+   * a rail jump cannot leave a gap, and by the header save on an edit.
+   */
   const submitAll = useCallback(async () => {
     const isFormValid = await form.trigger();
     if (!isFormValid) {
@@ -308,6 +311,7 @@ export function usePractitionerWizard(practitionerId?: string) {
     goToStep,
     goBack,
     goNext,
+    saveAll: submitAll,
     backToList,
     savedLabel,
   };
