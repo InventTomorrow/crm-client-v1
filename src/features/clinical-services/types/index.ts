@@ -1,5 +1,6 @@
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { EMPTY_LIST_ROW } from "@/lib/validationMessages";
 
 
 /**
@@ -155,9 +156,9 @@ export const clinicalServiceFormSchema = z
     shortDescription: z.string().trim().min(1, "Short description is required"),
     fullDescription: z.string().trim().optional(),
 
-    includedActivities: z.array(z.string().trim().min(1)).default([]),
-    excludedActivities: z.array(z.string().trim().min(1)).default([]),
-    conditionsTreated: z.array(z.string().trim().min(1)).default([]),
+    includedActivities: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
+    excludedActivities: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
+    conditionsTreated: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
 
     pricingModel: z.enum(CLINICAL_PRICING_MODELS),
     price: optionalNumber(z.coerce.number().min(0)),
@@ -176,7 +177,9 @@ export const clinicalServiceFormSchema = z
     ),
     advancePaymentNote: z.string().trim().optional(),
 
-    requiredStaffQualifications: z.array(z.string().trim().min(1)).default([]),
+    requiredStaffQualifications: z
+      .array(z.string().trim().min(1, EMPTY_LIST_ROW))
+      .default([]),
     safetyNote: z.string().trim().optional(),
 
     requiresPractitioner: z.boolean().default(false),
