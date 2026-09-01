@@ -1,5 +1,6 @@
 import type { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
+import { EMPTY_LIST_ROW } from '@/lib/validationMessages';
 
 /**
  * A number input that may legitimately be left empty.
@@ -139,14 +140,14 @@ export const practitionerFormSchema = z.object({
   fullName: z.string().trim().min(1, 'Name is required').max(120),
   title: z.string().trim().max(30).optional(),
   designation: z.string().trim().max(120).optional(),
-  specialties: z.array(z.string().trim().min(1)).default([]),
-  qualifications: z.array(z.string().trim().min(1)).default([]),
+  specialties: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
+  qualifications: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
   registrationNumber: z.string().trim().max(60).optional(),
   yearsExperience: optionalNumber(z.coerce.number().int().min(0).max(80)),
   bio: z.string().trim().max(2000).optional(),
   /** Optional. When set, the assistant sends the profile as a photo with a caption. */
   photoUrl: z.string().trim().max(2000).nullable().optional(),
-  languages: z.array(z.string().trim().min(1)).default([]),
+  languages: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
   gender: z.string().trim().max(40).optional(),
   consultationFee: optionalNumber(z.coerce.number().min(0)),
   currency: z.string().trim().length(3).default('PKR'),
