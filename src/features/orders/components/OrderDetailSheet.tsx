@@ -1,12 +1,12 @@
 "use client";
-import Link from "next/link";
+import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
-import { getImageUrl } from "@/lib/utils";
 import { Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import {
   useDeleteOrder,
@@ -267,7 +267,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
               {order.shippingDetail && (
                 <div>
                   <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5 flex items-center gap-1.5">
-                    <MapPin size={12} /> Delivery Address
+                    <MapPin size={12} /> Shipping Details
                   </div>
                   <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 text-[13px] text-[var(--ink-soft)] flex flex-col gap-0.5">
                     <span className="font-medium text-[var(--ink)]">
