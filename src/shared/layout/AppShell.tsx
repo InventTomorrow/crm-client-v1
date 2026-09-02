@@ -1,10 +1,10 @@
 "use client";
+import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
 import { AppOfferSurfaces } from "@/features/offers/components/AppOfferSurfaces";
+import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
 import { TourProvider } from "@/features/tour/components/TourProvider";
 import { WorkspaceTourStarter } from "@/features/tour/components/WorkspaceTourStarter";
-import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
-import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
 import { useAppStore } from "@/lib/appStore";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { AppTopBar } from "@/shared/layout/AppTopBar";
@@ -36,40 +36,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate>
       <TourProvider>
-      <div className="app-shell">
-        {/* AppSidebar reads `?section=` to light the active Settings tab. */}
-        <Suspense>
-          <AppSidebar
-            mobileOpen={mobileMenuOpen}
-            onCloseMobile={() => setMobileMenuOpen(false)}
-          />
-        </Suspense>
-        <div className="app-main">
-          {/* Campaign strip sits above the bar so it never covers navigation. */}
-          <AppOfferSurfaces />
-          <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
-          <main key={currentWorkspaceId} className="app-content">
-            <RouteGuard>{children}</RouteGuard>
-          </main>
-        </div>
-        <MobileDock />
+        <div className="app-shell">
+          {/* AppSidebar reads `?section=` to light the active Settings tab. */}
+          <Suspense>
+            <AppSidebar
+              mobileOpen={mobileMenuOpen}
+              onCloseMobile={() => setMobileMenuOpen(false)}
+            />
+          </Suspense>
+          <div className="app-main">
+            {/* Campaign strip sits above the bar so it never covers navigation. */}
+            <AppOfferSurfaces />
+            <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
+            <main key={currentWorkspaceId} className="app-content">
+              <RouteGuard>{children}</RouteGuard>
+            </main>
+          </div>
+          <MobileDock />
 
-        {escalatingLead && (
-          <EscalateDialog
-            lead={escalatingLead}
-            onClose={() => setEscalatingLead(null)}
-            onConfirm={() => {
-              setEscalatingLead(null);
-              setHotLead(escalatingLead);
-            }}
-          />
-        )}
-        {hotLead && <HotToast lead={hotLead} onClose={() => setHotLead(null)} />}
-        <Toaster richColors position="top-right" />
-        <WorkspaceSwitchingOverlay />
-        <WelcomeDemoDialog />
-        <WorkspaceTourStarter />
-      </div>
+          {escalatingLead && (
+            <EscalateDialog
+              lead={escalatingLead}
+              onClose={() => setEscalatingLead(null)}
+              onConfirm={() => {
+                setEscalatingLead(null);
+                setHotLead(escalatingLead);
+              }}
+            />
+          )}
+          {hotLead && (
+            <HotToast lead={hotLead} onClose={() => setHotLead(null)} />
+          )}
+          <Toaster richColors position="top-right" closeButton theme="system" />
+          <WorkspaceSwitchingOverlay />
+          <WelcomeDemoDialog />
+          <WorkspaceTourStarter />
+        </div>
       </TourProvider>
     </AuthGate>
   );
