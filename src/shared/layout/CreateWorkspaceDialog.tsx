@@ -111,7 +111,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                   scheduled for deletion and stays restorable for 60 days.
                 </p>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 {ownedWorkspaces.map((workspace) => (
                   <button
                     key={workspace.id}
