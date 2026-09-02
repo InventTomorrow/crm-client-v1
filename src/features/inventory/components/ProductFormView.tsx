@@ -1,17 +1,13 @@
 "use client";
+import { ProductCustomOptions } from "@/features/product-custom-options/components/ProductCustomOptions";
 import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { FileUpload } from "@/shared/ui/FileUpload";
 import { Input } from "@/shared/ui/Input";
-import { Skeleton } from "@/shared/ui/Motion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/Select";
+import { RadioGroup, RadioGroupItem } from "@/shared/ui/RadioGroup";
+import { SearchSelect } from "@/shared/ui/SearchSelect";
+import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import {
   Form,
@@ -26,8 +22,12 @@ import { useRouter } from "next/navigation";
 import { useProductForm } from "../hooks/useProductForm";
 import { usePresignedUpload } from "../hooks/useProducts";
 import { GENDERS } from "../types";
-import { CreatableCategorySelect } from "./CreatableCategorySelect";
+import { ImageLinkField } from "./ImageLinkField";
+import { ProductFormSkeleton } from "./InventorySkeletons";
 import { SizeSelector } from "./SizeSelector";
+
+/** Radio groups have no empty value, so "no gender set" needs a stand-in. */
+const NO_GENDER = "__none";
 
 export function ProductFormView({ productId }: { productId?: string }) {
   const router = useRouter();
@@ -45,6 +45,8 @@ export function ProductFormView({ productId }: { productId?: string }) {
     editingProduct,
     imageUrls,
     setCoverImage,
+    setLinkedCoverImage,
+    discardUnsavedUploads,
     categoryOptions,
     selectedCategory,
     discountedPrice,
@@ -54,6 +56,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
     setDeleteConfirmOpen,
     handleSubmit,
     confirmDelete,
+    customOptionsEnabled,
   } = useProductForm(productId);
 
   // Only an actual save/delete disables the fields — an in-flight photo upload
@@ -61,16 +64,16 @@ export function ProductFormView({ productId }: { productId?: string }) {
   const busy = isSaving || isDeleting;
   const canSubmit = !busy && !isUploading;
 
+  // Leaving without saving strands any photo uploaded here in S3.
+  const leaveForm = () => {
+    discardUnsavedUploads();
+    router.push("/inventory");
+  };
+
+  // Same placeholder the route shows, so waiting on the product doesn't swap
+  // one shape of loading for another.
   if (isEditMode && isLoadingProducts && !editingProduct) {
-    return (
-      <div className="p-4 md:p-8 max-w-[1200px] mx-auto flex flex-col gap-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <Skeleton className="h-96 w-full rounded-2xl" />
-          <Skeleton className="h-96 w-full rounded-2xl" />
-        </div>
-      </div>
-    );
+    return <ProductFormSkeleton />;
   }
 
   if (notFound) {
@@ -100,12 +103,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
     <div className="scroll overflow-y-auto h-full">
       <div className="max-w-[1200px] mx-auto p-4 md:p-8 flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/inventory")}
-          >
+          <Button type="button" variant="ghost" size="icon" onClick={leaveForm}>
             <ArrowLeft size={16} />
           </Button>
           <div>
@@ -120,9 +118,9 @@ export function ProductFormView({ productId }: { productId?: string }) {
 
         <Form {...form}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-              {/* Details */}
-              <div className="card p-5 flex flex-col gap-4">
+            {/* Details and photo are one product: one card, two columns. */}
+            <div className="card p-4 md:p-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px] items-start">
+              <div className="flex min-w-0 flex-col gap-4">
                 <FormField
                   control={form.control}
                   name="name"
@@ -141,7 +139,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                   <FormField
                     control={form.control}
                     name="sku"
@@ -165,42 +163,17 @@ export function ProductFormView({ productId }: { productId?: string }) {
                       <FormItem>
                         <FormLabel>Category</FormLabel>
                         <FormControl>
-                          <CreatableCategorySelect
+                          <SearchSelect
                             options={categoryOptions}
                             value={field.value ?? ""}
-                            onChange={(v) => field.onChange(v)}
+                            onChange={field.onChange}
+                            placeholder="Select category"
+                            searchPlaceholder="Search categories..."
+                            emptyMessage="No categories yet."
+                            creatable
                             disabled={busy}
                           />
                         </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <Select
-                          value={field.value || undefined}
-                          onValueChange={field.onChange}
-                          disabled={busy}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="—" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {GENDERS?.map((g) => (
-                              <SelectItem key={g} value={g}>
-                                {g}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                       </FormItem>
                     )}
                   />
@@ -221,7 +194,36 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          value={field.value || NO_GENDER}
+                          onValueChange={(value) =>
+                            field.onChange(value === NO_GENDER ? "" : value)
+                          }
+                          disabled={busy}
+                          className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1"
+                        >
+                          {[NO_GENDER, ...GENDERS].map((gender) => (
+                            <label
+                              key={gender}
+                              className="flex items-center gap-1.5 text-[13px]"
+                            >
+                              <RadioGroupItem value={gender} disabled={busy} />
+                              {gender === NO_GENDER ? "Any" : gender}
+                            </label>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                   <FormField
                     control={form.control}
                     name="price"
@@ -336,8 +338,8 @@ export function ProductFormView({ productId }: { productId?: string }) {
                 />
               </div>
 
-              {/* Image */}
-              <div className="card p-5 flex flex-col gap-2">
+              {/* Photo: beside the fields on desktop, under them on mobile. */}
+              <div className="flex min-w-0 flex-col gap-2">
                 <span className="text-[12px] font-medium text-[var(--ink-soft)]">
                   Product photo
                 </span>
@@ -351,9 +353,11 @@ export function ProductFormView({ productId }: { productId?: string }) {
                   disabled={busy}
                   accept="image/*"
                   maxSize={5 * 1024 * 1024}
-                  compact
-                  compactHeight="h-[180px]"
-                  description="Drop product photo or click to upload"
+                  aspectRatio="aspect-square"
+                  // Capped so the square doesn't tower over the fields column.
+                  className="max-w-[300px]"
+                  title="Add a product photo"
+                  description="Drop it here, or click to browse"
                   hint="PNG, JPG, WEBP — up to 5 MB"
                   tipsCollapsible
                   tipsTitle="Photo guidelines"
@@ -364,11 +368,91 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     "Recommended: square, 1000×1000px",
                   ]}
                 />
-                <p className="text-[12px] text-[var(--ink-mute)]">
-                  This photo is used on lists, the product preview and WhatsApp
-                  cards.
+                <ImageLinkField
+                  onSubmit={setLinkedCoverImage}
+                  disabled={busy || isUploading}
+                />
+                <p className="max-w-[300px] text-[12px] text-[var(--ink-mute)]">
+                  Used on lists, the product preview and WhatsApp cards.
                 </p>
               </div>
+            </div>
+
+            {/* Made-to-order customization */}
+            <div className="card p-5 flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name="customOptionsEnabled"
+                render={({ field }) => (
+                  <FormItem>
+                    <label className="flex items-start gap-3">
+                      <FormControl>
+                        <Switch
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                          disabled={busy}
+                          className="mt-0.5"
+                        />
+                      </FormControl>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-medium text-[var(--ink)]">
+                          Custom options
+                        </span>
+                        <span className="block text-[12px] text-[var(--ink-mute)]">
+                          Let customers ask for something specific on this
+                          product — a size, a colour, a name to add. The
+                          assistant collects what you tick below before it takes
+                          the order.
+                        </span>
+                      </span>
+                    </label>
+                  </FormItem>
+                )}
+              />
+
+              {customOptionsEnabled && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="customOptionKeys"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <ProductCustomOptions
+                            selectedKeys={field.value ?? []}
+                            onSelectedKeysChange={field.onChange}
+                            disabled={busy}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="customOptionNote"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes for the assistant</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            rows={2}
+                            placeholder="e.g. Printing on the back only, maximum two colours."
+                            {...field}
+                            value={field.value ?? ""}
+                            disabled={busy}
+                          />
+                        </FormControl>
+                        <p className="text-[12px] text-[var(--ink-mute)]">
+                          Limits specific to this product. Not shown to the
+                          customer.
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
             </div>
 
             <div className="flex justify-between gap-2">
@@ -396,7 +480,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/inventory")}
+                  onClick={leaveForm}
                   disabled={busy}
                 >
                   Cancel
@@ -405,7 +489,9 @@ export function ProductFormView({ productId }: { productId?: string }) {
                   type="submit"
                   disabled={!canSubmit}
                   title={
-                    isUploading ? "Waiting for photo upload to finish…" : undefined
+                    isUploading
+                      ? "Waiting for photo upload to finish…"
+                      : undefined
                   }
                 >
                   {isSaving ? (

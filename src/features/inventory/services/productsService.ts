@@ -18,6 +18,9 @@ interface ApiProduct {
   gender: string | null;
   color: string | null;
   imageUrls: string[];
+  customOptionsEnabled?: boolean;
+  customOptionKeys?: string[];
+  customOptionNote?: string | null;
   variants?: unknown[];
   tenantId: string;
   isDeleted: boolean;
@@ -38,6 +41,9 @@ export interface CreateProductPayload {
   gender?: string;
   color?: string;
   imageUrls?: string[];
+  customOptionsEnabled?: boolean;
+  customOptionKeys?: string[];
+  customOptionNote?: string;
 }
 
 export interface UpdateProductPayload {
@@ -53,6 +59,9 @@ export interface UpdateProductPayload {
   gender?: string;
   color?: string;
   imageUrls?: string[];
+  customOptionsEnabled?: boolean;
+  customOptionKeys?: string[];
+  customOptionNote?: string;
 }
 
 export interface PresignedUrlResult {
@@ -80,6 +89,10 @@ function mapProduct(p: ApiProduct): Product {
     color: p.color ?? '',
     desc: p.description ?? '',
     imageUrls: p.imageUrls ?? [],
+    // Defaulted: a server that predates these fields must still render.
+    customOptionsEnabled: p.customOptionsEnabled ?? false,
+    customOptionKeys: p.customOptionKeys ?? [],
+    customOptionNote: p.customOptionNote ?? '',
   };
 }
 
@@ -122,6 +135,9 @@ export const duplicateProduct = async (product: Product): Promise<Product> => {
     gender: product.gender || undefined,
     color: product.color || undefined,
     imageUrls: product.imageUrls ?? [],
+    customOptionsEnabled: product.customOptionsEnabled ?? false,
+    customOptionKeys: product.customOptionKeys ?? [],
+    customOptionNote: product.customOptionNote || undefined,
   };
   return createProduct(payload);
 };
@@ -170,6 +186,17 @@ export const uploadToS3 = (
     xhr.onerror = () => reject(new Error('S3 upload failed: network error'));
     xhr.send(file);
   });
+};
+
+/**
+ * Deletes an uploaded object from S3.
+ *
+ * Only for files this session uploaded and then discarded — a photo swapped out
+ * or a form abandoned before saving. Images belonging to a saved product are
+ * cleaned up server-side when the product is updated or deleted.
+ */
+export const deleteUploadedFile = async (url: string): Promise<void> => {
+  await apiClient.delete('/upload', { data: { url } });
 };
 
 /**

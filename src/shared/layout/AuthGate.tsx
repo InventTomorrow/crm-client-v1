@@ -1,6 +1,9 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
-import { hasFinishedOnboarding, resolveAuthLanding } from "@/features/auth/utils/authLanding";
+import {
+  hasFinishedOnboarding,
+  resolveAuthLanding,
+} from "@/features/auth/utils/authLanding";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

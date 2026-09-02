@@ -33,14 +33,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { presignedUpload } from "../services/productsService";
-import type { BulkItem, ProductFormData } from "../types";
-import { CATEGORIES, productSchema } from "../types";
+import { presignedUpload } from "@/features/inventory/services/productsService";
+import type { BulkItem, ProductFormData } from "@/features/inventory/types";
+import { CATEGORIES, productSchema } from "@/features/inventory/types";
 import {
   parseProductsCsv,
   parseProductsJson,
-} from "../utils/importProductsCsv";
-import { SizeSelector } from "./SizeSelector";
+} from "@/features/inventory/utils/importProductsCsv";
+import { SizeSelector } from "@/features/inventory/components/SizeSelector";
 
 export type { BulkItem };
 
@@ -55,9 +55,20 @@ const EMPTY_ITEM = (): BulkItem => ({
   gender: "",
   color: "",
   desc: "",
+  // Bulk add does not configure customization — it is set per product afterwards.
+  customOptionsEnabled: false,
+  customOptionKeys: [],
   imageUrl: "",
   imageUrls: [],
 });
+
+/**
+ * RETIRED — kept for reference only, not imported by any feature.
+ *
+ * Bulk add is gone and imports now run through ImportSheet → the
+ * /inventory/import review page. See features/inventory/components/
+ * ImportReviewView.tsx. Do not import this from a real page.
+ */
 
 // ── Inline Edit Panel ─────────────────────────────────────
 function EditPanel({

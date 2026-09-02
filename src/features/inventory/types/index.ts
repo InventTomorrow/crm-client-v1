@@ -8,6 +8,7 @@ export const CATEGORIES = [
   "Accessories",
   "Beauty",
   "Electronics",
+  "Uncategorized",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -17,11 +18,12 @@ const numericField = z
   .union([z.string(), z.number(), z.undefined()])
   .transform((v) => {
     if (v === undefined || v === null) return undefined as unknown as number;
-    if (typeof v === "string") return v === "" ? undefined as unknown as number : parseFloat(v);
+    if (typeof v === "string")
+      return v === "" ? (undefined as unknown as number) : parseFloat(v);
     return v;
   });
 
-export const GENDERS = ["Men", "Women", "Kids"] as const;
+export const GENDERS = ["Men", "Women", "Unisex", "Kids"] as const;
 
 /** Grouped size options for the product form's size selector. Values stay unique across groups. */
 export const SIZE_GROUPS = [
@@ -73,11 +75,14 @@ export const productSchema = z.object({
     )
     .optional(),
   stock: numericField.pipe(z.number().min(0, "Stock must be ≥ 0")),
-  cat: z.string().default("Apparel"),
+  cat: z.string().default("Uncategorized"),
   sizes: z.array(z.string()).default([]),
   gender: z.string().optional(),
   color: z.string().optional(),
   desc: z.string().optional(),
+  customOptionsEnabled: z.boolean().default(false),
+  customOptionKeys: z.array(z.string()).default([]),
+  customOptionNote: z.string().max(500).optional(),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;

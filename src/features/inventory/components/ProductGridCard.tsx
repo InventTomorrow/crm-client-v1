@@ -82,6 +82,11 @@ function ProductGridCardBase({
         >
           {statusLabel}
         </span>
+        {product.customOptionsEnabled && (
+          <span className="badge absolute top-2 left-2 border border-[var(--line)] bg-[var(--surface)]/90 font-medium text-[var(--ink-soft)] backdrop-blur-sm">
+            Custom
+          </span>
+        )}
         <div
           className={cn(
             "absolute inset-0 flex items-end gap-1.5 p-2.5 transition-opacity duration-150 bg-[linear-gradient(to_top,rgba(15,23,42,0.55),transparent_50%)]",

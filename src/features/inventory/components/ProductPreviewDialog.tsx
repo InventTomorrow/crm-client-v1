@@ -13,7 +13,7 @@ import {
 import { Separator } from "@/shared/ui/Separator";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { ImageIcon, Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Product } from "../types";
 
 const STATUS_STYLES: Record<
@@ -35,14 +35,17 @@ export function ProductPreviewDialog({
   onClose: () => void;
   onEdit: (product: Product) => void;
 }) {
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-  // A different product in the same dialog must start from its own first image.
-  useEffect(() => {
-    setActiveImageIndex(0);
-  }, [product?.id]);
+  // Held against the product it belongs to: the dialog is reused for whatever
+  // card was clicked, and a different product must start from its own first
+  // image without an effect resetting it after the first paint.
+  const [selection, setSelection] = useState({ productId: "", index: 0 });
+  const activeImageIndex =
+    selection.productId === product?.id ? selection.index : 0;
 
   if (!product) return null;
+
+  const selectImage = (index: number) =>
+    setSelection({ productId: product.id, index });
 
   const images = product.imageUrls ?? [];
   const activeImage = images[activeImageIndex];
@@ -58,8 +61,10 @@ export function ProductPreviewDialog({
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-        <div className="relative aspect-[4/3] bg-[var(--surface-2)]">
+      <DialogContent className="sm:max-w-lg gap-4 p-5 sm:p-6">
+        {/* Inset rather than full-bleed: the photo keeps clear of the dialog's
+            own corners and of the close button in the top-right. */}
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[var(--surface-2)]">
           {activeImage ? (
             <ShimmerImage
               src={getImageUrl(activeImage)}
@@ -73,7 +78,7 @@ export function ProductPreviewDialog({
             </div>
           )}
           <span
-            className="badge absolute top-2.5 right-2.5 font-medium text-white backdrop-blur-sm"
+            className="badge absolute top-2.5 left-2.5 font-medium text-white backdrop-blur-sm"
             style={{ background: status.background }}
           >
             {status.label}
@@ -81,12 +86,12 @@ export function ProductPreviewDialog({
         </div>
 
         {images.length > 1 && (
-          <div className="flex items-center gap-2 px-5 pt-3 overflow-x-auto">
+          <div className="flex items-center gap-2 overflow-x-auto">
             {images.map((imageUrl, index) => (
               <button
                 key={imageUrl}
                 type="button"
-                onClick={() => setActiveImageIndex(index)}
+                onClick={() => selectImage(index)}
                 className={cn(
                   "relative size-12 shrink-0 rounded-lg overflow-hidden border-2 transition-colors",
                   index === activeImageIndex
@@ -105,7 +110,7 @@ export function ProductPreviewDialog({
           </div>
         )}
 
-        <div className="scroll overflow-y-auto max-h-[52vh] px-5 py-4 flex flex-col gap-4">
+        <div className="scroll -mr-1 flex max-h-[46vh] flex-col gap-4 overflow-y-auto pr-1">
           <DialogHeader className="p-0 gap-1 text-left">
             <DialogTitle className="text-[16px] leading-tight">
               {product.name}
@@ -191,7 +196,7 @@ export function ProductPreviewDialog({
           )}
         </div>
 
-        <DialogFooter className="border-t border-[var(--border)] p-6 flex items-center justify-between gap-3">
+        <DialogFooter className="flex items-center justify-between gap-3 border-t border-border pt-4">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

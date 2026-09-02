@@ -51,6 +51,21 @@ export function buildProductColumns({
       },
     },
     {
+      id: "customization",
+      accessorFn: (p) => (p.customOptionsEnabled ? "Custom" : ""),
+      header: "Custom",
+      enableSorting: true,
+      cell: ({ row }) =>
+        row.original.customOptionsEnabled ? (
+          <span className="badge bg-[var(--surface-2)] text-[var(--ink-soft)] border border-[var(--line)]">
+            {row.original.customOptionKeys?.length ?? 0} option
+            {(row.original.customOptionKeys?.length ?? 0) === 1 ? "" : "s"}
+          </span>
+        ) : (
+          <span className="text-[var(--ink-mute)]">—</span>
+        ),
+    },
+    {
       id: "sku",
       accessorFn: (p) => p.sku,
       header: "SKU",

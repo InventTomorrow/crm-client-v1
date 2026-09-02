@@ -27,6 +27,17 @@ export const ORDER_STATUS_OPTIONS = [
 
 export type OrderPlatform = 'SHOPIFY' | 'INTERNAL' | 'API';
 
+/** One answered custom option, snapshotted onto the line at order time. */
+export interface OrderItemCustomOption {
+  key: string;
+  label: string;
+  value: string;
+  /** Artwork the customer sent, for an IMAGE option. */
+  imageUrl?: string;
+  priceDelta: number;
+  requiresQuote: boolean;
+}
+
 export interface OrderItem {
   id: string;
   productId: string | null;
@@ -36,7 +47,20 @@ export interface OrderItem {
   quantity: number;
   unitPrice: string; // Decimal serialized as string
   subtotal: string;
+  /** Null on every uncustomized line, including every historical one. */
+  customOptions?: OrderItemCustomOption[] | null;
+  /** Per-unit surcharge already included in unitPrice. */
+  customizationTotal?: number;
 }
+
+/** Whether an order is held waiting on the team to price custom work. */
+export const ORDER_QUOTE_STATUSES = [
+  "NONE",
+  "PENDING",
+  "QUOTED",
+  "ACCEPTED",
+] as const;
+export type OrderQuoteStatus = (typeof ORDER_QUOTE_STATUSES)[number];
 
 export interface OrderStatusHistoryEntry {
   id: string;
@@ -96,6 +120,8 @@ export interface Order extends Omit<OrderListItem, 'items'> {
   items: OrderItem[];
   statusHistory: OrderStatusHistoryEntry[];
   shippingDetail: OrderShippingDetail | null;
+  /** Absent on orders that predate the quote workflow — treat as "NONE". */
+  quoteStatus?: OrderQuoteStatus;
 }
 
 export interface OrdersSummary {

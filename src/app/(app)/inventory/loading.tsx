@@ -1,5 +1,5 @@
-import LoadingScreen from "@/shared/ui/LoadingScreen";
+import { InventoryListSkeleton } from "@/features/inventory/components/InventorySkeletons";
 
 export default function InventoryLoading() {
-  return <LoadingScreen />;
+  return <InventoryListSkeleton />;
 }

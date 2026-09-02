@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Retired components kept for reference only — never imported by a feature.
+    "src/mock/**",
   ]),
 ]);
 
