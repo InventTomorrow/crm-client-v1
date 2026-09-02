@@ -37,6 +37,7 @@ const DEFAULTS: BusinessProfileForm = {
   supportEmail: '',
   shareSupportContactOnHandoff: false,
   notifyOnEscalation: false,
+  captureCustomizationRequests: false,
 };
 
 export function BusinessSection() {
@@ -68,6 +69,8 @@ export function BusinessSection() {
         supportEmail: data.config.supportEmail ?? '',
         shareSupportContactOnHandoff: data.config.shareSupportContactOnHandoff ?? false,
         notifyOnEscalation: data.config.notifyOnEscalation ?? false,
+        captureCustomizationRequests:
+          data.config.captureCustomizationRequests ?? false,
       });
     }
   }, [data, form]);
@@ -371,6 +374,31 @@ export function BusinessSection() {
                         Off by default. Turn on to receive the lead&apos;s info and
                         escalation reason on the support number above whenever the
                         AI hands a conversation off to a human.
+                      </p>
+                    </div>
+                    <FormControl>
+                      <CRMSwitch on={field.value} onChange={() => field.onChange(!field.value)} />
+                    </FormControl>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="captureCustomizationRequests"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
+                    <div>
+                      <FormLabel className="text-[12.5px]">
+                        Take custom requests the assistant can&apos;t confirm
+                      </FormLabel>
+                      <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                        Off by default, so the assistant simply declines. Turn on
+                        and it writes the request down instead — with no price or
+                        promise — for your team to answer from the Customization
+                        requests tab on Orders.
                       </p>
                     </div>
                     <FormControl>
