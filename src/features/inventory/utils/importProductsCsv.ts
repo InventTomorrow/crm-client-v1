@@ -60,6 +60,9 @@ export function rowToBulkItem(o: Record<string, string>): BulkItem {
     price: toNumber(pick(o, "price", "unit_price", "rate")),
     discountPercentage: discountRaw ? toNumber(discountRaw) : undefined,
     stock: toNumber(pick(o, "stock", "quantity", "qty", "inventory")),
+    // Not importable: options are workspace records a CSV has no way to name.
+    customOptionsEnabled: false,
+    customOptionKeys: [],
     cat: pick(o, "category", "cat") || "Apparel",
     sizes: parseSizes(o),
     gender: pick(o, "gender"),
