@@ -181,7 +181,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
             <Label className="block text-[12px] font-medium text-[var(--ink-soft)] mb-1.5">
               Business type
             </Label>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {BUSINESS_VERTICALS.map((vertical, index) => (
                 <VerticalCard
                   key={vertical.value}
