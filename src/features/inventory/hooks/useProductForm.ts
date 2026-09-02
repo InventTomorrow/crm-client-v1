@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
+import { deleteUploadedFile } from "../services/productsService";
 import type { Product } from "../types";
 import { CATEGORIES, productSchema, type ProductFormData } from "../types";
 import {
@@ -18,11 +19,14 @@ const INITIAL_FORM_VALUES = {
   price: "",
   discountPercentage: undefined,
   stock: "",
-  cat: "Apparel",
+  cat: "Uncategorized",
   sizes: [],
   gender: "",
   color: "",
   desc: "",
+  customOptionsEnabled: false,
+  customOptionKeys: [],
+  customOptionNote: "",
 } satisfies z.input<typeof productSchema>;
 
 /** Owns the product form page's state: prefill from the cached product list,
@@ -38,9 +42,7 @@ export function useProductForm(productId?: string) {
   const isEditMode = !!productId;
   const editingProduct = useMemo(
     () =>
-      productId
-        ? products.find((p: Product) => p.id === productId)
-        : undefined,
+      productId ? products.find((p: Product) => p.id === productId) : undefined,
     [products, productId],
   );
   const notFound = isEditMode && !isLoadingProducts && !editingProduct;
@@ -68,11 +70,14 @@ export function useProductForm(productId?: string) {
           ? editingProduct.discountPercentage
           : undefined,
       stock: editingProduct.stock != null ? String(editingProduct.stock) : "",
-      cat: editingProduct.cat ?? "Apparel",
+      cat: editingProduct.cat ?? "Uncategorized",
       sizes: editingProduct.sizes ?? [],
       gender: editingProduct.gender ?? "",
       color: editingProduct.color ?? "",
       desc: editingProduct.desc ?? "",
+      customOptionsEnabled: editingProduct.customOptionsEnabled ?? false,
+      customOptionKeys: editingProduct.customOptionKeys ?? [],
+      customOptionNote: editingProduct.customOptionNote ?? "",
     });
     // Keyed on the id so a background refetch doesn't clobber in-progress edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,16 +88,23 @@ export function useProductForm(productId?: string) {
   const categoryOptions = useMemo(() => {
     const seen = new Set<string>();
     const out: string[] = [];
-    for (const c of [...CATEGORIES, ...products.map((p: Product) => p.cat)]) {
-      const key = c?.trim().toLowerCase();
-      if (!c || !key || seen.has(key)) continue;
+    for (const category of [
+      ...CATEGORIES,
+      ...(products?.map((p: Product) => p.cat) ?? []),
+    ]) {
+      const key = category?.trim().toLowerCase();
+      if (!category || !key || seen.has(key)) continue;
       seen.add(key);
-      out.push(c);
+      out.push(category);
     }
-    return out;
+    return out.sort((a, b) => a.localeCompare(b));
   }, [products]);
 
   const selectedCategory = useWatch({ control: form.control, name: "cat" });
+  const customOptionsEnabled = useWatch({
+    control: form.control,
+    name: "customOptionsEnabled",
+  });
   const watchedPrice = useWatch({ control: form.control, name: "price" });
   const watchedDiscount = useWatch({
     control: form.control,
@@ -109,11 +121,62 @@ export function useProductForm(productId?: string) {
   const isSaving = addProduct.isPending || updateProduct.isPending;
   const isDeleting = deleteProduct.isPending;
 
+  // Photos uploaded on this screen. Until the form is saved they belong to no
+  // product, so removing or replacing one has to delete it from S3 here —
+  // nothing else ever will. A photo already saved on the product is never in
+  // this list: the server deletes that one on update or delete, after the save.
+  const [uploadsPendingSave, setUploadsPendingSave] = useState<string[]>([]);
+
+  const discardUploads = useCallback((urls: string[]) => {
+    if (urls.length === 0) return;
+    setUploadsPendingSave((prev) => prev.filter((url) => !urls.includes(url)));
+    for (const url of urls) {
+      // A leftover object costs storage, not correctness — never block the form.
+      void deleteUploadedFile(url).catch(() => {});
+    }
+  }, []);
+
   // Single product image for now — variants will reintroduce a gallery. Extra
   // URLs on products created earlier are kept as-is so nothing is lost.
-  const setCoverImage = useCallback((url: string | null) => {
-    setImageUrls((prev) => (url ? [url, ...prev.slice(1)] : prev.slice(1)));
-  }, []);
+  const applyCoverImage = useCallback(
+    (url: string | null, isOwnUpload: boolean) => {
+      const replaced = imageUrls[0];
+      if (
+        replaced &&
+        replaced !== url &&
+        uploadsPendingSave.includes(replaced)
+      ) {
+        discardUploads([replaced]);
+      }
+      if (url && isOwnUpload) {
+        setUploadsPendingSave((prev) =>
+          prev.includes(url) ? prev : [...prev, url],
+        );
+      }
+      setImageUrls((prev) => (url ? [url, ...prev.slice(1)] : prev.slice(1)));
+    },
+    [imageUrls, uploadsPendingSave, discardUploads],
+  );
+
+  const setCoverImage = useCallback(
+    (url: string | null) => applyCoverImage(url, true),
+    [applyCoverImage],
+  );
+
+  /**
+   * A photo the seller linked to instead of uploading. It lives on someone
+   * else's host, so it is never tracked for deletion — DELETE /upload would
+   * refuse it anyway, the key not being under this workspace's prefix.
+   */
+  const setLinkedCoverImage = useCallback(
+    (url: string) => applyCoverImage(url, false),
+    [applyCoverImage],
+  );
+
+  /** Leaving without saving: every photo uploaded here is now an orphan. */
+  const discardUnsavedUploads = useCallback(() => {
+    discardUploads(uploadsPendingSave);
+  }, [uploadsPendingSave, discardUploads]);
 
   const handleSubmit = form.handleSubmit((data: ProductFormData) => {
     const payload = {
@@ -128,10 +191,22 @@ export function useProductForm(productId?: string) {
       gender: data.gender || undefined,
       color: data.color || undefined,
       imageUrls,
+      customOptionsEnabled: data.customOptionsEnabled,
+      // Cleared when the switch is off, so a disabled product can't quietly
+      // keep options that the listing badge would still count.
+      customOptionKeys: data.customOptionsEnabled ? data.customOptionKeys : [],
+      customOptionNote: data.customOptionsEnabled
+        ? data.customOptionNote || undefined
+        : undefined,
     };
+    // No cleanup on success: the photo is the product's now, and this screen
+    // unmounts on the redirect.
     const onSuccess = () => router.push("/inventory");
     if (editingProduct?.id) {
-      updateProduct.mutate({ id: editingProduct.id, data: payload }, { onSuccess });
+      updateProduct.mutate(
+        { id: editingProduct.id, data: payload },
+        { onSuccess },
+      );
     } else {
       addProduct.mutate(payload, { onSuccess });
     }
@@ -153,6 +228,8 @@ export function useProductForm(productId?: string) {
     editingProduct,
     imageUrls,
     setCoverImage,
+    setLinkedCoverImage,
+    discardUnsavedUploads,
     categoryOptions,
     selectedCategory,
     discountedPrice,
@@ -162,5 +239,6 @@ export function useProductForm(productId?: string) {
     setDeleteConfirmOpen,
     handleSubmit,
     confirmDelete,
+    customOptionsEnabled,
   };
 }
