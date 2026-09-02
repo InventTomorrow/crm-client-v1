@@ -85,6 +85,17 @@ export const NAV_ITEMS: NavItem[] = [
     Icon: Package,
     perm: "inventory:view",
     capability: "CATALOG_PRODUCTS",
+    // Both action pages are real destinations a seller lands on repeatedly, so
+    // unlike /services/new they earn a place here — hidden from view-only staff.
+    children: [
+      { href: "/inventory", label: "All products" },
+      { href: "/inventory/new", label: "Add product", perm: "inventory:edit" },
+      {
+        href: "/inventory/import",
+        label: "Import products",
+        perm: "inventory:edit",
+      },
+    ],
   },
   {
     href: "/menu",

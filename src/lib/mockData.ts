@@ -49,6 +49,10 @@ export interface Product {
   color?: string;
   desc?: string;
   imageUrls?: string[];
+  /** Made-to-order customization — see features/product-custom-options. */
+  customOptionsEnabled?: boolean;
+  customOptionKeys?: string[];
+  customOptionNote?: string;
 }
 
 export interface Order {
