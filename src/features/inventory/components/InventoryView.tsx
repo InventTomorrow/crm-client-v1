@@ -12,7 +12,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
   AlertTriangle,
   ChevronDown,
-  Copy,
   Download,
   Grid2x2,
   List,
@@ -27,14 +26,11 @@ import {
 import { useMemo } from "react";
 import { useInventoryView } from "../hooks/useInventoryView";
 import type { InventoryView as InvViewType, Product } from "../types";
-import { TIERS } from "../types";
 import { exportProductsCsv } from "../utils/exportProductsCsv";
 import { buildProductColumns } from "../utils/productColumns";
 import { AddMenuItem } from "./AddMenuItem";
-import { BulkAddDialog } from "./BulkAddDialog";
 import { ProductGridCard } from "./ProductGridCard";
 import { ProductPreviewDialog } from "./ProductPreviewDialog";
-import { TierCard } from "./TierCard";
 import {
   ErpPanel,
   StorefrontPanel,
@@ -67,9 +63,6 @@ export function InventoryView() {
     toggleStock,
     addMenuOpen,
     setAddMenuOpen,
-    bulkOpen,
-    importedItems,
-    parsingImport,
     deleteTarget,
     setDeleteTarget,
     previewProduct,
@@ -79,22 +72,16 @@ export function InventoryView() {
     exportOpen,
     setExportOpen,
     categoryOptions,
-    importRef,
-    importType,
     addMenuRef,
     stockCounts,
     filtered,
     goToAddProduct,
     goToEditProduct,
-    openBulkDialog,
+    goToImportProducts,
     confirmDelete,
     confirmBulkDelete,
-    handleImport,
-    closeBulkDialog,
-    saveBulkItems,
     duplicateProduct,
     deleteProduct,
-    bulkAddProducts,
   } = useInventoryView();
 
   const columns = useMemo(
@@ -120,7 +107,10 @@ export function InventoryView() {
       </div>
 
       {/* Stats */}
-      <div data-tour="page-list" className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-4">
+      <div
+        data-tour="page-list"
+        className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-4"
+      >
         <StatCard
           label="Total products"
           value={products.length}
@@ -158,7 +148,7 @@ export function InventoryView() {
       </div>
 
       {/* Tier selection */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[10px] mb-4">
+      {/* <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[10px] mb-4">
         {TIERS.map((t) => (
           <TierCard
             key={t.id}
@@ -167,14 +157,17 @@ export function InventoryView() {
             onClick={() => setTier(t.id)}
           />
         ))}
-      </div>
+      </div> */}
 
       {/* ── Tier 1: Manual Catalog ── */}
       {tier === 1 && (
         <div>
           <div className="card flex flex-col gap-2.5 mb-3 p-[10px]">
             {/* Row 1: search + view toggle + add */}
-            <div data-tour="page-actions" className="flex flex-wrap items-center gap-2.5">
+            <div
+              data-tour="page-actions"
+              className="flex flex-wrap items-center gap-2.5"
+            >
               <div className="relative w-full sm:min-w-[200px] sm:flex-[1_1_220px] sm:w-auto">
                 <Search
                   size={13}
@@ -229,45 +222,18 @@ export function InventoryView() {
                           goToAddProduct();
                         }}
                       />
-                      <AddMenuItem
-                        Icon={Copy}
-                        title="Bulk add"
-                        sub="Multiple at once with preview"
-                        onClick={() => {
-                          setAddMenuOpen(false);
-                          openBulkDialog();
-                        }}
-                      />
                       <div className="h-px mx-1 my-1 bg-[var(--line)]" />
                       <AddMenuItem
                         Icon={Upload}
-                        title="Import from CSV"
-                        sub="Spreadsheet format"
+                        title="Import products"
+                        sub="From a CSV or JSON file"
                         onClick={() => {
                           setAddMenuOpen(false);
-                          importType.current = "csv";
-                          importRef.current?.click();
-                        }}
-                      />
-                      <AddMenuItem
-                        Icon={Upload}
-                        title="Import from JSON"
-                        sub="API export format"
-                        onClick={() => {
-                          setAddMenuOpen(false);
-                          importType.current = "json";
-                          importRef.current?.click();
+                          goToImportProducts();
                         }}
                       />
                     </div>
                   )}
-                  <Input
-                    ref={importRef}
-                    type="file"
-                    accept=".csv,.json"
-                    className="hidden"
-                    onChange={handleImport}
-                  />
                 </div>
               </PermissionGuard>
             </div>
@@ -403,15 +369,6 @@ export function InventoryView() {
           setPreviewProduct(null);
           goToEditProduct(product);
         }}
-      />
-
-      <BulkAddDialog
-        open={bulkOpen}
-        onClose={closeBulkDialog}
-        isSaving={bulkAddProducts.isPending}
-        initialItems={importedItems}
-        parsing={parsingImport}
-        onSaveAll={saveBulkItems}
       />
 
       <ConfirmDialog

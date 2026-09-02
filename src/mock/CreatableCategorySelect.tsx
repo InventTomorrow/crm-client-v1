@@ -6,6 +6,11 @@ import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 
 /**
+ * RETIRED — kept for reference only, not imported by any feature.
+ *
+ * The product form's category field now uses the shared
+ * `@/shared/ui/CreateableAutoComplete`. Do not import this from a real page.
+ *
  * Category picker with inline creation: search the list, and when no match is
  * found, a "Create" action swaps the control for a text input with confirm /
  * cancel buttons. A created category is selected and added to the list.

@@ -4,6 +4,8 @@ import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { getImageUrl } from "@/lib/utils";
 import { Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
@@ -163,6 +165,20 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 )}
               </div>
 
+              {/* Held until the team prices the custom work on it. */}
+              {order.quoteStatus === "PENDING" && (
+                <div className="rounded-xl border border-[var(--warning-line,var(--line))] bg-[var(--surface-2)] p-3">
+                  <div className="text-[13px] font-medium text-[var(--ink)]">
+                    Waiting on your price
+                  </div>
+                  <p className="mt-1 text-[11.5px] text-[var(--ink-mute)]">
+                    This order includes custom work your team prices by hand. It
+                    stays a draft — no stock is held and the customer has not
+                    been charged — until you set the line prices and confirm it.
+                  </p>
+                </div>
+              )}
+
               {/* Items */}
               <div>
                 <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">
@@ -191,6 +207,36 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                             {formatMoney(orderItem?.unitPrice, order?.currency)}
                             {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
                           </div>
+                          {orderItem.customOptions?.length ? (
+                            <ul className="mt-1.5 flex flex-col gap-1">
+                              {orderItem.customOptions.map((option) => (
+                                <li
+                                  key={option.key}
+                                  className="flex items-start gap-1.5 text-[11.5px] text-[var(--ink-soft)]"
+                                >
+                                  {option.imageUrl && (
+                                    <ShimmerImage
+                                      src={getImageUrl(option.imageUrl)}
+                                      alt={`${option.label} artwork`}
+                                      wrapperClassName="w-8 h-8 rounded border border-[var(--line)] bg-[var(--surface-2)] flex-shrink-0"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  )}
+                                  <span className="min-w-0">
+                                    <span className="text-[var(--ink-mute)]">
+                                      {option.label}:
+                                    </span>{" "}
+                                    {option.value}
+                                    {option.requiresQuote
+                                      ? " · priced by team"
+                                      : option.priceDelta
+                                        ? ` · +${formatMoney(option.priceDelta, order?.currency)}`
+                                        : ""}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
                         </div>
                         <div className="text-[13px] font-medium text-[var(--ink)]">
                           {formatMoney(orderItem?.subtotal, order?.currency)}

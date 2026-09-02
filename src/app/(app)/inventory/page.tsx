@@ -1,5 +1,5 @@
-import type { Metadata } from 'next';
 import { InventoryView } from '@/features/inventory/components/InventoryView';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Inventory',
