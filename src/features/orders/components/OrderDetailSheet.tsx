@@ -214,14 +214,19 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                                   key={option.key}
                                   className="flex items-start gap-1.5 text-[11.5px] text-[var(--ink-soft)]"
                                 >
-                                  {option.imageUrl && (
-                                    <ShimmerImage
-                                      src={getImageUrl(option.imageUrl)}
-                                      alt={`${option.label} artwork`}
-                                      wrapperClassName="w-8 h-8 rounded border border-[var(--line)] bg-[var(--surface-2)] flex-shrink-0"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  )}
+                                  {option.imageUrls?.length ? (
+                                    <span className="flex flex-shrink-0 gap-1">
+                                      {option.imageUrls.map((url) => (
+                                        <ShimmerImage
+                                          key={url}
+                                          src={getImageUrl(url)}
+                                          alt={`${option.label} artwork`}
+                                          wrapperClassName="w-8 h-8 rounded border border-[var(--line)] bg-[var(--surface-2)] flex-shrink-0"
+                                          className="w-full h-full object-contain"
+                                        />
+                                      ))}
+                                    </span>
+                                  ) : null}
                                   <span className="min-w-0">
                                     <span className="text-[var(--ink-mute)]">
                                       {option.label}:
@@ -237,6 +242,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                               ))}
                             </ul>
                           ) : null}
+                          {orderItem.customizationNote && (
+                            <div className="mt-1.5 rounded-md border border-[var(--warning-line,var(--line))] bg-[var(--surface-2)] px-2 py-1.5 text-[11.5px] text-[var(--ink-soft)]">
+                              {orderItem.customizationNote}
+                            </div>
+                          )}
                         </div>
                         <div className="text-[13px] font-medium text-[var(--ink)]">
                           {formatMoney(orderItem?.subtotal, order?.currency)}

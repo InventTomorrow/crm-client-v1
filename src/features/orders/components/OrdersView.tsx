@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/shared/ui/Select";
 import { StatCard } from "@/shared/ui/StatCard";
-import { Loader2, Plus, Search, Wallet } from "lucide-react";
+import { Image as ImageIcon, Loader2, Plus, Search, Wallet } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -49,13 +49,21 @@ export function OrdersView() {
   const [search, setSearch] = useUrlState("q");
   const [statusParam, setStatus] = useUrlState("status");
   const status = statusParam as OrderStatus | "";
+  const [customizationParam, setCustomizationParam] =
+    useUrlState("customization");
   const [selectedId, setSelectedId] = useUrlState("order");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Order | null>(null);
 
   const filters: OrderFilters = useMemo(
-    () => ({ ...(search ? { search } : {}), ...(status ? { status } : {}) }),
-    [search, status],
+    () => ({
+      ...(search ? { search } : {}),
+      ...(status ? { status } : {}),
+      ...(customizationParam
+        ? { hasCustomization: customizationParam === "yes" }
+        : {}),
+    }),
+    [search, status, customizationParam],
   );
 
   const [orderPendingDeletion, setOrderPendingDeletion] =
@@ -124,8 +132,15 @@ export function OrdersView() {
         enableSorting: true,
         size: 90,
         cell: ({ row }) => (
-          <span className="text-[13px] font-semibold text-[var(--ink)]">
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
             #{row.original.orderNumber}
+            {row.original.hasCustomization && (
+              <ImageIcon
+                size={12}
+                className="text-[var(--ink-mute)]"
+                aria-label="Has customization"
+              />
+            )}
           </span>
         ),
       },
@@ -329,6 +344,21 @@ export function OrdersView() {
                     {ORDER_STATUS_META[s].label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={customizationParam || "__all__"}
+              onValueChange={(v) =>
+                setCustomizationParam(v === "__all__" ? "" : v)
+              }
+            >
+              <SelectTrigger className="w-[180px] text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Any customization</SelectItem>
+                <SelectItem value="yes">Has customization</SelectItem>
+                <SelectItem value="no">No customization</SelectItem>
               </SelectContent>
             </Select>
           </div>

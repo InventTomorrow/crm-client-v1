@@ -32,8 +32,8 @@ export interface OrderItemCustomOption {
   key: string;
   label: string;
   value: string;
-  /** Artwork the customer sent, for an IMAGE option. */
-  imageUrl?: string;
+  /** Artwork the customer sent, for an IMAGE option — capped at 3. */
+  imageUrls?: string[];
   priceDelta: number;
   requiresQuote: boolean;
 }
@@ -51,6 +51,8 @@ export interface OrderItem {
   customOptions?: OrderItemCustomOption[] | null;
   /** Per-unit surcharge already included in unitPrice. */
   customizationTotal?: number;
+  /** Artwork beyond the three attached, or a spec a human still has to settle. */
+  customizationNote?: string | null;
 }
 
 /** Whether an order is held waiting on the team to price custom work. */
@@ -92,6 +94,8 @@ export interface OrderListItem {
   createdAt: string;
   items: { id: string }[];
   lead: OrderLeadRef | null;
+  /** True when any line carries a custom option. */
+  hasCustomization?: boolean;
 }
 
 export interface OrderShippingDetail {
@@ -138,4 +142,5 @@ export interface OrderFilters {
   conversationId?: string;
   dateFrom?: string;
   dateTo?: string;
+  hasCustomization?: boolean;
 }
