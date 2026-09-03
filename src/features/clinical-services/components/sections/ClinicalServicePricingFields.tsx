@@ -9,6 +9,7 @@ import {
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/Input";
 import { NativeSelect } from "@/shared/ui/NativeSelect";
+import { useWatch } from "react-hook-form";
 import {
   CLINICAL_PRICING_MODELS,
   PRICING_MODEL_LABELS,
@@ -17,16 +18,30 @@ import {
 import { DEFAULT_CURRENCY } from "../../utils/clinicalServiceFormMapping";
 import { ShiftOptionsField } from "../ShiftOptionsField";
 
+/** Human-readable label for the primary price field, per model. */
+const PRICE_FIELD_LABEL: Record<string, string> = {
+  FIXED: "Price",
+  PER_SESSION: "Follow-up price",
+  PER_SHIFT: "Price per shift",
+  PER_DAY: "Price per day",
+  PER_MONTH: "Price per month",
+};
+
 export function ClinicalServicePricingFields({
   form,
   isSaving,
 }: ClinicalServiceFormSectionProps) {
-  const pricingModel = form.watch("pricingModel");
+  const pricingModel = useWatch({
+    control: form.control,
+    name: "pricingModel",
+  });
 
   // Which price inputs make sense depends entirely on the model chosen.
   const showsRange = pricingModel === "RANGE";
   const showsFirstSession = pricingModel === "PER_SESSION";
   const quotable = pricingModel !== "ON_ENQUIRY";
+
+  const priceLabel = PRICE_FIELD_LABEL[pricingModel] ?? "Price";
 
   return (
     <>
@@ -71,8 +86,7 @@ export function ClinicalServicePricingFields({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {showsFirstSession ? "Follow-up price" : "Price"} (
-                    {DEFAULT_CURRENCY})
+                    {priceLabel} ({DEFAULT_CURRENCY})
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -97,7 +111,7 @@ export function ClinicalServicePricingFields({
                 name="priceMin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Minimum ({DEFAULT_CURRENCY})</FormLabel>
+                    <FormLabel>From ({DEFAULT_CURRENCY})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -117,7 +131,7 @@ export function ClinicalServicePricingFields({
                 name="priceMax"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Maximum ({DEFAULT_CURRENCY})</FormLabel>
+                    <FormLabel>To ({DEFAULT_CURRENCY})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

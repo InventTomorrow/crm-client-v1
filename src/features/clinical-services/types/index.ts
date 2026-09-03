@@ -1,7 +1,6 @@
+import { EMPTY_LIST_ROW } from "@/lib/validationMessages";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { EMPTY_LIST_ROW } from "@/lib/validationMessages";
-
 
 /**
  * Mirrors what `GET /clinical-services/:id/preview` returns — the server
@@ -156,9 +155,15 @@ export const clinicalServiceFormSchema = z
     shortDescription: z.string().trim().min(1, "Short description is required"),
     fullDescription: z.string().trim().optional(),
 
-    includedActivities: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
-    excludedActivities: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
-    conditionsTreated: z.array(z.string().trim().min(1, EMPTY_LIST_ROW)).default([]),
+    includedActivities: z
+      .array(z.string().trim().min(1, EMPTY_LIST_ROW))
+      .default([]),
+    excludedActivities: z
+      .array(z.string().trim().min(1, EMPTY_LIST_ROW))
+      .default([]),
+    conditionsTreated: z
+      .array(z.string().trim().min(1, EMPTY_LIST_ROW))
+      .default([]),
 
     pricingModel: z.enum(CLINICAL_PRICING_MODELS),
     price: optionalNumber(z.coerce.number().min(0)),
