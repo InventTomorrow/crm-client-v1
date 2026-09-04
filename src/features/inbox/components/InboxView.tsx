@@ -14,9 +14,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
+import { HeaderIconButton } from "@/shared/ui/HeaderIconButton";
 import { Input } from "@/shared/ui/Input";
 import { Spinner } from "@/shared/ui/Motion";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
+import { SearchField } from "@/shared/ui/SearchField";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -36,9 +38,11 @@ import {
   Mic,
   MoreVertical,
   Package,
+  Palette,
   Paperclip,
   Phone,
   Plus,
+  Search,
   Send,
   ShoppingCart,
   Smile,
@@ -145,6 +149,7 @@ export function InboxView() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const [isValidatingLead, setIsValidatingLead] = useState(false);
   const [invalidLeadDialog, setInvalidLeadDialog] = useState<{
@@ -778,28 +783,15 @@ export function InboxView() {
               <Megaphone size={14} />+ New Broadcast
             </Button>
           </PermissionGuard>
-          {/* Search by name or phone */}
-          {/* <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
-            />
-            <Input
+          {searchOpen && (
+            <SearchField
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onValueChange={setSearch}
               placeholder="Search by name or phone…"
-              className="pl-9 pr-8 h-9 text-[12.5px]"
+              aria-label="Search conversations"
+              className="w-full max-w-none min-w-0"
             />
-            {search && (
-              <Button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] hover:text-[var(--ink)] hover:bg-transparent cursor-pointer"
-                title="Clear search"
-              >
-                <X size={14} />
-              </Button>
-            )}
-          </div> */}
+          )}
           {/* Filter tabs row */}
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden">
@@ -894,10 +886,18 @@ export function InboxView() {
                 </Button>
               )}
             </div>
-            {/* <WAStatusBadge
-              showLabel={false}
-              className="self-center flex-shrink-0"
-            /> */}
+            <HeaderIconButton
+              label={searchOpen ? "Close search" : "Search chats"}
+              isActive={searchOpen}
+              aria-expanded={searchOpen}
+              onClick={() => {
+                if (searchOpen) setSearch("");
+                setSearchOpen((v) => !v);
+              }}
+              className="size-8 shrink-0 self-center"
+            >
+              <Search size={15} />
+            </HeaderIconButton>
           </div>
         </div>
         <div className="h-px bg-[var(--line)]" />
@@ -1168,10 +1168,10 @@ export function InboxView() {
                       ? "Already flagged"
                       : "Flag for attention"}
                   </DropdownMenuItem>
-                  {/* <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setBgPickerOpen((v) => !v)}>
                     <Palette size={13} className="mr-2" /> Chat wallpaper
-                  </DropdownMenuItem> */}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
