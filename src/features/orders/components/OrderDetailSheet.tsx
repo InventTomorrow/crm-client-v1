@@ -5,7 +5,7 @@ import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
-import { Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
+import { Check, Copy, Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -33,6 +33,24 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
   // reviews the change and clicks Save. The checkbox toggles customer notify.
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [notifyCustomer, setNotifyCustomer] = useState(true);
+  const [shippingCopied, setShippingCopied] = useState(false);
+
+  const copyShippingDetails = (shipping: NonNullable<Order["shippingDetail"]>) => {
+    const lines = [
+      `Name: ${shipping.customerName}`,
+      `Contact: ${shipping.customerPhone}`,
+      shipping.email && `Email: ${shipping.email}`,
+      `Address: ${shipping.addressLine1}`,
+      shipping.addressLine2 && `Address 2: ${shipping.addressLine2}`,
+      [shipping.city, shipping.state, shipping.postalCode].filter(Boolean).length &&
+        `City: ${[shipping.city, shipping.state, shipping.postalCode].filter(Boolean).join(", ")}`,
+      `Country: ${shipping.country}`,
+      shipping.notes && `Notes: ${shipping.notes}`,
+    ].filter(Boolean);
+    navigator.clipboard.writeText(lines.join("\n"));
+    setShippingCopied(true);
+    setTimeout(() => setShippingCopied(false), 2000);
+  };
 
   const resetStatusChange = () => {
     setPendingStatus(null);
@@ -191,67 +209,98 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                     const params = new URLSearchParams({ q: orderItem.name });
                     if (orderItem.productId)
                       params.set("highlight", orderItem.productId);
+                    const hasCustomization =
+                      !!orderItem.customOptions?.length ||
+                      !!orderItem.customizationNote;
                     return (
-                      <Link
+                      <div
                         key={orderItem.id}
-                        href={`/inventory?${params.toString()}`}
-                        className="group hover-shimmer flex items-center justify-between px-3 py-2.5 border-b border-[var(--line-soft)] last:border-0 no-underline transition-colors hover:bg-[var(--surface-2)]"
-                        title="View in inventory"
+                        className="border-b border-[var(--line-soft)] last:border-0"
                       >
-                        <div className="min-w-0">
-                          <div className="text-[13px] text-[var(--ink)] truncate group-hover:text-[var(--accent)]">
-                            {orderItem?.name}
-                          </div>
-                          <div className="text-[11.5px] text-[var(--ink-mute)]">
-                            {orderItem?.quantity} ×{" "}
-                            {formatMoney(orderItem?.unitPrice, order?.currency)}
-                            {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
-                          </div>
-                          {orderItem.customOptions?.length ? (
-                            <ul className="mt-1.5 flex flex-col gap-1">
-                              {orderItem.customOptions.map((option) => (
-                                <li
-                                  key={option.key}
-                                  className="flex items-start gap-1.5 text-[11.5px] text-[var(--ink-soft)]"
-                                >
-                                  {option.imageUrls?.length ? (
-                                    <span className="flex flex-shrink-0 gap-1">
-                                      {option.imageUrls.map((url) => (
-                                        <ShimmerImage
-                                          key={url}
-                                          src={getImageUrl(url)}
-                                          alt={`${option.label} artwork`}
-                                          wrapperClassName="w-8 h-8 rounded border border-[var(--line)] bg-[var(--surface-2)] flex-shrink-0"
-                                          className="w-full h-full object-contain"
-                                        />
-                                      ))}
-                                    </span>
-                                  ) : null}
-                                  <span className="min-w-0">
-                                    <span className="text-[var(--ink-mute)]">
-                                      {option.label}:
-                                    </span>{" "}
-                                    {option.value}
-                                    {option.requiresQuote
-                                      ? " · priced by team"
-                                      : option.priceDelta
-                                        ? ` · +${formatMoney(option.priceDelta, order?.currency)}`
-                                        : ""}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                          {orderItem.customizationNote && (
-                            <div className="mt-1.5 rounded-md border border-[var(--warning-line,var(--line))] bg-[var(--surface-2)] px-2 py-1.5 text-[11.5px] text-[var(--ink-soft)]">
-                              {orderItem.customizationNote}
-                            </div>
+                        <Link
+                          href={`/inventory?${params.toString()}`}
+                          className="group hover-shimmer flex items-start gap-2.5 px-3 py-2.5 no-underline transition-colors hover:bg-[var(--surface-2)]"
+                          title="View in inventory"
+                        >
+                          {orderItem.imageUrl && (
+                            <ShimmerImage
+                              src={getImageUrl(orderItem.imageUrl)}
+                              alt={orderItem.name}
+                              wrapperClassName="w-11 h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] flex-shrink-0"
+                              className="w-full h-full object-cover"
+                            />
                           )}
-                        </div>
-                        <div className="text-[13px] font-medium text-[var(--ink)]">
-                          {formatMoney(orderItem?.subtotal, order?.currency)}
-                        </div>
-                      </Link>
+                          <div className="min-w-0 flex-1 flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-[13px] text-[var(--ink)] truncate group-hover:text-[var(--accent)]">
+                                {orderItem?.name}
+                              </div>
+                              <div className="text-[11.5px] text-[var(--ink-mute)]">
+                                {orderItem?.quantity} ×{" "}
+                                {formatMoney(orderItem?.unitPrice, order?.currency)}
+                                {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
+                              </div>
+                            </div>
+                            <div className="text-[13px] font-medium text-[var(--ink)] flex-shrink-0">
+                              {formatMoney(orderItem?.subtotal, order?.currency)}
+                            </div>
+                          </div>
+                        </Link>
+
+                        {hasCustomization && (
+                          <div className="mx-3 mb-2.5 rounded-lg border border-[var(--warning-line,var(--line))] bg-[var(--surface-2)] p-2.5">
+                            <div className="text-[10.5px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5">
+                              Customization Requested
+                            </div>
+                            {orderItem.customOptions?.length ? (
+                              <ul className="flex flex-col gap-1.5">
+                                {orderItem.customOptions.map((option) => (
+                                  <li
+                                    key={option.key}
+                                    className="flex items-start gap-1.5 text-[11.5px] text-[var(--ink-soft)]"
+                                  >
+                                    {option.imageUrls?.length ? (
+                                      <span className="flex flex-shrink-0 gap-1">
+                                        {option.imageUrls.map((url) => (
+                                          <ShimmerImage
+                                            key={url}
+                                            src={getImageUrl(url)}
+                                            alt={`${option.label} artwork`}
+                                            wrapperClassName="w-9 h-9 rounded border border-[var(--line)] bg-[var(--surface)] flex-shrink-0"
+                                            className="w-full h-full object-contain"
+                                          />
+                                        ))}
+                                      </span>
+                                    ) : null}
+                                    <span className="min-w-0">
+                                      <span className="text-[var(--ink-mute)]">
+                                        {option.label}:
+                                      </span>{" "}
+                                      {option.value}
+                                      {option.requiresQuote
+                                        ? " · priced by team"
+                                        : option.priceDelta
+                                          ? ` · +${formatMoney(option.priceDelta, order?.currency)}`
+                                          : ""}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+                            {orderItem.customizationNote && (
+                              <div
+                                className={
+                                  orderItem.customOptions?.length
+                                    ? "mt-1.5 pt-1.5 border-t border-[var(--line)] text-[11.5px] text-[var(--ink-soft)]"
+                                    : "text-[11.5px] text-[var(--ink-soft)]"
+                                }
+                              >
+                                {orderItem.customizationNote}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -273,38 +322,60 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 </div>
               </div>
 
-              {/* Delivery address */}
+              {/* Delivery address — shown last, after pricing */}
               {order.shippingDetail && (
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5 flex items-center gap-1.5">
-                    <MapPin size={12} /> Shipping Details
+                  <div className="mb-1.5 flex items-center justify-between gap-1.5">
+                    <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] flex items-center gap-1.5">
+                      <MapPin size={12} /> Shipping Details
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyShippingDetails(order.shippingDetail!)}
+                      className="flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
+                    >
+                      {shippingCopied ? (
+                        <>
+                          <Check size={12} className="text-[#15803D]" /> Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={12} /> Copy
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 text-[13px] text-[var(--ink-soft)] flex flex-col gap-0.5">
-                    <span className="font-medium text-[var(--ink)]">
-                      {order.shippingDetail.customerName}
-                    </span>
-                    {order.shippingDetail.customerPhone && (
-                      <span>{order.shippingDetail.customerPhone}</span>
-                    )}
-                    <span>{order.shippingDetail.addressLine1}</span>
-                    {order.shippingDetail.addressLine2 && (
-                      <span>{order.shippingDetail.addressLine2}</span>
-                    )}
-                    <span>
-                      {[
-                        order.shippingDetail.city,
-                        order.shippingDetail.state,
-                        order.shippingDetail.postalCode,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </span>
-                    <span>{order.shippingDetail.country}</span>
-                    {order.shippingDetail.notes && (
-                      <span className="text-[11.5px] text-[var(--ink-mute)] mt-1">
-                        {order.shippingDetail.notes}
-                      </span>
-                    )}
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 text-[13px] flex flex-col gap-1.5">
+                    {[
+                      { label: "Name", value: order.shippingDetail.customerName },
+                      { label: "Contact", value: order.shippingDetail.customerPhone },
+                      { label: "Email", value: order.shippingDetail.email },
+                      { label: "Address", value: order.shippingDetail.addressLine1 },
+                      { label: "Address 2", value: order.shippingDetail.addressLine2 },
+                      {
+                        label: "City",
+                        value: [
+                          order.shippingDetail.city,
+                          order.shippingDetail.state,
+                          order.shippingDetail.postalCode,
+                        ]
+                          .filter(Boolean)
+                          .join(", "),
+                      },
+                      { label: "Country", value: order.shippingDetail.country },
+                      { label: "Notes", value: order.shippingDetail.notes },
+                    ]
+                      .filter((field) => field.value)
+                      .map((field) => (
+                        <div key={field.label} className="flex items-start gap-2">
+                          <span className="w-[62px] flex-shrink-0 text-[11.5px] text-[var(--ink-mute)]">
+                            {field.label}
+                          </span>
+                          <span className="min-w-0 text-[var(--ink-soft)]">
+                            {field.value}
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
