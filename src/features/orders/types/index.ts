@@ -44,6 +44,8 @@ export interface OrderItem {
   variantId: string | null;
   name: string;
   sku: string | null;
+  /** Catalog product image, resolved server-side by productId at order time. */
+  imageUrl: string | null;
   quantity: number;
   unitPrice: string; // Decimal serialized as string
   subtotal: string;
