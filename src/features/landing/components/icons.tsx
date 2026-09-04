@@ -51,6 +51,12 @@ export const FacebookIcon = ({ className = "w-5 h-5" }: IconProps) => (
   </svg>
 );
 
+export const LinkedInIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zM7.114 20.452H3.558V9h3.556v11.452z" />
+  </svg>
+);
+
 export const PaperPlaneIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M3.4 20.4l17.45-7.48a1 1 0 0 0 0-1.84L3.4 3.6a1 1 0 0 0-1.4 1.05L4.5 11l9 1-9 1-2.5 6.35a1 1 0 0 0 1.4 1.05z" />
