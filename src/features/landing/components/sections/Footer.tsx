@@ -1,7 +1,12 @@
 import { Mail, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import Container from "../Container";
-import { FacebookIcon, InstagramIcon, YoutubeIcon } from "../icons";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedInIcon,
+  YoutubeIcon,
+} from "../icons";
 import Logo from "../Logo";
 import NewsletterForm from "./NewsletterForm";
 
@@ -23,6 +28,11 @@ const SOCIAL_LINKS = [
     href: "https://www.facebook.com/people/Asaan-Rabta",
     label: "Facebook",
     Icon: FacebookIcon,
+  },
+  {
+    href: "https://www.linkedin.com/company/asaan-rabta/",
+    label: "LinkedIn",
+    Icon: LinkedInIcon,
   },
 ];
 
