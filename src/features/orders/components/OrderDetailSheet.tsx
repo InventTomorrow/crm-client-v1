@@ -15,8 +15,15 @@ import {
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
 import type { Order, OrderStatus } from "../types";
+import { ImagePreviewDialog } from "./ImagePreviewDialog";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusSelect } from "./OrderStatusSelect";
+
+interface PreviewImage {
+  url: string;
+  caption: string;
+  filenameBase: string;
+}
 
 interface Props {
   orderId: string;
@@ -34,15 +41,19 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
   const [notifyCustomer, setNotifyCustomer] = useState(true);
   const [shippingCopied, setShippingCopied] = useState(false);
+  const [previewImage, setPreviewImage] = useState<PreviewImage | null>(null);
 
-  const copyShippingDetails = (shipping: NonNullable<Order["shippingDetail"]>) => {
+  const copyShippingDetails = (
+    shipping: NonNullable<Order["shippingDetail"]>,
+  ) => {
     const lines = [
       `Name: ${shipping.customerName}`,
       `Contact: ${shipping.customerPhone}`,
       shipping.email && `Email: ${shipping.email}`,
       `Address: ${shipping.addressLine1}`,
       shipping.addressLine2 && `Address 2: ${shipping.addressLine2}`,
-      [shipping.city, shipping.state, shipping.postalCode].filter(Boolean).length &&
+      [shipping.city, shipping.state, shipping.postalCode].filter(Boolean)
+        .length &&
         `City: ${[shipping.city, shipping.state, shipping.postalCode].filter(Boolean).join(", ")}`,
       `Country: ${shipping.country}`,
       shipping.notes && `Notes: ${shipping.notes}`,
@@ -56,6 +67,14 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
     setPendingStatus(null);
     setNotifyCustomer(true);
   };
+
+  // When any line is customized, order.notes reads as the customer's brief
+  // for that work — it belongs next to the customization, not as an
+  // easy-to-miss section at the bottom.
+  const anyItemCustomized =
+    order?.items.some(
+      (i) => !!i.customOptions?.length || !!i.customizationNote,
+    ) ?? false;
 
   const saveStatusChange = () => {
     if (!order || !pendingStatus) return;
@@ -217,35 +236,54 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                         key={orderItem.id}
                         className="border-b border-[var(--line-soft)] last:border-0"
                       >
-                        <Link
-                          href={`/inventory?${params.toString()}`}
-                          className="group hover-shimmer flex items-start gap-2.5 px-3 py-2.5 no-underline transition-colors hover:bg-[var(--surface-2)]"
-                          title="View in inventory"
-                        >
+                        <div className="flex items-start gap-2.5 px-3 py-2.5">
                           {orderItem.imageUrl && (
-                            <ShimmerImage
-                              src={getImageUrl(orderItem.imageUrl)}
-                              alt={orderItem.name}
-                              wrapperClassName="w-11 h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] flex-shrink-0"
-                              className="w-full h-full object-cover"
-                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPreviewImage({
+                                  url: orderItem.imageUrl!,
+                                  caption: orderItem.name,
+                                  filenameBase: orderItem.name,
+                                })
+                              }
+                              className="flex-shrink-0 rounded-lg transition-opacity hover:opacity-80"
+                              title="View full size"
+                            >
+                              <ShimmerImage
+                                src={getImageUrl(orderItem.imageUrl)}
+                                alt={orderItem.name}
+                                wrapperClassName="w-11 h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-2)]"
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
                           )}
-                          <div className="min-w-0 flex-1 flex items-start justify-between gap-2">
+                          <Link
+                            href={`/inventory?${params.toString()}`}
+                            className="group hover-shimmer min-w-0 flex-1 flex items-start justify-between gap-2 no-underline"
+                            title="View in inventory"
+                          >
                             <div className="min-w-0">
                               <div className="text-[13px] text-[var(--ink)] truncate group-hover:text-[var(--accent)]">
                                 {orderItem?.name}
                               </div>
                               <div className="text-[11.5px] text-[var(--ink-mute)]">
                                 {orderItem?.quantity} ×{" "}
-                                {formatMoney(orderItem?.unitPrice, order?.currency)}
+                                {formatMoney(
+                                  orderItem?.unitPrice,
+                                  order?.currency,
+                                )}
                                 {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
                               </div>
                             </div>
                             <div className="text-[13px] font-medium text-[var(--ink)] flex-shrink-0">
-                              {formatMoney(orderItem?.subtotal, order?.currency)}
+                              {formatMoney(
+                                orderItem?.subtotal,
+                                order?.currency,
+                              )}
                             </div>
-                          </div>
-                        </Link>
+                          </Link>
+                        </div>
 
                         {hasCustomization && (
                           <div className="mx-3 mb-2.5 rounded-lg border border-[var(--warning-line,var(--line))] bg-[var(--surface-2)] p-2.5">
@@ -254,37 +292,58 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                             </div>
                             {orderItem.customOptions?.length ? (
                               <ul className="flex flex-col gap-1.5">
-                                {orderItem.customOptions.map((option) => (
-                                  <li
-                                    key={option.key}
-                                    className="flex items-start gap-1.5 text-[11.5px] text-[var(--ink-soft)]"
-                                  >
-                                    {option.imageUrls?.length ? (
-                                      <span className="flex flex-shrink-0 gap-1">
-                                        {option.imageUrls.map((url) => (
-                                          <ShimmerImage
-                                            key={url}
-                                            src={getImageUrl(url)}
-                                            alt={`${option.label} artwork`}
-                                            wrapperClassName="w-9 h-9 rounded border border-[var(--line)] bg-[var(--surface)] flex-shrink-0"
-                                            className="w-full h-full object-contain"
-                                          />
-                                        ))}
+                                {orderItem.customOptions.map((option) => {
+                                  // Redelivered media or a resent photo can leave
+                                  // duplicate URLs on the same option — one photo
+                                  // should never appear as three identical thumbnails.
+                                  const artworkUrls = [
+                                    ...new Set(option.imageUrls ?? []),
+                                  ];
+                                  return (
+                                    <li
+                                      key={option.key}
+                                      className="flex items-start gap-1.5 text-[11.5px] text-[var(--ink-soft)]"
+                                    >
+                                      {artworkUrls.length ? (
+                                        <span className="flex flex-shrink-0 gap-1">
+                                          {artworkUrls.map((url) => (
+                                            <button
+                                              key={url}
+                                              type="button"
+                                              onClick={() =>
+                                                setPreviewImage({
+                                                  url,
+                                                  caption: `${orderItem.name} — ${option.label}`,
+                                                  filenameBase: `${orderItem.name}-${option.label}`,
+                                                })
+                                              }
+                                              className="transition-opacity hover:opacity-80"
+                                              title="View full size"
+                                            >
+                                              <ShimmerImage
+                                                src={getImageUrl(url)}
+                                                alt={`${option.label} artwork`}
+                                                wrapperClassName="w-9 h-9 rounded border border-[var(--line)] bg-[var(--surface)] flex-shrink-0"
+                                                className="w-full h-full object-contain"
+                                              />
+                                            </button>
+                                          ))}
+                                        </span>
+                                      ) : null}
+                                      <span className="min-w-0">
+                                        <span className="text-[var(--ink-mute)]">
+                                          {option.label}:
+                                        </span>{" "}
+                                        {option.value}
+                                        {option.requiresQuote
+                                          ? " · priced by team"
+                                          : option.priceDelta
+                                            ? ` · +${formatMoney(option.priceDelta, order?.currency)}`
+                                            : ""}
                                       </span>
-                                    ) : null}
-                                    <span className="min-w-0">
-                                      <span className="text-[var(--ink-mute)]">
-                                        {option.label}:
-                                      </span>{" "}
-                                      {option.value}
-                                      {option.requiresQuote
-                                        ? " · priced by team"
-                                        : option.priceDelta
-                                          ? ` · +${formatMoney(option.priceDelta, order?.currency)}`
-                                          : ""}
-                                    </span>
-                                  </li>
-                                ))}
+                                    </li>
+                                  );
+                                })}
                               </ul>
                             ) : null}
                             {orderItem.customizationNote && (
@@ -295,7 +354,25 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                                     : "text-[11.5px] text-[var(--ink-soft)]"
                                 }
                               >
+                                <span className="text-[var(--ink-mute)]">
+                                  Team note:
+                                </span>{" "}
                                 {orderItem.customizationNote}
+                              </div>
+                            )}
+                            {order.notes && (
+                              <div
+                                className={
+                                  orderItem.customOptions?.length ||
+                                  orderItem.customizationNote
+                                    ? "mt-1.5 pt-1.5 border-t border-[var(--line)] text-[11.5px] text-[var(--ink-soft)] whitespace-pre-wrap"
+                                    : "text-[11.5px] text-[var(--ink-soft)] whitespace-pre-wrap"
+                                }
+                              >
+                                <span className="text-[var(--ink-mute)]">
+                                  Customer note:
+                                </span>{" "}
+                                {order.notes}
                               </div>
                             )}
                           </div>
@@ -347,11 +424,23 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   </div>
                   <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 text-[13px] flex flex-col gap-1.5">
                     {[
-                      { label: "Name", value: order.shippingDetail.customerName },
-                      { label: "Contact", value: order.shippingDetail.customerPhone },
+                      {
+                        label: "Name",
+                        value: order.shippingDetail.customerName,
+                      },
+                      {
+                        label: "Contact",
+                        value: order.shippingDetail.customerPhone,
+                      },
                       { label: "Email", value: order.shippingDetail.email },
-                      { label: "Address", value: order.shippingDetail.addressLine1 },
-                      { label: "Address 2", value: order.shippingDetail.addressLine2 },
+                      {
+                        label: "Address",
+                        value: order.shippingDetail.addressLine1,
+                      },
+                      {
+                        label: "Address 2",
+                        value: order.shippingDetail.addressLine2,
+                      },
                       {
                         label: "City",
                         value: [
@@ -367,7 +456,10 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                     ]
                       .filter((field) => field.value)
                       .map((field) => (
-                        <div key={field.label} className="flex items-start gap-2">
+                        <div
+                          key={field.label}
+                          className="flex items-start gap-2"
+                        >
                           <span className="w-[62px] flex-shrink-0 text-[11.5px] text-[var(--ink-mute)]">
                             {field.label}
                           </span>
@@ -380,7 +472,10 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 </div>
               )}
 
-              {order.notes && (
+              {/* Shown here only when no line is customized — otherwise this
+                  same note already appears inside the Customization Requested
+                  card above. */}
+              {!anyItemCustomized && order.notes && (
                 <div>
                   <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">
                     Notes
@@ -477,6 +572,14 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
           </div>
         )}
       </div>
+
+      <ImagePreviewDialog
+        open={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        imageUrl={previewImage?.url ?? null}
+        caption={previewImage?.caption ?? ""}
+        filenameBase={previewImage?.filenameBase ?? "image"}
+      />
     </>
   );
 }
