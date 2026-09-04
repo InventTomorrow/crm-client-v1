@@ -5,6 +5,8 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useMe } from "@/features/auth/hooks/useAuth";
+import { hasFinishedOnboarding } from "@/features/auth/utils/authLanding";
 import { PrimaryCta } from "../LandingCta";
 import Logo from "../Logo";
 
@@ -23,6 +25,8 @@ const sectionIdOf = (href: string) => href.split("#")[1] ?? null;
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user } = useMe();
+  const isSignedIn = !!user && hasFinishedOnboarding(user);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState(
@@ -139,6 +143,14 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!isSignedIn && (
+              <Link
+                href="/auth/login"
+                className="hidden lg:inline-flex items-center px-4 py-3 text-[15px] font-semibold text-brand-dark/80 transition-colors hover:text-brand-dark"
+              >
+                Login
+              </Link>
+            )}
             <PrimaryCta signedInTarget="dashboard" className="hidden lg:inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
               Get Started
             </PrimaryCta>
@@ -221,7 +233,16 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 ))}
-                <div className="p-2 pt-1">
+                <div className="flex flex-col gap-2 p-2 pt-1">
+                  {!isSignedIn && (
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center justify-center rounded-2xl px-4 py-3 text-[15px] font-medium text-brand-dark/90 transition-colors hover:bg-brand-mint-soft hover:text-brand-dark"
+                    >
+                      Login
+                    </Link>
+                  )}
                   <PrimaryCta signedInTarget="dashboard" className="w-full justify-center h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:bg-brand-green-hover">
                     Get Started
                   </PrimaryCta>
