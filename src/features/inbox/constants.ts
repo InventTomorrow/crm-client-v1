@@ -1,12 +1,49 @@
+// Token-derived gradients/patterns instead of fixed hex, so wallpapers stay
+// legible and correctly themed in both light and dark mode.
 export const CHAT_BG_PRESETS = [
   { id: "default", label: "Default", value: "" },
-  { id: "wa-classic", label: "Classic", value: "#ECE5DD" },
-  { id: "wa-dark", label: "Night", value: "#0B141A" },
-  { id: "teal", label: "Teal", value: "linear-gradient(160deg,#075E54,#128C7E)" },
-  { id: "mint", label: "Mint", value: "linear-gradient(160deg,#d4f1c5,#a8e6b0)" },
-  { id: "slate", label: "Slate", value: "#1e293b" },
-  { id: "blush", label: "Blush", value: "linear-gradient(160deg,#fce4ec,#f8bbd0)" },
-  { id: "ocean", label: "Ocean", value: "linear-gradient(160deg,#e3f2fd,#bbdefb)" },
+  {
+    id: "mint",
+    label: "Mint",
+    value:
+      "linear-gradient(160deg, color-mix(in oklch, var(--accent) 12%, transparent) 0%, var(--bg) 70%)",
+  },
+  {
+    id: "teal",
+    label: "Teal",
+    value:
+      "linear-gradient(160deg, color-mix(in oklch, var(--accent-2) 18%, transparent) 0%, var(--bg) 65%)",
+  },
+  {
+    id: "violet",
+    label: "Violet",
+    value:
+      "linear-gradient(160deg, color-mix(in oklch, var(--info) 12%, transparent) 0%, var(--bg) 70%)",
+  },
+  {
+    id: "sunset",
+    label: "Sunset",
+    value:
+      "linear-gradient(160deg, color-mix(in oklch, var(--warning) 14%, transparent) 0%, var(--bg) 70%)",
+  },
+  {
+    id: "soft",
+    label: "Soft",
+    value:
+      "linear-gradient(160deg, color-mix(in oklch, var(--surface-2) 70%, transparent) 0%, var(--bg) 100%)",
+  },
+  {
+    id: "dots",
+    label: "Dots",
+    value:
+      "radial-gradient(color-mix(in oklch, var(--ink-mute) 22%, transparent) 1px, transparent 1px) 0 0 / 16px 16px, var(--bg)",
+  },
+  {
+    id: "weave",
+    label: "Weave",
+    value:
+      "repeating-linear-gradient(45deg, color-mix(in oklch, var(--line) 70%, transparent) 0 1px, transparent 1px 12px), var(--bg)",
+  },
 ];
 
 export const BUILT_IN_TABS = [
