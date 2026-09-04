@@ -1,5 +1,9 @@
 import React from "react";
 import { ShieldAlert } from "lucide-react";
+import {
+  REGISTERED_BUSINESS_ADDRESS,
+  REGISTERED_BUSINESS_NAME,
+} from "@/shared/lib/site";
 import { LegalSection } from "../components/LegalLayout";
 
 export const TERMS_SECTIONS: LegalSection[] = [
@@ -11,7 +15,10 @@ export const TERMS_SECTIONS: LegalSection[] = [
     content: (
       <div className="space-y-3">
         <p>
-          These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User,&quot; &quot;Customer,&quot; or &quot;Subscriber&quot;) and <strong>AsaanRabta</strong> (&quot;Company,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), governing your access to and use of the AsaanRabta website at <strong>https://asaanrabta.com</strong>, dashboard, WhatsApp CRM, AI multi-agent software, and web applications.
+          The AsaanRabta website at <strong>https://asaanrabta.com</strong> is owned and operated by <strong>{REGISTERED_BUSINESS_NAME}</strong> (&quot;Company,&quot; &quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). Our registered office and principal place of business is located at <strong>{REGISTERED_BUSINESS_ADDRESS}</strong>.
+        </p>
+        <p>
+          These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User,&quot; &quot;Customer,&quot; or &quot;Subscriber&quot;) and the Company, governing your access to and use of the AsaanRabta website, dashboard, WhatsApp CRM, AI multi-agent software, and web applications.
         </p>
         <p>
           By creating an account, connecting a WhatsApp device, or subscribing to any of our plans, you represent that you have read, understood, and agreed to be bound by these Terms and our Privacy Policy.

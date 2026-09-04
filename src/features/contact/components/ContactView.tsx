@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckCircle2, Clock, HelpCircle, Loader2, Mail } from "lucide-react";
+import { CheckCircle2, Clock, HelpCircle, Loader2, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import Container from "@/features/landing/components/Container";
-import { SUPPORT_EMAIL } from "@/shared/lib/site";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/shared/lib/site";
 import {
   Form,
   FormControl,
@@ -22,6 +22,12 @@ const SUPPORT_CHANNELS = [
     title: "Email us",
     description: SUPPORT_EMAIL,
     href: `mailto:${SUPPORT_EMAIL}`,
+  },
+  {
+    icon: Phone,
+    title: "Call us",
+    description: SUPPORT_PHONE,
+    href: `tel:${SUPPORT_PHONE.replace(/\s+/g, "")}`,
   },
   {
     icon: HelpCircle,

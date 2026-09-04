@@ -13,6 +13,11 @@ export const SITE_LOCALE = "en_US";
 
 export const SUPPORT_EMAIL = "support@asaanrabta.com";
 export const INFO_EMAIL = "info@asaanrabta.com";
+export const SUPPORT_PHONE = "+92 335 6641733";
+
+export const REGISTERED_BUSINESS_NAME = "Creative Web Circle LLP";
+export const REGISTERED_BUSINESS_ADDRESS =
+  "Office No 2, Ground Floor, Plaza No 75, Tawn Seen Complex Civic Centre, Bahria Town, Phase 4, Rawalpindi";
 
 // Public social profiles — feed JSON-LD `sameAs` and any footer social icons.
 // Add full profile URLs here as they go live (e.g. "https://www.facebook.com/asaanrabta").
