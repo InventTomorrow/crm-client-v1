@@ -2,7 +2,7 @@
 import { cn } from '@/lib/utils';
 import { Check, Loader2, MessageCircle } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreference } from '../hooks/useNotifications';
-import { NOTIFICATION_PREFERENCE_META, NOTIFICATION_TYPES } from '../lib/preferenceMeta';
+import { NOTIFICATION_PREFERENCE_META, SETTINGS_VISIBLE_NOTIFICATION_TYPES } from '../lib/preferenceMeta';
 import type { NotificationType } from '../types';
 
 const ROW_GRID = 'grid grid-cols-[1fr_56px_56px_72px] gap-2 items-center';
@@ -73,7 +73,7 @@ export function NotificationPreferences() {
         <span className="text-center">WhatsApp</span>
       </div>
 
-      {NOTIFICATION_TYPES.map((type, index) => {
+      {SETTINGS_VISIBLE_NOTIFICATION_TYPES.map((type, index) => {
         const meta = NOTIFICATION_PREFERENCE_META[type];
         const saved = preferences?.find((preference) => preference.type === type);
         const inApp = saved?.inApp ?? meta.inAppDefault;
