@@ -81,8 +81,8 @@ export const NOTIFICATION_PREFERENCE_META: Record<
   NEW_LOGIN: {
     title: "New sign-in",
     description: "When your account is accessed from a new device.",
-    inAppDefault: true,
-    emailDefault: true,
+    inAppDefault: false,
+    emailDefault: false,
     whatsappDefault: false,
   },
   BILLING: {
@@ -125,3 +125,12 @@ export const NOTIFICATION_PREFERENCE_META: Record<
 export const NOTIFICATION_TYPES = Object.keys(
   NOTIFICATION_PREFERENCE_META,
 ) as NotificationType[];
+
+// NEW_LOGIN is off by default and not user-configurable — kept out of the
+// settings list, though it stays in NOTIFICATION_PREFERENCE_META so past
+// NEW_LOGIN entries still render correctly in the notification feed.
+const HIDDEN_FROM_SETTINGS = new Set<NotificationType>(["NEW_LOGIN"]);
+
+export const SETTINGS_VISIBLE_NOTIFICATION_TYPES = NOTIFICATION_TYPES.filter(
+  (type) => !HIDDEN_FROM_SETTINGS.has(type),
+);
