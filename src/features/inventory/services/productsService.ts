@@ -1,6 +1,6 @@
 // src/features/inventory/services/productsService.ts
-import { apiClient } from '@/lib/apiClient';
-import type { Product } from '@/lib/mockData';
+import { apiClient } from "@/lib/apiClient";
+import type { Product } from "@/lib/mockData";
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -73,38 +73,47 @@ export interface PresignedUrlResult {
 
 function mapProduct(p: ApiProduct): Product {
   const stock = p.stock ?? 0;
-  const status: Product['status'] = stock === 0 ? 'out' : stock <= 12 ? 'low' : 'in';
+  const status: Product["status"] =
+    stock === 0 ? "out" : stock <= 12 ? "low" : "in";
   return {
     id: p.id,
     name: p.name,
-    sku: p.sku ?? '',
+    sku: p.sku ?? "",
     price: p.price,
     discountPercentage: p.discountPercentage ?? undefined,
     stock,
     status,
-    cat: p.category ?? 'Uncategorized',
-    size: p.size ?? '',
+    cat: p.category ?? "Uncategorized",
+    size: p.size ?? "",
     sizes: p.sizes ?? [],
-    gender: p.gender ?? '',
-    color: p.color ?? '',
-    desc: p.description ?? '',
+    gender: p.gender ?? "",
+    color: p.color ?? "",
+    desc: p.description ?? "",
     imageUrls: p.imageUrls ?? [],
     // Defaulted: a server that predates these fields must still render.
     customOptionsEnabled: p.customOptionsEnabled ?? false,
     customOptionKeys: p.customOptionKeys ?? [],
-    customOptionNote: p.customOptionNote ?? '',
+    customOptionNote: p.customOptionNote ?? "",
   };
 }
 
 // ─── Service functions ─────────────────────────────────────
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const { data } = await apiClient.get<{ success: boolean; data: ApiProduct[] }>('/products');
+  const { data } = await apiClient.get<{
+    success: boolean;
+    data: ApiProduct[];
+  }>("/products");
   return (data.data ?? []).map(mapProduct);
 };
 
-export const createProduct = async (payload: CreateProductPayload): Promise<Product> => {
-  const { data } = await apiClient.post<{ success: boolean; data: ApiProduct }>('/products', payload);
+export const createProduct = async (
+  payload: CreateProductPayload,
+): Promise<Product> => {
+  const { data } = await apiClient.post<{ success: boolean; data: ApiProduct }>(
+    "/products",
+    payload,
+  );
   return mapProduct(data.data);
 };
 
@@ -112,7 +121,10 @@ export const updateProduct = async (
   id: string,
   payload: UpdateProductPayload,
 ): Promise<Product> => {
-  const { data } = await apiClient.put<{ success: boolean; data: ApiProduct }>(`/products/${id}`, payload);
+  const { data } = await apiClient.put<{ success: boolean; data: ApiProduct }>(
+    `/products/${id}`,
+    payload,
+  );
   return mapProduct(data.data);
 };
 
@@ -122,43 +134,39 @@ export const deleteProduct = async (id: string): Promise<{ id: string }> => {
 };
 
 export const duplicateProduct = async (product: Product): Promise<Product> => {
-  const payload: CreateProductPayload = {
-    name: `${product.name} (copy)`,
-    sku: product.sku ? `${product.sku}-copy` : undefined,
-    price: product.price,
-    discountPercentage: product.discountPercentage,
-    stock: product.stock,
-    description: product.desc,
-    category: product.cat || undefined,
-    size: product.size || undefined,
-    sizes: product.sizes ?? [],
-    gender: product.gender || undefined,
-    color: product.color || undefined,
-    imageUrls: product.imageUrls ?? [],
-    customOptionsEnabled: product.customOptionsEnabled ?? false,
-    customOptionKeys: product.customOptionKeys ?? [],
-    customOptionNote: product.customOptionNote || undefined,
-  };
-  return createProduct(payload);
+  const { data } = await apiClient.post<{ success: boolean; data: ApiProduct }>(
+    `/products/${product.id}/duplicate`,
+  );
+  return mapProduct(data.data);
 };
 
-export const bulkCreateProducts = async (products: CreateProductPayload[]): Promise<Product[]> => {
-  const { data } = await apiClient.post<{ success: boolean; data: ApiProduct[] }>('/products/bulk', { products });
+export const bulkCreateProducts = async (
+  products: CreateProductPayload[],
+): Promise<Product[]> => {
+  const { data } = await apiClient.post<{
+    success: boolean;
+    data: ApiProduct[];
+  }>("/products/bulk", { products });
   return (data.data ?? []).map(mapProduct);
 };
 
-export type UploadFolder = 'products' | 'menu' | 'avatars' | 'attachments' | 'resources';
+export type UploadFolder =
+  | "products"
+  | "menu"
+  | "avatars"
+  | "attachments"
+  | "resources";
 
 /** Step 1: get a presigned PUT URL from our backend */
 export const getPresignedUrl = async (
   fileName: string,
   mimeType: string,
-  folder: UploadFolder = 'products',
+  folder: UploadFolder = "products",
 ): Promise<PresignedUrlResult> => {
-  const { data } = await apiClient.post<{ success: boolean; data: PresignedUrlResult }>(
-    '/upload/presign',
-    { fileName, mimeType, folder },
-  );
+  const { data } = await apiClient.post<{
+    success: boolean;
+    data: PresignedUrlResult;
+  }>("/upload/presign", { fileName, mimeType, folder });
   return data.data;
 };
 
@@ -174,16 +182,18 @@ export const uploadToS3 = (
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('PUT', uploadUrl);
-    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
     xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
+      if (event.lengthComputable)
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`S3 upload failed: ${xhr.status} ${xhr.statusText}`));
+      else
+        reject(new Error(`S3 upload failed: ${xhr.status} ${xhr.statusText}`));
     };
-    xhr.onerror = () => reject(new Error('S3 upload failed: network error'));
+    xhr.onerror = () => reject(new Error("S3 upload failed: network error"));
     xhr.send(file);
   });
 };
@@ -196,7 +206,7 @@ export const uploadToS3 = (
  * cleaned up server-side when the product is updated or deleted.
  */
 export const deleteUploadedFile = async (url: string): Promise<void> => {
-  await apiClient.delete('/upload', { data: { url } });
+  await apiClient.delete("/upload", { data: { url } });
 };
 
 /**
@@ -207,10 +217,14 @@ export const deleteUploadedFile = async (url: string): Promise<void> => {
  */
 export const presignedUpload = async (
   file: File,
-  folder: UploadFolder = 'products',
+  folder: UploadFolder = "products",
   onProgress?: (percent: number) => void,
 ): Promise<string> => {
-  const { uploadUrl, publicUrl } = await getPresignedUrl(file.name, file.type, folder);
+  const { uploadUrl, publicUrl } = await getPresignedUrl(
+    file.name,
+    file.type,
+    folder,
+  );
   await uploadToS3(uploadUrl, file, onProgress);
   return publicUrl;
 };
