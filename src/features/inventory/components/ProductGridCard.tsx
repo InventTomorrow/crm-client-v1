@@ -1,7 +1,7 @@
 import { cn, getImageUrl, pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
-import { Copy, ImageIcon, Pencil, Trash2 } from "lucide-react";
+import { Copy, ImageIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import type { Product } from "../types";
 
@@ -12,6 +12,7 @@ function ProductGridCardBase({
   onDelete,
   onDuplicate,
   highlight = false,
+  isDuplicating = false,
 }: {
   product: Product;
   onPreview: (product: Product) => void;
@@ -19,6 +20,7 @@ function ProductGridCardBase({
   onDelete: (product: Product) => void;
   onDuplicate: (product: Product) => void;
   highlight?: boolean;
+  isDuplicating?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -106,13 +108,18 @@ function ProductGridCardBase({
           <Button
             size="icon-sm"
             className="bg-white/95 text-slate-900 hover:bg-white"
+            disabled={isDuplicating}
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(product);
             }}
             title="Duplicate"
           >
-            <Copy size={13} />
+            {isDuplicating ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <Copy size={13} />
+            )}
           </Button>
           <Button
             size="icon-sm"

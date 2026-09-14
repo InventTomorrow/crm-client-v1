@@ -84,6 +84,10 @@ export function InventoryView() {
     deleteProduct,
   } = useInventoryView();
 
+  const duplicatingProductId = duplicateProduct.isPending
+    ? duplicateProduct.variables?.id
+    : undefined;
+
   const columns = useMemo(
     () =>
       buildProductColumns({
@@ -320,6 +324,7 @@ export function InventoryView() {
                   onEdit={goToEditProduct}
                   onDelete={setDeleteTarget}
                   onDuplicate={duplicateProduct.mutate}
+                  isDuplicating={p.id === duplicatingProductId}
                 />
               ))}
               <button
