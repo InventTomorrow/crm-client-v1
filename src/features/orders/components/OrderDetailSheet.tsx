@@ -1,4 +1,6 @@
 "use client";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { hasCapability } from "@/lib/business-verticals";
 import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
@@ -42,6 +44,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
   const [notifyCustomer, setNotifyCustomer] = useState(true);
   const [shippingCopied, setShippingCopied] = useState(false);
   const [previewImage, setPreviewImage] = useState<PreviewImage | null>(null);
+  const { tenant } = useCurrentTenant();
+  const isMenuCatalog =
+    !!tenant && hasCapability(tenant.businessVertical, "CATALOG_MENU");
+  const catalogPath = isMenuCatalog ? "/menu" : "/inventory";
+  const catalogLabel = isMenuCatalog ? "menu" : "inventory";
 
   const copyShippingDetails = (
     shipping: NonNullable<Order["shippingDetail"]>,
@@ -259,9 +266,9 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                             </button>
                           )}
                           <Link
-                            href={`/inventory?${params.toString()}`}
+                            href={`${catalogPath}?${params.toString()}`}
                             className="group hover-shimmer min-w-0 flex-1 flex items-start justify-between gap-2 no-underline"
-                            title="View in inventory"
+                            title={`View in ${catalogLabel}`}
                           >
                             <div className="min-w-0">
                               <div className="text-[13px] text-[var(--ink)] truncate group-hover:text-[var(--accent)]">
