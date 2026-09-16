@@ -1,16 +1,28 @@
-import { useEffect, useState } from 'react';
-import { ImageIcon, Search, UtensilsCrossed } from 'lucide-react';
-import { getImageUrl, pkr } from '@/lib/utils';
-import { Input } from '@/shared/ui/Input';
-import { Separator } from '@/shared/ui/Separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/shared/ui/Sheet';
-import { Skeleton } from '@/shared/ui/Motion';
-import { ShimmerImage } from '@/shared/ui/ShimmerImage';
-import { useMenuPreview } from '../hooks/useMenuPreview';
+import { getImageUrl, pkr } from "@/lib/utils";
+import { Input } from "@/shared/ui/Input";
+import { Skeleton } from "@/shared/ui/Motion";
+import { Separator } from "@/shared/ui/Separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/shared/ui/Sheet";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
+import { ImageIcon, Search, UtensilsCrossed } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useMenuPreview } from "../hooks/useMenuPreview";
 
-export function MenuPreviewSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+export function MenuPreviewSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Input stays bound to `search` (updates every keystroke, never lags); the
   // list only re-filters 300ms after typing stops, on `debouncedSearch`.
@@ -20,7 +32,7 @@ export function MenuPreviewSheet({ open, onOpenChange }: { open: boolean; onOpen
   }, [search]);
 
   useEffect(() => {
-    if (!open) setSearch('');
+    if (!open) setSearch("");
   }, [open]);
 
   const { groups, isLoading } = useMenuPreview(open, debouncedSearch);
@@ -30,12 +42,17 @@ export function MenuPreviewSheet({ open, onOpenChange }: { open: boolean; onOpen
       <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
         <SheetHeader className="border-b border-[var(--border)]">
           <SheetTitle>Menu Preview</SheetTitle>
-          <SheetDescription>What customers see when they browse your menu</SheetDescription>
+          <SheetDescription>
+            What customers see when they browse your menu
+          </SheetDescription>
         </SheetHeader>
 
         <div className="px-4 pt-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
+            />
             <Input
               placeholder="Search dishes…"
               value={search}
@@ -59,7 +76,7 @@ export function MenuPreviewSheet({ open, onOpenChange }: { open: boolean; onOpen
             </div>
           ) : (
             <div className="flex flex-col gap-5">
-              {groups.map((group, groupIndex) => (
+              {groups?.map((group, groupIndex) => (
                 <div key={group.category.id}>
                   {groupIndex > 0 && <Separator className="mb-5" />}
                   <h3 className="text-[13px] font-semibold tracking-wide uppercase text-[var(--ink)] mb-2.5">
@@ -69,7 +86,10 @@ export function MenuPreviewSheet({ open, onOpenChange }: { open: boolean; onOpen
                     {group.items.map((item) => {
                       const hasVariants = item.variants.length > 0;
                       return (
-                        <div key={item.id} className="flex items-start gap-3 py-1.5">
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-3 py-1.5"
+                        >
                           <div className="relative size-11 shrink-0 rounded-lg overflow-hidden bg-[var(--surface-2)]">
                             {item.imageUrl ? (
                               <ShimmerImage
@@ -85,14 +105,23 @@ export function MenuPreviewSheet({ open, onOpenChange }: { open: boolean; onOpen
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-[12.5px] font-medium truncate text-[var(--ink)]">{item.name}</div>
+                            <div className="text-[12.5px] font-medium truncate text-[var(--ink)]">
+                              {item.name}
+                            </div>
                             {hasVariants && (
                               <div className="flex flex-col gap-0.5 mt-0.5">
                                 {item.variants.map((variant) => (
-                                  <div key={variant.name} className="flex items-center gap-1.5">
+                                  <div
+                                    key={variant.name}
+                                    className="flex items-center gap-1.5"
+                                  >
                                     <span className="text-[11.5px] text-[var(--ink-mute)] shrink-0 whitespace-nowrap">
                                       {variant.name}
-                                      {variant.isDefault && <span className="ml-1 opacity-70">(default)</span>}
+                                      {variant.isDefault && (
+                                        <span className="ml-1 opacity-70">
+                                          (default)
+                                        </span>
+                                      )}
                                     </span>
                                     <span className="flex-1 border-b border-dotted border-[var(--border)] translate-y-[-2px]" />
                                     <span className="text-[11.5px] font-semibold font-[var(--font-mono)] text-[var(--ink)] shrink-0">
