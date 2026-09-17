@@ -42,7 +42,7 @@ export function ClinicalBookingsView() {
           onSelect={(option) => setServiceFilter(option?.id ?? "")}
           placeholder="All services"
           emptyLabel="No services yet"
-          className="h-9 w-[220px] text-[12.5px]"
+          className="h-10 w-[220px] text-[12.5px]"
         />
       }
     />

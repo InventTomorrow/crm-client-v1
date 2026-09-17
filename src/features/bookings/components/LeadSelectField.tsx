@@ -2,6 +2,7 @@
 import { useSearchLeads } from "@/features/leads/hooks/useLeads";
 import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
 import { cn } from "@/lib/utils";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Search, UserCheck } from "lucide-react";
@@ -30,7 +31,8 @@ export function LeadSelectField({
   disabled = false,
 }: LeadSelectFieldProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const searchResults = useSearchLeads(searchTerm);
+  const debouncedSearchTerm = useDebouncedValue(searchTerm);
+  const searchResults = useSearchLeads(debouncedSearchTerm);
   const vocabulary = useLeadVocabulary();
 
   if (selectedLeadId) {

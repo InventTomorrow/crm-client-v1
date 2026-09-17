@@ -1,4 +1,5 @@
 import { useAppStore } from "@/lib/appStore";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +23,7 @@ export function useInventoryView() {
     (t: number) => setTierParam(String(t)),
     [setTierParam],
   );
-  const [search, setSearch] = useUrlState("q");
+  const { search, searchInput, setSearchInput } = useDebouncedUrlSearch("q");
   // Set when arriving from an order item — rings + scrolls to that product, then clears.
   const [highlightId, setHighlightId] = useUrlState("highlight");
   const [filterCat, setFilterCat] = useUrlState("cat");
@@ -133,8 +134,8 @@ export function useInventoryView() {
     setInventoryView,
     tier,
     setTier,
-    search,
-    setSearch,
+    searchInput,
+    setSearchInput,
     highlightId,
     filterCat,
     setFilterCat,

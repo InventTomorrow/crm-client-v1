@@ -2,6 +2,7 @@
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useOpenLeadChat } from "@/features/leads/hooks/useOpenLeadChat";
 import { extractErrorMessage } from "@/lib/utils";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -18,7 +19,15 @@ import {
   SelectValue,
 } from "@/shared/ui/Select";
 import { StatCard } from "@/shared/ui/StatCard";
-import { Image as ImageIcon, Loader2, Plus, Search, Wallet } from "lucide-react";
+import {
+  Download,
+  Image as ImageIcon,
+  Loader2,
+  Plus,
+  Search,
+  StickyNote,
+  Wallet,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -46,7 +55,7 @@ import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
 export function OrdersView() {
-  const [search, setSearch] = useUrlState("q");
+  const { search, searchInput, setSearchInput } = useDebouncedUrlSearch("q");
   const [statusParam, setStatus] = useUrlState("status");
   const status = statusParam as OrderStatus | "";
   const [customizationParam, setCustomizationParam] =
@@ -104,10 +113,17 @@ export function OrdersView() {
     [setSelectedId],
   );
 
+  // Tracked per order: many orders share one lead, so the lead id alone would spin every row.
+  const [openingChatOrderId, setOpeningChatOrderId] = useState<string | null>(
+    null,
+  );
+
   // The inbox is keyed by lead, so an order without one has nothing to open.
   const openCustomerChat = useCallback(
     (order: OrderListItem) => {
-      if (order.lead) openLeadChat(order.lead);
+      if (!order.lead) return;
+      setOpeningChatOrderId(order.id);
+      openLeadChat(order.lead);
     },
     [openLeadChat],
   );
@@ -164,6 +180,28 @@ export function OrdersView() {
             </div>
           );
         },
+      },
+      {
+        id: "notes",
+        accessorFn: (o) => o.notes ?? "",
+        header: "Notes",
+        enableSorting: false,
+        size: 220,
+        cell: ({ row }) =>
+          row.original.notes ? (
+            <p
+              title={row.original.notes}
+              className="line-clamp-2 max-w-[260px] whitespace-normal text-[12px] leading-snug text-[var(--ink-soft)]"
+            >
+              <StickyNote
+                size={11}
+                className="mr-1 inline -translate-y-px text-[var(--ink-mute)]"
+              />
+              {row.original.notes}
+            </p>
+          ) : (
+            <span className="text-[12px] text-[var(--ink-mute)]">—</span>
+          ),
       },
       {
         id: "items",
@@ -233,13 +271,15 @@ export function OrdersView() {
             onEdit={loadAndEditOrder}
             onDelete={setOrderPendingDeletion}
             onOpenCustomerChat={openCustomerChat}
-            isOpeningChat={verifyingLeadId === row.original.lead?.id}
+            isOpeningChat={
+              verifyingLeadId !== null && openingChatOrderId === row.original.id
+            }
             isAnyChatOpening={verifyingLeadId !== null}
           />
         ),
       },
     ],
-    [loadAndEditOrder, openCustomerChat, verifyingLeadId],
+    [loadAndEditOrder, openCustomerChat, verifyingLeadId, openingChatOrderId],
   );
 
   // The CSV is built client-side from rows already fetched, so hiding the
@@ -310,22 +350,23 @@ export function OrdersView() {
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
         onExport={canExportOrders ? openExport : undefined}
+        showExportAll={false}
         onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
         defaultPageSize={20}
         maxBodyHeight="60vh"
         toolbar={
-          <div className="flex items-center gap-2 flex-1 flex-wrap">
-            <div className="relative flex-1 min-w-45 max-w-85">
+          <div className="card leads-toolbar flex items-center gap-2 flex-1 flex-wrap p-2">
+            <div className="relative w-full md:w-[320px]">
               <Search
                 size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
               />
               <Input
                 className="pl-8 text-[13px]"
                 placeholder="Search by order #, customer…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
             <Select
@@ -334,7 +375,10 @@ export function OrdersView() {
                 setStatus(v === "__all__" ? "" : (v as OrderStatus))
               }
             >
-              <SelectTrigger className="w-[160px] text-[13px]">
+              <SelectTrigger
+                size="lg"
+                className="w-full text-[13px] md:w-[170px]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -346,13 +390,16 @@ export function OrdersView() {
                 ))}
               </SelectContent>
             </Select>
-            <Select
+            {/* <Select
               value={customizationParam || "__all__"}
               onValueChange={(v) =>
                 setCustomizationParam(v === "__all__" ? "" : v)
               }
             >
-              <SelectTrigger className="w-[180px] text-[13px]">
+              <SelectTrigger
+                size="lg"
+                className="w-full text-[13px] md:w-[190px]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -360,7 +407,17 @@ export function OrdersView() {
                 <SelectItem value="yes">Has customization</SelectItem>
                 <SelectItem value="no">No customization</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
+            {canExportOrders && (
+              <Button
+                variant="outline"
+                className="h-10 md:ml-auto"
+                onClick={() => openExport(orders as OrderListItem[])}
+                disabled={orders.length === 0}
+              >
+                <Download size={13} /> Export
+              </Button>
+            )}
           </div>
         }
       />

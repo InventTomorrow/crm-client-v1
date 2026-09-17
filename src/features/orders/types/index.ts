@@ -96,6 +96,7 @@ export interface OrderListItem {
   createdAt: string;
   items: { id: string }[];
   lead: OrderLeadRef | null;
+  notes?: string | null;
   /** True when any line carries a custom option. */
   hasCustomization?: boolean;
 }

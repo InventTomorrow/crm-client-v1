@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { SearchField } from "@/shared/ui/SearchField";
-import { Skeleton } from "@/shared/ui/Skeleton";
+import { CardGridSkeleton } from "@/shared/ui/CardGridSkeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Info, LayoutGrid, List, Plus } from "lucide-react";
 import Link from "next/link";
@@ -108,7 +108,7 @@ export function PractitionersView() {
   );
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="card flex flex-wrap items-center gap-2 p-2">
       <SearchField
         value={searchTerm}
         onValueChange={setSearchTerm}
@@ -127,7 +127,12 @@ export function PractitionersView() {
           }
         >
           {VIEW_BUTTONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem key={id} value={id} aria-label={`${label} view`}>
+            <ToggleGroupItem
+              key={id}
+              value={id}
+              aria-label={`${label} view`}
+              className="h-10"
+            >
               <Icon size={12} /> {label}
             </ToggleGroupItem>
           ))}
@@ -136,6 +141,7 @@ export function PractitionersView() {
           onRefresh={() => practitionersQuery.refetch()}
           isRefreshing={practitionersQuery.isFetching}
           size="icon-lg"
+          className="size-10"
         />
       </div>
     </div>
@@ -222,16 +228,7 @@ export function PractitionersView() {
       {workspaceVisibilityNotice}
       {toolbar}
 
-      {practitionersQuery.isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton
-              key={index}
-              className="h-52 w-full rounded-[var(--radius-card)]"
-            />
-          ))}
-        </div>
-      )}
+      {practitionersQuery.isLoading && <CardGridSkeleton withAvatar />}
 
       {!practitionersQuery.isLoading && practitioners.length === 0 && (
         <PractitionersEmptyState

@@ -3,6 +3,7 @@ import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { SearchField } from "@/shared/ui/SearchField";
 import { Spinner } from "@/shared/ui/Spinner";
 import { Grid2x2, LayoutGrid, Plus } from "lucide-react";
@@ -26,6 +27,7 @@ export function ServicesView() {
   const router = useRouter();
   const { servicesView, setServicesView } = useAppStore();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [servicePendingDeletion, setServicePendingDeletion] = useState<
     string | null
   >(null);
@@ -39,7 +41,7 @@ export function ServicesView() {
     isFetchingNextPage,
     refetch,
     isFetching,
-  } = useServiceOfferings({ search: search || undefined });
+  } = useServiceOfferings({ search: debouncedSearch.trim() || undefined });
 
   const deleteService = useDeleteServiceOffering();
   const allServices = data?.pages.flat() ?? [];

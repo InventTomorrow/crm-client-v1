@@ -206,6 +206,7 @@ export default function TableView({
       selectable
       onDeleteSelected={onBulkDelete}
       onExport={onExport}
+      showExportAll={false}
       emptyMessage={`No matching ${vocabulary.plural}.`}
       defaultPageSize={20}
       className="flex-1 min-h-0"

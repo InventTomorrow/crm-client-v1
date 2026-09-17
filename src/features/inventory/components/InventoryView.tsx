@@ -4,7 +4,7 @@ import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable } from "@/shared/ui/DataTable";
 import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
-import { Skeleton } from "@/shared/ui/Motion";
+import { ProductGridSkeleton } from "./InventorySkeletons";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
@@ -53,8 +53,8 @@ export function InventoryView() {
     setInventoryView,
     tier,
     setTier,
-    search,
-    setSearch,
+    searchInput,
+    setSearchInput,
     highlightId,
     filterCat,
     setFilterCat,
@@ -180,8 +180,8 @@ export function InventoryView() {
                 <Input
                   className="pl-8"
                   placeholder="Search products..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                 />
               </div>
               <div className="hidden flex-1 sm:block" />
@@ -295,23 +295,7 @@ export function InventoryView() {
             </div>
           </div>
 
-          {isLoading && (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-[var(--line)] overflow-hidden"
-                >
-                  <Skeleton className="h-[140px] w-full rounded-none" />
-                  <div className="p-3 flex flex-col gap-2">
-                    <Skeleton className="h-3.5 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                    <Skeleton className="h-3 w-1/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {isLoading && <ProductGridSkeleton />}
 
           {!isLoading && inventoryView === "grid" && (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">

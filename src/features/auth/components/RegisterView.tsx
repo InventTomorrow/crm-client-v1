@@ -228,14 +228,14 @@ export function RegisterView() {
                     >
                       I agree to the{" "}
                       <Link
-                        href="/legal/terms"
+                        href="/terms"
                         className="text-[var(--accent)] hover:underline"
                       >
                         Terms of Service
                       </Link>{" "}
                       and{" "}
                       <Link
-                        href="/legal/privacy"
+                        href="/privacy-policy"
                         className="text-[var(--accent)] hover:underline"
                       >
                         Privacy Policy

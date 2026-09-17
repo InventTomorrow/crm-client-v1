@@ -150,11 +150,11 @@ export function LoginView() {
 
         <p className="text-center text-[11.5px] text-[var(--ink-mute)]">
           By signing in you agree to our{" "}
-          <Link href="/legal/terms" className="text-[var(--ink-soft)] hover:underline">
+          <Link href="/terms" className="text-[var(--ink-soft)] hover:underline">
             Terms
           </Link>{" "}
           and{" "}
-          <Link href="/legal/privacy" className="text-[var(--ink-soft)] hover:underline">
+          <Link href="/privacy-policy" className="text-[var(--ink-soft)] hover:underline">
             Privacy
           </Link>
           .

@@ -4,7 +4,7 @@ import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { NativeSelect } from "@/shared/ui/NativeSelect";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { SearchField } from "@/shared/ui/SearchField";
-import { Skeleton } from "@/shared/ui/Skeleton";
+import { CardGridSkeleton } from "@/shared/ui/CardGridSkeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { LayoutGrid, List, Plus, Stethoscope } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -72,7 +72,7 @@ export function ClinicalServicesView() {
     router.push(`/clinical-services/${service.id}/edit`);
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="card flex flex-wrap items-center gap-2 p-2">
       <SearchField
         value={searchTerm}
         onValueChange={setSearchTerm}
@@ -80,6 +80,8 @@ export function ClinicalServicesView() {
         className="min-w-[240px]"
       />
       <NativeSelect
+        size="lg"
+        className="w-[180px] data-[size=lg]:w-[180px]"
         value={typeFilter}
         aria-label="Filter by type"
         onChange={(event) =>
@@ -107,7 +109,12 @@ export function ClinicalServicesView() {
           }
         >
           {VIEW_BUTTONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem key={id} value={id} aria-label={`${label} view`}>
+            <ToggleGroupItem
+              key={id}
+              value={id}
+              aria-label={`${label} view`}
+              className="h-10"
+            >
               <Icon size={12} /> {label}
             </ToggleGroupItem>
           ))}
@@ -116,6 +123,7 @@ export function ClinicalServicesView() {
           onRefresh={() => servicesQuery.refetch()}
           isRefreshing={servicesQuery.isFetching}
           size="icon-lg"
+          className="size-10"
         />
       </div>
     </div>
@@ -206,16 +214,7 @@ export function ClinicalServicesView() {
       {header}
       {toolbar}
 
-      {servicesQuery.isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton
-              key={index}
-              className="h-56 w-full rounded-[var(--radius-card)]"
-            />
-          ))}
-        </div>
-      )}
+      {servicesQuery.isLoading && <CardGridSkeleton />}
 
       {!servicesQuery.isLoading && services.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">

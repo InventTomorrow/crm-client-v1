@@ -33,6 +33,7 @@ import {
   verifyEmail,
 } from '../services/authService';
 import type { AcceptInviteData, CreateWorkspaceData, ForgotPasswordData, LoginData, RegisterData, ResetPasswordData } from '../types';
+import { navigateToDashboard } from '@/features/tenant/utils/navigateToDashboard';
 import { resolveAuthLanding } from '../utils/authLanding';
 
 export function useLogin() {
@@ -206,6 +207,7 @@ export function useMyInvitations() {
 /** Accept a pending invitation, then switch into that workspace like a full switch. */
 export function useAcceptMyInvitation() {
   const qc = useQueryClient();
+  const router = useRouter();
   const { setCurrentWorkspace, setWorkspaceSwitching } = useAppStore();
   return useMutation({
     mutationFn: async (invite: { id: string; tenantId: string; tenantName: string | null }) => {
@@ -215,6 +217,7 @@ export function useAcceptMyInvitation() {
       return invite;
     },
     onSuccess: async ({ tenantId, tenantName }) => {
+      await navigateToDashboard(router);
       // Wipe stale cache while the overlay covers the UI, then load fresh identity.
       qc.clear();
       await qc.fetchQuery({ queryKey: ['me'], queryFn: getMe });

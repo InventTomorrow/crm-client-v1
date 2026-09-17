@@ -2,6 +2,7 @@
 
 import { useLeadVocabulary } from "@/features/leads/utils/leadVocabulary";
 import { Badge } from "@/shared/ui/Badge";
+import { NavigateIcon } from "@/shared/ui/NavigateIcon";
 import {
   Sheet,
   SheetContent,
@@ -129,14 +130,24 @@ export function AppointmentDetailSheet({
 
           <div className="flex flex-col gap-4">
             <DetailRow icon={User} label={vocabulary.customerSingularTitle}>
-              <span className="text-[13px] font-medium text-[var(--ink)]">
-                {name}
-              </span>
-              {appointment.lead && (
-                <span className="ml-1.5 text-[11.5px] text-[var(--ink-mute)]">
-                  via {vocabulary.singular}
-                </span>
-              )}
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-[13px] font-medium text-[var(--ink)]">
+                    {name}
+                  </span>
+                  {appointment.lead && (
+                    <span className="ml-1.5 text-[11.5px] text-[var(--ink-mute)]">
+                      via {vocabulary.singular}
+                    </span>
+                  )}
+                </div>
+                {appointment.lead && (
+                  <NavigateIcon
+                    href={`/leads?lead=${appointment.lead.id}`}
+                    label={`Open ${vocabulary.singular}`}
+                  />
+                )}
+              </div>
             </DetailRow>
 
             {appointment.practitioner && (
