@@ -38,7 +38,13 @@ import {
 } from "../types";
 import { APPOINTMENT_STATUS_ICONS } from "../utils/appointmentFormat";
 import { AppointmentsList } from "./AppointmentsList";
-import { BookingsCalendar } from "./BookingsCalendar";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/shared/ui/Skeleton";
+
+const BookingsCalendar = dynamic(
+  () => import("./BookingsCalendar").then((m) => m.BookingsCalendar),
+  { ssr: false, loading: () => <Skeleton className="h-[600px] w-full" /> },
+);
 import { QuickAppointmentDialog } from "./QuickAppointmentDialog";
 
 const ALL_STATUSES = "ALL";
