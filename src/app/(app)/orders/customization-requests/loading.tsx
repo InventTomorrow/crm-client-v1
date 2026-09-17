@@ -6,16 +6,13 @@ import {
   SkeletonToolbar,
 } from "@/shared/ui/PageSkeleton";
 
-export default function OrdersLoading() {
+export default function CustomizationRequestsLoading() {
   return (
     <SkeletonPage>
-      <SkeletonPageHeader actionWidths={["w-9", "w-28"]} />
+      <SkeletonPageHeader actionWidths={["w-9"]} />
       <SkeletonStatCards count={5} gridClassName="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" />
-      <SkeletonToolbar
-        controlWidths={["w-full md:w-[170px]", "w-full md:w-[190px]"]}
-        trailingWidths={["w-24"]}
-      />
-      <SkeletonTable columnCount={8} />
+      <SkeletonToolbar controlWidths={["w-full md:w-[170px]"]} />
+      <SkeletonTable columnCount={6} withCheckbox={false} />
     </SkeletonPage>
   );
 }
