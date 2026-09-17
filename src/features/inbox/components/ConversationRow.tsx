@@ -9,10 +9,16 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/DropdownMenu";
 import { motion } from "framer-motion";
-import { Archive, ArchiveRestore, MoreVertical, Star, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  MoreVertical,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { memo, useState } from "react";
-import type { ConversationListItem } from "../types";
 import { relativeTime } from "../lib/time";
+import type { ConversationListItem } from "../types";
 import { EscalationBadge } from "./EscalationBadge";
 
 interface ConversationRowProps {
@@ -100,13 +106,14 @@ function ConversationRowBase({
             )}
             {lastMsg?.content ?? "—"}
           </span>
-          {unread ? (
-            <span className="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10.5px] font-semibold inline-flex items-center justify-center">
-              {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
-            </span>
-          ) : (
+          <div className="flex items-center gap-1 shrink-0">
             <EscalationBadge status={conv.escalationStatus} />
-          )}
+            {unread && (
+              <span className="min-w-4.5 h-4.5 px-1 rounded-full bg-(--accent) text-white text-[10.5px] font-semibold inline-flex items-center justify-center">
+                {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -118,7 +125,9 @@ function ConversationRowBase({
             aria-label="Chat options"
             className={cn(
               "absolute right-2 top-2 flex-shrink-0 p-1 rounded-full text-[var(--ink-mute)] bg-[var(--surface)] shadow-sm transition-opacity",
-              menuOpen ? "opacity-100" : "opacity-0 group-hover/row:opacity-100",
+              menuOpen
+                ? "opacity-100"
+                : "opacity-0 group-hover/row:opacity-100",
             )}
           >
             <MoreVertical size={14} />
