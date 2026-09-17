@@ -24,6 +24,7 @@ import {
   Settings2,
   UserPlus,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -44,9 +45,13 @@ import {
 } from "../utils/appointmentFormat";
 import { AppointmentsList } from "./AppointmentsList";
 import { BookAppointmentSheet } from "./BookAppointmentSheet";
-import { BookingsCalendar } from "./BookingsCalendar";
 import { BookingsEmptyState } from "./BookingsEmptyState";
 import { QuickAppointmentDialog } from "./QuickAppointmentDialog";
+
+const BookingsCalendar = dynamic(
+  () => import("./BookingsCalendar").then((m) => m.BookingsCalendar),
+  { ssr: false, loading: () => <Skeleton className="h-[600px] w-full" /> },
+);
 
 const ALL_STATUSES = "ALL";
 const DEFAULT_TIMEZONE = "Asia/Karachi";

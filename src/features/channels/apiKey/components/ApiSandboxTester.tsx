@@ -3,11 +3,17 @@ import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { AlertTriangle, KeyRound, Loader2, Send } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
+import { Skeleton } from "@/shared/ui/Skeleton";
 import { useApiKeysQuery, useSendTestExternalOrder } from "../hooks/useApiKeys";
 import type { ApiKey } from "../types";
-import { CopyableCode } from "./CopyableCode";
 import { PayloadEditor } from "./PayloadEditor";
+
+const CopyableCode = dynamic(
+  () => import("./CopyableCode").then((m) => m.CopyableCode),
+  { ssr: false, loading: () => <Skeleton className="h-8 w-full" /> },
+);
 
 const EXAMPLE_PAYLOAD = {
   externalOrderId: `test-${Date.now()}`,
