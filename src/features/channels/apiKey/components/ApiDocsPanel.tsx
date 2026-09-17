@@ -1,7 +1,13 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { KeyRound, ShieldCheck, Terminal } from "lucide-react";
-import { CopyableCode } from "./CopyableCode";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/shared/ui/Skeleton";
+
+const CopyableCode = dynamic(
+  () => import("./CopyableCode").then((m) => m.CopyableCode),
+  { ssr: false, loading: () => <Skeleton className="h-8 w-full" /> },
+);
 
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "";
 const CREATE_ORDER_URL = `${API_ORIGIN}/api/v1/external/orders`;

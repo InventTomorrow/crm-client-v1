@@ -1,13 +1,6 @@
 "use client";
 import { cn, pkr } from "@/lib/utils";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/shared/ui/Chart";
+import type { ChartConfig } from "@/shared/ui/Chart";
 import {
   CalendarCheck,
   CalendarClock,
@@ -23,15 +16,10 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { Button } from "@/shared/ui/Button";
-import {
-  CartesianGrid,
-  Line,
-  LineChart as RLineChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Skeleton } from "@/shared/ui/Skeleton";
 import { UsageSummaryCard } from "@/features/billing/components/UsageSummaryCard";
 import {
   useLeadVocabulary,
@@ -68,11 +56,10 @@ const KPI_ICONS: Record<string, LucideIcon> = {
   aiResolution: Zap,
 };
 
-const fmtDay = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+const AnalyticsRevenueChart = dynamic(
+  () => import("./AnalyticsRevenueChart"),
+  { ssr: false, loading: () => <Skeleton className="h-[280px] w-full" /> },
+);
 
 function formatDelta(delta: number | null) {
   if (delta === null) return "—";
@@ -353,46 +340,11 @@ export function AnalyticsView() {
                 {data.chart.subtitle}
               </div>
             </div>
-            <ChartContainer config={chartConfig} className="h-[280px] w-full">
-              <RLineChart
-                data={data.series}
-                margin={{ left: 4, right: 12, top: 8 }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={fmtDay}
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={24}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  width={32}
-                  allowDecimals={false}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(l) => fmtDay(String(l))}
-                    />
-                  }
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-                {data.chart.metrics.map((metric) => (
-                  <Line
-                    key={metric}
-                    dataKey={metric}
-                    type="monotone"
-                    stroke={`var(--color-${metric})`}
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                ))}
-              </RLineChart>
-            </ChartContainer>
+            <AnalyticsRevenueChart
+              chart={data.chart}
+              series={data.series}
+              chartConfig={chartConfig}
+            />
           </div>
 
           {/* Funnel + AI Handoff */}

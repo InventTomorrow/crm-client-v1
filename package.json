@@ -6,6 +6,7 @@
     "dev": "next dev -H 127.0.0.1",
     "start": "next start",
     "build": "node scripts/generate-featured-blog.mjs && next build",
+    "analyze": "ANALYZE=true next build",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -58,6 +59,7 @@
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "^5.15.12",
+    "@next/bundle-analyzer": "^16.3.5",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^7.0.1",
