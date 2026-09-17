@@ -4,7 +4,10 @@ import { Alert, AlertDescription } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { SearchField } from '@/shared/ui/SearchField';
-import { Skeleton } from '@/shared/ui/Skeleton';
+import {
+  CoverageLocationsSkeleton,
+  CoverageMatrixSkeleton,
+} from './CoverageSkeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/Tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/ToggleGroup';
 import {
@@ -46,6 +49,9 @@ import {
 type CoverageTab = 'grid' | 'locations';
 /** How the service × area coverage is laid out — same data, two shapes. */
 type CoverageViewMode = 'matrix' | 'cards';
+
+const COVERAGE_TAB_TRIGGER_CLASS =
+  'h-full gap-2 px-3 text-[13px] text-[var(--ink-soft)] hover:text-[var(--ink)] data-active:bg-[var(--surface-2)] data-active:text-[var(--ink)] data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-[var(--surface-2)] dark:data-active:text-[var(--ink)]';
 
 const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
   grid: 'Search a service, city or area…',
@@ -185,13 +191,13 @@ export function CoverageAreasView() {
         onValueChange={(nextTab) => setActiveTab(nextTab as CoverageTab)}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList className="bg-muted h-9 border p-1 shadow-xs">
-            <TabsTrigger value="grid" className="gap-2 px-3">
+          <TabsList className="h-11 gap-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-1">
+            <TabsTrigger value="grid" className={COVERAGE_TAB_TRIGGER_CLASS}>
               <Table2 className="size-4" />
               Service coverage
               <TabCount value={services.length} />
             </TabsTrigger>
-            <TabsTrigger value="locations" className="gap-2 px-3">
+            <TabsTrigger value="locations" className={COVERAGE_TAB_TRIGGER_CLASS}>
               <MapPin className="size-4" />
               Locations by city
               <TabCount value={locations.length} />
@@ -212,11 +218,11 @@ export function CoverageAreasView() {
                 }
                 aria-label="Coverage layout"
               >
-                <ToggleGroupItem value="matrix" aria-label="Matrix">
+                <ToggleGroupItem value="matrix" aria-label="Matrix" className="h-10">
                   <Table2 className="size-4" />
                   Matrix
                 </ToggleGroupItem>
-                <ToggleGroupItem value="cards" aria-label="Cards">
+                <ToggleGroupItem value="cards" aria-label="Cards" className="h-10">
                   <LayoutGrid className="size-4" />
                   Cards
                 </ToggleGroupItem>
@@ -234,7 +240,7 @@ export function CoverageAreasView() {
         </div>
 
         <TabsContent value="grid" className="space-y-4 pt-4">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && <CoverageMatrixSkeleton />}
 
           {!isLoading && !hasGridData && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">
@@ -315,7 +321,7 @@ export function CoverageAreasView() {
             </Alert>
           )}
 
-          {locationsQuery.isLoading && <Skeleton className="h-32 w-full" />}
+          {locationsQuery.isLoading && <CoverageLocationsSkeleton />}
 
           {!locationsQuery.isLoading && locations.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">

@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
+import { NavigateIcon } from "@/shared/ui/NavigateIcon";
 import { CRMSwitch } from "@/shared/ui/CRMSwitch";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import {
@@ -26,7 +27,6 @@ import {
   Check,
   CheckCheck,
   ChevronLeft,
-  ChevronRight,
   Edit2,
   FileAudio,
   FileText,
@@ -1719,13 +1719,13 @@ export function InboxView() {
           {/* Lead info — click to open the lead's page + detail sheet */}
           <Link
             href={selectedLeadId ? `/leads?lead=${selectedLeadId}` : "/leads"}
-            className="card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px] no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
+            className="group card hover-shimmer shrink-0 p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px] no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
           >
             <div className="flex items-center justify-between mb-0.5">
               <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
                 {leadVocabulary.singularTitle} information
               </p>
-              <ChevronRight size={13} className="text-[var(--ink-mute)]" />
+              <NavigateIcon label={`Open ${leadVocabulary.singular}`} />
             </div>
             <div className="flex items-center gap-2">
               <Phone
@@ -1811,26 +1811,29 @@ export function InboxView() {
                   <Link
                     key={order.id}
                     href={`/orders?order=${order.id}`}
-                    className="card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-1 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
+                    className="group card hover-shimmer shrink-0 p-3 bg-[var(--surface-2)] flex flex-col gap-1 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] font-semibold text-[var(--ink)]">
                         #{order.orderNumber}
                       </span>
-                      <span
-                        className="badge text-[10px] font-medium px-[6px] py-[2px]"
-                        style={{
-                          color,
-                          background: `${color}15`,
-                          border: `1px solid ${color}30`,
-                        }}
-                      >
-                        {order.status.charAt(0) +
-                          order.status
-                            .slice(1)
-                            .toLowerCase()
-                            .replace(/_/g, " ")}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="badge text-[10px] font-medium px-[6px] py-[2px]"
+                          style={{
+                            color,
+                            background: `${color}15`,
+                            border: `1px solid ${color}30`,
+                          }}
+                        >
+                          {order.status.charAt(0) +
+                            order.status
+                              .slice(1)
+                              .toLowerCase()
+                              .replace(/_/g, " ")}
+                        </span>
+                        <NavigateIcon label="Open order" />
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-[var(--ink-mute)]">
                       <span>

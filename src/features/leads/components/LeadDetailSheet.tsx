@@ -6,6 +6,7 @@ import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
+import { NavigateIcon } from "@/shared/ui/NavigateIcon";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import {
   Dialog,
@@ -177,9 +178,15 @@ export default function LeadDetailSheet({
         <div className="scroll flex-1 overflow-y-auto p-4 flex flex-col gap-4">
           {/* Contact info */}
           <div className="flex flex-col gap-2">
-            <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
-              {vocabulary.singularTitle} information
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--ink-mute)]">
+                {vocabulary.singularTitle} information
+              </p>
+              <NavigateIcon
+                href={`/inbox?lead=${lead.id}`}
+                label="Open conversation"
+              />
+            </div>
             <div className="card p-3 bg-[var(--surface-2)] flex flex-col gap-2 text-[12.5px]">
               {lead.phone && (
                 <div className="flex items-center gap-2">
@@ -288,26 +295,29 @@ export default function LeadDetailSheet({
                     <NextLink
                       key={order.id}
                       href={`/orders?order=${order.id}`}
-                      className="card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-1.5 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
+                      className="group card hover-shimmer p-3 bg-[var(--surface-2)] flex flex-col gap-1.5 no-underline transition-colors hover:bg-[var(--surface)] hover:border-[var(--accent)]"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[12.5px] font-semibold text-[var(--ink)]">
                           Order #{order.orderNumber}
                         </span>
-                        <span
-                          className="badge text-[10.5px] font-medium px-[7px] py-[2px]"
-                          style={{
-                            color,
-                            background: `${color}15`,
-                            border: `1px solid ${color}30`,
-                          }}
-                        >
-                          {order.status.charAt(0) +
-                            order.status
-                              .slice(1)
-                              .toLowerCase()
-                              .replace(/_/g, " ")}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className="badge text-[10.5px] font-medium px-[7px] py-[2px]"
+                            style={{
+                              color,
+                              background: `${color}15`,
+                              border: `1px solid ${color}30`,
+                            }}
+                          >
+                            {order.status.charAt(0) +
+                              order.status
+                                .slice(1)
+                                .toLowerCase()
+                                .replace(/_/g, " ")}
+                          </span>
+                          <NavigateIcon label="Open order" />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between text-[11.5px] text-[var(--ink-mute)]">
                         <span>

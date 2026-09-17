@@ -1,4 +1,5 @@
 'use client';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
@@ -30,6 +31,7 @@ const ALL_TYPES = 'ALL';
 
 export function ResourcesView() {
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebouncedValue(searchTerm);
   const [typeFilter, setTypeFilter] = useState<ResourceType | typeof ALL_TYPES>(ALL_TYPES);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [resourceBeingEdited, setResourceBeingEdited] = useState<TenantResource | null>(null);
@@ -38,7 +40,7 @@ export function ResourcesView() {
 
   const resourcesQuery = useResourcesQuery({
     ...(typeFilter === ALL_TYPES ? {} : { resourceType: typeFilter }),
-    ...(searchTerm.trim() ? { search: searchTerm.trim() } : {}),
+    ...(debouncedSearchTerm.trim() ? { search: debouncedSearchTerm.trim() } : {}),
   });
 
   const deleteResource = useDeleteResource();

@@ -46,6 +46,7 @@ import {
 import { AppointmentsList } from "./AppointmentsList";
 import { BookAppointmentSheet } from "./BookAppointmentSheet";
 import { BookingsEmptyState } from "./BookingsEmptyState";
+import { BookingsPageSkeleton } from "./BookingsPageSkeleton";
 import { QuickAppointmentDialog } from "./QuickAppointmentDialog";
 
 const BookingsCalendar = dynamic(
@@ -183,11 +184,7 @@ export function BookingsView() {
 
   if (isLoadingConfig || isClinic) {
     return (
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
-        <Skeleton className="h-9 w-56" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
+      <BookingsPageSkeleton statCount={4} />
     );
   }
 
@@ -212,7 +209,7 @@ export function BookingsView() {
     <div
       role="tablist"
       aria-label="View mode"
-      className="inline-flex h-9 items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5"
+      className="inline-flex h-10 items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5"
     >
       {VIEW_MODES.map(({ id, label, Icon }) => (
         <button
@@ -288,7 +285,7 @@ export function BookingsView() {
           isFetchingNextPage={appointmentsQuery.isFetchingNextPage}
           onLoadMore={() => appointmentsQuery.fetchNextPage()}
           toolbar={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="card flex flex-wrap items-center gap-2 p-2">
               <Select
                 value={statusFilter}
                 onValueChange={(nextStatus) =>
@@ -297,7 +294,7 @@ export function BookingsView() {
                   )
                 }
               >
-                <SelectTrigger className="h-9 w-[168px] text-[12.5px]">
+                <SelectTrigger size="lg" className="w-[168px] text-[12.5px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

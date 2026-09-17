@@ -12,7 +12,7 @@ import { Skeleton } from "@/shared/ui/Motion";
 /** /inventory — heading, stat tiles, toolbar, filter chips, product grid. */
 export function InventoryListSkeleton() {
   return (
-    <div className="p-4 md:p-8">
+    <div className="h-full overflow-hidden p-4">
       <div className="mb-3.5 flex flex-col gap-2">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="h-3.5 w-64" />
@@ -20,14 +20,11 @@ export function InventoryListSkeleton() {
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-3 rounded-xl border border-[var(--line)] p-3.5"
-          >
-            <Skeleton className="size-9" circle />
+          <div key={index} className="card flex items-center gap-3 p-3.5">
+            <Skeleton className="size-9 rounded-lg" />
             <div className="flex flex-1 flex-col gap-1.5">
               <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-4 w-10" />
+              <Skeleton className="h-5 w-10" />
             </div>
           </div>
         ))}
@@ -48,21 +45,25 @@ export function InventoryListSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <div
-            key={index}
-            className="overflow-hidden rounded-xl border border-[var(--line)]"
-          >
-            <Skeleton className="h-[140px] w-full rounded-none" />
-            <div className="flex flex-col gap-2 p-3">
-              <Skeleton className="h-3.5 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-              <Skeleton className="h-3 w-1/3" />
-            </div>
+      <ProductGridSkeleton />
+    </div>
+  );
+}
+
+/** Product cards only — shared by the route skeleton and the page's own loading state. */
+export function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <div key={index} className="card flex flex-col overflow-hidden p-0">
+          <Skeleton className="aspect-square w-full rounded-none" />
+          <div className="flex flex-col gap-2 p-3">
+            <Skeleton className="h-3.5 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="h-3 w-1/3" />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -159,7 +160,7 @@ export function ImportProductsSkeleton() {
         {Array.from({ length: 2 }).map((_, index) => (
           <div
             key={index}
-            className="flex items-center gap-3 rounded-xl border border-[var(--line)] p-4"
+            className="flex items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4"
           >
             <Skeleton className="size-10" />
             <div className="flex flex-1 flex-col gap-1.5">

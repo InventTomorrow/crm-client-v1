@@ -49,7 +49,7 @@ export function DoctorBookingsView() {
           onSelect={(option) => setPractitionerFilter(option?.id ?? "")}
           placeholder="All doctors"
           emptyLabel="No practitioners yet"
-          className="h-9 w-[220px] text-[12.5px]"
+          className="h-10 w-[220px] text-[12.5px]"
         />
       }
     />

@@ -1,6 +1,7 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -11,6 +12,8 @@ import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import {
+  Archive,
+  CircleCheck,
   Download,
   Grid2x2,
   Layers,
@@ -21,7 +24,6 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useOpenLeadChat } from "../hooks/useOpenLeadChat";
 import {
   useAddLead,
   useArchiveLead,
@@ -32,6 +34,7 @@ import {
   useUpdateLead,
   useUpdateLeadStatus,
 } from "../hooks/useLeads";
+import { useOpenLeadChat } from "../hooks/useOpenLeadChat";
 import type { Lead, LeadStatus, LeadsFilter, LeadsView } from "../types";
 import { downloadLeadsCsv } from "../utils/exportLeadsCsv";
 import { useLeadVocabulary } from "../utils/leadVocabulary";
@@ -39,6 +42,7 @@ import type { LeadFormData } from "../validations.lead";
 import LeadDetailSheet from "./LeadDetailSheet";
 import LeadFormDialog from "./LeadFormDialog";
 import { LeadsBulkImportDialog } from "./LeadsBulkImportDialog";
+import { LeadsStatsSkeleton, LeadsViewSkeleton } from "./LeadsSkeleton";
 import KanbanView from "./views/KanbanView";
 import ListView from "./views/ListView";
 import TableView from "./views/TableView";
@@ -75,6 +79,12 @@ export function LeadsView() {
     channel: "all",
     search: "",
   });
+  // Input stays instant; the (client-side) list re-filters only once typing pauses.
+  const debouncedLeadSearch = useDebouncedValue(filter.search);
+  const viewFilter = useMemo(
+    () => ({ ...filter, search: debouncedLeadSearch }),
+    [filter, debouncedLeadSearch],
+  );
   const [selected, setSelected] = useState<Lead | null>(null);
   // Deep-link support: `/leads?lead=<id>` opens the detail sheet (e.g. from the inbox).
   const [leadParam, setLeadParam] = useUrlState("lead");
@@ -212,24 +222,31 @@ export function LeadsView() {
       </div>
 
       {/* Stats */}
-      <div data-tour="page-list" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard
-          label={`Total ${vocabulary.plural}`}
-          value={leads.length}
-          Icon={Users}
-        />
-        <StatCard
-          label={vocabulary.urgentLabel}
-          value={hot}
-          Icon={vocabulary.UrgentIcon}
-          accent="#EF4444"
-        />
-        <StatCard
-          label="Projected value"
-          value={pkr(totalValue)}
-          Icon={TrendingUp}
-        />
-      </div>
+      {isLoading ? (
+        <LeadsStatsSkeleton />
+      ) : (
+        <div
+          data-tour="page-list"
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3"
+        >
+          <StatCard
+            label={`Total ${vocabulary.plural}`}
+            value={leads.length}
+            Icon={Users}
+          />
+          <StatCard
+            label={vocabulary.urgentLabel}
+            value={hot}
+            Icon={vocabulary.UrgentIcon}
+            accent="#EF4444"
+          />
+          <StatCard
+            label="Projected value"
+            value={pkr(totalValue)}
+            Icon={TrendingUp}
+          />
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="card leads-toolbar flex items-center gap-2 flex-wrap p-2">
@@ -247,7 +264,7 @@ export function LeadsView() {
             }
           />
         </div>
-        <ToggleGroup
+        {/* <ToggleGroup
           type="single"
           variant="outline"
           size="sm"
@@ -266,7 +283,7 @@ export function LeadsView() {
               {c.label}
             </ToggleGroupItem>
           ))}
-        </ToggleGroup>
+        </ToggleGroup> */}
         <ToggleGroup
           type="single"
           variant="outline"
@@ -277,8 +294,12 @@ export function LeadsView() {
             if (v) setArchived(v === "archived");
           }}
         >
-          <ToggleGroupItem value="active">Active</ToggleGroupItem>
-          <ToggleGroupItem value="archived">Archived</ToggleGroupItem>
+          <ToggleGroupItem value="active" className="h-10">
+            <CircleCheck size={12} /> Active
+          </ToggleGroupItem>
+          <ToggleGroupItem value="archived" className="h-10">
+            <Archive size={12} /> Archived
+          </ToggleGroupItem>
         </ToggleGroup>
         <div className="hidden md:block md:flex-1" />
         <ToggleGroup
@@ -297,7 +318,7 @@ export function LeadsView() {
               value={id}
               title={label}
               // Kanban isn't usable on phones — hide the toggle there.
-              className={cn(id === "kanban" && "hidden md:inline-flex")}
+              className={cn(id === "kanban" && "hidden md:inline-flex", "h-10")}
             >
               <Icon size={12} /> {label}
             </ToggleGroupItem>
@@ -305,11 +326,7 @@ export function LeadsView() {
         </ToggleGroup>
       </div>
 
-      {isLoading && (
-        <div className="flex-1 flex items-center justify-center text-[var(--ink-mute)]">
-          Loading {vocabulary.plural}…
-        </div>
-      )}
+      {isLoading && <LeadsViewSkeleton view={leadsView} />}
 
       {!isLoading && leadsView === "kanban" && (
         <>
@@ -317,7 +334,7 @@ export function LeadsView() {
           <div className="hidden md:flex md:flex-col flex-1 min-h-0">
             <KanbanView
               leads={leads}
-              filter={filter}
+              filter={viewFilter}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
               onAddLead={openCreate}
@@ -326,7 +343,7 @@ export function LeadsView() {
           <div className="flex md:hidden flex-col flex-1 min-h-0">
             <TableView
               leads={leads}
-              filter={filter}
+              filter={viewFilter}
               archived={archived}
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
@@ -345,7 +362,7 @@ export function LeadsView() {
       {!isLoading && leadsView === "list" && (
         <ListView
           leads={leads}
-          filter={filter}
+          filter={viewFilter}
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}
@@ -360,7 +377,7 @@ export function LeadsView() {
       {!isLoading && leadsView === "table" && (
         <TableView
           leads={leads}
-          filter={filter}
+          filter={viewFilter}
           archived={archived}
           onSelect={setSelected}
           onStatusChange={handleStatusChange}

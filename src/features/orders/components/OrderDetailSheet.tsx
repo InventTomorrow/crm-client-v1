@@ -5,9 +5,20 @@ import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { Label } from "@/shared/ui/Label";
+import { NavigateIcon } from "@/shared/ui/NavigateIcon";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
-import { Check, Copy, Loader2, MapPin, Pencil, Trash2, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Loader2,
+  MapPin,
+  Package,
+  Pencil,
+  StickyNote,
+  Trash2,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -132,8 +143,18 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                 <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">
                   Customer
                 </div>
-                <div className="text-[14px] font-medium text-[var(--ink)]">
-                  {order.customerName || order.lead?.name || "Unknown"}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-[14px] font-medium text-[var(--ink)]">
+                    {order.customerName || order.lead?.name || "Unknown"}
+                  </div>
+                  {order.lead && (
+                    <div className="flex items-center gap-1.5">
+                      <NavigateIcon
+                        href={`/leads?lead=${order.lead.id}`}
+                        label="Open customer"
+                      />
+                    </div>
+                  )}
                 </div>
                 {(order.customerPhone || order.lead?.phone) && (
                   <div className="text-[12.5px] text-[var(--ink-soft)]">
@@ -244,6 +265,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                         className="border-b border-[var(--line-soft)] last:border-0"
                       >
                         <div className="flex items-start gap-2.5 px-3 py-2.5">
+                          {!orderItem.imageUrl && (
+                            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-mute)]">
+                              <Package size={16} />
+                            </span>
+                          )}
                           {orderItem.imageUrl && (
                             <button
                               type="button"
@@ -267,10 +293,10 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                           )}
                           <Link
                             href={`${catalogPath}?${params.toString()}`}
-                            className="group hover-shimmer min-w-0 flex-1 flex items-start justify-between gap-2 no-underline"
+                            className="group hover-shimmer min-w-0 flex-1 flex items-start gap-2 no-underline"
                             title={`View in ${catalogLabel}`}
                           >
-                            <div className="min-w-0">
+                            <div className="min-w-0 max-w-[60%]">
                               <div className="text-[13px] text-[var(--ink)] truncate group-hover:text-[var(--accent)]">
                                 {orderItem?.name}
                               </div>
@@ -283,6 +309,10 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                                 {orderItem?.sku ? ` · ${orderItem?.sku}` : ""}
                               </div>
                             </div>
+                            <span
+                              aria-hidden
+                              className="mt-[11px] min-w-4 flex-1 border-b border-dashed border-[var(--line)]"
+                            />
                             <div className="text-[13px] font-medium text-[var(--ink)] flex-shrink-0">
                               {formatMoney(
                                 orderItem?.subtotal,
@@ -484,12 +514,14 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   card above. */}
               {!anyItemCustomized && order.notes && (
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1">
-                    Notes
+                  <div className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)] mb-1.5 flex items-center gap-1.5">
+                    <StickyNote size={12} /> Notes
                   </div>
-                  <p className="text-[13px] text-[var(--ink-soft)] whitespace-pre-wrap">
-                    {order.notes}
-                  </p>
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3.5 py-3">
+                    <p className="text-[13px] leading-relaxed text-[var(--ink)] whitespace-pre-wrap break-words">
+                      {order.notes}
+                    </p>
+                  </div>
                 </div>
               )}
 

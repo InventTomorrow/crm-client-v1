@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CoverageAreasPage() {
   return (
-    <div className="p-4 md:p-8">
+    <div className="scroll h-full overflow-y-auto p-4 md:p-8">
       <CoverageAreasView />
     </div>
   );

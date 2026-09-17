@@ -145,7 +145,7 @@ export function BookingsSegmentView({
     <div
       role="tablist"
       aria-label="View mode"
-      className="inline-flex h-9 items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5"
+      className="inline-flex h-10 items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5"
     >
       {VIEW_MODES.map(({ id, label, Icon }) => (
         <button
@@ -171,14 +171,14 @@ export function BookingsSegmentView({
 
   // One bar for both views, so a filter does not move or vanish when the view flips.
   const filterBar = (
-    <div className="flex flex-row items-center gap-2">
+    <div className="card flex flex-row flex-wrap items-center gap-2 p-2">
       <Select
         value={statusFilter}
         onValueChange={(nextStatus) =>
           setStatusFilter(nextStatus as AppointmentStatus | typeof ALL_STATUSES)
         }
       >
-        <SelectTrigger className="h-9 w-[168px] text-[12.5px]">
+        <SelectTrigger size="lg" className="w-[168px] text-[12.5px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

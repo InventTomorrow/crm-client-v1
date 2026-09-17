@@ -20,6 +20,7 @@ import {
   updateTenant,
 } from "../services/tenantService";
 import type { CreateTenantPayload } from "../types";
+import { navigateToDashboard } from "../utils/navigateToDashboard";
 
 /** Fetch all tenants the current user has access to */
 export function useTenants() {
@@ -55,6 +56,7 @@ export function useCreateTenant() {
         // time createTenant resolves, and switching rotates the JWT cookies to
         // scope them to the new tenant.
         await switchWorkspace(tenant.id);
+        await navigateToDashboard(router);
 
         // Wipe all cached data (including the old /me) and refetch /me fresh —
         // its roleId/tenant now reflect the new JWT, which useSyncActiveWorkspace
@@ -133,15 +135,12 @@ export function useSwitchWorkspace() {
       return tenantId;
     },
     onSuccess: async (tenantId) => {
-      // 1. Wipe all stale cache while overlay is covering the UI
+      // Leave the old page first — it may not exist or be permitted in the new workspace.
+      await navigateToDashboard(router);
       queryClient.clear();
-      // 2. Fetch fresh identity for the new workspace
       await queryClient.fetchQuery({ queryKey: ["me"], queryFn: getMe });
-      // 3. Update workspace ID — triggers key-based remount of <main>, unmounting all page components
+      // Key-based remount of <main>, so the dashboard refetches under the new workspace.
       setCurrentWorkspace(tenantId);
-      // 4. Land on the dashboard — the previous route may not exist or be permitted in the new workspace
-      router.push("/dashboard");
-      // 5. Let React process the unmount before lifting the overlay
       await new Promise((r) => setTimeout(r, 80));
       setWorkspaceSwitching(false);
     },

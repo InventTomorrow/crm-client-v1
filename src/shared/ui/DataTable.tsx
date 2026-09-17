@@ -47,6 +47,8 @@ interface DataTableProps<TData> {
   onDeleteSelected?: (rows: TData[]) => void;
   /** Called with all rows for export */
   onExport?: (rows: TData[]) => void;
+  /** Show the "Export all" button when nothing is selected */
+  showExportAll?: boolean;
   /** Called when a row is clicked (anywhere outside interactive cells) */
   onRowClick?: (row: TData) => void;
   /** Extra toolbar content (filters, buttons) */
@@ -68,6 +70,7 @@ export function DataTable<TData>({
   selectable = false,
   onDeleteSelected,
   onExport,
+  showExportAll = true,
   onRowClick,
   toolbar,
   emptyMessage = "No data found.",
@@ -138,9 +141,7 @@ export function DataTable<TData>({
     table.setPageSize(size);
   };
 
-  const selectedRows = table
-    .getSelectedRowModel()
-    .rows.map((r) => r.original);
+  const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original);
 
   const { pageIndex } = table.getState().pagination;
   const totalPages = table.getPageCount();
@@ -154,34 +155,35 @@ export function DataTable<TData>({
           {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
           {selectedRows.length > 0 && (
             <div className="flex items-center gap-1.5 text-[12.5px] text-[var(--ink-soft)]">
-              <span className="font-medium text-[var(--ink)]">{selectedRows.length}</span> selected
+              <span className="font-medium text-[var(--ink)]">
+                {selectedRows.length}
+              </span>{" "}
+              selected
+              {onExport && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-1"
+                  onClick={() => onExport(selectedRows)}
+                >
+                  <Download size={13} /> Export
+                </Button>
+              )}
               {onDeleteSelected && (
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-[#DC2626] ml-1"
+                  variant="destructive"
+                  size="sm"
                   onClick={() => {
                     onDeleteSelected(selectedRows);
                     setRowSelection({});
                   }}
-                  title="Delete selected"
                 >
-                  <Trash2 size={14} />
-                </Button>
-              )}
-              {onExport && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onExport(selectedRows)}
-                  title="Export selected"
-                >
-                  <Download size={14} />
+                  <Trash2 size={13} /> Delete
                 </Button>
               )}
             </div>
           )}
-          {onExport && selectedRows.length === 0 && (
+          {onExport && showExportAll && selectedRows.length === 0 && (
             <Button
               variant="outline"
               size="sm"
@@ -219,13 +221,22 @@ export function DataTable<TData>({
                       key={header.id}
                       className={cn(
                         "px-3 py-2.5 text-left text-[11.5px] font-semibold uppercase tracking-wide text-[var(--ink-mute)] whitespace-nowrap select-none",
-                        header.column.getCanSort() && "cursor-pointer hover:text-[var(--ink)]",
+                        header.column.getCanSort() &&
+                          "cursor-pointer hover:text-[var(--ink)]",
                       )}
-                      style={{ width: header.column.getSize() !== 150 ? header.column.getSize() : undefined }}
+                      style={{
+                        width:
+                          header.column.getSize() !== 150
+                            ? header.column.getSize()
+                            : undefined,
+                      }}
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       <div className="flex items-center gap-1.5">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                         {header.column.getCanSort() && (
                           <span className="text-[var(--ink-mute)] opacity-60">
                             {header.column.getIsSorted() === "asc" ? (
@@ -267,7 +278,9 @@ export function DataTable<TData>({
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                    onClick={
+                      onRowClick ? () => onRowClick(row.original) : undefined
+                    }
                     className={cn(
                       "border-b border-[var(--line-soft)] transition-colors hover:bg-[var(--surface-2)]",
                       row.getIsSelected() && "bg-[var(--accent-soft)]",
@@ -314,9 +327,15 @@ export function DataTable<TData>({
           <span>Rows per page</span>
           <Select
             value={String(pageSize)}
-            onValueChange={(nextPageSize) => handlePageSizeChange(Number(nextPageSize))}
+            onValueChange={(nextPageSize) =>
+              handlePageSizeChange(Number(nextPageSize))
+            }
           >
-            <SelectTrigger size="sm" aria-label="Rows per page" className="w-[72px]">
+            <SelectTrigger
+              size="sm"
+              aria-label="Rows per page"
+              className="w-[72px]"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -359,7 +378,10 @@ export function DataTable<TData>({
 
           {/* Page number pills */}
           {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const startPage = Math.max(0, Math.min(pageIndex - 2, totalPages - 5));
+            const startPage = Math.max(
+              0,
+              Math.min(pageIndex - 2, totalPages - 5),
+            );
             const page = startPage + i;
             return (
               <Button

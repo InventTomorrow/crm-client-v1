@@ -1,4 +1,5 @@
 'use client';
+import { useDebouncedUrlSearch } from '@/shared/hooks/useDebouncedUrlSearch';
 import { useUrlState } from '@/shared/hooks/useUrlState';
 import { Button } from '@/shared/ui/Button';
 import { DataTable, type ColumnDef } from '@/shared/ui/DataTable';
@@ -42,7 +43,7 @@ const HIGHLIGHTED_STATUSES: CustomizationRequestStatus[] = [
 ];
 
 export function CustomizationRequestsView() {
-  const [search, setSearch] = useUrlState('rq');
+  const { search, searchInput, setSearchInput } = useDebouncedUrlSearch('rq');
   const [statusParam, setStatus] = useUrlState('rstatus');
   const [selectedId, setSelectedId] = useUrlState('request');
   const status = statusParam as CustomizationRequestStatus | '';
@@ -214,8 +215,8 @@ export function CustomizationRequestsView() {
               <Input
                 className="pl-8 text-[13px]"
                 placeholder="Search by customer, product, or request…"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
               />
             </div>
             <Select
