@@ -78,6 +78,14 @@ export const NAV_ITEMS: NavItem[] = [
     Icon: ShoppingCart,
     perm: "orders:view",
     capability: "ORDERS",
+    // children: [
+    //   { href: "/orders", label: "All orders", Icon: ShoppingBag },
+    //   {
+    //     href: "/orders/customization-requests",
+    //     label: "Customization requests",
+    //     Icon: PencilRuler,
+    //   },
+    // ],
   },
   {
     href: "/inventory",
@@ -159,7 +167,11 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       // A clinic's appointments are all reachable from the two pages below, so the
       // combined list is only a duplicate there.
-      { href: "/bookings", label: "Appointments", hiddenForVerticals: ["HEALTHCARE"] },
+      {
+        href: "/bookings",
+        label: "Appointments",
+        hiddenForVerticals: ["HEALTHCARE"],
+      },
       // A clinic books two different calendars — its own, and each doctor's.
       {
         href: "/bookings/clinical",

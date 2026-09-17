@@ -12,9 +12,8 @@ import {
   type VerticalCapability,
 } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
-import { ChevronDown, Moon, Sun } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -154,7 +153,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         <nav
           data-tour="sidebar-nav"
           className={cn(
-            "flex flex-col gap-0.5 flex-1",
+            "flex flex-col gap-0.5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-secondary",
             collapsed ? "px-[10px] py-1" : "px-3 py-1",
           )}
         >
@@ -181,10 +180,10 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-3 flex flex-col gap-2.5 border-t border-[var(--line)] relative">
+        <div className="p-3 flex flex-col gap-2.5 shrink-0 border-t border-[var(--line)] relative">
           {!collapsed && <SidebarOfferCard />}
 
-          {!collapsed ? (
+          {/* {!collapsed ? (
             <div className="theme-seg">
               <button
                 className={theme !== "dark" ? "on" : ""}
@@ -208,7 +207,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
             >
               {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             </Button>
-          )}
+          )} */}
 
           {/* Profile */}
           <div data-header-popover className="relative">

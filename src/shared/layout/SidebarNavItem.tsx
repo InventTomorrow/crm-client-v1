@@ -126,7 +126,7 @@ export function SidebarNavItem({
                   // Children fade in one after another as the section opens.
                   style={{ animationDelay: `${index * 40}ms` }}
                   className={cn(
-                    'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] no-underline transition-colors animate-in fade-in slide-in-from-left-1 fill-mode-both',
+                    'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13.5px] no-underline transition-colors animate-in fade-in slide-in-from-left-1 fill-mode-both',
                     childActive
                       ? 'bg-[var(--accent-soft)] font-semibold text-[var(--accent)]'
                       : 'text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]',
