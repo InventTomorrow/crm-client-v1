@@ -1,4 +1,6 @@
 'use client';
+import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
+import { hasCapability } from '@/lib/business-verticals';
 import { cn } from '@/lib/utils';
 import { Check, Loader2, MessageCircle } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreference } from '../hooks/useNotifications';
@@ -46,6 +48,11 @@ function Toggle({
 export function NotificationPreferences() {
   const { data: preferences } = useNotificationPreferences();
   const update = useUpdateNotificationPreference();
+  const { tenant } = useCurrentTenant();
+  const visibleTypes = SETTINGS_VISIBLE_NOTIFICATION_TYPES.filter((type) => {
+    const capability = NOTIFICATION_PREFERENCE_META[type].capability;
+    return !capability || hasCapability(tenant?.businessVertical, capability);
+  });
 
   // Only the toggle actually being changed shows a loader/disables — not every
   // row — since the mutation is a single shared instance across the grid.
@@ -73,7 +80,7 @@ export function NotificationPreferences() {
         <span className="text-center">WhatsApp</span>
       </div>
 
-      {SETTINGS_VISIBLE_NOTIFICATION_TYPES.map((type, index) => {
+      {visibleTypes.map((type, index) => {
         const meta = NOTIFICATION_PREFERENCE_META[type];
         const saved = preferences?.find((preference) => preference.type === type);
         const inApp = saved?.inApp ?? meta.inAppDefault;

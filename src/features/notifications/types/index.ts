@@ -17,8 +17,32 @@ export const notificationTypeSchema = z.enum([
   'APPOINTMENT_BOOKED',
   'APPOINTMENT_RESCHEDULED',
   'APPOINTMENT_CANCELLED',
+  'CUSTOMIZATION_REQUESTED',
+  'SERVICE_ORDER_PLACED',
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
+
+/**
+ * What a SERVICE_ORDER_PLACED notification carries in `data` — the whole order,
+ * since for now the notification is where an owner reads orders closed in chat.
+ */
+export interface ServiceOrderNotificationData {
+  serviceOrderId: string;
+  orderLabel: string;
+  leadId: string;
+  conversationId: string | null;
+  customer: {
+    name: string | null;
+    phone: string;
+    email: string | null;
+    businessName: string | null;
+  };
+  lines: { serviceName: string; planName: string; text: string }[];
+  priceSummary: string;
+  briefAnswers: { label: string; value: string }[];
+  briefSummary: string | null;
+  notes: string | null;
+}
 
 export const notificationSchema = z.object({
   id: z.string(),
