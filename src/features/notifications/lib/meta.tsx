@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   Bell,
   CalendarCheck,
   CalendarSync,
@@ -9,6 +10,7 @@ import {
   Megaphone,
   Package,
   CreditCard,
+  Palette,
   Phone,
   UserPlus,
   Users,
@@ -51,6 +53,16 @@ export function notificationMeta(type: NotificationType): Meta {
       bg: 'rgba(239,68,68,0.12)',
       color: '#DC2626',
     },
+    CUSTOMIZATION_REQUESTED: {
+      Icon: Palette,
+      bg: 'rgba(245,158,11,0.14)',
+      color: '#B45309',
+    },
+    SERVICE_ORDER_PLACED: {
+      Icon: BadgeCheck,
+      bg: 'rgba(34,197,94,0.12)',
+      color: '#15803D',
+    },
   };
   return map[type] ?? { Icon: Bell, bg: 'var(--surface-2)', color: 'var(--ink-soft)' };
 }
@@ -79,6 +91,11 @@ export function notificationHref(n: Notification): string {
     case 'APPOINTMENT_RESCHEDULED':
     case 'APPOINTMENT_CANCELLED':
       return '/bookings';
+    case 'CUSTOMIZATION_REQUESTED':
+      return '/orders';
+    // There is no service-orders page yet: the chat is where the deal lives.
+    case 'SERVICE_ORDER_PLACED':
+      return typeof data.leadId === 'string' ? `/inbox?lead=${data.leadId}` : '/inbox';
     default:
       return '/notifications';
   }

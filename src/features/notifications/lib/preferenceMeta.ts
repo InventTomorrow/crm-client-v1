@@ -1,9 +1,12 @@
+import type { VerticalCapability } from "@/lib/business-verticals";
 import type { NotificationType } from "../types";
 
 /**
  * Every notification type in display order, with the server-side default
  * delivery channels. The preferences endpoint only returns rows the user has
  * actually changed, so the UI drives off this list and falls back to these.
+ * The defaults must match EMAIL/WHATSAPP_DEFAULT_TYPES and
+ * IN_APP_DEFAULT_OFF_TYPES in the server's notifications.service.ts.
  */
 export const NOTIFICATION_PREFERENCE_META: Record<
   NotificationType,
@@ -13,12 +16,14 @@ export const NOTIFICATION_PREFERENCE_META: Record<
     inAppDefault: boolean;
     emailDefault: boolean;
     whatsappDefault: boolean;
+    /** Only workspaces with this capability can receive the event, so only they see the row. */
+    capability?: VerticalCapability;
   }
 > = {
   NEW_MESSAGE: {
     title: "New message",
     description: "When a lead sends you a new message.",
-    inAppDefault: false,
+    inAppDefault: true,
     emailDefault: false,
     whatsappDefault: false,
   },
@@ -47,7 +52,7 @@ export const NOTIFICATION_PREFERENCE_META: Record<
     title: "Order created",
     description: "When a new order is placed.",
     inAppDefault: true,
-    emailDefault: false,
+    emailDefault: true,
     whatsappDefault: false,
   },
   ORDER_STATUS_CHANGED: {
@@ -119,6 +124,22 @@ export const NOTIFICATION_PREFERENCE_META: Record<
     inAppDefault: true,
     emailDefault: false,
     whatsappDefault: true,
+  },
+  CUSTOMIZATION_REQUESTED: {
+    title: "Customization request",
+    description: "When a customer asks for something the assistant could not confirm.",
+    inAppDefault: true,
+    emailDefault: false,
+    whatsappDefault: false,
+    capability: "CATALOG_PRODUCTS",
+  },
+  SERVICE_ORDER_PLACED: {
+    title: "New order",
+    description: "When the assistant closes a service order in chat. Reply to the WhatsApp alert to confirm it.",
+    inAppDefault: true,
+    emailDefault: true,
+    whatsappDefault: true,
+    capability: "SERVICE_ORDERS",
   },
 };
 

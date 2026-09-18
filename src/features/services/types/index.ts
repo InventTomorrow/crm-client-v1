@@ -40,6 +40,15 @@ export const BILLING_CYCLE_LABELS: Record<BillingCycle, string> = {
   ONE_TIME: 'One-Time',
 };
 
+/** How the bot closes a service: take the order in chat, or book a call. */
+export const SERVICE_CLOSE_MODES = ['CALL', 'CHAT'] as const;
+export type ServiceCloseMode = (typeof SERVICE_CLOSE_MODES)[number];
+
+export const SERVICE_CLOSE_MODE_LABELS: Record<ServiceCloseMode, string> = {
+  CHAT: 'Closes in chat',
+  CALL: 'Closes on a call',
+};
+
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
 export interface ServicePlan {
@@ -72,6 +81,7 @@ export interface ServiceOffering {
   sampleWorkUrl?: string | null;
   imageUrls: string[];
   plans: ServicePlan[];
+  closeMode: ServiceCloseMode;
   isActive: boolean;
   displayOrder: number;
   createdAt: string;
@@ -94,23 +104,41 @@ export const servicePlanFormSchema = z.object({
 });
 export type ServicePlanFormData = z.infer<typeof servicePlanFormSchema>;
 
-export const serviceOfferingFormSchema = z.object({
-  name: z.string().min(1, 'Service name is required'),
-  shortDescription: z.string().min(1, 'Short description is required'),
-  fullDescription: z.string().optional(),
-  category: z.string().optional(),
-  // No default — the picker starts empty so the choice is made deliberately, not inherited.
-  deliveryType: z.enum(DELIVERY_TYPES, { error: 'Select how this service is delivered.' }),
-  pricingType: z.enum(PRICING_TYPES, { error: 'Select how this service is priced.' }),
-  startingPrice: z.number().nullable().optional(),
-  currency: z.enum(CURRENCIES).default('PKR'),
-  platformsCovered: z.array(z.string()).default([]),
-  keyOutcomes: z.array(z.string()).default([]),
-  sampleWorkUrl: z.string().optional(),
-  isActive: z.boolean().default(true),
-  displayOrder: z.number().int().default(0),
-  plans: z.array(servicePlanFormSchema).default([]),
-});
+/** A plan the bot can sell in chat: a real price, not a custom quote. Mirrors the server rule. */
+export const isPricedPlan = (plan: { price?: number | null; isCustomQuote?: boolean }) =>
+  !plan.isCustomQuote && plan.price != null && plan.price > 0;
+
+export const serviceOfferingFormSchema = z
+  .object({
+    name: z.string().min(1, 'Service name is required'),
+    shortDescription: z.string().min(1, 'Short description is required'),
+    fullDescription: z.string().optional(),
+    category: z.string().optional(),
+    // No default — the picker starts empty so the choice is made deliberately, not inherited.
+    deliveryType: z.enum(DELIVERY_TYPES, { error: 'Select how this service is delivered.' }),
+    pricingType: z.enum(PRICING_TYPES, { error: 'Select how this service is priced.' }),
+    startingPrice: z.number().nullable().optional(),
+    currency: z.enum(CURRENCIES).default('PKR'),
+    platformsCovered: z.array(z.string()).default([]),
+    keyOutcomes: z.array(z.string()).default([]),
+    sampleWorkUrl: z.string().optional(),
+    // Calls until the owner opts in, so the bot never starts taking orders it wasn't asked to.
+    closeMode: z.enum(SERVICE_CLOSE_MODES).default('CALL'),
+    isActive: z.boolean().default(true),
+    displayOrder: z.number().int().default(0),
+    plans: z.array(servicePlanFormSchema).default([]),
+  })
+  // Enforced in edit mode too: the server rejects the pair, so the form says why first.
+  .superRefine((values, ctx) => {
+    if (values.closeMode === 'CHAT' && !values.plans.some(isPricedPlan)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['closeMode'],
+        message:
+          'Closing in chat needs at least one plan with a price. Add one under Plans, or turn this off to book calls instead.',
+      });
+    }
+  });
 export type ServiceOfferingFormData = z.infer<typeof serviceOfferingFormSchema>;
 /** Pre-parse shape — what react-hook-form actually holds, before defaults are applied. */
 export type ServiceOfferingFormInput = z.input<typeof serviceOfferingFormSchema>;

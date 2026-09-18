@@ -23,6 +23,7 @@ export const INITIAL_SERVICE_FORM_VALUES: DefaultValues<ServiceFormInput> = {
   platformsCovered: [],
   keyOutcomes: [],
   sampleWorkUrl: '',
+  closeMode: 'CALL',
   isActive: true,
   displayOrder: 0,
   plans: [],
@@ -89,6 +90,7 @@ export function toServiceFormValues(service: ServiceOffering): ServiceFormInput 
     platformsCovered: service.platformsCovered ?? [],
     keyOutcomes: service.keyOutcomes ?? [],
     sampleWorkUrl: service.sampleWorkUrl ?? '',
+    closeMode: service.closeMode ?? 'CALL',
     isActive: service.isActive,
     displayOrder: service.displayOrder,
     plans: (service.plans ?? []).map(toPlanFormValues),
@@ -110,6 +112,7 @@ export function toServicePayload(formData: ServiceOfferingFormData) {
     platformsCovered: formData.platformsCovered.filter(Boolean),
     keyOutcomes: formData.keyOutcomes.filter(Boolean),
     sampleWorkUrl: formData.sampleWorkUrl?.trim() || null,
+    closeMode: formData.closeMode,
     isActive: formData.isActive,
     displayOrder: formData.displayOrder,
     plans: formData.plans.map((plan, index) => ({

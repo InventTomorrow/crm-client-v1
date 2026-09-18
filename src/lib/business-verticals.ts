@@ -24,6 +24,7 @@ export type VerticalCapability =
   | "CATALOG_SERVICES"
   | "CATALOG_CLINICAL"
   | "ORDERS"
+  | "SERVICE_ORDERS"
   | "QUALIFICATION"
   | "BOOKINGS"
   | "FOLLOW_UPS"
@@ -88,6 +89,7 @@ const VERTICAL_CAPABILITIES: Record<BusinessVertical, VerticalCapability[]> = {
   RESTAURANT: ["CATALOG_MENU", "ORDERS"],
   MARKETING_AGENCY: [
     "CATALOG_SERVICES",
+    "SERVICE_ORDERS",
     "QUALIFICATION",
     "BOOKINGS",
     "FOLLOW_UPS",

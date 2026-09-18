@@ -15,13 +15,14 @@ import {
   markNotificationRead,
   updateNotificationPreference,
 } from '../services/notificationsService';
-import type { Notification, NotificationStreamEvent } from '../types';
+import type { Notification, NotificationStreamEvent, NotificationType } from '../types';
 
 const PAGE_SIZE = 20;
 
 const keys = {
   unread: ['notifications', 'unread'] as const,
-  list: (unreadOnly: boolean) => ['notifications', 'list', unreadOnly] as const,
+  list: (unreadOnly: boolean, type?: NotificationType) =>
+    ['notifications', 'list', unreadOnly, type ?? 'ALL'] as const,
   prefs: ['notifications', 'preferences'] as const,
 };
 
@@ -34,11 +35,16 @@ export function useUnreadCount() {
   });
 }
 
-export function useNotificationsList(unreadOnly = false) {
+export function useNotificationsList(unreadOnly = false, type?: NotificationType) {
   return useInfiniteQuery({
-    queryKey: keys.list(unreadOnly),
+    queryKey: keys.list(unreadOnly, type),
     queryFn: ({ pageParam }) =>
-      getNotifications({ cursor: pageParam, limit: PAGE_SIZE, unreadOnly }),
+      getNotifications({
+        cursor: pageParam,
+        limit: PAGE_SIZE,
+        unreadOnly,
+        ...(type ? { type } : {}),
+      }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1]?.id : undefined,
@@ -100,5 +106,7 @@ export function applyNotificationEvent(
       return { ...old, pages: [[event.notification, ...(first ?? [])], ...rest] };
     });
     qc.invalidateQueries({ queryKey: keys.list(true) });
+    // A single-kind list (e.g. Orders) refetches only when this is its kind.
+    qc.invalidateQueries({ queryKey: keys.list(false, n.type) });
   }
 }
