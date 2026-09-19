@@ -8,8 +8,19 @@ const orderData = {
   orderLabel: "SO-48213907",
   leadId: "lead-1",
   conversationId: null,
-  customer: { name: "Ali Raza", phone: "923004445555", email: null, businessName: "Zara Threads" },
-  lines: [{ serviceName: "Logo Design", planName: "Standard", text: "Logo Design — Standard: PKR 15,000 (one-time)" }],
+  customer: {
+    name: "Ali Raza",
+    phone: "923004445555",
+    email: null,
+    businessName: "Zara Threads",
+  },
+  lines: [
+    {
+      serviceName: "Logo Design",
+      planName: "Standard",
+      text: "Logo Design — Standard: PKR 15,000 (one-time)",
+    },
+  ],
   priceSummary: "PKR 15,000 one-time",
   briefAnswers: [],
   briefSummary: null,
@@ -34,7 +45,9 @@ describe("service order notifications", () => {
   });
 
   it("opens the customer's chat, since orders have no page of their own yet", () => {
-    expect(notificationHref(notification(orderData))).toBe("/inbox?lead=lead-1");
+    expect(notificationHref(notification(orderData))).toBe(
+      "/inbox?lead=lead-1",
+    );
     expect(notificationHref(notification(null))).toBe("/inbox");
   });
 });
