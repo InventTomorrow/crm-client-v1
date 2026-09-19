@@ -4,8 +4,16 @@ import Link from 'next/link';
 import { useMarkNotificationRead } from '../hooks/useNotifications';
 import { notificationHref, notificationMeta, timeAgo } from '../lib/meta';
 import type { Notification } from '../types';
+import { isServiceOrderData, ServiceOrderNotificationRow } from './ServiceOrderNotificationRow';
 
 export function NotificationRow({ notification }: { notification: Notification }) {
+  if (notification.type === 'SERVICE_ORDER_PLACED' && isServiceOrderData(notification.data)) {
+    return <ServiceOrderNotificationRow notification={notification} order={notification.data} />;
+  }
+  return <LinkNotificationRow notification={notification} />;
+}
+
+function LinkNotificationRow({ notification }: { notification: Notification }) {
   const { Icon, bg, color } = notificationMeta(notification.type);
   const markRead = useMarkNotificationRead();
 

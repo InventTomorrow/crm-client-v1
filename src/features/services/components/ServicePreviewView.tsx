@@ -41,6 +41,7 @@ import {
   formatServiceStartingPrice,
   toPlanPreviewList,
 } from '../utils/servicePreviewSummary';
+import { SERVICE_CLOSE_MODE_LABELS } from '../types';
 import { PlanComparisonSheet } from './PlanComparisonSheet';
 import { PlanPreviewCard } from './PlanPreviewCard';
 
@@ -307,6 +308,10 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
                 <PreviewDetailRow
                   label="Status"
                   value={service.isActive ? 'Active' : 'Inactive'}
+                />
+                <PreviewDetailRow
+                  label="Closing"
+                  value={SERVICE_CLOSE_MODE_LABELS[service.closeMode ?? 'CALL']}
                 />
                 <PreviewDetailRow label="Category" value={service.category || '—'} />
                 <PreviewDetailRow label="Currency" value={service.currency} />

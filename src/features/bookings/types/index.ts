@@ -160,6 +160,13 @@ export interface AppointmentClinicalServiceSummary {
   category: string | null;
 }
 
+/** An agency service a call is about, resolved server-side from its id. */
+export interface AppointmentServiceSummary {
+  id: string;
+  name: string;
+  category: string | null;
+}
+
 export interface Appointment {
   id: string;
   tenantId: string;
@@ -181,6 +188,11 @@ export interface Appointment {
   lead?: AppointmentLeadSummary | null;
   practitioner?: AppointmentPractitionerSummary | null;
   clinicalService?: AppointmentClinicalServiceSummary | null;
+  /** Agency calls: the deal the assistant captured before booking it. Empty elsewhere. */
+  serviceOfferingIds?: string[];
+  services?: AppointmentServiceSummary[];
+  briefSummary?: string | null;
+  briefAnswers?: { label: string; value: string }[];
 }
 
 export type SlotUnavailableReason = "BOOKED" | "TOO_SOON" | "DAY_FULL";

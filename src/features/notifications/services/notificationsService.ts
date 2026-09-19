@@ -1,7 +1,12 @@
 import { apiClient } from '@/lib/apiClient';
 import type { Notification, NotificationPreference, NotificationType } from '../types';
 
-export async function getNotifications(params: { cursor?: string; limit?: number; unreadOnly?: boolean }) {
+export async function getNotifications(params: {
+  cursor?: string;
+  limit?: number;
+  unreadOnly?: boolean;
+  type?: NotificationType;
+}) {
   const res = await apiClient.get<{ success: true; data: Notification[] }>('/notifications', { params });
   return res.data.data;
 }

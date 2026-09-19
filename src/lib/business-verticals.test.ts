@@ -17,6 +17,7 @@ describe("business verticals", () => {
     expect(capabilitiesFor("RESTAURANT")).toEqual(["CATALOG_MENU", "ORDERS"]);
     expect(capabilitiesFor("MARKETING_AGENCY")).toEqual([
       "CATALOG_SERVICES",
+      "SERVICE_ORDERS",
       "QUALIFICATION",
       "BOOKINGS",
       "FOLLOW_UPS",

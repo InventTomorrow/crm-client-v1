@@ -46,9 +46,10 @@ export const SERVICE_FORM_STEPS: FormWizardStep<ServiceOfferingFormInput>[] = [
     id: 'visibility',
     label: 'Visibility',
     title: 'Visibility',
-    description: 'Whether the bot may offer this service, and where it sits in the catalog.',
+    description:
+      'Whether the bot may offer this service, how it closes the sale, and where it sits in the catalog.',
     Icon: Eye,
-    fields: ['isActive', 'displayOrder'],
+    fields: ['isActive', 'closeMode', 'displayOrder'],
     // Both fields ship with usable defaults, so this never holds Save back.
     isComplete: () => true,
     isOptional: true,

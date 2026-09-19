@@ -10,10 +10,12 @@ import {
   SheetTitle,
 } from "@/shared/ui/Sheet";
 import {
+  Briefcase,
   CalendarClock,
   CalendarX2,
   ClipboardList,
   Clock,
+  MessageSquareQuote,
   Phone,
   Stethoscope,
   StickyNote,
@@ -175,6 +177,40 @@ export function AppointmentDetailSheet({
                 {appointment.clinicalService.category && (
                   <p className="text-[11.5px] text-[var(--ink-mute)]">
                     {appointment.clinicalService.category}
+                  </p>
+                )}
+              </DetailRow>
+            )}
+
+            {/* Agency calls: what the assistant learned before booking, so whoever
+                takes the call walks in informed. */}
+            {!!appointment.services?.length && (
+              <DetailRow icon={Briefcase} label="About">
+                <div className="flex flex-wrap gap-1.5">
+                  {appointment.services.map((service) => (
+                    <Badge key={service.id} variant="secondary" className="text-[11px]">
+                      {service.name}
+                    </Badge>
+                  ))}
+                </div>
+              </DetailRow>
+            )}
+
+            {(!!appointment.briefAnswers?.length || appointment.briefSummary) && (
+              <DetailRow icon={MessageSquareQuote} label="What they told the assistant">
+                {!!appointment.briefAnswers?.length && (
+                  <dl className="flex flex-col gap-1">
+                    {appointment.briefAnswers.map((answer) => (
+                      <div key={answer.label} className="text-[12.5px]">
+                        <dt className="inline text-[var(--ink-mute)]">{answer.label} </dt>
+                        <dd className="inline text-[var(--ink)]">{answer.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {appointment.briefSummary && (
+                  <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--ink-soft)]">
+                    {appointment.briefSummary}
                   </p>
                 )}
               </DetailRow>
