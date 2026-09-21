@@ -28,7 +28,11 @@ import {
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
 import type { Order, OrderStatus } from "../types";
+<<<<<<< HEAD
 import { getMenuDishName } from "../utils/getMenuDishName";
+=======
+import { getCatalogSearchName } from "../utils/getCatalogSearchName";
+>>>>>>> fix/order-catalog-link-search
 import { ImagePreviewDialog } from "./ImagePreviewDialog";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusSelect } from "./OrderStatusSelect";
@@ -255,9 +259,13 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                     // Click-through to the catalog: filter by name and ring the
                     // exact product when we know its id.
                     const params = new URLSearchParams({
+<<<<<<< HEAD
                       q: isMenuCatalog
                         ? getMenuDishName(orderItem.name)
                         : orderItem.name,
+=======
+                      q: getCatalogSearchName(orderItem.name, isMenuCatalog),
+>>>>>>> fix/order-catalog-link-search
                     });
                     if (orderItem.productId)
                       params.set("highlight", orderItem.productId);
