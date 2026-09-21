@@ -10,7 +10,6 @@ import {
 import Logo from "../Logo";
 import NewsletterForm from "./NewsletterForm";
 
-const SUPPORT_EMAIL = "support@asaanrabta.com";
 const INFO_EMAIL = "info@asaanrabta.com";
 
 const SOCIAL_LINKS = [
@@ -81,7 +80,7 @@ export default function Footer() {
             <NewsletterForm />
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
             {FOOTER_LINK_GROUPS.map((group) => (
               <nav key={group.heading} aria-label={group.heading}>
                 <h3 className="text-[14px] font-semibold text-brand-dark">
@@ -101,20 +100,11 @@ export default function Footer() {
                 </ul>
               </nav>
             ))}
-            <nav aria-label="Support">
+            <nav aria-label="Support" className="col-span-2 sm:col-span-1">
               <h3 className="text-[14px] font-semibold text-brand-dark">
                 Support
               </h3>
               <ul className="mt-4 space-y-2.5">
-                <li>
-                  <Link
-                    href={`mailto:${SUPPORT_EMAIL}`}
-                    className="inline-flex items-center gap-2 text-brand-text text-[14px] transition-colors hover:text-brand-green"
-                  >
-                    <Mail className="size-4 text-brand-green" />
-                    {SUPPORT_EMAIL}
-                  </Link>
-                </li>
                 <li>
                   <Link
                     href={`mailto:${INFO_EMAIL}`}

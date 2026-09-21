@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Container from "../Container";
+import { PrimaryCta } from "../LandingCta";
 import Reveal from "../Reveal";
 import SectionHeading from "../SectionHeading";
-import { PrimaryCta } from "../LandingCta";
 
 const ASSET = "/landing-page-assests";
 
@@ -37,7 +37,11 @@ export default function BusinessTypes() {
         />
         <div className="mt-10 sm:mt-14 flex flex-wrap justify-center gap-5 sm:gap-6 md:gap-8">
           {INDUSTRIES.map((ind, i) => (
-            <Reveal key={i} delay={i * 0.05} className="flex flex-col items-center">
+            <Reveal
+              key={i}
+              delay={i * 0.05}
+              className="flex flex-col items-center"
+            >
               <motion.div
                 whileHover={{ y: -6, scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
