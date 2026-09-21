@@ -97,7 +97,7 @@ export function ImagePreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[640px]">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle className="text-[15px] font-semibold pr-6 truncate">
             {caption}

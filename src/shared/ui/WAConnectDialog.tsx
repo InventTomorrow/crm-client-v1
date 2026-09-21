@@ -18,7 +18,10 @@ interface WAConnectDialogProps {
 export function WAConnectDialog({ open, onOpenChange }: WAConnectDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] p-0 gap-0 overflow-hidden border-0">
+      <DialogContent
+        aria-describedby={undefined}
+        className="sm:max-w-[400px] p-0 gap-0 overflow-hidden border-0"
+      >
         <DialogTitle className="sr-only">WhatsApp connection</DialogTitle>
         <WhatsAppWidget
           className="h-auto rounded-none border-0 shadow-none"
