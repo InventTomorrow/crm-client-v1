@@ -10,6 +10,7 @@ import {
 } from '../hooks/useChatbotSettings';
 import { businessProfileSchema, type BusinessProfileForm } from '../types';
 import { BusinessNameCard } from './BusinessNameCard';
+import { SettingsSaveBar } from './SettingsSaveBar';
 import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
 import { useUpdateBusinessVertical } from '@/features/tenant/hooks/useTenant';
 import { BUSINESS_VERTICALS, getBusinessVerticalShortLabel, type BusinessVertical } from '@/lib/business-verticals';
@@ -410,7 +411,7 @@ export function BusinessSection() {
             />
           </div>
 
-          <div className="flex justify-end">
+          <SettingsSaveBar>
             <Button type="submit" disabled={isPending || !form.formState.isDirty}>
               {isPending ? (
                 <><Loader2 size={13} className="animate-spin" /> Saving…</>
@@ -418,7 +419,7 @@ export function BusinessSection() {
                 <><Check size={14} /> Save changes</>
               )}
             </Button>
-          </div>
+          </SettingsSaveBar>
         </form>
       </Form>
     </>

@@ -99,23 +99,23 @@ function flattenCatalog(
 // ── Role meta ────────────────────────────────────────────────────────────────
 const ROLE_META: Record<string, { color: string; bg: string; desc: string }> = {
   OWNER: {
-    color: "text-[#7C3AED]",
-    bg: "bg-[rgba(124,58,237,0.12)]",
+    color: "text-info-foreground",
+    bg: "bg-info-soft",
     desc: "Full access — billing, members, all data.",
   },
   SALES: {
-    color: "text-[#2563EB]",
-    bg: "bg-[rgba(59,130,246,0.12)]",
+    color: "text-accent",
+    bg: "bg-accent-soft",
     desc: "Leads, conversations, broadcasts.",
   },
   FINANCE: {
-    color: "text-[#059669]",
-    bg: "bg-[rgba(16,185,129,0.12)]",
+    color: "text-warning-foreground",
+    bg: "bg-warning-soft",
     desc: "Orders, reports, billing view.",
   },
   SUPPORT: {
-    color: "text-[#D97706]",
-    bg: "bg-[rgba(245,158,11,0.12)]",
+    color: "text-ink",
+    bg: "bg-line-soft",
     desc: "Inbox, lead edits, order view.",
   },
 };
@@ -438,7 +438,7 @@ function InviteMemberDialog({
                         >
                           <Check
                             size={12}
-                            className="text-[#15803D] flex-shrink-0"
+                            className="text-success-foreground shrink-0"
                           />{" "}
                           {p}
                         </motion.div>
@@ -511,11 +511,11 @@ function PendingInvites({ canInvite }: { canInvite: boolean }) {
                 </span>
                 <RoleBadge name={inv.roleName} />
                 {inv.expired ? (
-                  <span className="badge bg-[rgba(220,38,38,0.1)] text-[#DC2626] text-[10.5px] px-2">
+                  <span className="badge bg-destructive-soft text-destructive-foreground text-[10.5px] px-2">
                     Expired
                   </span>
                 ) : (
-                  <span className="badge bg-[rgba(202,138,4,0.12)] text-[#854D0E] text-[10.5px] px-2">
+                  <span className="badge bg-warning-soft text-warning-foreground text-[10.5px] px-2">
                     Awaiting response
                   </span>
                 )}
@@ -538,7 +538,7 @@ function PendingInvites({ canInvite }: { canInvite: boolean }) {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-[#DC2626] text-white hover:bg-[#B91C1C]"
+                    variant="destructive"
                     disabled={isCancelling}
                     onClick={() =>
                       cancel(inv.id, { onSettled: () => setCancelId(null) })
@@ -554,7 +554,7 @@ function PendingInvites({ canInvite }: { canInvite: boolean }) {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-[var(--ink-mute)] hover:text-[#DC2626]"
+                  className="text-[var(--ink-mute)] hover:text-destructive"
                   title="Cancel invitation"
                   onClick={() => setCancelId(inv.id)}
                 >
@@ -705,7 +705,7 @@ function MemberDetailSheet({
                       <div key={p.key} className="flex items-center gap-1.5">
                         <Check
                           size={12}
-                          className="text-[#15803D] flex-shrink-0"
+                          className="text-success-foreground shrink-0"
                         />{" "}
                         {p.label}
                       </div>
@@ -852,7 +852,7 @@ function MembersTab() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="text-[var(--ink-mute)] hover:text-[#DC2626]"
+                className="text-[var(--ink-mute)] hover:text-destructive"
                 title="Remove member"
                 disabled={isRemoving}
                 onClick={(e) => {
@@ -922,7 +922,7 @@ function MembersTab() {
               className={cn(
                 "rounded-[7px] px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150",
                 isSelected
-                  ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
+                  ? "bg-accent-soft text-accent shadow-sm"
                   : "text-[var(--ink-mute)] hover:bg-[var(--surface)] hover:text-[var(--ink)]",
               )}
             >
@@ -1205,7 +1205,7 @@ function PermissionsTab() {
   return (
     <div className="flex flex-col gap-4">
       {/* Info banner */}
-      <div className="flex items-start gap-2.5 rounded-[12px] bg-[rgba(99,102,241,0.07)] border border-[rgba(99,102,241,0.18)] px-4 py-3">
+      <div className="flex items-start gap-2.5 rounded-[12px] bg-accent-soft border border-accent/20 px-4 py-3">
         <Info size={14} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
         <p className="text-[12.5px] text-[var(--ink-soft)] leading-relaxed">
           The <strong>Owner</strong> role always has full access and cannot be
@@ -1310,7 +1310,7 @@ export function TeamSection() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-150",
                 isSelected
-                  ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
+                  ? "bg-accent-soft text-accent shadow-sm"
                   : "text-[var(--ink-mute)] hover:text-[var(--ink)] hover:bg-[var(--surface)]",
               )}
             >
@@ -1321,7 +1321,7 @@ export function TeamSection() {
                   className={cn(
                     "rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums",
                     isSelected
-                      ? "bg-[var(--bg)]/20 text-[var(--bg)]"
+                      ? "bg-accent/15 text-accent"
                       : "bg-[var(--surface)] text-[var(--ink-soft)]",
                   )}
                 >
