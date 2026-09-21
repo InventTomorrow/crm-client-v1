@@ -1,9 +1,7 @@
 "use client";
 import { useMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import { VerticalCard } from "@/features/onboarding/components/VerticalCard";
 import {
-  useCreateTenant,
   useDeleteTenant,
   useLeaveWorkspace,
   useLeftMembers,
@@ -13,11 +11,9 @@ import {
 } from "@/features/tenant/hooks/useTenant";
 import type { WorkspaceStats } from "@/features/tenant/types";
 import { useAppStore } from "@/lib/appStore";
-import {
-  BUSINESS_VERTICALS,
-  type BusinessVertical,
-} from "@/lib/business-verticals";
+import type { BusinessVertical } from "@/lib/business-verticals";
 import { cn } from "@/lib/utils";
+import { CreateWorkspaceDialog } from "@/shared/layout/CreateWorkspaceDialog";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import {
@@ -59,143 +55,6 @@ const PALETTE = [
   "linear-gradient(135deg,#FCD34D,#F87171)",
   "linear-gradient(135deg,#6EE7B7,#818CF8)",
 ];
-
-// ─────────────────────────────────────────────────────────────
-// Create Workspace Dialog
-// ─────────────────────────────────────────────────────────────
-function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [businessVertical, setBusinessVertical] =
-    useState<BusinessVertical | null>(null);
-  const { mutate: createTenant, isPending } = useCreateTenant();
-
-  const canCreate =
-    name.trim().length >= 2 &&
-    businessName.trim().length >= 2 &&
-    !!businessVertical;
-
-  const handleCreate = () => {
-    if (!canCreate || !businessVertical) return;
-    createTenant(
-      {
-        name: name.trim(),
-        businessName: businessName.trim(),
-        businessVertical,
-      },
-      { onSuccess: () => onClose() },
-    );
-  };
-
-  return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent
-        className="sm:max-w-[460px] p-0 gap-0 overflow-hidden"
-        showCloseButton={false}
-      >
-        <DialogHeader className="px-6 py-5 border-b border-[var(--line)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center">
-              <Building2 size={18} className="text-[var(--accent)]" />
-            </div>
-            <div>
-              <DialogTitle className="text-[16px] font-semibold">
-                New Workspace
-              </DialogTitle>
-              <DialogDescription className="text-[12px] text-[var(--ink-mute)] mt-0.5">
-                Isolated data, members, and billing.
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-        <div className="p-6 flex flex-col gap-4">
-          <div>
-            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
-              Workspace name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Karachi Branch, Q2 Ops…"
-              autoFocus
-              disabled={isPending}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreate();
-              }}
-            />
-            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
-              Internal label for your team — can&apos;t be changed later.
-            </p>
-          </div>
-          <div>
-            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
-              Business name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="e.g. Karachi Karahi"
-              disabled={isPending}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreate();
-              }}
-            />
-            <p className="mt-1 text-[11px] text-[var(--ink-mute)]">
-              What customers see — editable later in Business settings.
-            </p>
-          </div>
-          <div>
-            <Label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
-              Business type <span className="text-red-500">*</span>
-            </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {BUSINESS_VERTICALS.map((vertical, index) => (
-                <VerticalCard
-                  key={vertical.value}
-                  icon={vertical.icon}
-                  title={vertical.title}
-                  description={vertical.description}
-                  selected={businessVertical === vertical.value}
-                  disabled={isPending}
-                  index={index}
-                  onSelect={() => setBusinessVertical(vertical.value)}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3.5 text-[12px] text-[var(--ink-soft)] leading-relaxed">
-            <span className="font-semibold text-[var(--ink)]">
-              You'll be the Owner
-            </span>{" "}
-            — invite your team after creation. Workspace data is fully isolated
-            from your other workspaces.
-          </div>
-        </div>
-        <div className="px-6 py-4 border-t border-[var(--line)] flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={!canCreate || isPending}>
-            {isPending ? (
-              <>
-                <Loader2 size={13} className="animate-spin" /> Creating…
-              </>
-            ) : (
-              <>
-                <Plus size={13} /> Create workspace
-              </>
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────
 // Delete Confirm Dialog

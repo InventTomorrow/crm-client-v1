@@ -10,35 +10,57 @@ interface Props {
   disabled?: boolean;
   index: number;
   onSelect: () => void;
+  /** `compact` is a horizontal row for dialogs and narrow panels. */
+  variant?: 'default' | 'compact';
 }
 
-export function VerticalCard({ icon: Icon, title, description, selected, disabled, index, onSelect }: Props) {
+export function VerticalCard({
+  icon: Icon,
+  title,
+  description,
+  selected,
+  disabled,
+  index,
+  onSelect,
+  variant = 'default',
+}: Props) {
+  const isCompact = variant === 'compact';
   return (
     <motion.button
       type="button"
       onClick={onSelect}
       disabled={disabled}
+      aria-pressed={selected}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut', delay: 0.05 * index }}
       className={cn(
-        'flex flex-col items-start gap-3 p-6 rounded-2xl border text-left transition-all disabled:opacity-60 disabled:cursor-not-allowed',
+        'flex text-left border transition-all disabled:opacity-60 disabled:cursor-not-allowed',
+        isCompact ? 'flex-row items-center gap-3 p-3 rounded-xl' : 'flex-col items-start gap-3 p-6 rounded-2xl',
         selected
-          ? 'border-[var(--accent)] bg-[rgba(79,195,247,0.06)] ring-2 ring-[rgba(79,195,247,0.25)]'
-          : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)] hover:bg-[rgba(79,195,247,0.03)]',
+          ? 'border-accent bg-accent-soft ring-2 ring-accent/20'
+          : 'border-line bg-surface hover:border-accent hover:bg-surface-2',
       )}
     >
       <div
         className={cn(
-          'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors',
-          selected ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-2)] text-[var(--ink-mute)]',
+          'flex items-center justify-center shrink-0 transition-colors',
+          isCompact ? 'size-9 rounded-lg' : 'size-11 rounded-xl',
+          selected ? 'bg-primary text-primary-foreground' : 'bg-surface-2 text-ink-mute',
         )}
       >
-        <Icon size={20} />
+        <Icon size={isCompact ? 17 : 20} />
       </div>
-      <div>
-        <div className="text-[15px] font-semibold text-[var(--ink)]">{title}</div>
-        <p className="text-[12.5px] mt-1 text-[var(--ink-mute)] leading-relaxed">{description}</p>
+      <div className="min-w-0">
+        <div className={cn('font-semibold text-ink', isCompact ? 'text-[13px]' : 'text-[15px]')}>{title}</div>
+        <p
+          className={cn(
+            'text-ink-mute',
+            isCompact ? 'mt-0.5 text-[11.5px] leading-snug line-clamp-2' : 'mt-1 text-[12.5px] leading-relaxed',
+          )}
+        >
+          {description}
+        </p>
       </div>
     </motion.button>
   );
