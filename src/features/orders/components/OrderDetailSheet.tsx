@@ -28,6 +28,7 @@ import {
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
 import type { Order, OrderStatus } from "../types";
+import { getMenuDishName } from "../utils/getMenuDishName";
 import { ImagePreviewDialog } from "./ImagePreviewDialog";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusSelect } from "./OrderStatusSelect";
@@ -253,7 +254,11 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   {order.items.map((orderItem) => {
                     // Click-through to the catalog: filter by name and ring the
                     // exact product when we know its id.
-                    const params = new URLSearchParams({ q: orderItem.name });
+                    const params = new URLSearchParams({
+                      q: isMenuCatalog
+                        ? getMenuDishName(orderItem.name)
+                        : orderItem.name,
+                    });
                     if (orderItem.productId)
                       params.set("highlight", orderItem.productId);
                     const hasCustomization =
