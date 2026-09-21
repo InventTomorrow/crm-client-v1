@@ -79,6 +79,7 @@ export function AppointmentDetailSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
+        aria-describedby={undefined}
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
       >

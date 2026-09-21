@@ -2,7 +2,17 @@
 // existing `@/features/tenant/types` imports keep working.
 export type { BusinessVertical } from '@/lib/business-verticals';
 
-import type { BusinessVertical } from '@/lib/business-verticals';
+import { BUSINESS_VERTICAL_VALUES, type BusinessVertical } from '@/lib/business-verticals';
+import { z } from 'zod';
+
+// Mirrors server tenant.dto.ts createTenantSchema limits.
+export const createWorkspaceSchema = z.object({
+  name: z.string().trim().min(2, 'Workspace name must be at least 2 characters').max(60),
+  businessName: z.string().trim().min(2, 'Business name must be at least 2 characters').max(120),
+  businessVertical: z.enum(BUSINESS_VERTICAL_VALUES, { error: 'Pick a business type' }),
+  replaceTenantId: z.string().optional(),
+});
+export type CreateWorkspaceForm = z.infer<typeof createWorkspaceSchema>;
 
 export interface Tenant {
   id: string;

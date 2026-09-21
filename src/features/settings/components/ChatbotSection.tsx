@@ -7,6 +7,7 @@ import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISett
 import { cn } from '@/lib/utils';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
+import { SettingsSaveBar } from './SettingsSaveBar';
 import { Button } from '@/shared/ui/Button';
 import { Switch } from '@/shared/ui/Switch';
 import { Textarea } from '@/shared/ui/Textarea';
@@ -145,11 +146,11 @@ export function ChatbotSection() {
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <SettingsSaveBar variant="inset">
           <Button type="submit" disabled={isPending || !isDirty}>
             {isPending ? <><Loader2 size={13} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save changes</>}
           </Button>
-        </div>
+        </SettingsSaveBar>
       </form>
 
       <AISettingsWidget />

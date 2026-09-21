@@ -5,6 +5,8 @@
 // Read from env, never hardcoded. Empty string when unset so callers can
 // cheaply check `if (!GTM_ID) return` and skip GTM entirely in dev/preview.
 export const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID ?? "";
+// GA4 measurement ID for the direct gtag.js snippet (format: G-XXXXXXXXXX).
+export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
 
 // Push an arbitrary event object onto the dataLayer. This is the generic
 // primitive every custom tracking call should go through.

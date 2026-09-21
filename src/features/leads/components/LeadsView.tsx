@@ -191,7 +191,8 @@ export function LeadsView() {
   ];
 
   return (
-    <div className="p-4 h-full flex flex-col gap-3 overflow-hidden">
+    // Phones scroll the whole page (children keep their height); desktop keeps the fixed-height kanban layout.
+    <div className="scroll p-4 h-full flex flex-col gap-3 overflow-y-auto max-md:*:shrink-0 md:overflow-hidden">
       {/* Header */}
       <div className="page-header flex items-center justify-between gap-3.5 flex-wrap">
         <div>
@@ -200,7 +201,7 @@ export function LeadsView() {
             {vocabulary.pageSubtitle}
           </div>
         </div>
-        <div data-tour="page-actions" className="flex gap-2 items-center">
+        <div data-tour="page-actions" className="flex flex-wrap gap-2 items-center">
           <RefreshButton
             onRefresh={() => refetch()}
             isRefreshing={isFetching}

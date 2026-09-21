@@ -193,7 +193,8 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
           align="start"
           side={collapsed ? "right" : "bottom"}
           sideOffset={collapsed ? 8 : 6}
-          className={cn("p-1.5 bg-[var(--surface)]", collapsed && "w-70")}
+          // Portaled to body — must sit above the mobile sidebar drawer (z-70).
+          className={cn("z-[80] p-1.5 bg-[var(--surface)]", collapsed && "w-70")}
         >
           {ownedGroup.length > 0 && (
             <>

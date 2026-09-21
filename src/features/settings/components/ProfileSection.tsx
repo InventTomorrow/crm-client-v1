@@ -16,6 +16,7 @@ import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { profileSchema, type ProfileFormValues } from "../types";
+import { SettingsSaveBar } from "./SettingsSaveBar";
 
 export function ProfileSection() {
   const { user, isLoading } = useMe();
@@ -137,7 +138,7 @@ export function ProfileSection() {
                 )}
               />
             </div>
-            <div className="flex justify-between items-center mt-4">
+            <SettingsSaveBar variant="inset" className="mt-4 justify-between">
               <div
                 className={`text-[12.5px] flex items-center gap-1.5 ${saved ? "text-[#15803D]" : "text-[var(--ink-mute)]"}`}
               >
@@ -172,7 +173,7 @@ export function ProfileSection() {
                   )}
                 </Button>
               </div>
-            </div>
+            </SettingsSaveBar>
           </form>
         </Form>
 

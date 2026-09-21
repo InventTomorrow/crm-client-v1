@@ -25,10 +25,10 @@ const DOCK_ITEMS: {
 }[] = [
   { href: '/dashboard', label: 'Home',  Icon: LayoutDashboard, perm: 'reports:view' },
   { href: '/inbox',     label: 'Inbox', Icon: Inbox,        perm: 'conversations:view' },
-  { href: '/leads',     label: 'Leads', Icon: Users,        perm: 'leads:view' },
+  { href: '/leads',     label: 'Leads', Icon: Users,        perm: 'leads:view', labelByVertical: { HEALTHCARE: 'Patients' } },
   { href: '/orders',    label: 'Orders', Icon: ShoppingCart, perm: 'orders:view', capability: 'ORDERS' },
   { href: '/inventory', label: 'Stock', Icon: Package,      perm: 'inventory:view', capability: 'CATALOG_PRODUCTS' },
-  { href: '/admin',     label: 'Team',  Icon: Shield,       perm: 'members:view' },
+  { href: '/settings/access', label: 'Team', Icon: Shield,  perm: 'members:view' },
   { href: '/settings',  label: 'More',  Icon: Settings },
 ];
 
@@ -43,6 +43,10 @@ export function MobileDock() {
       (permsLoading || !it.perm || can(it.perm)) &&
       (!it.capability || hasCapability(tenant?.businessVertical, it.capability)),
   );
+  // Longest match wins so /settings/access lights "Team", not "More" as well.
+  const activeHref = dockItems
+    .filter((it) => pathname.startsWith(it.href))
+    .reduce<string | undefined>((best, it) => (!best || it.href.length > best.length ? it.href : best), undefined);
   const badgeFor = (href: string): number | undefined =>
     href === '/inbox' ? inboxUnread || undefined : href === '/leads' ? leadsCount || undefined : undefined;
 
@@ -50,7 +54,7 @@ export function MobileDock() {
     <nav className="mobile-dock">
       <div className="dock-scroll">
         {dockItems.map(it => {
-          const active = pathname.startsWith(it.href);
+          const active = it.href === activeHref;
           const badge = badgeFor(it.href);
           return (
             <Link key={it.href} href={it.href} className={`dock-item no-underline ${active ? 'active' : ''}`}>

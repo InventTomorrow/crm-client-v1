@@ -19,6 +19,7 @@ export function HeroDashboardMockup() {
       <Image
         src={`${ASSET}/1.png`}
         alt="AsaanRabta leads pipeline dashboard"
+        loading="eager"
         fill
         sizes="(max-width: 940px) 100vw, 900px"
         quality={100}
@@ -58,7 +59,8 @@ export function CRMTableMockup() {
         alt="Lead CRM pipeline"
         fill
         sizes="(max-width: 768px) 100vw, 600px"
-        quality={100}
+        // Differs from the hero's q=100 so this lazy copy doesn't mask the hero's eager LCP entry in dev.
+        quality={90}
         className="object-cover"
       />
     </div>
