@@ -1,4 +1,5 @@
 'use client';
+import type * as React from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/ui/Dialog';
 import { Button } from '@/shared/ui/Button';
@@ -19,6 +20,8 @@ export interface ConfirmDialogProps {
   /** Optional second action (e.g. "Delete for everyone") shown beside confirm. */
   secondaryLabel?: string;
   onSecondary?: () => void;
+  /** Extra detail under the description, e.g. a summary of the record being removed. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -37,6 +40,7 @@ export function ConfirmDialog({
   loading = false,
   secondaryLabel,
   onSecondary,
+  children,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && !loading) onClose(); }}>
@@ -57,6 +61,7 @@ export function ConfirmDialog({
                 {description}
               </DialogDescription>
             )}
+            {children && <div className="mt-3">{children}</div>}
           </div>
         </DialogHeader>
 

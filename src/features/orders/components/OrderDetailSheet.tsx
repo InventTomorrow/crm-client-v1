@@ -29,7 +29,7 @@ import {
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
 import type { Order, OrderStatus } from "../types";
 import { getCatalogSearchName } from "../utils/getCatalogSearchName";
-import { ImagePreviewDialog } from "./ImagePreviewDialog";
+import { ImagePreviewDialog } from "@/shared/ui/ImagePreviewDialog";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderStatusSelect } from "./OrderStatusSelect";
 

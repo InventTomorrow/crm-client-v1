@@ -1,5 +1,4 @@
 "use client";
-import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
   Dialog,
@@ -8,13 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/Dialog";
+import { cn, getImageUrl } from "@/lib/utils";
 import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 
-type ExportFormat = "jpeg" | "png";
+export type ExportFormat = "jpeg" | "png";
 
 /** Fetches the image, re-encodes it on a canvas, and triggers a browser download. */
-async function downloadAs(
+export async function downloadImageAs(
   sourceUrl: string,
   format: ExportFormat,
   filenameBase: string,
@@ -70,6 +70,7 @@ export function ImagePreviewDialog({
   imageUrl,
   caption,
   filenameBase,
+  fullScreen = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -77,6 +78,8 @@ export function ImagePreviewDialog({
   imageUrl: string | null;
   caption: string;
   filenameBase: string;
+  /** Fills the viewport — for documents like receipts that need their fine print read. */
+  fullScreen?: boolean;
 }) {
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +90,7 @@ export function ImagePreviewDialog({
     setExporting(format);
     setError(null);
     try {
-      await downloadAs(resolvedUrl, format, filenameBase);
+      await downloadImageAs(resolvedUrl, format, filenameBase);
     } catch {
       setError("Could not export this image. Try again.");
     } finally {
@@ -97,20 +100,35 @@ export function ImagePreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-[640px]">
+      <DialogContent
+        aria-describedby={undefined}
+        className={cn(
+          fullScreen
+            ? "flex h-[calc(100dvh-24px)] w-[calc(100vw-24px)] max-w-none flex-col sm:max-w-none"
+            : "sm:max-w-[640px]",
+        )}
+      >
         <DialogHeader>
           <DialogTitle className="text-[15px] font-semibold pr-6 truncate">
             {caption}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-2">
+        <div
+          className={cn(
+            "flex items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-2",
+            fullScreen && "min-h-0 flex-1 overflow-auto",
+          )}
+        >
           {resolvedUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- full-size preview of a user-uploaded photo, not a page asset
             <img
               src={resolvedUrl}
               alt={caption}
-              className="max-h-[65vh] w-auto max-w-full rounded-md object-contain"
+              className={cn(
+                "w-auto max-w-full rounded-md object-contain",
+                fullScreen ? "max-h-full" : "max-h-[65vh]",
+              )}
             />
           )}
         </div>
