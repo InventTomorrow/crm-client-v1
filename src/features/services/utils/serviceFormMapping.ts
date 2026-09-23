@@ -1,3 +1,4 @@
+import { getEffectiveDefaultAccountId, toPaymentAccountForm } from '@/features/settings/utils/paymentAccounts';
 import type { DefaultValues } from 'react-hook-form';
 import type { z } from 'zod';
 import {
@@ -24,6 +25,10 @@ export const INITIAL_SERVICE_FORM_VALUES: DefaultValues<ServiceFormInput> = {
   keyOutcomes: [],
   sampleWorkUrl: '',
   closeMode: 'CALL',
+  collectPayment: false,
+  globalPaymentAccountIds: [],
+  paymentAccounts: [],
+  defaultPaymentAccountId: null,
   isActive: true,
   displayOrder: 0,
   plans: [],
@@ -91,6 +96,10 @@ export function toServiceFormValues(service: ServiceOffering): ServiceFormInput 
     keyOutcomes: service.keyOutcomes ?? [],
     sampleWorkUrl: service.sampleWorkUrl ?? '',
     closeMode: service.closeMode ?? 'CALL',
+    collectPayment: service.collectPayment ?? false,
+    globalPaymentAccountIds: service.globalPaymentAccountIds ?? [],
+    paymentAccounts: (service.paymentAccounts ?? []).map(toPaymentAccountForm),
+    defaultPaymentAccountId: service.defaultPaymentAccountId ?? null,
     isActive: service.isActive,
     displayOrder: service.displayOrder,
     plans: (service.plans ?? []).map(toPlanFormValues),
@@ -113,6 +122,16 @@ export function toServicePayload(formData: ServiceOfferingFormData) {
     keyOutcomes: formData.keyOutcomes.filter(Boolean),
     sampleWorkUrl: formData.sampleWorkUrl?.trim() || null,
     closeMode: formData.closeMode,
+    collectPayment: formData.collectPayment,
+    globalPaymentAccountIds: formData.globalPaymentAccountIds,
+    paymentAccounts: formData.paymentAccounts,
+    defaultPaymentAccountId: getEffectiveDefaultAccountId(
+      [
+        ...formData.globalPaymentAccountIds,
+        ...formData.paymentAccounts.map((account) => account.id),
+      ],
+      formData.defaultPaymentAccountId,
+    ),
     isActive: formData.isActive,
     displayOrder: formData.displayOrder,
     plans: formData.plans.map((plan, index) => ({

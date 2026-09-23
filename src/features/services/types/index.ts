@@ -1,3 +1,4 @@
+import { paymentAccountShapeSchema, type PaymentAccount } from '@/features/settings/types';
 import type { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -82,6 +83,10 @@ export interface ServiceOffering {
   imageUrls: string[];
   plans: ServicePlan[];
   closeMode: ServiceCloseMode;
+  collectPayment: boolean;
+  globalPaymentAccountIds: string[];
+  paymentAccounts: PaymentAccount[];
+  defaultPaymentAccountId: string | null;
   isActive: boolean;
   displayOrder: number;
   createdAt: string;
@@ -124,6 +129,11 @@ export const serviceOfferingFormSchema = z
     sampleWorkUrl: z.string().optional(),
     // Calls until the owner opts in, so the bot never starts taking orders it wasn't asked to.
     closeMode: z.enum(SERVICE_CLOSE_MODES).default('CALL'),
+    collectPayment: z.boolean().default(false),
+    globalPaymentAccountIds: z.array(z.string()).default([]),
+    // Each account is checked in its dialog; saved ones pass as they are, as on the server.
+    paymentAccounts: z.array(paymentAccountShapeSchema).max(10).default([]),
+    defaultPaymentAccountId: z.string().nullable().default(null),
     isActive: z.boolean().default(true),
     displayOrder: z.number().int().default(0),
     plans: z.array(servicePlanFormSchema).default([]),
@@ -136,6 +146,16 @@ export const serviceOfferingFormSchema = z
         path: ['closeMode'],
         message:
           'Closing in chat needs at least one plan with a price. Add one under Plans, or turn this off to book calls instead.',
+      });
+    }
+    if (
+      values.collectPayment &&
+      values.globalPaymentAccountIds.length + values.paymentAccounts.length === 0
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['collectPayment'],
+        message: 'Select a workspace account or add one for this service to collect payment.',
       });
     }
   });
