@@ -11,6 +11,7 @@ import { useEffect, useRef } from 'react';
 import { useServiceForm } from '../hooks/useServiceForm';
 import { SERVICE_FORM_STEPS } from '../utils/serviceFormSections';
 import { ServiceBasicsFields } from './sections/ServiceBasicsFields';
+import { ServicePaymentFields } from './sections/ServicePaymentFields';
 import { ServicePlansFields } from './sections/ServicePlansFields';
 import { ServicePositioningFields } from './sections/ServicePositioningFields';
 import { ServicePricingFields } from './sections/ServicePricingFields';
@@ -98,6 +99,9 @@ export function ServiceFormView({ serviceId }: { serviceId?: string }) {
                 {activeStep.id === 'plans' && <ServicePlansFields form={form} isSaving={isSaving} />}
                 {activeStep.id === 'visibility' && (
                   <ServiceVisibilityFields form={form} isSaving={isSaving} />
+                )}
+                {activeStep.id === 'payment' && (
+                  <ServicePaymentFields form={form} isSaving={isSaving} />
                 )}
               </FormSection>
 

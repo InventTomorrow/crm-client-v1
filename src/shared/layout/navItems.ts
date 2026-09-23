@@ -88,6 +88,13 @@ export const NAV_ITEMS: NavItem[] = [
     // ],
   },
   {
+    href: "/service-orders",
+    label: "Orders",
+    Icon: ShoppingCart,
+    perm: "orders:view",
+    capability: "SERVICE_ORDERS",
+  },
+  {
     href: "/inventory",
     label: "Inventory",
     Icon: Package,

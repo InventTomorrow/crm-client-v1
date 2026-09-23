@@ -19,6 +19,7 @@ export const notificationTypeSchema = z.enum([
   'APPOINTMENT_CANCELLED',
   'CUSTOMIZATION_REQUESTED',
   'SERVICE_ORDER_PLACED',
+  'PAYMENT_DETAILS_CHANGED',
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
@@ -42,6 +43,8 @@ export interface ServiceOrderNotificationData {
   briefAnswers: { label: string; value: string }[];
   briefSummary: string | null;
   notes: string | null;
+  /** Absent on notifications created before payment collection existed. */
+  paymentRequired?: boolean;
 }
 
 export const notificationSchema = z.object({

@@ -11,6 +11,10 @@ export function CRMSwitch({ on, onChange, size = 'sm' }: CRMSwitchProps) {
   const h = size === 'sm' ? 18 : 22;
   return (
     <button
+      // Without an explicit type a button inside a form submits it on every toggle.
+      type="button"
+      role="switch"
+      aria-checked={on}
       onClick={(e) => { e.stopPropagation(); onChange(!on); }}
       style={{
         width: w,

@@ -141,6 +141,14 @@ export const NOTIFICATION_PREFERENCE_META: Record<
     whatsappDefault: true,
     capability: "SERVICE_ORDERS",
   },
+  PAYMENT_DETAILS_CHANGED: {
+    title: "Payment details changed",
+    description: "When payment accounts or a service's payment collection change.",
+    inAppDefault: true,
+    emailDefault: true,
+    whatsappDefault: false,
+    capability: "SERVICE_ORDERS",
+  },
 };
 
 export const NOTIFICATION_TYPES = Object.keys(
@@ -150,7 +158,8 @@ export const NOTIFICATION_TYPES = Object.keys(
 // NEW_LOGIN is off by default and not user-configurable — kept out of the
 // settings list, though it stays in NOTIFICATION_PREFERENCE_META so past
 // NEW_LOGIN entries still render correctly in the notification feed.
-const HIDDEN_FROM_SETTINGS = new Set<NotificationType>(["NEW_LOGIN"]);
+// PAYMENT_DETAILS_CHANGED is a security alert whose email cannot be switched off.
+const HIDDEN_FROM_SETTINGS = new Set<NotificationType>(["NEW_LOGIN", "PAYMENT_DETAILS_CHANGED"]);
 
 export const SETTINGS_VISIBLE_NOTIFICATION_TYPES = NOTIFICATION_TYPES.filter(
   (type) => !HIDDEN_FROM_SETTINGS.has(type),

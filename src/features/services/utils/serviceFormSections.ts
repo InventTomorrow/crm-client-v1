@@ -1,5 +1,5 @@
 import type { FormWizardStep } from '@/shared/hooks/useFormWizard';
-import { Eye, FileText, Layers, Tag, Target } from 'lucide-react';
+import { Eye, FileText, Layers, Tag, Target, Wallet } from 'lucide-react';
 import { serviceCompletionRules, type ServiceOfferingFormInput } from '../types';
 
 /** The add/edit service form, one section at a time. `fields` is what react-hook-form
@@ -51,6 +51,18 @@ export const SERVICE_FORM_STEPS: FormWizardStep<ServiceOfferingFormInput>[] = [
     Icon: Eye,
     fields: ['isActive', 'closeMode', 'displayOrder'],
     // Both fields ship with usable defaults, so this never holds Save back.
+    isComplete: () => true,
+    isOptional: true,
+  },
+  {
+    id: 'payment',
+    label: 'Payment',
+    title: 'Payment collection',
+    description:
+      'Whether the bot shares payment details after an order in chat and collects the receipt.',
+    Icon: Wallet,
+    fields: ['collectPayment', 'globalPaymentAccountIds', 'paymentAccounts', 'defaultPaymentAccountId'],
+    // Off by default, so this never holds Save back.
     isComplete: () => true,
     isOptional: true,
   },
