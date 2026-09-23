@@ -1,0 +1,17 @@
+/* Served as-is: the CSS bundler rewrites :dir(rtl) into a :lang() list that never matches a lang="en" page. */
+
+/* Nastaliq needs more leading, size and word gaps; never letter-spacing — it breaks Urdu letter joins. */
+:where(textarea, [dir="auto"]):dir(rtl) {
+  font-size: max(1em, 15px);
+  line-height: 2.4;
+  word-spacing: 0.15em;
+  letter-spacing: normal;
+}
+
+/* Single-line fields stay inside their 40px height. */
+:where(input):dir(rtl) {
+  font-size: max(1em, 15px);
+  line-height: 1.9;
+  word-spacing: 0.15em;
+  letter-spacing: normal;
+}
