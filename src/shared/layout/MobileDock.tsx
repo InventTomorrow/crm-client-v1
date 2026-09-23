@@ -27,6 +27,7 @@ const DOCK_ITEMS: {
   { href: '/inbox',     label: 'Inbox', Icon: Inbox,        perm: 'conversations:view' },
   { href: '/leads',     label: 'Leads', Icon: Users,        perm: 'leads:view', labelByVertical: { HEALTHCARE: 'Patients' } },
   { href: '/orders',    label: 'Orders', Icon: ShoppingCart, perm: 'orders:view', capability: 'ORDERS' },
+  { href: '/service-orders', label: 'Orders', Icon: ShoppingCart, perm: 'orders:view', capability: 'SERVICE_ORDERS' },
   { href: '/inventory', label: 'Stock', Icon: Package,      perm: 'inventory:view', capability: 'CATALOG_PRODUCTS' },
   { href: '/settings/access', label: 'Team', Icon: Shield,  perm: 'members:view' },
   { href: '/settings',  label: 'More',  Icon: Settings },

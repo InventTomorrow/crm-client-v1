@@ -1,6 +1,6 @@
 'use client';
 import { cn } from '@/lib/utils';
-import { ChevronDown, Mail, MessageSquare, Phone } from 'lucide-react';
+import { ChevronDown, Mail, MessageSquare, Phone, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useMarkNotificationRead } from '../hooks/useNotifications';
@@ -163,9 +163,17 @@ export function ServiceOrderNotificationRow({
             >
               <MessageSquare size={13} /> Open chat
             </Link>
+            <Link
+              href={`/service-orders?order=${order.serviceOrderId}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] px-3 py-1.5 text-[12.5px] font-medium text-[var(--ink)] transition-colors hover:bg-[var(--surface-2)]"
+            >
+              <Receipt size={13} /> View order
+            </Link>
             <p className="text-[11.5px] text-[var(--ink-mute)]">
-              Payment is not taken in chat. Reply 1, 2 or 3 to the WhatsApp alert to confirm, mark
-              paid or cancel.
+              {order.paymentRequired
+                ? 'Payment details were shared in chat — the receipt appears on the order once sent.'
+                : 'Payment is not taken in chat.'}{' '}
+              Reply 1, 2 or 3 to the WhatsApp alert to confirm, mark paid or cancel.
             </p>
           </div>
         </div>

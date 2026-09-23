@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  ShieldAlert,
   Bell,
   CalendarCheck,
   CalendarSync,
@@ -58,6 +59,7 @@ export function notificationMeta(type: NotificationType): Meta {
       bg: 'rgba(245,158,11,0.14)',
       color: '#B45309',
     },
+    PAYMENT_DETAILS_CHANGED: { Icon: ShieldAlert, bg: 'var(--warning-soft)', color: 'var(--warning-foreground)' },
     SERVICE_ORDER_PLACED: {
       Icon: BadgeCheck,
       bg: 'rgba(34,197,94,0.12)',
@@ -94,6 +96,8 @@ export function notificationHref(n: Notification): string {
     case 'CUSTOMIZATION_REQUESTED':
       return '/orders';
     // There is no service-orders page yet: the chat is where the deal lives.
+    case 'PAYMENT_DETAILS_CHANGED':
+      return '/settings/business?tab=payments';
     case 'SERVICE_ORDER_PLACED':
       return typeof data.leadId === 'string' ? `/inbox?lead=${data.leadId}` : '/inbox';
     default:
