@@ -44,6 +44,7 @@ import {
 import { SERVICE_CLOSE_MODE_LABELS } from '../types';
 import { PlanComparisonSheet } from './PlanComparisonSheet';
 import { PlanPreviewCard } from './PlanPreviewCard';
+import { ServicePaymentPanel } from './ServicePaymentPanel';
 
 /** Read-only view of one service offering — how the catalog entry reads before anyone edits it.
  * Clicking a service in the list lands here; the editor is one action away. */
@@ -63,7 +64,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-6 p-4 md:p-8">
+      <div className="flex w-full flex-col gap-6 p-4 md:p-8">
         <Skeleton className="h-9 w-64" />
         <Skeleton className="h-24 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
@@ -73,7 +74,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
 
   if (isError || !service) {
     return (
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-4 p-4 md:p-8">
+      <div className="flex w-full flex-col gap-4 p-4 md:p-8">
         <Button variant="outline" size="lg" onClick={returnToList} className="w-fit">
           <ArrowLeft size={14} className="mr-1.5" /> Back to services
         </Button>
@@ -92,7 +93,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
 
   return (
     <div className="scroll h-full overflow-y-auto">
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-6 p-4 md:p-8">
+      <div className="flex w-full flex-col gap-6 p-4 md:p-8">
         {/* Page header */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-2">
@@ -182,7 +183,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
           <div className="flex min-w-0 flex-col gap-5">
             <PreviewPanel
               Icon={FileText}
@@ -285,6 +286,8 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
 
           {/* Aside — the facts a rep checks rather than reads */}
           <div className="flex min-w-0 flex-col gap-5">
+            <ServicePaymentPanel service={service} />
+
             <PreviewPanel
               Icon={MonitorSmartphone}
               title="Platforms covered"

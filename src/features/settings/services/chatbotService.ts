@@ -3,6 +3,7 @@ import type {
   BusinessProfileForm,
   ChatbotConfigForm,
   ChatbotConfigResponse,
+  PaymentAccountsForm,
 } from '../types';
 
 export async function getChatbotConfig(): Promise<ChatbotConfigResponse> {
@@ -16,6 +17,10 @@ export async function updateChatbotConfig(data: ChatbotConfigForm): Promise<void
 
 export async function updateBusinessProfile(data: BusinessProfileForm): Promise<void> {
   await apiClient.put('/chatbot/business', data);
+}
+
+export async function updatePaymentAccounts(data: PaymentAccountsForm): Promise<void> {
+  await apiClient.put('/chatbot/payment-accounts', data);
 }
 
 export async function generateBusinessIntro(businessDescription: string): Promise<string> {

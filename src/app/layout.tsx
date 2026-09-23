@@ -1,7 +1,7 @@
 import { Providers } from "@/lib/providers";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Noto_Nastaliq_Urdu } from "next/font/google";
 import Script from "next/script";
 // GTM analytics: the snippet boots the container, GTMProvider tracks SPA pageviews.
 import { GA_MEASUREMENT_ID, GTM_ID } from "@/lib/gtm";
@@ -20,6 +20,17 @@ const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+// Arabic-script subset only: its unicode-range keeps Latin text on Manrope and the file
+// downloads only when a page actually shows Urdu.
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+  variable: "--font-urdu",
+  subsets: ["arabic"],
+  weight: "variable",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
 });
 
 const DEFAULT_TITLE =
@@ -73,11 +84,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${manrope.variable} h-full`}
+      className={`${manrope.variable} ${notoNastaliqUrdu.variable} h-full`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>
+        {/* Linked, not imported, so the bundler keeps its :dir(rtl) selectors intact. */}
+        {/* eslint-disable-next-line @next/next/no-css-tags -- bundling would rewrite :dir(rtl) into a never-matching :lang() list */}
+        <link rel="stylesheet" href="/styles/urdu-text.css" />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=JSON.parse(localStorage.getItem('sf:app')||'{}');if(t.state?.theme==='dark')document.documentElement.classList.add('dark')}catch(e){}`,

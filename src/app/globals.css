@@ -6,7 +6,7 @@
 
 /* Design System Theme Variables mapping to Tailwind v4 */
 @theme {
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), var(--font-urdu), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Custom Colors mapped from our design tokens */
@@ -179,9 +179,12 @@
   --r-12: 12px;
   --r-10: 10px;
 
+  /* Urdu glyphs fall through Manrope to Nastaliq; Latin never does (unicode-range). */
   --font-body:
-    var(--font-manrope), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-head: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+    var(--font-manrope), var(--font-urdu), ui-sans-serif, system-ui,
+    -apple-system, sans-serif;
+  --font-head:
+    var(--font-manrope), var(--font-urdu), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -305,6 +308,13 @@ select {
   color: inherit;
   font-weight: 400;
 }
+
+/* Text users type in Urdu reads right-to-left per paragraph; Latin text keeps its direction. */
+:where(p, li, dt, dd, td, th, blockquote, input, textarea) {
+  unicode-bidi: plaintext;
+}
+
+/* Urdu line/word spacing lives in public/styles/urdu-text.css — it needs an unrewritten :dir(rtl). */
 
 /* surfaces */
 /* @layer components so utility classes (e.g. bg-[#0F172A]) reliably

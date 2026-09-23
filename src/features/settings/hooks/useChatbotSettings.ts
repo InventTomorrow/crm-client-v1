@@ -7,8 +7,14 @@ import {
   getChatbotConfig,
   updateBusinessProfile,
   updateChatbotConfig,
+  updatePaymentAccounts,
 } from '../services/chatbotService';
-import type { BusinessProfileForm, ChatbotConfigForm } from '../types';
+import type {
+  BusinessProfileForm,
+  ChatbotConfigForm,
+  ChatbotConfigResponse,
+  PaymentAccountsForm,
+} from '../types';
 
 const KEY = ['chatbot-config'];
 
@@ -23,6 +29,7 @@ export function useUpdateChatbotConfig() {
     onSuccess: () => {
       toast.success('Chatbot settings saved');
       queryClient.invalidateQueries({ queryKey: KEY });
+      queryClient.invalidateQueries({ queryKey: ['wa-config'] });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to save settings')),
   });
@@ -37,6 +44,41 @@ export function useUpdateBusinessProfile() {
       queryClient.invalidateQueries({ queryKey: KEY });
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Failed to save business profile')),
+  });
+}
+
+export function useUpdatePaymentAccounts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: PaymentAccountsForm) => updatePaymentAccounts(data),
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: KEY });
+      const previousConfig = queryClient.getQueryData<ChatbotConfigResponse>(KEY);
+      queryClient.setQueryData<ChatbotConfigResponse>(KEY, (current) =>
+        current?.config
+          ? {
+              ...current,
+              config: {
+                ...current.config,
+                defaultPaymentAccountId: data.defaultPaymentAccountId,
+                paymentAccounts: data.paymentAccounts.map((account) => ({
+                  ...account,
+                  bankName: account.bankName || null,
+                  iban: account.iban || null,
+                  instructions: account.instructions || null,
+                })),
+              },
+            }
+          : current,
+      );
+      return { previousConfig };
+    },
+    onSuccess: () => toast.success('Payment details saved'),
+    onError: (error, _data, context) => {
+      if (context?.previousConfig) queryClient.setQueryData(KEY, context.previousConfig);
+      toast.error(extractErrorMessage(error, 'Failed to save payment details'));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: KEY }),
   });
 }
 

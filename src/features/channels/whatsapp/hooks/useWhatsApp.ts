@@ -116,7 +116,11 @@ export function useUpdateWAConfig() {
       toast.error(extractErrorMessage(error, "Failed to update settings"));
       if (ctx?.prev) queryClient.setQueryData(["wa-config"], ctx.prev);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["wa-config"] }),
+    // Same chatbot config row as the Chatbot settings form — refresh both views.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["wa-config"] });
+      queryClient.invalidateQueries({ queryKey: ["chatbot-config"] });
+    },
   });
 }
 

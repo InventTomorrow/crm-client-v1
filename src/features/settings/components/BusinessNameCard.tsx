@@ -1,5 +1,6 @@
 "use client";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { KEEP_FIELD_REFS } from "@/lib/formReset";
 import { useUpdateBusinessName } from "@/features/tenant/hooks/useTenant";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -31,7 +32,7 @@ export function BusinessNameCard() {
   // workspace name is what they trade under until the owner changes it.
   useEffect(() => {
     if (!tenant) return;
-    form.reset({ businessName: tenant.businessName ?? tenant.name });
+    form.reset({ businessName: tenant.businessName ?? tenant.name }, KEEP_FIELD_REFS);
   }, [tenant, form]);
 
   return (
@@ -48,7 +49,7 @@ export function BusinessNameCard() {
         <form
           onSubmit={form.handleSubmit((values) =>
             saveBusinessName(values.businessName, {
-              onSuccess: () => form.reset(values),
+              onSuccess: () => form.reset(values, KEEP_FIELD_REFS),
             }),
           )}
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:items-start"

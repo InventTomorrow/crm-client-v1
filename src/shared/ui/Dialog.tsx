@@ -7,6 +7,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/shared/ui/Button"
 import { XIcon } from "lucide-react"
 
+// Dialogs sit at z-50; one opened from a fixed side sheet (scrim z-60, sheet z-70) would render behind it.
+const RaisedDialogContext = React.createContext(false)
+
+/** Wrap a side sheet's content so any dialog opened inside it stacks above the sheet. */
+function RaisedDialogLayer({ children }: { children: React.ReactNode }) {
+  return <RaisedDialogContext.Provider value>{children}</RaisedDialogContext.Provider>
+}
+
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -59,9 +67,10 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const isRaised = React.useContext(RaisedDialogContext)
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={cn(isRaised && "z-[80]")} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
@@ -70,6 +79,7 @@ function DialogContent({
           "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.97] data-[state=closed]:slide-out-to-bottom-2",
           // Expo-out on the way in so it settles rather than snaps; a shorter ease-in on the way out.
           "duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] data-[state=closed]:duration-200 data-[state=closed]:ease-in",
+          isRaised && "z-[80]",
           className
         )}
         {...props}
@@ -163,6 +173,7 @@ function DialogDescription({
 }
 
 export {
+  RaisedDialogLayer,
   Dialog,
   DialogClose,
   DialogContent,
