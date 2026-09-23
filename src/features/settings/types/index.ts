@@ -1,4 +1,13 @@
 import { z } from "zod";
+import {
+  cleanText,
+  getAccountNumberError,
+  getIbanError,
+  getInstructionsError,
+  getNameError,
+  normalizeAccountNumber,
+  normalizeIban,
+} from "../utils/paymentAccountRules";
 
 export type { NotifSettings, UserProfile } from "@/lib/mockData";
 
@@ -12,12 +21,15 @@ export const profileSchema = z.object({
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Chatbot config (mirrors server chatbot.dto) ────────────────────
+export const botReplyLanguageSchema = z.enum(["MATCH_CUSTOMER", "ENGLISH", "ROMAN_URDU"]);
+export type BotReplyLanguage = z.infer<typeof botReplyLanguageSchema>;
+
 export const chatbotConfigSchema = z.object({
   greetingMessage: z.string().min(1, "Greeting message is required"),
   escalationMessage: z.string().min(1, "Escalation message is required"),
   fallbackMessage: z.string().min(1, "Fallback message is required"),
   aiPersonality: z.enum(["FORMAL", "CASUAL", "PERSUASIVE"]),
-  aiEnabled: z.boolean(),
+  replyLanguage: botReplyLanguageSchema,
 });
 export type ChatbotConfigForm = z.infer<typeof chatbotConfigSchema>;
 
@@ -55,6 +67,79 @@ export const businessProfileSchema = z.object({
 });
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
+// ──────────────────── Payment accounts (mirrors server payment-details) ────────────────────
+export const PAYMENT_ACCOUNT_METHODS = ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "OTHER"] as const;
+export const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_ACCOUNT_METHODS)[number], string> = {
+  BANK_TRANSFER: "Bank transfer",
+  EASYPAISA: "Easypaisa",
+  JAZZCASH: "JazzCash",
+  OTHER: "Other",
+};
+
+/** Shape only — for lists holding saved accounts, which may predate today's rules. */
+export const paymentAccountShapeSchema = z.object({
+  id: z.string().regex(/^[A-Za-z0-9-]{1,64}$/),
+  method: z.enum(PAYMENT_ACCOUNT_METHODS),
+  accountTitle: z.string(),
+  accountNumber: z.string(),
+  bankName: z.string(),
+  iban: z.string(),
+  instructions: z.string(),
+});
+
+/** Same rules as the server: cleaned and normalised, then checked per payment method. Used when adding or editing one account. */
+export const paymentAccountSchema = paymentAccountShapeSchema
+  .transform((account) => ({
+    ...account,
+    accountTitle: cleanText(account.accountTitle),
+    accountNumber: normalizeAccountNumber(account.method, account.accountNumber),
+    bankName: cleanText(account.bankName),
+    iban: normalizeIban(account.iban),
+    instructions: cleanText(account.instructions),
+  }))
+  .superRefine((account, ctx) => {
+    const issues: [keyof typeof account, string | null][] = [
+      ["accountTitle", getNameError(account.accountTitle, "Account title")],
+      ["accountNumber", getAccountNumberError(account.method, account.accountNumber)],
+      [
+        "bankName",
+        account.bankName
+          ? getNameError(account.bankName, "Bank name")
+          : account.method === "BANK_TRANSFER"
+            ? "Bank name is required for a bank transfer"
+            : null,
+      ],
+      ["iban", getIbanError(account.method, account.iban)],
+      ["instructions", getInstructionsError(account.instructions)],
+    ];
+    for (const [field, message] of issues) {
+      if (message) ctx.addIssue({ code: "custom", path: [field], message });
+    }
+  });
+export type PaymentAccountForm = z.infer<typeof paymentAccountSchema>;
+
+export interface PaymentAccount {
+  id: string;
+  method: (typeof PAYMENT_ACCOUNT_METHODS)[number];
+  accountTitle: string;
+  accountNumber: string;
+  bankName: string | null;
+  iban: string | null;
+  instructions: string | null;
+}
+
+/** Root fields the shared account editor reads — any form holding these can render it. */
+export interface PaymentAccountsFieldValues {
+  paymentAccounts: PaymentAccountForm[];
+  defaultPaymentAccountId: string | null;
+}
+
+export const paymentAccountsSchema = z.object({
+  paymentAccounts: z.array(paymentAccountShapeSchema).max(10, "Add at most 10 payment accounts"),
+  defaultPaymentAccountId: z.string().nullable(),
+});
+export type PaymentAccountsForm = z.infer<typeof paymentAccountsSchema>;
+
 // Invite a workspace member. Only email + roleId are persisted by the API; the
 // invitee sets their own name when they accept. city/phone are captured for
 // display and future use.
@@ -74,6 +159,9 @@ export interface ChatbotConfigResponse {
     fallbackMessage: string;
     aiPersonality: "FORMAL" | "CASUAL" | "PERSUASIVE";
     aiEnabled: boolean;
+    replyLanguage: BotReplyLanguage;
+    paymentAccounts: PaymentAccount[];
+    defaultPaymentAccountId: string | null;
     businessDescription: string | null;
     businessInfoMessage: string | null;
     businessFaqs: BusinessFaq[] | null;
