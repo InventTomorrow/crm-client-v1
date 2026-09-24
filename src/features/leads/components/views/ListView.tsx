@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { pkr } from "@/lib/utils";
+import { useMaxVisibleItemsHeight } from "@/shared/hooks/useMaxVisibleItemsHeight";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { Button } from "@/shared/ui/Button";
@@ -47,22 +48,31 @@ export default function ListView({
 }) {
   const vocabulary = useLeadVocabulary();
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
+  const { containerRef, maxHeight } = useMaxVisibleItemsHeight<HTMLDivElement>({
+    itemSelector: ":scope > .card",
+    maxVisibleItems: 15,
+    remeasureKey: filtered,
+  });
 
   return (
-    <div className="scroll flex-1 min-h-0 overflow-y-auto flex flex-col gap-2">
+    <div
+      ref={containerRef}
+      className="scroll overflow-y-auto flex flex-col gap-2"
+      style={maxHeight !== undefined ? { maxHeight } : undefined}
+    >
       {filtered.map((l) => {
         const statusMeta = vocabulary.statusMeta[l.status];
         return (
           <div
             key={l.id}
-            className="card flex items-center gap-3.5 cursor-pointer p-3 transition-colors hover:bg-[var(--surface-2)]"
+            className="card flex flex-wrap items-center gap-3 cursor-pointer p-3 transition-colors hover:bg-[var(--surface-2)] sm:flex-nowrap sm:gap-3.5"
             onClick={() => onSelect(l)}
             style={{ borderLeft: `3px solid ${statusMeta.color}` }}
           >
             <CRMAvatar name={l.name} size={40} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-[14px]">{l.name}</span>
+                <span className="truncate font-medium text-[14px]">{l.name}</span>
                 <ChannelBadge channel={l.channel} size="xs" />
                 {l.status === "hot" && <span className="dot dot-hot pulse-hot" />}
               </div>
@@ -87,7 +97,7 @@ export default function ListView({
               </div>
             </div>
             <div
-              className="flex items-center gap-3"
+              className="flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3"
               onClick={(e) => e.stopPropagation()}
             >
               <LeadStatusSelect

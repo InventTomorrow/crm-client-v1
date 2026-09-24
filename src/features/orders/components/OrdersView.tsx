@@ -293,7 +293,7 @@ export function OrdersView() {
 
   return (
     <div className="w-full p-4">
-      <div className="flex items-center justify-between gap-3 mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-[22px] font-semibold text-[var(--ink)]">
             Orders
@@ -329,6 +329,7 @@ export function OrdersView() {
             value={formatMoney(summary.revenue ?? 0)}
             hint={`${summary.total} order${summary.total === 1 ? "" : "s"} · excludes cancelled`}
             Icon={Wallet}
+            className="col-span-2 sm:col-span-1"
           />
           {summary.byStatus.slice(0, 4).map((s) => (
             <StatCard
@@ -354,9 +355,9 @@ export function OrdersView() {
         onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
         defaultPageSize={20}
-        maxBodyHeight="60vh"
+        maxVisibleRows={15}
         toolbar={
-          <div className="card leads-toolbar flex items-center gap-2 flex-1 flex-wrap p-2">
+          <div className="card flex items-center gap-2 flex-1 flex-wrap p-2">
             <div className="relative w-full md:w-[320px]">
               <Search
                 size={13}
@@ -377,7 +378,7 @@ export function OrdersView() {
             >
               <SelectTrigger
                 size="lg"
-                className="w-full text-[13px] md:w-[170px]"
+                className="min-w-0 flex-1 text-[13px] md:w-[170px] md:flex-none"
               >
                 <SelectValue />
               </SelectTrigger>

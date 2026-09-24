@@ -73,10 +73,10 @@ export default function TableView({
               onClick={() => onSelect(l)}
             >
               <CRMAvatar name={l.name} size={30} />
-              <div>
-                <div className="font-medium text-[13px]">{l.name}</div>
-                <div className="text-[11px] text-[var(--ink-mute)]">
-                  {l.lastMsg.length > 40 ? l.lastMsg.slice(0, 40) + "…" : l.lastMsg}
+              <div className="min-w-0">
+                <div className="font-medium text-[13px] whitespace-nowrap">{l.name}</div>
+                <div className="max-w-[220px] truncate text-[11px] text-[var(--ink-mute)]">
+                  {l.lastMsg}
                 </div>
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function TableView({
       showExportAll={false}
       emptyMessage={`No matching ${vocabulary.plural}.`}
       defaultPageSize={20}
-      className="flex-1 min-h-0"
+      maxVisibleRows={15}
     />
   );
 }

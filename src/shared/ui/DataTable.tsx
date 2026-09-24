@@ -12,6 +12,7 @@ import {
   type RowSelectionState,
 } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
+import { useMaxVisibleItemsHeight } from "@/shared/hooks/useMaxVisibleItemsHeight";
 import {
   ArrowUpDown,
   ArrowUp,
@@ -62,6 +63,8 @@ interface DataTableProps<TData> {
   className?: string;
   /** Caps the table body height and makes it smoothly scroll internally, leaving the toolbar/pagination fixed. */
   maxBodyHeight?: string;
+  /** Shows at most this many rows of the current page; the rest scroll inside the table. */
+  maxVisibleRows?: number;
 }
 
 export function DataTable<TData>({
@@ -78,6 +81,7 @@ export function DataTable<TData>({
   defaultPageSize = 20,
   className,
   maxBodyHeight,
+  maxVisibleRows,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -146,6 +150,15 @@ export function DataTable<TData>({
   const { pageIndex } = table.getState().pagination;
   const totalPages = table.getPageCount();
 
+  const pageRows = table.getRowModel().rows;
+  const { containerRef: scrollContainerRef, maxHeight: visibleRowsMaxHeight } =
+    useMaxVisibleItemsHeight<HTMLDivElement>({
+      itemSelector: "tbody > tr",
+      maxVisibleItems: maxVisibleRows,
+      remeasureKey: pageRows,
+    });
+  const bodyMaxHeight = maxBodyHeight ?? visibleRowsMaxHeight;
+
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {/* Toolbar — the caller's row grows to the full width so it lays out identically to the
@@ -199,11 +212,14 @@ export function DataTable<TData>({
 
       {/* Table */}
       <div
+        ref={scrollContainerRef}
         className={cn(
           "card overflow-x-auto",
-          maxBodyHeight && "overflow-y-auto scroll-smooth",
+          bodyMaxHeight !== undefined && "overflow-y-auto scroll-smooth",
         )}
-        style={maxBodyHeight ? { maxHeight: maxBodyHeight } : undefined}
+        style={
+          bodyMaxHeight !== undefined ? { maxHeight: bodyMaxHeight } : undefined
+        }
       >
         <div>
           <table className="w-full text-[13px]">
@@ -213,7 +229,7 @@ export function DataTable<TData>({
                   key={hg.id}
                   className={cn(
                     "border-b border-[var(--line)] bg-[var(--surface-2)]",
-                    maxBodyHeight && "sticky top-0 z-10",
+                    bodyMaxHeight !== undefined && "sticky top-0 z-10",
                   )}
                 >
                   {hg.headers.map((header) => (
@@ -265,7 +281,7 @@ export function DataTable<TData>({
                     ))}
                   </tr>
                 ))
-              ) : table.getRowModel().rows.length === 0 ? (
+              ) : pageRows.length === 0 ? (
                 <tr>
                   <td
                     colSpan={allColumns.length}
@@ -275,7 +291,7 @@ export function DataTable<TData>({
                   </td>
                 </tr>
               ) : (
-                table.getRowModel().rows.map((row) => (
+                pageRows?.map((row) => (
                   <tr
                     key={row.id}
                     onClick={
@@ -356,7 +372,7 @@ export function DataTable<TData>({
         </span>
 
         {/* Nav buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 max-sm:w-full max-sm:justify-center">
           <Button
             variant="ghost"
             size="icon"
