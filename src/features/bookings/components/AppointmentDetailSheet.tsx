@@ -81,7 +81,7 @@ export function AppointmentDetailSheet({
       <SheetContent
         aria-describedby={undefined}
         side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
+        className="flex flex-col gap-0 p-0 data-[side=right]:w-full sm:max-w-[400px]"
       >
         {/* Header */}
         <SheetHeader className="border-b border-[var(--line)] px-5 py-4">
