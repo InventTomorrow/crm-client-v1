@@ -4,6 +4,7 @@ import { hasCapability } from "@/lib/business-verticals";
 import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
+import { DetailPanel } from "@/shared/ui/DetailPanel";
 import { Label } from "@/shared/ui/Label";
 import { NavigateIcon } from "@/shared/ui/NavigateIcon";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
@@ -105,16 +106,15 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
 
   return (
     <>
-      <div className="scrim" onClick={onClose} />
-      <div className="card-2 fade-up fixed flex flex-col overflow-hidden bg-[var(--surface)] right-[14px] top-[14px] bottom-[14px] w-[460px] max-w-[calc(100vw-28px)] z-[70]">
-        <div className="flex items-center justify-between p-[18px] border-b border-[var(--line)]">
-          <div className="flex items-center gap-2.5">
+      <DetailPanel onClose={onClose}>
+        <div className="flex items-center justify-between gap-2 p-[18px] border-b border-[var(--line)]">
+          <div className="flex min-w-0 flex-wrap items-center gap-2.5">
             <h3 className="text-[16px] font-semibold text-[var(--ink)]">
               {order ? `Order #${order.orderNumber}` : "Order"}
             </h3>
             {order && <OrderStatusBadge status={order.status} />}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-shrink-0 items-center gap-1.5">
             {order && (
               <PermissionGuard permission="orders:edit">
                 <Button
@@ -145,7 +145,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   Customer
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-[14px] font-medium text-[var(--ink)]">
+                  <div className="min-w-0 break-words text-[14px] font-medium text-[var(--ink)]">
                     {order.customerName || order.lead?.name || "Unknown"}
                   </div>
                   {order.lead && (
@@ -503,7 +503,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                           <span className="w-[62px] flex-shrink-0 text-[11.5px] text-[var(--ink-mute)]">
                             {field.label}
                           </span>
-                          <span className="min-w-0 text-[var(--ink-soft)]">
+                          <span className="min-w-0 break-words text-[var(--ink-soft)]">
                             {field.value}
                           </span>
                         </div>
@@ -548,7 +548,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   {order.statusHistory.map((h) => (
                     <div key={h.id} className="flex items-start gap-2.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-[7px] flex-shrink-0" />
-                      <div className="text-[12.5px]">
+                      <div className="min-w-0 break-words text-[12.5px]">
                         <span className="text-[var(--ink)]">
                           {h.fromStatus
                             ? `${h.fromStatus} → ${h.toStatus}`
@@ -613,7 +613,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
             )}
           </div>
         )}
-      </div>
+      </DetailPanel>
 
       <ImagePreviewDialog
         open={!!previewImage}

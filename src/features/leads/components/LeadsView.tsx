@@ -190,9 +190,16 @@ export function LeadsView() {
     { id: "wa", label: "WhatsApp" },
   ];
 
+  const isKanbanLayout = leadsView === "kanban";
+
   return (
-    // Phones scroll the whole page (children keep their height); desktop keeps the fixed-height kanban layout.
-    <div className="scroll p-4 h-full flex flex-col gap-3 overflow-y-auto max-md:*:shrink-0 md:overflow-hidden">
+    // The page scrolls with children at natural height; only desktop kanban keeps a fixed-height board.
+    <div
+      className={cn(
+        "scroll p-4 h-full flex flex-col gap-3 overflow-y-auto",
+        isKanbanLayout ? "max-md:*:shrink-0 md:overflow-hidden" : "*:shrink-0",
+      )}
+    >
       {/* Header */}
       <div className="page-header flex items-center justify-between gap-3.5 flex-wrap">
         <div>
@@ -201,7 +208,10 @@ export function LeadsView() {
             {vocabulary.pageSubtitle}
           </div>
         </div>
-        <div data-tour="page-actions" className="flex flex-wrap gap-2 items-center">
+        <div
+          data-tour="page-actions"
+          className="flex flex-wrap gap-2 items-center"
+        >
           <RefreshButton
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
@@ -245,12 +255,13 @@ export function LeadsView() {
             label="Projected value"
             value={pkr(totalValue)}
             Icon={TrendingUp}
+            className="col-span-2 sm:col-span-1"
           />
         </div>
       )}
 
       {/* Toolbar */}
-      <div className="card leads-toolbar flex items-center gap-2 flex-wrap p-2">
+      <div className="card flex items-center gap-2 flex-wrap p-2">
         <div className="relative w-full flex-none md:flex-[1_1_220px] md:w-auto md:min-w-[200px]">
           <Search
             size={13}
@@ -308,6 +319,7 @@ export function LeadsView() {
           variant="outline"
           size="sm"
           spacing={0}
+          className="max-md:ml-auto"
           value={leadsView}
           onValueChange={(v) => {
             if (v) setLeadsView(v as LeadsView);
@@ -341,7 +353,7 @@ export function LeadsView() {
               onAddLead={openCreate}
             />
           </div>
-          <div className="flex md:hidden flex-col flex-1 min-h-0">
+          <div className="md:hidden">
             <TableView
               leads={leads}
               filter={viewFilter}

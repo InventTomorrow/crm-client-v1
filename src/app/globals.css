@@ -968,6 +968,8 @@ html.dark .seg button.on {
 .app-shell {
   display: flex;
   height: 100vh;
+  /* 100vh runs behind the mobile browser toolbar, pushing page bottoms (save bars, composers) under the dock. */
+  height: 100dvh;
   position: relative;
 }
 .app-sidebar {
@@ -1024,7 +1026,7 @@ html.dark .seg button.on {
     box-shadow: 20px 0 60px rgba(15, 23, 42, 0.25);
   }
   .app-content {
-    padding-bottom: 74px;
+    padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
   }
 
   .mobile-dock {
@@ -1033,7 +1035,8 @@ html.dark .seg button.on {
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 55;
+    /* Below dialogs/sheets (z-50) so their footer actions are never covered. */
+    z-index: 45;
     background: var(--surface);
     border-top: 1px solid var(--line);
     padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px));
@@ -1193,20 +1196,13 @@ html.dark .seg button.on {
   .leads-kanban {
     grid-template-columns: 1fr !important;
   }
-  .leads-toolbar {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-  .leads-toolbar > * {
-    width: 100%;
-  }
 
   /* dialogs */
   .dialog-full-mobile {
     width: 100% !important;
     max-width: 100% !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
     border-radius: 0 !important;
     transform: none !important;
     top: 0 !important;

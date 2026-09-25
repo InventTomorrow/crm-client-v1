@@ -3,6 +3,7 @@ import { useOpenLeadChat } from "@/features/leads/hooks/useOpenLeadChat";
 import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { DetailPanel } from "@/shared/ui/DetailPanel";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -39,9 +40,8 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
 
   return (
     <>
-      <div className="scrim" onClick={onClose} />
-      <div className="card-2 fade-up fixed flex flex-col overflow-hidden bg-[var(--surface)] right-[14px] top-[14px] bottom-[14px] w-[460px] max-w-[calc(100vw-28px)] z-[70]">
-        <div className="flex items-center justify-between p-[18px] border-b border-[var(--line)]">
+      <DetailPanel onClose={onClose}>
+        <div className="flex items-center justify-between gap-2 p-[18px] border-b border-[var(--line)]">
           <div className="flex items-center gap-2.5 min-w-0">
             <h3 className="text-[16px] font-semibold text-[var(--ink)] truncate">
               {request ? request.productName : "Customization request"}
@@ -114,10 +114,10 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
                       key={answer.key}
                       className="text-[12.5px] flex items-start gap-2"
                     >
-                      <span className="text-[var(--ink-mute)] min-w-[110px]">
+                      <span className="text-[var(--ink-mute)] w-[110px] flex-shrink-0">
                         {answer.label}
                       </span>
-                      <span className="text-[var(--ink)] flex-1">
+                      <span className="min-w-0 break-words text-[var(--ink)] flex-1">
                         {answer.value}
                       </span>
                     </div>
@@ -151,7 +151,7 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
             </div>
 
             <div className="border-t border-[var(--line)] p-[18px] space-y-3">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[12px] text-[var(--ink-mute)]">
                   {REQUEST_STATUS_META[request.status].hint}
                 </span>
@@ -192,7 +192,7 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
             </div>
           </>
         )}
-      </div>
+      </DetailPanel>
 
       <ConfirmDialog
         open={confirmDelete}

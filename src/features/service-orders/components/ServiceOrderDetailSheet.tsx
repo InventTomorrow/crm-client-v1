@@ -1,6 +1,7 @@
 'use client';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { DetailPanel } from '@/shared/ui/DetailPanel';
 import { RaisedDialogLayer } from '@/shared/ui/Dialog';
 import { PermissionGuard } from '@/shared/ui/PermissionGuard';
 import { ArrowUpRight, Check, CircleDollarSign, Loader2, MessageSquare, Paperclip, X } from 'lucide-react';
@@ -61,8 +62,7 @@ export function ServiceOrderDetailSheet({
 
   return (
     <RaisedDialogLayer>
-      <div className="scrim" onClick={onClose} />
-      <div className="card-2 fade-up fixed bottom-[14px] right-[14px] top-[14px] z-[70] flex w-[500px] max-w-[calc(100vw-28px)] flex-col overflow-hidden bg-[var(--surface)]">
+      <DetailPanel onClose={onClose} className="sm:w-[500px]">
         <div className="flex items-center justify-between gap-2 border-b border-[var(--line)] p-[18px]">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3 className="truncate text-[16px] font-semibold text-[var(--ink)]">{orderLabel}</h3>
@@ -242,7 +242,7 @@ export function ServiceOrderDetailSheet({
             </div>
           </>
         )}
-      </div>
+      </DetailPanel>
 
       <AddReceiptDialog
         serviceOrderId={isAddingReceipt && serviceOrder ? serviceOrder.id : null}

@@ -8,6 +8,7 @@ import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
 import { NavigateIcon } from "@/shared/ui/NavigateIcon";
 import { Checkbox } from "@/shared/ui/Checkbox";
+import { DetailPanel } from "@/shared/ui/DetailPanel";
 import {
   Dialog,
   DialogContent,
@@ -135,8 +136,7 @@ export default function LeadDetailSheet({
 
   return (
     <>
-      <div className="scrim" onClick={onClose} />
-      <div className="card-2 fade-up fixed flex flex-col overflow-hidden bg-[var(--surface)] right-[14px] top-[14px] bottom-[14px] w-[420px] z-[70]">
+      <DetailPanel onClose={onClose} className="sm:w-[420px]">
         {/* Header */}
         <div className="relative p-[18px] border-b border-[var(--line)]">
           <Button
@@ -147,11 +147,11 @@ export default function LeadDetailSheet({
           >
             <X size={18} />
           </Button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pr-8">
             <CRMAvatar name={lead.name} size={52} ring />
-            <div>
-              <h3 className="text-[17px] font-semibold">{lead.name}</h3>
-              <div className="flex gap-1.5 items-center mt-1">
+            <div className="min-w-0">
+              <h3 className="text-[17px] font-semibold break-words">{lead.name}</h3>
+              <div className="flex flex-wrap gap-1.5 items-center mt-1">
                 <span
                   className="badge font-medium flex items-center gap-1.5 py-[3px] px-[9px]"
                   style={{
@@ -207,7 +207,10 @@ export default function LeadDetailSheet({
                     className="text-[var(--ink-mute)] flex-shrink-0"
                   />
                   <span className="text-[var(--ink-mute)]">Email</span>
-                  <span className="font-medium text-[var(--ink)] ml-auto">
+                  <span
+                    title={lead.email}
+                    className="min-w-0 truncate font-medium text-[var(--ink)] ml-auto"
+                  >
                     {lead.email}
                   </span>
                 </div>
@@ -218,7 +221,7 @@ export default function LeadDetailSheet({
                   className="text-[var(--ink-mute)] flex-shrink-0"
                 />
                 <span className="text-[var(--ink-mute)]">City</span>
-                <span className="font-medium text-[var(--ink)] ml-auto">
+                <span className="min-w-0 truncate font-medium text-[var(--ink)] ml-auto">
                   {lead.city}
                 </span>
               </div>
@@ -431,7 +434,7 @@ export default function LeadDetailSheet({
             </Button>
           </div> */}
         </div>
-      </div>
+      </DetailPanel>
 
       {/* Receipt send dialog */}
       <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
