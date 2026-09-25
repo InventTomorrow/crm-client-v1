@@ -9,10 +9,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/Popover";
 import { WAConnectDialog, WAStatusButton } from "@/shared/ui/WAConnectDialog";
 import {
   Bell,
+  ChevronLeft,
+  ChevronRight,
   Maximize,
   Menu,
   Minimize,
-  PanelLeft,
   Search,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -40,7 +41,8 @@ interface AppTopBarProps {
 export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
   const pathname = usePathname();
 
-  const { workspaces, currentWorkspaceId, toggleSidebar } = useAppStore();
+  const { workspaces, currentWorkspaceId, sidebarCollapsed, toggleSidebar } =
+    useAppStore();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -81,11 +83,15 @@ export function AppTopBar({ onMobileMenu }: AppTopBarProps) {
 
       {/* Desktop sidebar collapse toggle */}
       <HeaderIconButton
-        label="Toggle sidebar"
+        label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="hide-mobile"
         onClick={toggleSidebar}
       >
-        <PanelLeft size={18} />
+        {sidebarCollapsed ? (
+          <ChevronRight size={18} />
+        ) : (
+          <ChevronLeft size={18} />
+        )}
       </HeaderIconButton>
 
       <div className="ml-1 min-w-0">
