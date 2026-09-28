@@ -57,7 +57,7 @@ export default function NewsletterForm() {
                     placeholder="you@company.com"
                     aria-label="Email address"
                     disabled={isSubmitting}
-                    className="h-11 rounded-xl border-brand-mint-2 bg-white text-brand-dark placeholder:text-brand-text-soft focus-visible:border-brand-green focus-visible:ring-brand-green/20"
+                    className="h-11 rounded-xl border-brand-mint-2 bg-white dark:bg-white text-brand-dark placeholder:text-brand-text-soft focus-visible:border-brand-green focus-visible:ring-brand-green/20"
                   />
                 </FormControl>
                 <FormMessage className="text-[12px]" />
