@@ -50,7 +50,7 @@ export function PrimaryCta({
     <Button
       asChild
       variant="ghost"
-      className={cn("hover:text-white", className)}
+      className={cn("hover:text-white dark:hover:bg-brand-green-hover", className)}
     >
       <Link href={signedInCta?.href ?? CTA_HREF}>{signedInCta?.label ?? children}</Link>
     </Button>

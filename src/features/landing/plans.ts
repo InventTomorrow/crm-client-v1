@@ -22,6 +22,7 @@ export type Plan = {
   offerEndsAt?: string;
   period: string;
   cta: string;
+  isTrial: boolean;
   featured: boolean;
   comingSoon: boolean;
   features: string[];
@@ -72,6 +73,28 @@ function periodLabel(
     return `/${days} day${days === 1 ? "" : "s"}`;
   }
   return PERIOD_LABEL[duration] ?? "/month";
+}
+
+const SPAN_LABEL: Record<string, string> = {
+  DAYS_3: "3 days",
+  DAYS_7: "7 days",
+  DAYS_14: "14 days",
+  MONTHLY: "1 month",
+  QUARTERLY: "3 months",
+  SEMI_ANNUAL: "6 months",
+  ANNUAL: "1 year",
+};
+
+// Trials read as a span ("for 3 days"), not a billing cycle ("/3 days").
+function trialSpanLabel(
+  duration: string,
+  customDurationDays: number | null,
+): string {
+  if (duration === "CUSTOM_DAYS") {
+    const days = customDurationDays ?? 0;
+    return `for ${days} day${days === 1 ? "" : "s"}`;
+  }
+  return `for ${SPAN_LABEL[duration] ?? "a limited time"}`;
 }
 
 function formatAmount(amount: number): string {
@@ -145,8 +168,13 @@ function toPlan(dto: PublicPlanDto): Plan {
     ...(discount && dto.offerEndsAt
       ? { offerCountdown: offerCountdown(dto.offerEndsAt), offerEndsAt: dto.offerEndsAt }
       : {}),
-    period: periodLabel(dto.duration, dto.customDurationDays),
-    cta: dto.ctaLabel?.trim() || `Start with ${dto.name}`,
+    period: dto.isTrial
+      ? trialSpanLabel(dto.duration, dto.customDurationDays)
+      : periodLabel(dto.duration, dto.customDurationDays),
+    cta:
+      dto.ctaLabel?.trim() ||
+      (dto.isTrial ? "Start free trial" : `Start with ${dto.name}`),
+    isTrial: dto.isTrial,
     featured: dto.isFeatured,
     comingSoon: dto.isComingSoon,
     features: dto.features.length > 0 ? dto.features : fallbackFeatures(dto),

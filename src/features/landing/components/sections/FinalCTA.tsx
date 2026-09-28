@@ -3,8 +3,8 @@ import { Button } from "@/shared/ui/Button";
 import { useState } from "react";
 import Container from "../Container";
 import { PrimaryCta } from "../LandingCta";
-import Reveal from "../Reveal";
 import { CTAFloatingPhone } from "../mockups";
+import Reveal from "../Reveal";
 import { WatchDemoModal } from "../WatchDemoModal";
 
 export default function FinalCTA() {
@@ -33,7 +33,7 @@ export default function FinalCTA() {
                   <Button
                     variant="ghost"
                     onClick={() => setDemoOpen(true)}
-                    className="h-auto w-full sm:w-auto rounded-full border border-transparent bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:bg-brand-mint hover:text-brand-dark"
+                    className="h-auto w-full sm:w-auto rounded-full border border-transparent bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:bg-brand-mint dark:hover:bg-brand-mint hover:text-brand-dark"
                   >
                     Watch Demo
                   </Button>
