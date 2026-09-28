@@ -78,7 +78,7 @@ export default function Hero({ offer }: { offer: ActiveOffer | null }) {
           <Button
             variant="ghost"
             onClick={() => setDemoOpen(true)}
-            className="h-auto w-full sm:w-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-brand-green/40 hover:bg-brand-mint hover:text-brand-dark"
+            className="h-auto w-full sm:w-auto rounded-full border border-gray-200 bg-white px-7 py-3.5 text-base font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-brand-green/40 hover:bg-brand-mint dark:hover:bg-brand-mint hover:text-brand-dark"
           >
             Watch Demo
           </Button>
