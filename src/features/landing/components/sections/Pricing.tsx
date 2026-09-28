@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { OfferCountdown } from "@/features/offers/components/OfferCountdown";
 import type { ActiveOffer } from "@/features/offers/types";
+import { motion } from "framer-motion";
 import type { Plan } from "../../plans";
 import Container from "../Container";
 import { CheckIcon, ZapIcon } from "../icons";
@@ -134,23 +134,36 @@ export default function Pricing({
                     </div>
                   )}
 
-                  <div
-                    className={`flex items-end gap-1 ${plan.discountPercentage ? "mt-1.5" : "mt-6"}`}
-                  >
-                    <span
-                      className={`text-[15px] font-medium ${plan.featured ? "text-white/70" : "text-brand-text"}`}
+                  {plan.isTrial ? (
+                    <div className="mt-6 flex items-end gap-2">
+                      <span className="text-[2.75rem] font-bold leading-none tracking-tight text-brand-green">
+                        Free
+                      </span>
+                      <span
+                        className={`mb-1 text-[15px] ${plan.featured ? "text-white/60" : "text-brand-text"}`}
+                      >
+                        {plan.period}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className={`flex items-end gap-1 ${plan.discountPercentage ? "mt-1.5" : "mt-6"}`}
                     >
-                      Rs
-                    </span>
-                    <span className="text-[2.75rem] font-bold leading-none tracking-tight">
-                      {plan.price}
-                    </span>
-                    <span
-                      className={`mb-1 text-[15px] ${plan.featured ? "text-white/60" : "text-brand-text"}`}
-                    >
-                      {plan.period}
-                    </span>
-                  </div>
+                      <span
+                        className={`text-[15px] font-medium ${plan.featured ? "text-white/70" : "text-brand-text"}`}
+                      >
+                        Rs
+                      </span>
+                      <span className="text-[2.75rem] font-bold leading-none tracking-tight">
+                        {plan.price}
+                      </span>
+                      <span
+                        className={`mb-1 text-[15px] ${plan.featured ? "text-white/60" : "text-brand-text"}`}
+                      >
+                        {plan.period}
+                      </span>
+                    </div>
+                  )}
 
                   {plan.tagline && (
                     <p className="mt-2.5 text-[13px] font-medium text-brand-green">
@@ -186,8 +199,8 @@ export default function Pricing({
                       planId={plan.id}
                       className={`w-full justify-center h-auto rounded-full px-7 py-3.5 text-base font-semibold transition-all hover:-translate-y-0.5 ${
                         plan.featured
-                          ? "bg-white text-brand-dark hover:bg-gray-100 hover:text-brand-dark"
-                          : "bg-brand-green text-white shadow-cta hover:bg-brand-green-hover hover:shadow-cta-hover"
+                          ? "bg-white text-brand-dark hover:bg-gray-100 dark:hover:bg-gray-100 hover:text-brand-dark"
+                          : "bg-brand-green text-white shadow-cta hover:bg-brand-green-hover dark:hover:bg-brand-green-hover hover:shadow-cta-hover"
                       }`}
                     >
                       {plan.cta}
@@ -196,10 +209,6 @@ export default function Pricing({
                       <>
                         <p className="mt-3 text-center text-[13px] text-brand-text-soft">
                           No credit card required.
-                        </p>
-                        <p className="mt-4 flex items-center justify-center gap-1.5 text-[12.5px] font-medium text-brand-text">
-                          <ZapIcon className="h-3.5 w-3.5 text-brand-green" />
-                          100% Secure WhatsApp Connection
                         </p>
                       </>
                     )}
