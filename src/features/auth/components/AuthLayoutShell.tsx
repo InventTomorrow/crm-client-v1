@@ -27,7 +27,15 @@ function BrandMark() {
         width={220}
         height={72}
         priority
-        className="h-16 w-auto"
+        className="h-16 w-auto dark:hidden"
+      />
+      <Image
+        src="/asaanrabta-logo-dark.png"
+        alt="AsaanRabta"
+        width={220}
+        height={72}
+        priority
+        className="hidden h-16 w-auto dark:block"
       />
     </Link>
   );
@@ -95,7 +103,8 @@ export function AuthLayoutShell({ children }: { children: React.ReactNode }) {
         <PlanIntentCapture />
       </Suspense>
       {/* ── Left: Form Pane ── */}
-      <section className="relative flex flex-col w-full lg:w-1/2 bg-[var(--surface)] overflow-y-auto min-h-screen">
+      {/* Dark mode recesses the pane and fields below the card so the form reads as layered. */}
+      <section className="relative flex flex-col w-full lg:w-1/2 bg-[var(--surface)] dark:bg-[var(--bg)] dark:[&_[data-slot=input]]:bg-[var(--bg)] overflow-y-auto min-h-screen">
         {/* Top Header Row */}
         <div className="flex items-center justify-between px-8 py-5 flex-shrink-0">
           <BrandMark />
