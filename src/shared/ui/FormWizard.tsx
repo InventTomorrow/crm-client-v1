@@ -2,6 +2,10 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
+  FormWizardStepTabs,
+  type FormWizardStepTab,
+} from "@/shared/ui/FormWizardStepTabs";
+import {
   ArrowLeft,
   Check,
   ChevronLeft,
@@ -46,6 +50,19 @@ interface FormWizardProps {
   children: React.ReactNode;
 }
 
+function getStepFlags(
+  step: WizardStep,
+  index: number,
+  currentStepIndex: number,
+  furthestStepIndex: number,
+) {
+  return {
+    isCurrent: index === currentStepIndex,
+    isComplete: index < furthestStepIndex && !step.hasError,
+    isLocked: index > furthestStepIndex,
+  };
+}
+
 function StepRailItem({
   step,
   index,
@@ -59,9 +76,12 @@ function StepRailItem({
   furthestStepIndex: number;
   onSelect: () => void;
 }) {
-  const isCurrent = index === currentStepIndex;
-  const isComplete = index < furthestStepIndex && !step.hasError;
-  const isLocked = index > furthestStepIndex;
+  const { isCurrent, isComplete, isLocked } = getStepFlags(
+    step,
+    index,
+    currentStepIndex,
+    furthestStepIndex,
+  );
 
   return (
     <button
@@ -148,6 +168,23 @@ export function FormWizard({
 
   if (!currentStep) return null;
 
+  const stepTabs: FormWizardStepTab[] = steps.map((step, index) => {
+    const { isCurrent, isComplete, isLocked } = getStepFlags(
+      step,
+      index,
+      currentStepIndex,
+      furthestStepIndex,
+    );
+    return {
+      id: step.id,
+      label: step.title,
+      isActive: isCurrent,
+      isComplete,
+      isLocked,
+      hasError: step.hasError,
+    };
+  });
+
   return (
     <div className="scroll h-full overflow-y-auto">
       <div className="mx-auto w-full max-w-7xl p-4 md:p-8">
@@ -180,10 +217,17 @@ export function FormWizard({
           )}
         </div>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-[264px_minmax(0,1fr)] md:items-start lg:gap-8">
+        {/* Outside the grid: a grid item can only stick within its own row. */}
+        <FormWizardStepTabs
+          tabs={stepTabs}
+          onStepSelect={onStepSelect}
+          className="mt-4 md:hidden"
+        />
+
+        <div className="mt-2 grid gap-6 md:mt-6 md:grid-cols-[264px_minmax(0,1fr)] md:items-start lg:gap-8">
           <nav
             aria-label="Form steps"
-            className="card sticky top-0 flex flex-col gap-1 p-2 md:top-4"
+            className="card sticky top-4 hidden flex-col gap-1 p-2 md:flex"
           >
             {steps.map((step, index) => (
               <StepRailItem
@@ -199,7 +243,7 @@ export function FormWizard({
 
           <div className="flex min-w-0 flex-col gap-4">
             <section className="card overflow-hidden">
-              <header className="flex items-center gap-3 border-b border-[var(--line)] px-6 py-4">
+              <header className="flex items-center gap-3 border-b border-[var(--line)] px-4 py-4 md:px-6">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--accent)]">
                   <currentStep.Icon size={14} />
                 </span>
@@ -211,12 +255,15 @@ export function FormWizard({
                     {currentStep.description}
                   </p>
                 </div>
-                <span className="ml-auto shrink-0 text-[11.5px] text-[var(--ink-mute)]">
+                {/* The mobile step tabs already number each step. */}
+                <span className="ml-auto hidden shrink-0 text-[11.5px] text-[var(--ink-mute)] md:inline">
                   Step {currentStepIndex + 1} of {steps.length}
                 </span>
               </header>
 
-              <div className="flex flex-col gap-5 px-6 py-6">{children}</div>
+              <div className="flex flex-col gap-5 px-4 py-5 md:px-6 md:py-6">
+                {children}
+              </div>
             </section>
 
             {/* Pinned: the step buttons stay reachable however long the fields run. */}
