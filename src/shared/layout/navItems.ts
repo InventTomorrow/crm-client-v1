@@ -284,6 +284,10 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/demo", label: "Demo", Icon: PlayCircle },
 ];
 
+export function formatNavBadge(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
+
 /** The label to show for the active workspace's vertical, falling back to the default. */
 export function navLabelFor(
   item: Pick<NavItem, "label" | "labelByVertical">,
