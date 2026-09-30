@@ -25,7 +25,7 @@ interface WorkspaceStep extends Omit<Step, 'nextRoute' | 'prevRoute'> {
 /**
  * The full catalogue, in tour order. A workspace only ever sees the steps its
  * vertical and the signed-in role allow, so a restaurant walks its menu while an
- * agency walks services and bookings.
+ * service-based business walks services and bookings.
  */
 const WORKSPACE_STEPS: WorkspaceStep[] = [
   // ── Orientation ───────────────────────────────────────────────────────────

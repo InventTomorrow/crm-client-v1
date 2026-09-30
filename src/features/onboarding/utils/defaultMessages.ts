@@ -12,7 +12,7 @@ const TEMPLATES: Record<BusinessVertical, (workspace: string) => { greetingMessa
     fallbackMessage: `Sorry, I didn't quite catch that. Could you rephrase — or tell me what you're in the mood for?`,
   }),
   MARKETING_AGENCY: (workspace) => ({
-    greetingMessage: `Hi! 👋 Thanks for reaching out to ${workspace}. What are you looking to grow?`,
+    greetingMessage: `Hi! 👋 Thanks for reaching out to ${workspace}. What can we help you with?`,
     escalationMessage: `Let me connect you with someone from the ${workspace} team — please hold on a moment.`,
     fallbackMessage: `Sorry, I didn't quite catch that. Could you rephrase — or tell me a bit about your business?`,
   }),

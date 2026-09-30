@@ -44,7 +44,7 @@ export interface BusinessVerticalOption {
 export const BUSINESS_VERTICALS: BusinessVerticalOption[] = [
   {
     value: "MARKETING_AGENCY",
-    title: "Marketing agency",
+    title: "Service-based business",
     description:
       "You sell services, packages, lead qualification, and booked calls.",
     icon: Megaphone,
@@ -80,7 +80,7 @@ export const BUSINESS_VERTICAL_VALUES = BUSINESS_VERTICALS.map(
 const BUSINESS_VERTICAL_SHORT_LABELS: Record<BusinessVertical, string> = {
   ECOMMERCE: "Retail",
   RESTAURANT: "Restaurant",
-  MARKETING_AGENCY: "Agency",
+  MARKETING_AGENCY: "Services",
   HEALTHCARE: "Clinic",
 };
 

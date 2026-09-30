@@ -263,7 +263,7 @@ export function isoToLocalInput(isoInstant: string, timezone: string): string {
 /**
  * The second line an appointment gets wherever there is room for one: the doctor it
  * is with, the service it is for, or the phone number when it is neither — a clinic
- * booking and an agency call both have something worth saying under the name.
+ * booking and a service-business call both have something worth saying under the name.
  */
 export function appointmentSubtitle(appointment: Appointment): string {
   const doctor = appointment.practitioner

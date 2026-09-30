@@ -36,7 +36,7 @@ export interface LeadVocabulary {
   customerSingular: string;
   customerSingularTitle: string;
   customerPlural: string;
-  /** What a booked slot is called: an agency books a call, a clinic books an appointment. */
+  /** What a booked slot is called: a service-based business books a call, a clinic books an appointment. */
   bookingSingular: string;
   bookingSingularTitle: string;
   /** The same word with its article, so copy never has to pick between "a" and "an". */

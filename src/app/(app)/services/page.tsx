@@ -3,7 +3,7 @@ import { ServicesView } from '@/features/services/components/ServicesView';
 
 export const metadata: Metadata = {
   title: 'Services | AsaanRabta',
-  description: 'Manage your agency service offerings',
+  description: 'Manage your service offerings',
 };
 
 export default function ServicesPage() {
