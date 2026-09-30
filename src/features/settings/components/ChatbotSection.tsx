@@ -4,6 +4,8 @@ import { Bot, Check, Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISettingsWidget';
+import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
+import { hasCapability } from '@/lib/business-verticals';
 import { cn } from '@/lib/utils';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
@@ -17,17 +19,34 @@ const PERSONALITIES = [
   { key: 'PERSUASIVE' as const, label: 'Persuasive', desc: 'Confident & sales-driven' },
 ];
 
+const SALES_STYLES = [
+  {
+    key: 'SOFT' as const,
+    label: 'Soft',
+    desc: 'Answers and helps; recommends only when the customer asks',
+  },
+  {
+    key: 'BALANCED' as const,
+    label: 'Balanced',
+    desc: 'Recommends with confidence, one add-on, easy close — never pushes past a no',
+  },
+];
+
 const DEFAULTS: ChatbotConfigForm = {
   greetingMessage: '',
   escalationMessage: '',
   fallbackMessage: '',
   aiPersonality: 'CASUAL',
+  salesStyle: 'BALANCED',
   aiEnabled: true,
 };
 
 export function ChatbotSection() {
   const { data, isLoading } = useChatbotConfig();
   const { mutate: save, isPending } = useUpdateChatbotConfig();
+  const { tenant } = useCurrentTenant();
+  // Only a store sells products; other verticals never see the setting.
+  const sellsProducts = !!tenant && hasCapability(tenant.businessVertical, 'CATALOG_PRODUCTS');
 
   const {
     register,
@@ -49,6 +68,7 @@ export function ChatbotSection() {
         escalationMessage: data.config.escalationMessage,
         fallbackMessage: data.config.fallbackMessage,
         aiPersonality: data.config.aiPersonality,
+        salesStyle: data.config.salesStyle ?? 'BALANCED',
         aiEnabled: data.config.aiEnabled,
       });
     }
@@ -116,6 +136,42 @@ export function ChatbotSection() {
                     >
                       <span className="text-[12.5px] font-medium text-[var(--ink)]">{p.label}</span>
                       <span className="text-[11px] text-[var(--ink-mute)] mt-0.5 leading-snug">{p.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            />
+          </div>
+        )}
+
+        {/* Sales style — stores only */}
+        {aiEnabled && sellsProducts && (
+          <div className="flex flex-col gap-2">
+            <div>
+              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Sales style</label>
+              <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                How actively the assistant recommends and moves customers towards an order
+              </p>
+            </div>
+            <Controller
+              name="salesStyle"
+              control={control}
+              render={({ field }) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {SALES_STYLES.map((style) => (
+                    <button
+                      key={style.key}
+                      type="button"
+                      onClick={() => field.onChange(style.key)}
+                      className={cn(
+                        'flex flex-col items-start p-3 rounded-xl border text-left transition-all',
+                        field.value === style.key
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] shadow-sm'
+                          : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]',
+                      )}
+                    >
+                      <span className="text-[12.5px] font-medium text-[var(--ink)]">{style.label}</span>
+                      <span className="text-[11px] text-[var(--ink-mute)] mt-0.5 leading-snug">{style.desc}</span>
                     </button>
                   ))}
                 </div>

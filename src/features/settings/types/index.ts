@@ -17,9 +17,12 @@ export const chatbotConfigSchema = z.object({
   escalationMessage: z.string().min(1, "Escalation message is required"),
   fallbackMessage: z.string().min(1, "Fallback message is required"),
   aiPersonality: z.enum(["FORMAL", "CASUAL", "PERSUASIVE"]),
+  // Ecommerce stores only — how actively the assistant sells.
+  salesStyle: z.enum(["SOFT", "BALANCED"]),
   aiEnabled: z.boolean(),
 });
 export type ChatbotConfigForm = z.infer<typeof chatbotConfigSchema>;
+export type SalesStyle = ChatbotConfigForm["salesStyle"];
 
 // Mirrors the server's updateTenantSchema — the workspace name is not editable.
 export const businessIdentitySchema = z.object({
@@ -73,6 +76,8 @@ export interface ChatbotConfigResponse {
     escalationMessage: string;
     fallbackMessage: string;
     aiPersonality: "FORMAL" | "CASUAL" | "PERSUASIVE";
+    // Absent on configs saved before the setting existed; the server treats that as BALANCED.
+    salesStyle?: SalesStyle | null;
     aiEnabled: boolean;
     businessDescription: string | null;
     businessInfoMessage: string | null;

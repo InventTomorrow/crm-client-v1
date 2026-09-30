@@ -8,6 +8,9 @@ export const metadata: Metadata = {
 
 export default async function EditProductPage({ params }: { params: Promise<{ productId: string }> }) {
   const { productId } = await params;
+
+  console.log(productId);
+  
   return (
     <div className="h-full">
       <ProductFormView productId={productId} />
