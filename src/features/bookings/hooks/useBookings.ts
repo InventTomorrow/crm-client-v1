@@ -68,7 +68,7 @@ const INITIAL_CONFIG_VALUES: BookingConfigFormInput = {
   maxAdvanceDays: 30,
   timezone: 'Asia/Karachi',
   availableDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
-  // Morning and afternoon, closed over lunch — the shape most agencies start from.
+  // Morning and afternoon, closed over lunch — the shape most service businesses start from.
   workingHours: [
     { startTime: '10:00', endTime: '13:00' },
     { startTime: '15:00', endTime: '18:00' },

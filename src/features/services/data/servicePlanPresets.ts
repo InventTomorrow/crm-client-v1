@@ -23,7 +23,7 @@ export const SERVICE_PLAN_PRESETS: ServicePlanPreset[] = [
   {
     id: 'three-tier-retainer',
     label: 'Basic · Growth · Pro',
-    description: 'Three monthly retainer tiers — the usual agency ladder.',
+    description: 'Three monthly retainer tiers — the usual service-business ladder.',
     billingCycle: 'MONTHLY',
     tiers: [
       { name: 'Basic', bestFor: 'Small businesses starting out', minContractMonths: 3, isHighlighted: false, isCustomQuote: false },

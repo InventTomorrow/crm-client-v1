@@ -14,9 +14,9 @@ export interface SuggestedQuestion {
   mapsToLeadField: LeadFieldMapping | null;
 }
 
-const AGENCY_QUESTIONS: SuggestedQuestion[] = [
+const SERVICE_BUSINESS_QUESTIONS: SuggestedQuestion[] = [
   {
-    questionText: "What's your monthly marketing budget?",
+    questionText: "What's your monthly budget?",
     inputType: "QUICK_REPLY",
     options: ["Under 50k", "50k–150k", "150k–500k", "Over 500k"],
     isRequired: true,
@@ -137,8 +137,8 @@ const QUESTIONS_BY_VERTICAL: Partial<
 export function suggestedQuestionsFor(
   businessVertical: BusinessVertical | undefined,
 ): SuggestedQuestion[] {
-  if (!businessVertical) return AGENCY_QUESTIONS;
-  return QUESTIONS_BY_VERTICAL[businessVertical] ?? AGENCY_QUESTIONS;
+  if (!businessVertical) return SERVICE_BUSINESS_QUESTIONS;
+  return QUESTIONS_BY_VERTICAL[businessVertical] ?? SERVICE_BUSINESS_QUESTIONS;
 }
 
 /**

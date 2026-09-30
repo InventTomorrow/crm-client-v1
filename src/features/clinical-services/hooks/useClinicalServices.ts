@@ -83,7 +83,7 @@ export function useInfiniteClinicalServices(
 /**
  * The categories already in use, so the form suggests existing spellings rather
  * than letting "Nursing" and "nursing " become two categories. Derived from the
- * list rather than a dedicated endpoint — same approach as the agency catalogue.
+ * list rather than a dedicated endpoint — same approach as the service catalogue.
  */
 export function useClinicalServiceCategories() {
   return useQuery({

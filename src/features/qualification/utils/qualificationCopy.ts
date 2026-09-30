@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 /**
  * Every string on the qualification screens that names what the workspace is
- * actually collecting. A marketing agency qualifies leads by budget; a clinic
+ * actually collecting. A service-based business qualifies leads by budget; a clinic
  * takes an intake from a patient. Same form, same scoring — different words.
  *
  * Same shape as `labelByVertical` in the nav: one default set, and a partial
@@ -69,7 +69,7 @@ const DEFAULT_COPY: QualificationCopy = {
 
   dialogDescription:
     "What the bot asks, and how the lead's answer gets stored.",
-  questionPlaceholder: "What's your monthly marketing budget?",
+  questionPlaceholder: "What's your monthly budget?",
   optionPlaceholder: "e.g. Under 50k",
   scoringValuePlaceholder: "e.g. 100000",
   mapsToFieldLabel: "Save to lead field",

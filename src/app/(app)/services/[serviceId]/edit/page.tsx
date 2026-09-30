@@ -3,7 +3,7 @@ import { ServiceFormView } from '@/features/services/components/ServiceFormView'
 
 export const metadata: Metadata = {
   title: 'Edit service | AsaanRabta',
-  description: 'Edit a service offering in your agency catalog',
+  description: 'Edit a service offering in your service catalog',
 };
 
 export default async function EditServicePage({

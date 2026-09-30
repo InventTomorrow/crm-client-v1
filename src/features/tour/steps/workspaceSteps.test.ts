@@ -48,7 +48,7 @@ describe('buildWorkspaceTour', () => {
     expect(contents.some((c) => c.includes('working hours'))).toBe(false);
   });
 
-  it('gives an agency services, qualification and bookings instead of a catalogue', () => {
+  it('gives a service-based business services, qualification and bookings instead of a catalogue', () => {
     const tour = buildWorkspaceTour({ businessVertical: 'MARKETING_AGENCY', can: allowAll });
 
     expect(tour?.tour).toBe('workspace-agency-v1');
@@ -96,7 +96,7 @@ describe('buildWorkspaceTour', () => {
     });
   });
 
-  it('covers every page an agency workspace actually has', () => {
+  it('covers every page a service-based workspace actually has', () => {
     const tour = buildWorkspaceTour({ businessVertical: 'MARKETING_AGENCY', can: allowAll });
     const routes = new Set(
       tour!.steps.flatMap((step) => (step.nextRoute ? [step.nextRoute] : [])),
