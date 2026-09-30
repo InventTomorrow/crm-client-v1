@@ -36,6 +36,6 @@ describe("business verticals", () => {
 
   it("has a short label per vertical", () => {
     expect(getBusinessVerticalShortLabel("ECOMMERCE")).toBe("Retail");
-    expect(getBusinessVerticalShortLabel("MARKETING_AGENCY")).toBe("Agency");
+    expect(getBusinessVerticalShortLabel("MARKETING_AGENCY")).toBe("Services");
   });
 });

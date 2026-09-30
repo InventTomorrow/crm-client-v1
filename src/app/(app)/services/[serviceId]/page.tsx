@@ -3,7 +3,7 @@ import { ServicePreviewView } from '@/features/services/components/ServicePrevie
 
 export const metadata: Metadata = {
   title: 'Service | AsaanRabta',
-  description: 'Review a service offering in your agency catalog',
+  description: 'Review a service offering in your service catalog',
 };
 
 export default async function ServicePreviewPage({

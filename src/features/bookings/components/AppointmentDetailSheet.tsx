@@ -183,7 +183,7 @@ export function AppointmentDetailSheet({
               </DetailRow>
             )}
 
-            {/* Agency calls: what the assistant learned before booking, so whoever
+            {/* Service-business calls: what the assistant learned before booking, so whoever
                 takes the call walks in informed. */}
             {!!appointment.services?.length && (
               <DetailRow icon={Briefcase} label="About">
