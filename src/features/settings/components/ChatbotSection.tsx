@@ -4,18 +4,15 @@ import { Check, Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISettingsWidget';
-<<<<<<< HEAD
-import { KEEP_FIELD_REFS } from '@/lib/formReset';
-=======
 import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
 import { hasCapability } from '@/lib/business-verticals';
->>>>>>> feat/ecommerce-sales-agent
+import { KEEP_FIELD_REFS } from '@/lib/formReset';
 import { cn } from '@/lib/utils';
+import { Button } from '@/shared/ui/Button';
+import { Textarea } from '@/shared/ui/Textarea';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
 import { SettingsSaveBar } from './SettingsSaveBar';
-import { Button } from '@/shared/ui/Button';
-import { Textarea } from '@/shared/ui/Textarea';
 
 const PERSONALITIES = [
   { key: 'FORMAL' as const, label: 'Formal', desc: 'Professional & precise' },
@@ -23,12 +20,12 @@ const PERSONALITIES = [
   { key: 'PERSUASIVE' as const, label: 'Persuasive', desc: 'Confident & sales-driven' },
 ];
 
-<<<<<<< HEAD
 const REPLY_LANGUAGES = [
   { key: 'MATCH_CUSTOMER' as const, label: 'Match customer', desc: "Replies in the customer's language" },
   { key: 'ENGLISH' as const, label: 'English', desc: 'Always replies in English' },
   { key: 'ROMAN_URDU' as const, label: 'Roman Urdu', desc: 'e.g. "Aap ka order mil gaya hai"' },
-=======
+];
+
 const SALES_STYLES = [
   {
     key: 'SOFT' as const,
@@ -40,7 +37,6 @@ const SALES_STYLES = [
     label: 'Balanced',
     desc: 'Recommends with confidence, one add-on, easy close — never pushes past a no',
   },
->>>>>>> feat/ecommerce-sales-agent
 ];
 
 const DEFAULTS: ChatbotConfigForm = {
@@ -48,12 +44,8 @@ const DEFAULTS: ChatbotConfigForm = {
   escalationMessage: '',
   fallbackMessage: '',
   aiPersonality: 'CASUAL',
-<<<<<<< HEAD
   replyLanguage: 'MATCH_CUSTOMER',
-=======
   salesStyle: 'BALANCED',
-  aiEnabled: true,
->>>>>>> feat/ecommerce-sales-agent
 };
 
 export function ChatbotSection() {
@@ -82,14 +74,9 @@ export function ChatbotSection() {
         escalationMessage: data.config.escalationMessage,
         fallbackMessage: data.config.fallbackMessage,
         aiPersonality: data.config.aiPersonality,
-<<<<<<< HEAD
         replyLanguage: data.config.replyLanguage ?? 'MATCH_CUSTOMER',
-      }, KEEP_FIELD_REFS);
-=======
         salesStyle: data.config.salesStyle ?? 'BALANCED',
-        aiEnabled: data.config.aiEnabled,
-      });
->>>>>>> feat/ecommerce-sales-agent
+      }, KEEP_FIELD_REFS);
     }
   }, [data, reset]);
 
@@ -138,7 +125,7 @@ export function ChatbotSection() {
         </div>
 
         {/* Sales style — stores only */}
-        {aiEnabled && sellsProducts && (
+        {sellsProducts && (
           <div className="flex flex-col gap-2">
             <div>
               <label className="text-[12px] font-medium text-[var(--ink-soft)]">Sales style</label>
@@ -150,24 +137,12 @@ export function ChatbotSection() {
               name="salesStyle"
               control={control}
               render={({ field }) => (
-                <div className="grid grid-cols-2 gap-2">
-                  {SALES_STYLES.map((style) => (
-                    <button
-                      key={style.key}
-                      type="button"
-                      onClick={() => field.onChange(style.key)}
-                      className={cn(
-                        'flex flex-col items-start p-3 rounded-xl border text-left transition-all',
-                        field.value === style.key
-                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] shadow-sm'
-                          : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]',
-                      )}
-                    >
-                      <span className="text-[12.5px] font-medium text-[var(--ink)]">{style.label}</span>
-                      <span className="text-[11px] text-[var(--ink-mute)] mt-0.5 leading-snug">{style.desc}</span>
-                    </button>
-                  ))}
-                </div>
+                <OptionGrid
+                  options={SALES_STYLES}
+                  value={field.value}
+                  onChange={field.onChange}
+                  columns={2}
+                />
               )}
             />
           </div>
@@ -210,13 +185,20 @@ function OptionGrid<TKey extends string>({
   options,
   value,
   onChange,
+  columns = 3,
 }: {
   options: { key: TKey; label: string; desc: string }[];
   value: TKey;
   onChange: (key: TKey) => void;
+  columns?: 2 | 3;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-2',
+        columns === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
+      )}
+    >
       {options.map((option) => (
         <button
           key={option.key}
