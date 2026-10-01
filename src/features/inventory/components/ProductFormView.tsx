@@ -24,6 +24,7 @@ import { usePresignedUpload } from "../hooks/useProducts";
 import { GENDERS } from "../types";
 import { ImageLinkField } from "./ImageLinkField";
 import { ProductFormSkeleton } from "./InventorySkeletons";
+import { ProductVariantsField } from "./ProductVariantsField";
 import { SizeSelector } from "./SizeSelector";
 
 /** Radio groups have no empty value, so "no gender set" needs a stand-in. */
@@ -57,6 +58,12 @@ export function ProductFormView({ productId }: { productId?: string }) {
     handleSubmit,
     confirmDelete,
     customOptionsEnabled,
+    variantFields,
+    hasVariants,
+    variantSizeOptions,
+    appendVariant,
+    removeVariant,
+    setVariantImage,
   } = useProductForm(productId);
 
   // Only an actual save/delete disables the fields — an in-flight photo upload
@@ -229,17 +236,26 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price *</FormLabel>
+                        <FormLabel>
+                          {hasVariants ? "Price (auto)" : "Price *"}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             placeholder="8999"
                             {...field}
                             value={field.value ?? ""}
-                            disabled={busy}
+                            readOnly={hasVariants}
+                            disabled={busy || hasVariants}
                           />
                         </FormControl>
-                        <FormMessage />
+                        {hasVariants ? (
+                          <p className="text-xs text-muted-foreground">
+                            Set by the cheapest variant.
+                          </p>
+                        ) : (
+                          <FormMessage />
+                        )}
                       </FormItem>
                     )}
                   />
@@ -286,17 +302,26 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     name="stock"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Stock *</FormLabel>
+                        <FormLabel>
+                          {hasVariants ? "Stock (auto)" : "Stock *"}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             placeholder="47"
                             {...field}
                             value={field.value ?? ""}
-                            disabled={busy}
+                            readOnly={hasVariants}
+                            disabled={busy || hasVariants}
                           />
                         </FormControl>
-                        <FormMessage />
+                        {hasVariants ? (
+                          <p className="text-xs text-muted-foreground">
+                            Total across all variants.
+                          </p>
+                        ) : (
+                          <FormMessage />
+                        )}
                       </FormItem>
                     )}
                   />
@@ -318,24 +343,35 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="sizes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Available Sizes</FormLabel>
-                      <FormControl>
-                        <SizeSelector
-                          category={selectedCategory}
-                          value={field.value ?? []}
-                          onChange={field.onChange}
-                          disabled={busy}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {hasVariants ? (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[12px] font-medium text-[var(--ink-soft)]">
+                      Available Sizes
+                    </span>
+                    <p className="text-[12px] text-[var(--ink-mute)]">
+                      Taken from the sizes on your variants below.
+                    </p>
+                  </div>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="sizes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Available Sizes</FormLabel>
+                        <FormControl>
+                          <SizeSelector
+                            category={selectedCategory}
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            disabled={busy}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {/* Photo: beside the fields on desktop, under them on mobile. */}
@@ -376,6 +412,18 @@ export function ProductFormView({ productId }: { productId?: string }) {
                   Used on lists, the product preview and WhatsApp cards.
                 </p>
               </div>
+            </div>
+
+            <div className="card p-4 md:p-5">
+              <ProductVariantsField
+                form={form}
+                fields={variantFields.fields}
+                sizeOptions={variantSizeOptions}
+                onAppend={appendVariant}
+                onRemove={removeVariant}
+                onImageChange={setVariantImage}
+                disabled={busy}
+              />
             </div>
 
             {/* Made-to-order customization */}

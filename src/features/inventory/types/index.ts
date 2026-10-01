@@ -1,4 +1,4 @@
-export type { Product } from "@/lib/mockData";
+export type { Product, ProductVariant } from "@/lib/mockData";
 import { z } from "zod";
 
 export const CATEGORIES = [
@@ -55,6 +55,33 @@ export function getSizeGroupsForCategory(
   return SIZE_GROUPS.filter((g) => g.label === "General");
 }
 
+/** A blank variant name falls back to "Colour / Size", then the product name — the assistant quotes it to customers. */
+export function getVariantLabel(
+  variant: { name?: string; size?: string; color?: string },
+  productName: string,
+): string {
+  const typedName = variant.name?.trim();
+  if (typedName) return typedName;
+  const attributes = [variant.color?.trim(), variant.size?.trim()].filter(Boolean);
+  return attributes.length ? attributes.join(" / ") : productName.trim();
+}
+
+// `id` is set only on rows already saved, so the API updates them instead of recreating.
+export const productVariantSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().trim().max(120).optional(),
+  size: z.string().trim().max(60).optional(),
+  color: z.string().trim().max(60).optional(),
+  sku: z.string().trim().max(120).optional(),
+  imageUrl: z.string().optional(),
+  price: numericField.pipe(z.number().positive("Price must be positive")),
+  stock: numericField.pipe(
+    z.number().int("Whole units only").min(0, "Stock must be ≥ 0"),
+  ),
+});
+
+export type ProductVariantFormInput = z.input<typeof productVariantSchema>;
+
 export const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   sku: z.string().optional(),
@@ -83,12 +110,14 @@ export const productSchema = z.object({
   customOptionsEnabled: z.boolean().default(false),
   customOptionKeys: z.array(z.string()).default([]),
   customOptionNote: z.string().max(500).optional(),
+  variants: z.array(productVariantSchema).max(100).default([]),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
+export type ProductFormInput = z.input<typeof productSchema>;
 
-/** A product row inside the bulk-add dialog (form data + image references). */
-export interface BulkItem extends ProductFormData {
+/** A product row inside the bulk-add dialog (form data + image references). Imports carry no variants. */
+export interface BulkItem extends Omit<ProductFormData, "variants"> {
   /** Primary image shown in the card / editor. */
   imageUrl?: string;
   /** Full set of images (kept from imports that carry several URLs). */

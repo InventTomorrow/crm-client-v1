@@ -59,9 +59,12 @@ export function useUpdateProduct() {
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Product[]>(queryKey) ?? [];
+      // Payload variants are offsets, not prices — keep the cached ones until the refetch.
       queryClient.setQueryData(
         queryKey,
-        previous.map((p) => (p.id === id ? { ...p, ...data } : p)),
+        previous.map((p) =>
+          p.id === id ? { ...p, ...data, variants: p.variants } : p,
+        ),
       );
       return { previous };
     },

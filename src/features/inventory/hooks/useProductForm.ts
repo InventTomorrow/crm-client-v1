@@ -1,17 +1,79 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
-import { deleteUploadedFile } from "../services/productsService";
-import type { Product } from "../types";
-import { CATEGORIES, productSchema, type ProductFormData } from "../types";
+import {
+  deleteUploadedFile,
+  type VariantPayload,
+} from "../services/productsService";
+import type { Product, ProductVariant } from "../types";
+import {
+  CATEGORIES,
+  getSizeGroupsForCategory,
+  getVariantLabel,
+  productSchema,
+  type ProductFormData,
+  type ProductVariantFormInput,
+} from "../types";
 import {
   useAddProduct,
   useDeleteProduct,
   useProducts,
   useUpdateProduct,
 } from "./useProducts";
+
+type SavedVariant = ProductFormData["variants"][number];
+
+const EMPTY_VARIANT = {
+  name: "",
+  size: "",
+  color: "",
+  sku: "",
+  imageUrl: "",
+  stock: "",
+} satisfies Omit<ProductVariantFormInput, "price">;
+
+const toVariantFormValues = (
+  variant: ProductVariant,
+): ProductVariantFormInput => ({
+  id: variant.id,
+  name: variant.name,
+  size: variant.size ?? "",
+  color: variant.color ?? "",
+  sku: variant.sku ?? "",
+  imageUrl: variant.imageUrl ?? "",
+  price: String(variant.price),
+  stock: String(variant.stock),
+});
+
+/** Sizes the versions come in, first spelling kept — becomes the product's size list. */
+const getVariantSizes = (variants: SavedVariant[]): string[] => {
+  const seen = new Set<string>();
+  return variants.flatMap((variant) => {
+    const size = variant.size?.trim();
+    if (!size || seen.has(size.toLowerCase())) return [];
+    seen.add(size.toLowerCase());
+    return [size];
+  });
+};
+
+// The API prices a variant as an offset from the product, which carries the cheapest one.
+const toVariantPayloads = (
+  variants: SavedVariant[],
+  basePrice: number,
+  productName: string,
+): VariantPayload[] =>
+  variants.map((variant) => ({
+    ...(variant.id ? { id: variant.id } : {}),
+    name: getVariantLabel(variant, productName),
+    size: variant.size || undefined,
+    color: variant.color || undefined,
+    sku: variant.sku || undefined,
+    imageUrl: variant.imageUrl || undefined,
+    priceDelta: Math.round((variant.price - basePrice) * 100) / 100,
+    stock: variant.stock,
+  }));
 
 const INITIAL_FORM_VALUES = {
   name: "",
@@ -27,6 +89,7 @@ const INITIAL_FORM_VALUES = {
   customOptionsEnabled: false,
   customOptionKeys: [],
   customOptionNote: "",
+  variants: [],
 } satisfies z.input<typeof productSchema>;
 
 /** Owns the product form page's state: prefill from the cached product list,
@@ -78,6 +141,7 @@ export function useProductForm(productId?: string) {
       customOptionsEnabled: editingProduct.customOptionsEnabled ?? false,
       customOptionKeys: editingProduct.customOptionKeys ?? [],
       customOptionNote: editingProduct.customOptionNote ?? "",
+      variants: (editingProduct.variants ?? []).map(toVariantFormValues),
     });
     // Keyed on the id so a background refetch doesn't clobber in-progress edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,6 +181,43 @@ export function useProductForm(productId?: string) {
     if (!price || !discount || discount <= 0 || discount > 100) return null;
     return price - (price * discount) / 100;
   }, [watchedPrice, watchedDiscount]);
+
+  const variantFields = useFieldArray({
+    control: form.control,
+    name: "variants",
+  });
+  const watchedVariants = useWatch({ control: form.control, name: "variants" });
+  const hasVariants = (watchedVariants?.length ?? 0) > 0;
+  const variantSizeOptions = useMemo(
+    () =>
+      getSizeGroupsForCategory(selectedCategory).flatMap((group) => [
+        ...group.options,
+      ]),
+    [selectedCategory],
+  );
+
+  // With variants, price and stock are no longer typed by hand: the cheapest
+  // variant sets the price, and stock is what all of them hold together.
+  useEffect(() => {
+    if (!hasVariants || !watchedVariants) return;
+    const prices = watchedVariants
+      .map((variant) => Number(variant?.price))
+      .filter((price) => price > 0);
+    if (prices.length) {
+      form.setValue("price", String(Math.min(...prices)), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+    const totalStock = watchedVariants.reduce(
+      (sum, variant) => sum + (Number(variant?.stock) || 0),
+      0,
+    );
+    form.setValue("stock", String(totalStock), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }, [watchedVariants, hasVariants, form]);
 
   const isSaving = addProduct.isPending || updateProduct.isPending;
   const isDeleting = deleteProduct.isPending;
@@ -178,19 +279,69 @@ export function useProductForm(productId?: string) {
     discardUploads(uploadsPendingSave);
   }, [uploadsPendingSave, discardUploads]);
 
+  const discardIfUnsaved = useCallback(
+    (url: string | undefined) => {
+      if (url && uploadsPendingSave.includes(url)) discardUploads([url]);
+    },
+    [uploadsPendingSave, discardUploads],
+  );
+
+  /** Variant photos are always uploaded here, so each one is tracked until the product is saved. */
+  const setVariantImage = useCallback(
+    (index: number, url: string | null) => {
+      const replaced = form.getValues(`variants.${index}.imageUrl`);
+      if (replaced !== url) discardIfUnsaved(replaced);
+      if (url) {
+        setUploadsPendingSave((prev) =>
+          prev.includes(url) ? prev : [...prev, url],
+        );
+      }
+      form.setValue(`variants.${index}.imageUrl`, url ?? "", {
+        shouldDirty: true,
+      });
+    },
+    [form, discardIfUnsaved],
+  );
+
+  const appendVariant = useCallback(() => {
+    const currentPrice = form.getValues("price");
+    variantFields.append({
+      ...EMPTY_VARIANT,
+      // Seeded from the product price so the first row starts sensible.
+      price: currentPrice === undefined ? "" : String(currentPrice),
+    });
+  }, [form, variantFields]);
+
+  const removeVariant = useCallback(
+    (index: number) => {
+      discardIfUnsaved(form.getValues(`variants.${index}.imageUrl`));
+      variantFields.remove(index);
+    },
+    [form, variantFields, discardIfUnsaved],
+  );
+
   const handleSubmit = form.handleSubmit((data: ProductFormData) => {
+    const { variants } = data;
+    const hasSavedVariants = variants.length > 0;
+    const basePrice = hasSavedVariants
+      ? Math.min(...variants.map((variant) => variant.price))
+      : data.price;
     const payload = {
       name: data.name,
       sku: data.sku || undefined,
-      price: data.price,
+      price: basePrice,
       discountPercentage: data.discountPercentage,
-      stock: data.stock,
+      stock: hasSavedVariants
+        ? variants.reduce((sum, variant) => sum + variant.stock, 0)
+        : data.stock,
       description: data.desc || undefined,
       category: data.cat || undefined,
-      sizes: data.sizes ?? [],
+      sizes: hasSavedVariants ? getVariantSizes(variants) : (data.sizes ?? []),
       gender: data.gender || undefined,
       color: data.color || undefined,
       imageUrls,
+      // Sent even when empty, so removing the last variant clears it on the server.
+      variants: toVariantPayloads(variants, basePrice, data.name),
       customOptionsEnabled: data.customOptionsEnabled,
       // Cleared when the switch is off, so a disabled product can't quietly
       // keep options that the listing badge would still count.
@@ -240,5 +391,11 @@ export function useProductForm(productId?: string) {
     handleSubmit,
     confirmDelete,
     customOptionsEnabled,
+    variantFields,
+    hasVariants,
+    variantSizeOptions,
+    appendVariant,
+    removeVariant,
+    setVariantImage,
   };
 }
