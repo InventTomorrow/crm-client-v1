@@ -28,17 +28,19 @@ export const botReplyLanguageSchema = z.enum([
 ]);
 export type BotReplyLanguage = z.infer<typeof botReplyLanguageSchema>;
 
+export const salesStyleSchema = z.enum(["SOFT", "BALANCED"]);
+export type SalesStyle = z.infer<typeof salesStyleSchema>;
+
 export const chatbotConfigSchema = z.object({
   greetingMessage: z.string().min(1, "Greeting message is required"),
   escalationMessage: z.string().min(1, "Escalation message is required"),
   fallbackMessage: z.string().min(1, "Fallback message is required"),
   aiPersonality: z.enum(["FORMAL", "CASUAL", "PERSUASIVE"]),
+  replyLanguage: botReplyLanguageSchema,
   // Ecommerce stores only — how actively the assistant sells.
-  salesStyle: z.enum(["SOFT", "BALANCED"]),
-  aiEnabled: z.boolean(),
+  salesStyle: salesStyleSchema,
 });
 export type ChatbotConfigForm = z.infer<typeof chatbotConfigSchema>;
-export type SalesStyle = ChatbotConfigForm["salesStyle"];
 
 // Mirrors the server's updateTenantSchema — the workspace name is not editable.
 export const businessIdentitySchema = z.object({
