@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { SITE_LOCALE, SITE_NAME, absoluteUrl } from "@/shared/lib/site";
+import type { Metadata } from "next";
 
 export const PRIVATE_PAGE_ROBOTS: Metadata["robots"] = {
   index: false,
