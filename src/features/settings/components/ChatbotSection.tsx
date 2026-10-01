@@ -4,13 +4,15 @@ import { Check, Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISettingsWidget';
+import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
+import { hasCapability } from '@/lib/business-verticals';
 import { KEEP_FIELD_REFS } from '@/lib/formReset';
 import { cn } from '@/lib/utils';
+import { Button } from '@/shared/ui/Button';
+import { Textarea } from '@/shared/ui/Textarea';
 import { useChatbotConfig, useUpdateChatbotConfig } from '../hooks/useChatbotSettings';
 import { chatbotConfigSchema, type ChatbotConfigForm } from '../types';
 import { SettingsSaveBar } from './SettingsSaveBar';
-import { Button } from '@/shared/ui/Button';
-import { Textarea } from '@/shared/ui/Textarea';
 
 const PERSONALITIES = [
   { key: 'FORMAL' as const, label: 'Formal', desc: 'Professional & precise' },
@@ -24,17 +26,34 @@ const REPLY_LANGUAGES = [
   { key: 'ROMAN_URDU' as const, label: 'Roman Urdu', desc: 'e.g. "Aap ka order mil gaya hai"' },
 ];
 
+const SALES_STYLES = [
+  {
+    key: 'SOFT' as const,
+    label: 'Soft',
+    desc: 'Answers and helps; recommends only when the customer asks',
+  },
+  {
+    key: 'BALANCED' as const,
+    label: 'Balanced',
+    desc: 'Recommends with confidence, one add-on, easy close — never pushes past a no',
+  },
+];
+
 const DEFAULTS: ChatbotConfigForm = {
   greetingMessage: '',
   escalationMessage: '',
   fallbackMessage: '',
   aiPersonality: 'CASUAL',
   replyLanguage: 'MATCH_CUSTOMER',
+  salesStyle: 'BALANCED',
 };
 
 export function ChatbotSection() {
   const { data, isLoading } = useChatbotConfig();
   const { mutate: save, isPending } = useUpdateChatbotConfig();
+  const { tenant } = useCurrentTenant();
+  // Only a store sells products; other verticals never see the setting.
+  const sellsProducts = !!tenant && hasCapability(tenant.businessVertical, 'CATALOG_PRODUCTS');
 
   const {
     register,
@@ -56,6 +75,7 @@ export function ChatbotSection() {
         fallbackMessage: data.config.fallbackMessage,
         aiPersonality: data.config.aiPersonality,
         replyLanguage: data.config.replyLanguage ?? 'MATCH_CUSTOMER',
+        salesStyle: data.config.salesStyle ?? 'BALANCED',
       }, KEEP_FIELD_REFS);
     }
   }, [data, reset]);
@@ -104,6 +124,30 @@ export function ChatbotSection() {
           </p>
         </div>
 
+        {/* Sales style — stores only */}
+        {sellsProducts && (
+          <div className="flex flex-col gap-2">
+            <div>
+              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Sales style</label>
+              <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
+                How actively the assistant recommends and moves customers towards an order
+              </p>
+            </div>
+            <Controller
+              name="salesStyle"
+              control={control}
+              render={({ field }) => (
+                <OptionGrid
+                  options={SALES_STYLES}
+                  value={field.value}
+                  onChange={field.onChange}
+                  columns={2}
+                />
+              )}
+            />
+          </div>
+        )}
+
         <div className="border-t border-[var(--line)] pt-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-[12px] font-medium text-[var(--ink-soft)]">Greeting message</label>
@@ -141,13 +185,20 @@ function OptionGrid<TKey extends string>({
   options,
   value,
   onChange,
+  columns = 3,
 }: {
   options: { key: TKey; label: string; desc: string }[];
   value: TKey;
   onChange: (key: TKey) => void;
+  columns?: 2 | 3;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-2',
+        columns === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
+      )}
+    >
       {options.map((option) => (
         <button
           key={option.key}

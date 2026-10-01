@@ -43,6 +43,8 @@ export interface FileUploadProps {
   compactHeight?: string;
   /** Icon-only square thumbnail (no title/description/hint text, small always-visible remove button) — for per-row images like variant swatches. Implies `compact`; pair with a small `compactHeight` (and a same-size wrapper) for a true thumbnail. */
   thumbnail?: boolean;
+  /** How a picked image fills the frame. Defaults to `contain` in compact/thumbnail modes, `cover` otherwise. */
+  imageFit?: "contain" | "cover";
   title?: string;
   description?: string;
   hint?: string;
@@ -90,6 +92,7 @@ export function FileUpload({
   compact = false,
   compactHeight = "h-[120px]",
   thumbnail = false,
+  imageFit,
   title = "Upload a file",
   description = "Drag and drop here, or click to browse",
   hint,
@@ -108,6 +111,7 @@ export function FileUpload({
   const hasTips = !!tips && tips.length > 0;
   const tipsVisible = hasTips && (!tipsCollapsible || showTips);
   const isCompact = compact || thumbnail;
+  const resolvedImageFit = imageFit ?? (isCompact ? "contain" : "cover");
   const sizeClassName = isCompact ? compactHeight : aspectRatio;
 
   const lastUploadedUrlRef = useRef<string | null>(null);
@@ -206,7 +210,9 @@ export function FileUpload({
                 alt={fileName ?? "Uploaded file"}
                 className={cn(
                   "absolute inset-0 h-full w-full",
-                  isCompact ? "object-contain" : "object-cover",
+                  resolvedImageFit === "contain"
+                    ? "object-contain"
+                    : "object-cover",
                 )}
               />
             ) : isPdf && preview.preview ? (
@@ -232,13 +238,15 @@ export function FileUpload({
                   className="absolute inset-0 cursor-pointer bg-black/0 transition-colors hover:bg-black/30"
                   title="Change image"
                 />
+                {/* Inside the corner: the frame clips overflow, so an offset button was cut off. */}
                 <button
                   type="button"
                   onClick={removeFile}
                   title="Remove image"
-                  className="bg-background/90 text-muted-foreground hover:text-destructive absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full border shadow-sm"
+                  aria-label="Remove image"
+                  className="bg-background text-foreground hover:bg-destructive hover:text-primary-foreground absolute top-1 right-1 z-10 flex size-5 items-center justify-center rounded-full border shadow-md transition-colors"
                 >
-                  <XIcon className="size-2.5" />
+                  <XIcon className="size-3" />
                 </button>
               </>
             ) : (

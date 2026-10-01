@@ -21,8 +21,15 @@ export const profileSchema = z.object({
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ──────────────────── Chatbot config (mirrors server chatbot.dto) ────────────────────
-export const botReplyLanguageSchema = z.enum(["MATCH_CUSTOMER", "ENGLISH", "ROMAN_URDU"]);
+export const botReplyLanguageSchema = z.enum([
+  "MATCH_CUSTOMER",
+  "ENGLISH",
+  "ROMAN_URDU",
+]);
 export type BotReplyLanguage = z.infer<typeof botReplyLanguageSchema>;
+
+export const salesStyleSchema = z.enum(["SOFT", "BALANCED"]);
+export type SalesStyle = z.infer<typeof salesStyleSchema>;
 
 export const chatbotConfigSchema = z.object({
   greetingMessage: z.string().min(1, "Greeting message is required"),
@@ -30,6 +37,8 @@ export const chatbotConfigSchema = z.object({
   fallbackMessage: z.string().min(1, "Fallback message is required"),
   aiPersonality: z.enum(["FORMAL", "CASUAL", "PERSUASIVE"]),
   replyLanguage: botReplyLanguageSchema,
+  // Ecommerce stores only — how actively the assistant sells.
+  salesStyle: salesStyleSchema,
 });
 export type ChatbotConfigForm = z.infer<typeof chatbotConfigSchema>;
 
@@ -68,8 +77,16 @@ export const businessProfileSchema = z.object({
 export type BusinessProfileForm = z.infer<typeof businessProfileSchema>;
 
 // ──────────────────── Payment accounts (mirrors server payment-details) ────────────────────
-export const PAYMENT_ACCOUNT_METHODS = ["BANK_TRANSFER", "EASYPAISA", "JAZZCASH", "OTHER"] as const;
-export const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_ACCOUNT_METHODS)[number], string> = {
+export const PAYMENT_ACCOUNT_METHODS = [
+  "BANK_TRANSFER",
+  "EASYPAISA",
+  "JAZZCASH",
+  "OTHER",
+] as const;
+export const PAYMENT_METHOD_LABELS: Record<
+  (typeof PAYMENT_ACCOUNT_METHODS)[number],
+  string
+> = {
   BANK_TRANSFER: "Bank transfer",
   EASYPAISA: "Easypaisa",
   JAZZCASH: "JazzCash",
@@ -92,7 +109,10 @@ export const paymentAccountSchema = paymentAccountShapeSchema
   .transform((account) => ({
     ...account,
     accountTitle: cleanText(account.accountTitle),
-    accountNumber: normalizeAccountNumber(account.method, account.accountNumber),
+    accountNumber: normalizeAccountNumber(
+      account.method,
+      account.accountNumber,
+    ),
     bankName: cleanText(account.bankName),
     iban: normalizeIban(account.iban),
     instructions: cleanText(account.instructions),
@@ -100,7 +120,10 @@ export const paymentAccountSchema = paymentAccountShapeSchema
   .superRefine((account, ctx) => {
     const issues: [keyof typeof account, string | null][] = [
       ["accountTitle", getNameError(account.accountTitle, "Account title")],
-      ["accountNumber", getAccountNumberError(account.method, account.accountNumber)],
+      [
+        "accountNumber",
+        getAccountNumberError(account.method, account.accountNumber),
+      ],
       [
         "bankName",
         account.bankName
@@ -135,7 +158,9 @@ export interface PaymentAccountsFieldValues {
 }
 
 export const paymentAccountsSchema = z.object({
-  paymentAccounts: z.array(paymentAccountShapeSchema).max(10, "Add at most 10 payment accounts"),
+  paymentAccounts: z
+    .array(paymentAccountShapeSchema)
+    .max(10, "Add at most 10 payment accounts"),
   defaultPaymentAccountId: z.string().nullable(),
 });
 export type PaymentAccountsForm = z.infer<typeof paymentAccountsSchema>;
@@ -158,6 +183,8 @@ export interface ChatbotConfigResponse {
     escalationMessage: string;
     fallbackMessage: string;
     aiPersonality: "FORMAL" | "CASUAL" | "PERSUASIVE";
+    // Absent on configs saved before the setting existed; the server treats that as BALANCED.
+    salesStyle?: SalesStyle | null;
     aiEnabled: boolean;
     replyLanguage: BotReplyLanguage;
     paymentAccounts: PaymentAccount[];

@@ -53,6 +53,19 @@ export interface Product {
   customOptionsEnabled?: boolean;
   customOptionKeys?: string[];
   customOptionNote?: string;
+  variants?: ProductVariant[];
+}
+
+/** One purchasable version of a product. `price` is the full price, not the API's offset. */
+export interface ProductVariant {
+  id: string;
+  name: string;
+  size?: string;
+  color?: string;
+  sku?: string;
+  imageUrl?: string;
+  price: number;
+  stock: number;
 }
 
 export interface Order {

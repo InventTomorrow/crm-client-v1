@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSizeGroupsForCategory, productSchema } from "./index";
+import { getSizeGroupsForCategory, getVariantLabel, productSchema } from "./index";
 
 describe("getSizeGroupsForCategory", () => {
   it("maps apparel to clothing sizes, case- and whitespace-insensitively", () => {
@@ -35,5 +35,32 @@ describe("productSchema", () => {
 
   it("rejects negative stock", () => {
     expect(productSchema.safeParse({ ...valid, stock: -1 }).success).toBe(false);
+  });
+
+  describe("variants", () => {
+    const variant = { name: "Maroon, Large", size: "L", color: "Maroon", price: "9499", stock: "4" };
+
+    it("defaults to none and coerces a variant's price and stock", () => {
+      expect(productSchema.parse(valid).variants).toEqual([]);
+      const parsed = productSchema.parse({ ...valid, variants: [variant] });
+      expect(parsed.variants[0]).toMatchObject({ name: "Maroon, Large", price: 9499, stock: 4 });
+    });
+
+    it("leaves the name optional but needs a positive price on every variant", () => {
+      expect(productSchema.safeParse({ ...valid, variants: [{ ...variant, name: "" }] }).success).toBe(true);
+      expect(productSchema.safeParse({ ...valid, variants: [{ ...variant, price: "0" }] }).success).toBe(false);
+    });
+
+    it("labels a nameless variant by colour and size, then by the product name", () => {
+      expect(getVariantLabel({ name: " Eid Edition " }, "Lawn Suit")).toBe("Eid Edition");
+      expect(getVariantLabel({ name: "", color: "Maroon", size: "L" }, "Lawn Suit")).toBe("Maroon / L");
+      expect(getVariantLabel({ size: "XL" }, "Lawn Suit")).toBe("XL");
+      expect(getVariantLabel({}, "Lawn Suit ")).toBe("Lawn Suit");
+    });
+
+    it("rejects fractional or negative variant stock", () => {
+      expect(productSchema.safeParse({ ...valid, variants: [{ ...variant, stock: "1.5" }] }).success).toBe(false);
+      expect(productSchema.safeParse({ ...valid, variants: [{ ...variant, stock: "-1" }] }).success).toBe(false);
+    });
   });
 });

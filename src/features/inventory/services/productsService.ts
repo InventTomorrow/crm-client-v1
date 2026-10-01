@@ -1,8 +1,20 @@
 // src/features/inventory/services/productsService.ts
 import { apiClient } from "@/lib/apiClient";
-import type { Product } from "@/lib/mockData";
+import type { Product, ProductVariant } from "@/lib/mockData";
 
 // ─── Types ────────────────────────────────────────────────
+
+interface ApiProductVariant {
+  id: string;
+  name: string;
+  value: string | null;
+  size: string | null;
+  color: string | null;
+  sku: string | null;
+  imageUrl: string | null;
+  priceDelta: number | null;
+  stock: number | null;
+}
 
 interface ApiProduct {
   id: string;
@@ -21,7 +33,7 @@ interface ApiProduct {
   customOptionsEnabled?: boolean;
   customOptionKeys?: string[];
   customOptionNote?: string | null;
-  variants?: unknown[];
+  variants?: ApiProductVariant[];
   tenantId: string;
   isDeleted: boolean;
   createdAt: string;
@@ -44,6 +56,19 @@ export interface CreateProductPayload {
   customOptionsEnabled?: boolean;
   customOptionKeys?: string[];
   customOptionNote?: string;
+  variants?: VariantPayload[];
+}
+
+/** A variant as the API stores it — priced as an offset from the product's price. */
+export interface VariantPayload {
+  id?: string;
+  name: string;
+  size?: string;
+  color?: string;
+  sku?: string;
+  imageUrl?: string;
+  priceDelta: number;
+  stock: number;
 }
 
 export interface UpdateProductPayload {
@@ -62,6 +87,7 @@ export interface UpdateProductPayload {
   customOptionsEnabled?: boolean;
   customOptionKeys?: string[];
   customOptionNote?: string;
+  variants?: VariantPayload[];
 }
 
 export interface PresignedUrlResult {
@@ -70,6 +96,28 @@ export interface PresignedUrlResult {
 }
 
 // ─── Mapper ───────────────────────────────────────────────
+
+// Older option rows ("Size" / "XL") open as a version labelled by their value, so editing converts them.
+function mapVariant(
+  variant: ApiProductVariant,
+  productPrice: number,
+): ProductVariant {
+  const legacyValue = variant.value?.trim();
+  return {
+    id: variant.id,
+    name: legacyValue || variant.name,
+    size:
+      variant.size ??
+      (legacyValue && /size/i.test(variant.name) ? legacyValue : undefined),
+    color:
+      variant.color ??
+      (legacyValue && /colou?r/i.test(variant.name) ? legacyValue : undefined),
+    sku: variant.sku ?? undefined,
+    imageUrl: variant.imageUrl ?? undefined,
+    price: productPrice + (variant.priceDelta ?? 0),
+    stock: variant.stock ?? 0,
+  };
+}
 
 function mapProduct(p: ApiProduct): Product {
   const stock = p.stock ?? 0;
@@ -94,6 +142,7 @@ function mapProduct(p: ApiProduct): Product {
     customOptionsEnabled: p.customOptionsEnabled ?? false,
     customOptionKeys: p.customOptionKeys ?? [],
     customOptionNote: p.customOptionNote ?? "",
+    variants: (p.variants ?? []).map((variant) => mapVariant(variant, p.price)),
   };
 }
 
