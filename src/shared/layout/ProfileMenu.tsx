@@ -14,9 +14,8 @@ import {
   Moon,
   PlayCircle,
   Settings,
-  Shield,
   Sun,
-  User,
+  User
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNextStep } from "nextstepjs";
@@ -144,12 +143,6 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
           icon={Settings}
           label="Workspace settings"
           onClick={() => go("/settings")}
-          disabled={isLoggingOut}
-        />
-        <ProfRow
-          icon={Shield}
-          label="Team & Access"
-          onClick={() => go("/admin")}
           disabled={isLoggingOut}
         />
         <ProfRow
