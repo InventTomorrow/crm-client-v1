@@ -1,15 +1,15 @@
 'use client';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from '@/shared/ui/form';
-import { forgotPasswordSchema, type ForgotPasswordData } from '../types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, CheckCircle, Loader2, Mail } from 'lucide-react';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
 import { useForgotPassword } from '../hooks/useAuth';
+import { forgotPasswordSchema, type ForgotPasswordData } from '../types';
 
 export function ForgotPasswordView() {
   const { mutate, isPending, isSuccess } = useForgotPassword();
@@ -32,7 +32,7 @@ export function ForgotPasswordView() {
             <CheckCircle size={40} className="text-[#22C55E]" />
             <h1 className="text-[20px] font-semibold text-[var(--ink)]">Check your email</h1>
             <p className="text-[13px] text-[var(--ink-mute)]">
-              We sent a password reset link to your email. It expires in 1 hour.
+              If an account exists for that email, we sent a password reset link. It expires in 30 minutes.
             </p>
             <Button variant="outline" asChild className="mt-2">
               <Link href="/auth/login">
