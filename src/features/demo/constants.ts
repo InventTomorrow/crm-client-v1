@@ -1,11 +1,13 @@
-import { Inbox, Users, ShoppingCart, Package, type LucideIcon } from "lucide-react";
+import { Inbox, Package, ShoppingCart, Users, type LucideIcon } from "lucide-react";
 
-/**
- * Source for the product walkthrough video. Drop an mp4 into `client/public`
- * (e.g. `/demo.mp4`) or swap in a hosted URL — the player falls back to a
- * placeholder while this is empty.
- */
-export const DEMO_VIDEO_SRC = "/demo/crm-demo.mp4";
+export const FULL_DEMO_VIDEO_ID = "jVZOaJFXTk4";
+export const FULL_DEMO_VIDEO_TITLE =
+  "AsaanRabta WhatsApp CRM full demo: shared inbox, lead tracking, order booking and inventory sync";
+
+export const CRM_OVERVIEW_VIDEO_ID = "UJLp1V5x-zg";
+export const CRM_OVERVIEW_VIDEO_THUMBNAIL = "/demo/thumbnail-crm-summary-video.png";
+export const CRM_OVERVIEW_VIDEO_TITLE =
+  "AsaanRabta WhatsApp CRM overview: manage leads, orders and customer chats in one dashboard";
 
 /** localStorage key that triggers the welcome dialog once, right after onboarding. */
 export const SHOW_DEMO_FLAG = "asaanrabta_show_demo";
