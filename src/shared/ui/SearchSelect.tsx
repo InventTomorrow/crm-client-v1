@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import {
   Command,
   CommandEmpty,
@@ -10,7 +12,7 @@ import {
   CommandList,
 } from "@/shared/ui/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/Popover";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export interface SearchSelectOption {
@@ -27,6 +29,11 @@ export interface SearchSelectProps {
   emptyMessage?: string;
   disabled?: boolean;
   clearable?: boolean;
+  /** Adds a labelled row at the top of the list that clears the selection — clearer than the trigger's small ×. */
+  clearOptionLabel?: string;
+  /** Adds a footer button that opens an input for a value not in the list. */
+  customValueLabel?: string;
+  customValuePlaceholder?: string;
   className?: string;
   /** Renders a "Create <query>" row so users can commit values not in the list. */
   creatable?: boolean;
@@ -60,6 +67,9 @@ export function SearchSelect({
   emptyMessage = "No results found.",
   disabled = false,
   clearable = true,
+  clearOptionLabel,
+  customValueLabel,
+  customValuePlaceholder,
   className,
   creatable = false,
   createLabel = (query) => `Create "${query}"`,
@@ -67,6 +77,8 @@ export function SearchSelect({
 }: SearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [isAddingCustomValue, setIsAddingCustomValue] = useState(false);
+  const [customValue, setCustomValue] = useState("");
 
   const normalizedOptions = useMemo(() => normalizeOptions(options), [options]);
   const selected = normalizedOptions.find((option) => option.value === value);
@@ -80,14 +92,35 @@ export function SearchSelect({
       (option) => option.label.toLowerCase() === trimmedQuery.toLowerCase(),
     );
 
+  const closeCustomValueInput = () => {
+    setIsAddingCustomValue(false);
+    setCustomValue("");
+  };
+
   const commit = (nextValue: string) => {
     onChange(nextValue);
     setQuery("");
+    closeCustomValueInput();
     setOpen(false);
   };
 
+  // A typed "xl" reuses the listed "XL", so the same value never exists twice in two spellings.
+  const commitCustomValue = () => {
+    const typedValue = customValue.trim();
+    if (!typedValue) return;
+    const listedOption = normalizedOptions.find(
+      (option) => option.label.toLowerCase() === typedValue.toLowerCase(),
+    );
+    commit(listedOption?.value ?? typedValue);
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) closeCustomValueInput();
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         {/* Styled to match SelectTrigger — same height, border and focus ring —
             so it sits level with Input/Select in a shared form row. */}
@@ -148,6 +181,16 @@ export function SearchSelect({
           <CommandList>
             {!showCreate && <CommandEmpty>{emptyMessage}</CommandEmpty>}
             <CommandGroup>
+              {clearOptionLabel && value && !disabled && (
+                <CommandItem
+                  value={clearOptionLabel}
+                  onSelect={() => commit("")}
+                  className="text-muted-foreground"
+                >
+                  <X className="size-4" />
+                  {clearOptionLabel}
+                </CommandItem>
+              )}
               {normalizedOptions.map((option) => (
                 <CommandItem
                   key={option.value}
@@ -175,6 +218,50 @@ export function SearchSelect({
             </CommandGroup>
           </CommandList>
         </Command>
+        {/* Outside <Command>, so cmdk's list keyboard handling never swallows the input's keys. */}
+        {customValueLabel && (
+          <div className="border-t p-1">
+            {isAddingCustomValue ? (
+              <div className="flex items-center gap-1.5 p-1">
+                <Input
+                  autoFocus
+                  className="h-8"
+                  placeholder={customValuePlaceholder}
+                  value={customValue}
+                  onChange={(event) => setCustomValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    // Inside a form, Enter would otherwise submit it.
+                    event.preventDefault();
+                    commitCustomValue();
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  onClick={commitCustomValue}
+                  disabled={!customValue.trim()}
+                  title={customValueLabel}
+                  aria-label={customValueLabel}
+                >
+                  <Check className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => setIsAddingCustomValue(true)}
+              >
+                <Plus className="size-4" />
+                {customValueLabel}
+              </Button>
+            )}
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
