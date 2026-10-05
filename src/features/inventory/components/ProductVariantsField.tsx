@@ -1,9 +1,11 @@
 "use client";
+import { getImageUrl } from "@/lib/utils";
 import { useElementHeight } from "@/shared/hooks/useElementHeight";
 import { Button } from "@/shared/ui/Button";
 import { FileUpload } from "@/shared/ui/FileUpload";
 import { Input } from "@/shared/ui/Input";
 import { SearchSelect } from "@/shared/ui/SearchSelect";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   FormControl,
   FormField,
@@ -36,6 +38,8 @@ export function ProductVariantsField({
   form,
   fields,
   sizeOptions,
+  coverImageUrl,
+  skuSuggestions,
   onAppend,
   onRemove,
   onImageChange,
@@ -44,6 +48,8 @@ export function ProductVariantsField({
   form: ProductForm;
   fields: FieldArrayWithId<ProductFormInput, "variants">[];
   sizeOptions: string[];
+  coverImageUrl?: string;
+  skuSuggestions: (string | undefined)[];
   onAppend: () => void;
   onRemove: (index: number) => void;
   onImageChange: (index: number, url: string | null) => void;
@@ -86,6 +92,8 @@ export function ProductVariantsField({
           form={form}
           index={index}
           sizeOptions={sizeOptions}
+          coverImageUrl={coverImageUrl}
+          skuSuggestion={skuSuggestions[index]}
           onUpload={uploadVariantImage}
           onRemove={() => onRemove(index)}
           onImageChange={(url) => onImageChange(index, url)}
@@ -100,6 +108,8 @@ function ProductVariantCard({
   form,
   index,
   sizeOptions,
+  coverImageUrl,
+  skuSuggestion,
   onUpload,
   onRemove,
   onImageChange,
@@ -108,6 +118,8 @@ function ProductVariantCard({
   form: ProductForm;
   index: number;
   sizeOptions: string[];
+  coverImageUrl?: string;
+  skuSuggestion?: string;
   onUpload: (file: File) => Promise<string>;
   onRemove: () => void;
   onImageChange: (url: string | null) => void;
@@ -125,6 +137,7 @@ function ProductVariantCard({
   const photoSizeStyle = {
     "--variant-photo-size": `${fieldsHeight ?? FALLBACK_PHOTO_SIZE}px`,
   } as CSSProperties;
+  const showsCoverFallback = !variant?.imageUrl && Boolean(coverImageUrl);
 
   return (
     <div
@@ -149,6 +162,20 @@ function ProductVariantCard({
           className="h-full [&>div:first-child]:h-full"
           disabled={disabled}
         />
+        {/* Click-through, so the drop zone underneath still takes a click or a dropped file. */}
+        {showsCoverFallback && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+            <ShimmerImage
+              src={getImageUrl(coverImageUrl)}
+              alt=""
+              wrapperClassName="absolute inset-0"
+              className="h-full w-full object-cover opacity-35"
+            />
+            <span className="absolute inset-x-1.5 bottom-1.5 truncate rounded-md bg-[var(--surface-2)]/90 px-1.5 py-0.5 text-center text-[10px] font-medium text-[var(--ink-soft)]">
+              Product photo
+            </span>
+          </div>
+        )}
       </div>
 
       {/* self-start: measured at its own height, never stretched to the photo's. */}
@@ -186,6 +213,9 @@ function ProductVariantCard({
                     placeholder="Select"
                     searchPlaceholder="Search or type a size…"
                     emptyMessage="Type to add your own size."
+                    clearOptionLabel="Clear size"
+                    customValueLabel="Add custom size"
+                    customValuePlaceholder="e.g. 500g, 12 inch"
                     creatable
                     disabled={disabled}
                     className="h-10"
@@ -266,7 +296,7 @@ function ProductVariantCard({
                 <FormLabel className={FIELD_LABEL_CLASS}>SKU</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="LWN-ML"
+                    placeholder={skuSuggestion ?? "Optional"}
                     {...field}
                     value={field.value ?? ""}
                     disabled={disabled}

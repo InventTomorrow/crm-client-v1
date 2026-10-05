@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import {
@@ -22,17 +22,19 @@ import {
   useProducts,
   useUpdateProduct,
 } from "./useProducts";
+import { getSuggestedVariantSkus, getVariantTotals } from "../utils/variants";
 
 type SavedVariant = ProductFormData["variants"][number];
 
 const EMPTY_VARIANT = {
   name: "",
   size: "",
-  color: "",
   sku: "",
   imageUrl: "",
-  stock: "",
-} satisfies Omit<ProductVariantFormInput, "price">;
+} satisfies Omit<ProductVariantFormInput, "price" | "stock" | "color">;
+
+const toInputValue = (value: unknown): string =>
+  value === undefined || value === null ? "" : String(value);
 
 const toVariantFormValues = (
   variant: ProductVariant,
@@ -63,17 +65,20 @@ const toVariantPayloads = (
   variants: SavedVariant[],
   basePrice: number,
   productName: string,
-): VariantPayload[] =>
-  variants.map((variant) => ({
+  productSku: string | undefined,
+): VariantPayload[] => {
+  const suggestedSkus = getSuggestedVariantSkus(productSku, variants);
+  return variants.map((variant, index) => ({
     ...(variant.id ? { id: variant.id } : {}),
     name: getVariantLabel(variant, productName),
     size: variant.size || undefined,
     color: variant.color || undefined,
-    sku: variant.sku || undefined,
+    sku: variant.sku || suggestedSkus[index],
     imageUrl: variant.imageUrl || undefined,
     priceDelta: Math.round((variant.price - basePrice) * 100) / 100,
     stock: variant.stock,
   }));
+};
 
 const INITIAL_FORM_VALUES = {
   name: "",
@@ -186,7 +191,10 @@ export function useProductForm(productId?: string) {
     control: form.control,
     name: "variants",
   });
+  // Price, stock and colour typed on the product before it had variants — every new variant starts from them.
+  const typedProductDefaultsRef = useRef({ price: "", stock: "", color: "" });
   const watchedVariants = useWatch({ control: form.control, name: "variants" });
+  const watchedSku = useWatch({ control: form.control, name: "sku" });
   const hasVariants = (watchedVariants?.length ?? 0) > 0;
   const variantSizeOptions = useMemo(
     () =>
@@ -195,29 +203,30 @@ export function useProductForm(productId?: string) {
       ]),
     [selectedCategory],
   );
+  const variantTotals = useMemo(
+    () => getVariantTotals(watchedVariants ?? []),
+    [watchedVariants],
+  );
+  const variantSkuSuggestions = useMemo(
+    () => getSuggestedVariantSkus(watchedSku, watchedVariants ?? []),
+    [watchedSku, watchedVariants],
+  );
 
   // With variants, price and stock are no longer typed by hand: the cheapest
   // variant sets the price, and stock is what all of them hold together.
   useEffect(() => {
-    if (!hasVariants || !watchedVariants) return;
-    const prices = watchedVariants
-      .map((variant) => Number(variant?.price))
-      .filter((price) => price > 0);
-    if (prices.length) {
-      form.setValue("price", String(Math.min(...prices)), {
+    if (!hasVariants) return;
+    if (variantTotals.minPrice !== null) {
+      form.setValue("price", String(variantTotals.minPrice), {
         shouldDirty: true,
         shouldValidate: true,
       });
     }
-    const totalStock = watchedVariants.reduce(
-      (sum, variant) => sum + (Number(variant?.stock) || 0),
-      0,
-    );
-    form.setValue("stock", String(totalStock), {
+    form.setValue("stock", String(variantTotals.totalStock), {
       shouldDirty: true,
       shouldValidate: true,
     });
-  }, [watchedVariants, hasVariants, form]);
+  }, [variantTotals, hasVariants, form]);
 
   const isSaving = addProduct.isPending || updateProduct.isPending;
   const isDeleting = deleteProduct.isPending;
@@ -304,11 +313,20 @@ export function useProductForm(productId?: string) {
   );
 
   const appendVariant = useCallback(() => {
-    const currentPrice = form.getValues("price");
+    // Once variants exist the product fields turn into auto totals, so the hand-typed values are captured first.
+    if (variantFields.fields.length === 0) {
+      typedProductDefaultsRef.current = {
+        price: toInputValue(form.getValues("price")),
+        stock: toInputValue(form.getValues("stock")),
+        color: toInputValue(form.getValues("color")).trim(),
+      };
+    }
+    const { price, stock, color } = typedProductDefaultsRef.current;
     variantFields.append({
       ...EMPTY_VARIANT,
-      // Seeded from the product price so the first row starts sensible.
-      price: currentPrice === undefined ? "" : String(currentPrice),
+      price: price || toInputValue(form.getValues("price")),
+      stock,
+      color,
     });
   }, [form, variantFields]);
 
@@ -338,10 +356,11 @@ export function useProductForm(productId?: string) {
       category: data.cat || undefined,
       sizes: hasSavedVariants ? getVariantSizes(variants) : (data.sizes ?? []),
       gender: data.gender || undefined,
-      color: data.color || undefined,
+      // Colours live on the variants now; a leftover product colour would tell the assistant a second, wrong one.
+      color: hasSavedVariants ? "" : data.color || undefined,
       imageUrls,
       // Sent even when empty, so removing the last variant clears it on the server.
-      variants: toVariantPayloads(variants, basePrice, data.name),
+      variants: toVariantPayloads(variants, basePrice, data.name, data.sku),
       customOptionsEnabled: data.customOptionsEnabled,
       // Cleared when the switch is off, so a disabled product can't quietly
       // keep options that the listing badge would still count.
@@ -393,6 +412,8 @@ export function useProductForm(productId?: string) {
     customOptionsEnabled,
     variantFields,
     hasVariants,
+    variantTotals,
+    variantSkuSuggestions,
     variantSizeOptions,
     appendVariant,
     removeVariant,
