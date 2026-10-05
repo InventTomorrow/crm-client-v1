@@ -83,7 +83,7 @@ export function CreateApiKeyDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="flex w-full min-w-0 items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2">
-              <code className="min-w-0 flex-1 truncate text-[12.5px]">
+              <code className="min-w-0 flex-1 truncate font-mono text-[13px]">
                 {revealed
                   ? createdKey.key
                   : `${createdKey.keyPrefix}${"•".repeat(24)}`}
@@ -120,9 +120,8 @@ export function CreateApiKeyDialog({
             <DialogHeader>
               <DialogTitle>New API key</DialogTitle>
               <DialogDescription>
-                Sandbox keys are for testing your integration; they never notify
-                real customers. Live keys create real orders and send real
-                WhatsApp/email receipts.
+                Sandbox keys are for testing — their orders are flagged as
+                sandbox orders. Live keys create real orders.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -158,11 +157,11 @@ export function CreateApiKeyDialog({
                           onValueChange={field.onChange}
                           className="flex gap-4"
                         >
-                          <label className="flex items-center gap-2 text-[13px]">
+                          <label className="flex items-center gap-2 text-sm">
                             <RadioGroupItem value="SANDBOX" />
                             Sandbox
                           </label>
-                          <label className="flex items-center gap-2 text-[13px]">
+                          <label className="flex items-center gap-2 text-sm">
                             <RadioGroupItem value="LIVE" />
                             Live
                           </label>

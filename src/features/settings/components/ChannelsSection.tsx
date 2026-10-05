@@ -1,6 +1,6 @@
 "use client";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
-import { OrderApiCard } from "@/features/channels/apiKey/components/OrderApiCard";
+import { WebsiteApiCard } from "@/features/channels/apiKey/components/WebsiteApiCard";
 import { useWAStatus } from "@/features/channels/whatsapp/hooks/useWhatsApp";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
@@ -76,7 +76,7 @@ export function ChannelsSection() {
         )}
       </div>
 
-      <OrderApiCard />
+      <WebsiteApiCard />
 
       <WAConnectDialog
         open={isConnectDialogOpen}

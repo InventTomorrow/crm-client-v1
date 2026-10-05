@@ -237,6 +237,15 @@
   --warning-foreground: var(--color-yellow-900);
   --invert: var(--color-zinc-900);
   --invert-foreground: var(--color-zinc-50);
+
+  /* Syntax highlighting — read by CopyableCode so code blocks follow the theme class without JS. */
+  --code-text: var(--ink);
+  --code-key: oklch(0.48 0.16 255);
+  --code-string: oklch(0.5 0.12 155);
+  --code-number: oklch(0.56 0.15 50);
+  --code-keyword: oklch(0.53 0.2 20);
+  --code-punctuation: var(--ink-soft);
+  --code-comment: var(--ink-mute);
 }
 
 /* Dark Mode Overrides — WhatsApp dark palette */
@@ -268,6 +277,11 @@ html.dark {
   --shadow-2: 0 4px 14px oklch(0 0 0 / 0.55);
   --shadow-3: 0 16px 40px oklch(0 0 0 / 0.7);
   --shadow-pop: 0 24px 56px oklch(0 0 0 / 0.75);
+
+  --code-key: #79c0ff;
+  --code-string: #a5d6ff;
+  --code-number: #ffa657;
+  --code-keyword: #ff7b72;
 }
 
 * {

@@ -57,6 +57,8 @@ const ROUTE_CAPABILITIES: { prefix: string; capability: VerticalCapability }[] =
   { prefix: "/bookings/clinical", capability: "CATALOG_CLINICAL" },
   { prefix: "/bookings/doctors", capability: "PRACTITIONERS" },
   { prefix: "/resources", capability: "RESOURCES" },
+  // Mirrors the server: API keys are ORDERS-gated, so every Website API page is too.
+  { prefix: "/channels/api", capability: "ORDERS" },
   { prefix: "/channels/order-api", capability: "ORDERS" },
 ];
 

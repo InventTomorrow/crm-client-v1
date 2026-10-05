@@ -41,7 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 
-# documents
-docs/
+# documents — root folder only; a bare `docs` also hid source folders from git and Tailwind's class scan
 /docs
-docs
