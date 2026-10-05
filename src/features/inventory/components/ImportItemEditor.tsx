@@ -22,7 +22,7 @@ import type { z } from "zod";
 import { usePresignedUpload } from "../hooks/useProducts";
 import type { BulkItem, ProductFormData } from "../types";
 import { CATEGORIES, GENDERS, productSchema } from "../types";
-import { ImageLinkField } from "./ImageLinkField";
+import { PhotoSourceField } from "./PhotoSourceField";
 import { SizeSelector } from "./SizeSelector";
 
 /** Radio groups have no empty value, so "no gender set" needs a stand-in. */
@@ -52,10 +52,12 @@ export function ImportItemEditor({
     phase,
   } = usePresignedUpload();
 
-  const form = useForm<z.input<typeof productSchema>, unknown, ProductFormData>({
-    resolver: zodResolver(productSchema),
-    defaultValues: toFormValues(item),
-  });
+  const form = useForm<z.input<typeof productSchema>, unknown, ProductFormData>(
+    {
+      resolver: zodResolver(productSchema),
+      defaultValues: toFormValues(item),
+    },
+  );
 
   const selectedCategory = useWatch({ control: form.control, name: "cat" });
   const watchedPrice = useWatch({ control: form.control, name: "price" });
@@ -83,7 +85,11 @@ export function ImportItemEditor({
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="flex w-full shrink-0 flex-col gap-1.5 sm:w-[180px]">
+          <PhotoSourceField
+            onLinkSubmit={setImageUrl}
+            disabled={isUploading}
+            className="w-full shrink-0 sm:w-[180px]"
+          >
             <FileUpload
               value={imageUrl || null}
               onChange={(url) => setImageUrl(url ?? "")}
@@ -97,8 +103,7 @@ export function ImportItemEditor({
               title="Add a photo"
               description="Drop it here, or click to browse"
             />
-            <ImageLinkField onSubmit={setImageUrl} disabled={isUploading} />
-          </div>
+          </PhotoSourceField>
 
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <FormField
