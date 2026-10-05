@@ -1,11 +1,6 @@
-import { OrderApiView } from '@/features/channels/apiKey/components/OrderApiView';
-import type { Metadata } from 'next';
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: 'Website Orders API',
-  description: 'Manage API keys, read setup docs, and test the external order API',
-};
-
+// Old single-page URL — kept so bookmarks and existing links still land somewhere.
 export default function OrderApiPage() {
-  return <div className="h-full overflow-y-auto"><OrderApiView /></div>;
+  redirect("/channels/api/keys");
 }
