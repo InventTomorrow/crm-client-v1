@@ -5,28 +5,28 @@
 // files don't need to change. The original hand-built HTML mockups live in
 // ./legacy.tsx for later reuse.
 
+import { DemoPlayer } from "@/features/demo/components/DemoPlayer";
+import {
+  CRM_OVERVIEW_VIDEO_ID,
+  CRM_OVERVIEW_VIDEO_THUMBNAIL,
+  CRM_OVERVIEW_VIDEO_TITLE,
+} from "@/features/demo/constants";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
 const ASSET = "/landing-page-assests";
 
 /* ------------------------------------------------------------------ */
-/*  Hero — Leads pipeline dashboard                                    */
+/*  Hero — CRM summary video                                           */
 /* ------------------------------------------------------------------ */
 export function HeroDashboardMockup() {
   return (
-    <div className="relative rounded-xl sm:rounded-2xl border border-gray-100 shadow-dashboard overflow-hidden aspect-[899/396]">
-      <Image
-        src={`${ASSET}/1.png`}
-        alt="AsaanRabta leads pipeline dashboard"
-        loading="eager"
-        fill
-        sizes="(max-width: 940px) 100vw, 900px"
-        quality={100}
-        className="object-cover"
-        priority
-      />
-    </div>
+    <DemoPlayer
+      videoId={CRM_OVERVIEW_VIDEO_ID}
+      title={CRM_OVERVIEW_VIDEO_TITLE}
+      thumbnailSrc={CRM_OVERVIEW_VIDEO_THUMBNAIL}
+      className="sm:rounded-2xl shadow-dashboard"
+    />
   );
 }
 
