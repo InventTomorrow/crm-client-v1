@@ -7,17 +7,19 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { extractErrorMessage } from '@/lib/utils';
+import { downloadBlob, extractErrorMessage } from '@/lib/utils';
 import {
   createOrder,
   deleteOrder,
+  exportOrdersCsv,
   getOrder,
   getOrders,
   getOrdersSummary,
+  importOrdersCsv,
   updateOrder,
   updateOrderStatus,
 } from '../services/ordersService';
-import type { OrderFilters, OrderStatus } from '../types';
+import type { OrderExportParams, OrderFilters, OrderStatus } from '../types';
 import type { OrderFormValues } from '../validations.order';
 
 const PAGE_SIZE = 25;
@@ -136,6 +138,34 @@ export function useDeleteOrder() {
       invalidateAll(qc);
     },
     onError: (e) => toast.error(extractErrorMessage(e, 'Failed to delete order')),
+  });
+}
+
+export function useExportOrders() {
+  return useMutation({
+    mutationFn: async ({ filename, ...params }: OrderExportParams & { filename: string }) =>
+      downloadBlob(await exportOrdersCsv(params), `${filename}.csv`),
+    onError: (e) => toast.error(extractErrorMessage(e, 'Failed to export orders')),
+  });
+}
+
+/** Dry run: validates the CSV and reports what would be imported, without saving. */
+export function usePreviewOrdersImport() {
+  return useMutation({
+    mutationFn: (csv: string) => importOrdersCsv({ csv, dryRun: true }),
+    onError: (e) => toast.error(extractErrorMessage(e, 'Could not read the CSV')),
+  });
+}
+
+export function useCommitOrdersImport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (csv: string) => importOrdersCsv({ csv, dryRun: false }),
+    onSuccess: ({ counts }) => {
+      toast.success(`Imported ${counts.created} order${counts.created === 1 ? '' : 's'}`);
+      invalidateAll(qc);
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, 'Failed to import orders')),
   });
 }
 

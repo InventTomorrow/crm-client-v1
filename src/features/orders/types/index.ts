@@ -147,3 +147,32 @@ export interface OrderFilters {
   dateTo?: string;
   hasCustomization?: boolean;
 }
+
+/** Server caps a selected-rows export; clear the selection to export every matching order. */
+export const MAX_EXPORT_SELECTED_ORDERS = 250;
+
+export type OrderExportParams = OrderFilters & { ids?: string[] };
+
+/** Matches the server's CSV size cap, which keeps the JSON body under its 1mb limit. */
+export const MAX_ORDER_IMPORT_FILE_BYTES = 750_000;
+
+export const ORDER_IMPORT_STATUSES = ['ready', 'duplicate', 'invalid', 'created', 'failed'] as const;
+export type OrderImportStatus = (typeof ORDER_IMPORT_STATUSES)[number];
+
+/** One order (one or more CSV rows sharing an order_number) from an import preview or run. */
+export interface OrderImportOutcome {
+  orderNumber: string;
+  rowNumbers: number[];
+  customerName: string | null;
+  customerContact: string | null;
+  itemCount: number;
+  total: number | null;
+  currency: string | null;
+  status: OrderImportStatus;
+  errors: string[];
+}
+
+export interface OrderImportResult {
+  orders: OrderImportOutcome[];
+  counts: Record<OrderImportStatus, number>;
+}
