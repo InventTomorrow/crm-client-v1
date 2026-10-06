@@ -312,6 +312,16 @@ export function useProductForm(productId?: string) {
     [form, discardIfUnsaved],
   );
 
+  // A linked photo lives on someone else's host, so it is never tracked for deletion — same as the cover's.
+  const setLinkedVariantImage = useCallback(
+    (index: number, url: string) => {
+      const replaced = form.getValues(`variants.${index}.imageUrl`);
+      if (replaced !== url) discardIfUnsaved(replaced);
+      form.setValue(`variants.${index}.imageUrl`, url, { shouldDirty: true });
+    },
+    [form, discardIfUnsaved],
+  );
+
   const appendVariant = useCallback(() => {
     // Once variants exist the product fields turn into auto totals, so the hand-typed values are captured first.
     if (variantFields.fields.length === 0) {
@@ -418,5 +428,6 @@ export function useProductForm(productId?: string) {
     appendVariant,
     removeVariant,
     setVariantImage,
+    setLinkedVariantImage,
   };
 }

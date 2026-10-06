@@ -67,6 +67,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
     appendVariant,
     removeVariant,
     setVariantImage,
+    setLinkedVariantImage,
   } = useProductForm(productId);
 
   // Only an actual save/delete disables the fields — an in-flight photo upload
@@ -432,6 +433,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                 onAppend={appendVariant}
                 onRemove={removeVariant}
                 onImageChange={setVariantImage}
+                onImageLink={setLinkedVariantImage}
                 disabled={busy}
               />
             </div>
