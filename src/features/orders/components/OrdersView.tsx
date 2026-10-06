@@ -26,6 +26,7 @@ import {
   Plus,
   Search,
   StickyNote,
+  Upload,
   Wallet,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -33,6 +34,7 @@ import { toast } from "sonner";
 import {
   useCreateOrder,
   useDeleteOrder,
+  useExportOrders,
   useOrders,
   useOrdersSummary,
   useRefreshOrders,
@@ -41,18 +43,24 @@ import {
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
 import { getOrder } from "../services/ordersService";
 import {
+  MAX_EXPORT_SELECTED_ORDERS,
   ORDER_STATUS_OPTIONS,
   type Order,
   type OrderFilters,
   type OrderListItem,
   type OrderStatus,
 } from "../types";
-import { downloadOrdersCsv } from "../utils/exportOrdersCsv";
 import { OrderDetailSheet } from "./OrderDetailSheet";
 import { OrderForm } from "./OrderForm";
 import { OrderPlatformBadge } from "./OrderPlatformBadge";
 import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
+import { OrdersImportDialog } from "./OrdersImportDialog";
+
+/** Selected rows export by id; null ids exports every order matching the current filters. */
+interface OrdersExportScope {
+  selectedOrderIds: string[] | null;
+}
 
 export function OrdersView() {
   const { search, searchInput, setSearchInput } = useDebouncedUrlSearch("q");
@@ -80,8 +88,9 @@ export function OrdersView() {
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<OrderListItem[]>(
     [],
   );
-  const [exportRows, setExportRows] = useState<OrderListItem[]>([]);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [ordersExportScope, setOrdersExportScope] =
+    useState<OrdersExportScope | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const { can } = usePermissions();
   const {
     openLeadChat,
@@ -97,6 +106,7 @@ export function OrdersView() {
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
   const deleteOrder = useDeleteOrder();
+  const exportOrders = useExportOrders();
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
@@ -282,14 +292,31 @@ export function OrdersView() {
     [loadAndEditOrder, openCustomerChat, verifyingLeadId, openingChatOrderId],
   );
 
-  // The CSV is built client-side from rows already fetched, so hiding the
-  // control is the only place orders:export can be enforced.
   const canExportOrders = can("orders:export");
 
-  const openExport = (rows: OrderListItem[]) => {
-    setExportRows(rows);
-    setExportOpen(true);
+  const openSelectedExport = (selectedOrders: OrderListItem[]) => {
+    if (selectedOrders.length > MAX_EXPORT_SELECTED_ORDERS) {
+      toast.error(
+        `Select up to ${MAX_EXPORT_SELECTED_ORDERS} orders, or clear the selection to export every matching order`,
+      );
+      return;
+    }
+    setOrdersExportScope({
+      selectedOrderIds: selectedOrders.map((order) => order.id),
+    });
   };
+
+  const exportOrdersCsv = (filename: string) =>
+    exportOrders
+      .mutateAsync({
+        ...filters,
+        ...(ordersExportScope?.selectedOrderIds
+          ? { ids: ordersExportScope.selectedOrderIds }
+          : {}),
+        filename,
+      })
+      // The hook already toasts the failure; swallow so the dialog can close.
+      .catch(() => undefined);
 
   return (
     <div className="w-full p-4">
@@ -311,6 +338,9 @@ export function OrdersView() {
             label="Refresh orders"
           />
           <PermissionGuard permission="orders:create">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <Upload size={15} /> Import
+            </Button>
             <Button onClick={openCreate}>
               <Plus size={15} /> New order
             </Button>
@@ -350,7 +380,7 @@ export function OrdersView() {
         isLoading={isLoading}
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
-        onExport={canExportOrders ? openExport : undefined}
+        onExport={canExportOrders ? openSelectedExport : undefined}
         showExportAll={false}
         onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
         emptyMessage="No orders yet."
@@ -413,7 +443,9 @@ export function OrdersView() {
               <Button
                 variant="outline"
                 className="h-10 md:ml-auto"
-                onClick={() => openExport(orders as OrderListItem[])}
+                onClick={() =>
+                  setOrdersExportScope({ selectedOrderIds: null })
+                }
                 disabled={orders.length === 0}
               >
                 <Download size={13} /> Export
@@ -500,12 +532,21 @@ export function OrdersView() {
       />
 
       <ExportDialog
-        open={exportOpen}
-        onClose={() => setExportOpen(false)}
-        onConfirm={(name) => downloadOrdersCsv(exportRows, name)}
+        open={!!ordersExportScope}
+        onClose={() => setOrdersExportScope(null)}
+        onConfirm={exportOrdersCsv}
         defaultName={`orders_export_${new Date().toISOString().split("T")[0]}`}
-        count={exportRows.length}
-        title="Export orders"
+        count={ordersExportScope?.selectedOrderIds?.length}
+        title={
+          ordersExportScope?.selectedOrderIds
+            ? "Export selected orders"
+            : "Export all matching orders"
+        }
+      />
+
+      <OrdersImportDialog
+        open={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
       />
 
       <ConfirmDialog

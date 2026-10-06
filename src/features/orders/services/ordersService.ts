@@ -1,5 +1,14 @@
 import { apiClient } from '@/lib/apiClient';
-import type { Order, OrderFilters, OrderListItem, OrderStatus, OrdersSummary } from '../types';
+import { isAxiosError } from 'axios';
+import type {
+  Order,
+  OrderExportParams,
+  OrderFilters,
+  OrderImportResult,
+  OrderListItem,
+  OrderStatus,
+  OrdersSummary,
+} from '../types';
 import type { OrderFormValues } from '../validations.order';
 
 export async function getOrders(params: OrderFilters & { cursor?: string; limit?: number }) {
@@ -44,4 +53,39 @@ export async function updateOrderStatus(
 export async function deleteOrder(id: string) {
   const res = await apiClient.delete(`/orders/${id}`);
   return res.data;
+}
+
+// A blob request also receives its JSON error body as a blob; parse it so the API message reaches the toast.
+async function withParsedBlobError(error: unknown): Promise<unknown> {
+  if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) return error;
+  try {
+    error.response.data = JSON.parse(await error.response.data.text());
+  } catch {
+    // Not JSON — leave the generic message in place.
+  }
+  return error;
+}
+
+export async function exportOrdersCsv({ ids, ...filters }: OrderExportParams): Promise<Blob> {
+  try {
+    const res = await apiClient.get<Blob>('/orders/export', {
+      params: {
+        ...filters,
+        ...(ids?.length ? { ids: ids.join(',') } : {}),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      responseType: 'blob',
+    });
+    return res.data;
+  } catch (error) {
+    throw await withParsedBlobError(error);
+  }
+}
+
+export async function importOrdersCsv(payload: { csv: string; dryRun: boolean }) {
+  const res = await apiClient.post<{ success: true; data: OrderImportResult }>(
+    '/orders/import',
+    payload,
+  );
+  return res.data.data;
 }
