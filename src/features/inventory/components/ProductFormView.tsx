@@ -1,6 +1,6 @@
 "use client";
 import { ProductCustomOptions } from "@/features/product-custom-options/components/ProductCustomOptions";
-import { pkr } from "@/lib/utils";
+import { cn, pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { FileUpload } from "@/shared/ui/FileUpload";
@@ -22,8 +22,9 @@ import { useRouter } from "next/navigation";
 import { useProductForm } from "../hooks/useProductForm";
 import { usePresignedUpload } from "../hooks/useProducts";
 import { GENDERS } from "../types";
-import { ImageLinkField } from "./ImageLinkField";
+import { describeVariantStock, formatPriceRange } from "../utils/variants";
 import { ProductFormSkeleton } from "./InventorySkeletons";
+import { PhotoSourceField } from "./PhotoSourceField";
 import { ProductVariantsField } from "./ProductVariantsField";
 import { SizeSelector } from "./SizeSelector";
 
@@ -60,10 +61,13 @@ export function ProductFormView({ productId }: { productId?: string }) {
     customOptionsEnabled,
     variantFields,
     hasVariants,
+    variantTotals,
+    variantSkuSuggestions,
     variantSizeOptions,
     appendVariant,
     removeVariant,
     setVariantImage,
+    setLinkedVariantImage,
   } = useProductForm(productId);
 
   // Only an actual save/delete disables the fields — an in-flight photo upload
@@ -146,7 +150,12 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  className={cn(
+                    "grid grid-cols-1 gap-2.5 sm:grid-cols-2",
+                    !hasVariants && "lg:grid-cols-3",
+                  )}
+                >
                   <FormField
                     control={form.control}
                     name="sku"
@@ -184,22 +193,24 @@ export function ProductFormView({ productId }: { productId?: string }) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Maroon"
-                            {...field}
-                            disabled={busy}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  {!hasVariants && (
+                    <FormField
+                      control={form.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Color</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Maroon"
+                              {...field}
+                              disabled={busy}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
                 <FormField
                   control={form.control}
@@ -231,34 +242,36 @@ export function ProductFormView({ productId }: { productId?: string }) {
                   )}
                 />
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {hasVariants ? "Price (auto)" : "Price *"}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="8999"
-                            {...field}
-                            value={field.value ?? ""}
-                            readOnly={hasVariants}
-                            disabled={busy || hasVariants}
-                          />
-                        </FormControl>
-                        {hasVariants ? (
-                          <p className="text-xs text-muted-foreground">
-                            Set by the cheapest variant.
-                          </p>
-                        ) : (
+                  {hasVariants ? (
+                    <AutoValueField
+                      label="Price"
+                      value={formatPriceRange(
+                        variantTotals.minPrice,
+                        variantTotals.maxPrice,
+                      )}
+                      hint="Set by your variants."
+                    />
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="8999"
+                              {...field}
+                              value={field.value ?? ""}
+                              disabled={busy}
+                            />
+                          </FormControl>
                           <FormMessage />
-                        )}
-                      </FormItem>
-                    )}
-                  />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="discountPercentage"
@@ -297,34 +310,36 @@ export function ProductFormView({ productId }: { productId?: string }) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="stock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {hasVariants ? "Stock (auto)" : "Stock *"}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="47"
-                            {...field}
-                            value={field.value ?? ""}
-                            readOnly={hasVariants}
-                            disabled={busy || hasVariants}
-                          />
-                        </FormControl>
-                        {hasVariants ? (
-                          <p className="text-xs text-muted-foreground">
-                            Total across all variants.
-                          </p>
-                        ) : (
+                  {hasVariants ? (
+                    <AutoValueField
+                      label="Stock"
+                      value={`${variantTotals.totalStock.toLocaleString("en-PK")} units`}
+                      hint={describeVariantStock(
+                        variantTotals.variantCount,
+                        variantTotals.soldOutCount,
+                      )}
+                    />
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stock *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="47"
+                              {...field}
+                              value={field.value ?? ""}
+                              disabled={busy}
+                            />
+                          </FormControl>
                           <FormMessage />
-                        )}
-                      </FormItem>
-                    )}
-                  />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
                 <FormField
                   control={form.control}
@@ -343,16 +358,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     </FormItem>
                   )}
                 />
-                {hasVariants ? (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[12px] font-medium text-[var(--ink-soft)]">
-                      Available Sizes
-                    </span>
-                    <p className="text-[12px] text-[var(--ink-mute)]">
-                      Taken from the sizes on your variants below.
-                    </p>
-                  </div>
-                ) : (
+                {!hasVariants && (
                   <FormField
                     control={form.control}
                     name="sizes"
@@ -376,40 +382,43 @@ export function ProductFormView({ productId }: { productId?: string }) {
 
               {/* Photo: beside the fields on desktop, under them on mobile. */}
               <div className="flex min-w-0 flex-col gap-2">
-                <span className="text-[12px] font-medium text-[var(--ink-soft)]">
-                  Product photo
-                </span>
-                <FileUpload
-                  value={imageUrls[0] ?? null}
-                  onChange={setCoverImage}
-                  onUpload={uploadImage}
-                  isUploading={isUploading}
-                  uploadPhase={uploadPhase}
-                  progress={uploadProgress}
-                  disabled={busy}
-                  accept="image/*"
-                  maxSize={5 * 1024 * 1024}
-                  aspectRatio="aspect-square"
-                  // Capped so the square doesn't tower over the fields column.
-                  className="max-w-[300px]"
-                  title="Add a product photo"
-                  description="Drop it here, or click to browse"
-                  hint="PNG, JPG, WEBP — up to 5 MB"
-                  tipsCollapsible
-                  tipsTitle="Photo guidelines"
-                  tips={[
-                    "Use a plain background so the product stands out",
-                    "Shoot in good, even lighting — avoid harsh shadows",
-                    "Show the actual product customers will receive",
-                    "Recommended: square, 1000×1000px",
-                  ]}
-                />
-                <ImageLinkField
-                  onSubmit={setLinkedCoverImage}
+                <PhotoSourceField
+                  label="Product photo"
+                  onLinkSubmit={setLinkedCoverImage}
                   disabled={busy || isUploading}
-                />
+                  className="max-w-[300px]"
+                >
+                  <FileUpload
+                    value={imageUrls[0] ?? null}
+                    onChange={setCoverImage}
+                    onUpload={uploadImage}
+                    isUploading={isUploading}
+                    uploadPhase={uploadPhase}
+                    progress={uploadProgress}
+                    disabled={busy}
+                    accept="image/*"
+                    maxSize={5 * 1024 * 1024}
+                    aspectRatio="aspect-square"
+                    // Capped so the square doesn't tower over the fields column.
+                    className="max-w-[300px]"
+                    title="Add a product photo"
+                    description="Drop it here, or click to browse"
+                    hint="PNG, JPG, WEBP — up to 5 MB"
+                    tipsCollapsible
+                    tipsTitle="Photo guidelines"
+                    tips={[
+                      "Use a plain background so the product stands out",
+                      "Shoot in good, even lighting — avoid harsh shadows",
+                      "Show the actual product customers will receive",
+                      "Recommended: square, 1000×1000px",
+                    ]}
+                  />
+                </PhotoSourceField>
                 <p className="max-w-[300px] text-[12px] text-[var(--ink-mute)]">
-                  Used on lists, the product preview and WhatsApp cards.
+                  Used on lists, the product preview and WhatsApp cards
+                  {hasVariants
+                    ? ", and for any variant without its own photo."
+                    : "."}
                 </p>
               </div>
             </div>
@@ -419,9 +428,12 @@ export function ProductFormView({ productId }: { productId?: string }) {
                 form={form}
                 fields={variantFields.fields}
                 sizeOptions={variantSizeOptions}
+                coverImageUrl={imageUrls[0]}
+                skuSuggestions={variantSkuSuggestions}
                 onAppend={appendVariant}
                 onRemove={removeVariant}
                 onImageChange={setVariantImage}
+                onImageLink={setLinkedVariantImage}
                 disabled={busy}
               />
             </div>
@@ -571,6 +583,32 @@ export function ProductFormView({ productId }: { productId?: string }) {
           loading={isDeleting}
         />
       </div>
+    </div>
+  );
+}
+
+/** A value the form works out for itself — styled like a field so the row stays aligned, but plainly not editable. */
+function AutoValueField({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-sm leading-none font-medium text-[var(--ink)]">
+        {label}
+      </span>
+      <output
+        aria-label={label}
+        className="flex h-10 min-w-0 items-center rounded-lg border border-dashed border-[var(--ink-mute)]/35 bg-[var(--surface-2)]/50 px-2.5 text-sm font-medium text-[var(--ink)]"
+      >
+        <span className="truncate">{value}</span>
+      </output>
+      <p className="text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }

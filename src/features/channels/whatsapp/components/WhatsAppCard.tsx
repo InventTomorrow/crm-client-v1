@@ -13,7 +13,7 @@ export function WhatsAppCard() {
   const isPending = status === "PENDING" || status === "CONNECTING";
 
   return (
-    <div className="card hover-shimmer p-5 transition-colors hover:bg-[var(--surface-2)]">
+    <div className="card flex items-center hover-shimmer p-5 transition-colors hover:bg-[var(--surface-2)]">
       <div className="flex items-center gap-3">
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"

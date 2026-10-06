@@ -32,6 +32,8 @@ describe("getRequiredCapability", () => {
 
   it("gates the Order API page but not the channels root", () => {
     expect(getRequiredCapability("/channels/order-api")).toBe("ORDERS");
+    expect(getRequiredCapability("/channels/api/keys")).toBe("ORDERS");
+    expect(getRequiredCapability("/channels/api/sandbox/orders")).toBe("ORDERS");
     expect(getRequiredCapability("/channels")).toBeNull();
   });
 

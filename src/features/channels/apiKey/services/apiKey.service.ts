@@ -4,7 +4,7 @@ import type {
   ApiKey,
   CreateApiKeyDto,
   CreatedApiKey,
-  ExternalOrderTestResult,
+  SandboxHttpResponse,
 } from '../types';
 
 // A bare axios instance, deliberately separate from `apiClient`: the sandbox
@@ -38,13 +38,15 @@ export const deleteApiKey = async (id: string): Promise<void> => {
   await apiClient.delete(`/api-keys/${id}/permanent`);
 };
 
-/** Sends a real request to the external-orders API using the given key — used by the in-app sandbox tester. */
+/** Sends a real request to the external-orders API using the given key — used by the in-app sandbox. */
 export const sendTestExternalOrder = async (
-  key: string,
+  apiKey: string,
   payload: unknown,
-): Promise<ExternalOrderTestResult> => {
-  const res = await externalApiClient.post('/external/orders', payload, {
-    headers: { Authorization: `Bearer ${key}` },
+): Promise<SandboxHttpResponse> => {
+  const response = await externalApiClient.post('/external/orders', payload, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+    // 4xx/5xx are results the developer needs to see, not failures to throw.
+    validateStatus: () => true,
   });
-  return res.data.data;
+  return { httpStatus: response.status, body: response.data };
 };

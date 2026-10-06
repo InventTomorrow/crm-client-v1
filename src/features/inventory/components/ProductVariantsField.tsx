@@ -1,9 +1,12 @@
 "use client";
+import { getImageUrl } from "@/lib/utils";
 import { useElementHeight } from "@/shared/hooks/useElementHeight";
 import { Button } from "@/shared/ui/Button";
 import { FileUpload } from "@/shared/ui/FileUpload";
 import { Input } from "@/shared/ui/Input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/Popover";
 import { SearchSelect } from "@/shared/ui/SearchSelect";
+import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   FormControl,
   FormField,
@@ -11,8 +14,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
-import { Plus, Trash2 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { Link2, Plus, Trash2 } from "lucide-react";
+import { useState, type CSSProperties } from "react";
 import {
   useWatch,
   type FieldArrayWithId,
@@ -24,6 +27,7 @@ import {
   type ProductFormData,
   type ProductFormInput,
 } from "../types";
+import { ImageLinkField } from "./ImageLinkField";
 
 const FIELD_LABEL_CLASS = "text-[12px] text-[var(--ink-soft)]";
 
@@ -36,17 +40,23 @@ export function ProductVariantsField({
   form,
   fields,
   sizeOptions,
+  coverImageUrl,
+  skuSuggestions,
   onAppend,
   onRemove,
   onImageChange,
+  onImageLink,
   disabled,
 }: {
   form: ProductForm;
   fields: FieldArrayWithId<ProductFormInput, "variants">[];
   sizeOptions: string[];
+  coverImageUrl?: string;
+  skuSuggestions: (string | undefined)[];
   onAppend: () => void;
   onRemove: (index: number) => void;
   onImageChange: (index: number, url: string | null) => void;
+  onImageLink: (index: number, url: string) => void;
   disabled?: boolean;
 }) {
   // Only `upload` is shared — each FileUpload tracks its own progress, so rows never race.
@@ -86,9 +96,12 @@ export function ProductVariantsField({
           form={form}
           index={index}
           sizeOptions={sizeOptions}
+          coverImageUrl={coverImageUrl}
+          skuSuggestion={skuSuggestions[index]}
           onUpload={uploadVariantImage}
           onRemove={() => onRemove(index)}
           onImageChange={(url) => onImageChange(index, url)}
+          onImageLink={(url) => onImageLink(index, url)}
           disabled={disabled}
         />
       ))}
@@ -100,20 +113,29 @@ function ProductVariantCard({
   form,
   index,
   sizeOptions,
+  coverImageUrl,
+  skuSuggestion,
   onUpload,
   onRemove,
   onImageChange,
+  onImageLink,
   disabled,
 }: {
   form: ProductForm;
   index: number;
   sizeOptions: string[];
+  coverImageUrl?: string;
+  skuSuggestion?: string;
   onUpload: (file: File) => Promise<string>;
   onRemove: () => void;
   onImageChange: (url: string | null) => void;
+  onImageLink: (url: string) => void;
   disabled?: boolean;
 }) {
-  const variant = useWatch({ control: form.control, name: `variants.${index}` });
+  const variant = useWatch({
+    control: form.control,
+    name: `variants.${index}`,
+  });
   const productName = useWatch({ control: form.control, name: "name" });
   const autoLabel = getVariantLabel(
     { size: variant?.size, color: variant?.color },
@@ -125,6 +147,7 @@ function ProductVariantCard({
   const photoSizeStyle = {
     "--variant-photo-size": `${fieldsHeight ?? FALLBACK_PHOTO_SIZE}px`,
   } as CSSProperties;
+  const showsCoverFallback = !variant?.imageUrl && Boolean(coverImageUrl);
 
   return (
     <div
@@ -149,6 +172,24 @@ function ProductVariantCard({
           className="h-full [&>div:first-child]:h-full"
           disabled={disabled}
         />
+        {/* Click-through, so the drop zone underneath still takes a click or a dropped file. */}
+        {showsCoverFallback && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+            <ShimmerImage
+              src={getImageUrl(coverImageUrl)}
+              alt=""
+              wrapperClassName="absolute inset-0"
+              className="h-full w-full object-cover opacity-35"
+            />
+            <span className="absolute inset-x-1.5 bottom-1.5 truncate rounded-md bg-[var(--surface-2)]/90 px-1.5 py-0.5 text-center text-[10px] font-medium text-[var(--ink-soft)]">
+              Product photo
+            </span>
+          </div>
+        )}
+        {/* With a photo set, the uploader's own × sits in this corner — remove it first to link another. */}
+        {!variant?.imageUrl && (
+          <VariantPhotoLinkButton onSubmit={onImageLink} disabled={disabled} />
+        )}
       </div>
 
       {/* self-start: measured at its own height, never stretched to the photo's. */}
@@ -159,7 +200,9 @@ function ProductVariantCard({
             name={`variants.${index}.name`}
             render={({ field }) => (
               <FormItem className="col-span-2 sm:col-span-1">
-                <FormLabel className={FIELD_LABEL_CLASS}>Name (optional)</FormLabel>
+                <FormLabel className={FIELD_LABEL_CLASS}>
+                  Name (optional)
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder={autoLabel || "e.g. Maroon, Large"}
@@ -186,6 +229,9 @@ function ProductVariantCard({
                     placeholder="Select"
                     searchPlaceholder="Search or type a size…"
                     emptyMessage="Type to add your own size."
+                    clearOptionLabel="Clear size"
+                    customValueLabel="Add custom size"
+                    customValuePlaceholder="e.g. 500g, 12 inch"
                     creatable
                     disabled={disabled}
                     className="h-10"
@@ -266,7 +312,7 @@ function ProductVariantCard({
                 <FormLabel className={FIELD_LABEL_CLASS}>SKU</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="LWN-ML"
+                    placeholder={skuSuggestion ?? "Optional"}
                     {...field}
                     value={field.value ?? ""}
                     disabled={disabled}
@@ -292,5 +338,42 @@ function ProductVariantCard({
         <Trash2 size={14} />
       </Button>
     </div>
+  );
+}
+
+/** The variant photo's other way in: a link, in a popover so the small thumbnail stays the upload target. */
+function VariantPhotoLinkButton({
+  onSubmit,
+  disabled,
+}: {
+  onSubmit: (url: string) => void;
+  disabled?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          title="Add photo link"
+          aria-label="Add photo link"
+          className="absolute top-1.5 right-1.5 z-10 inline-flex size-6 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-soft)] shadow-sm transition-colors hover:text-[var(--accent)] disabled:pointer-events-none disabled:opacity-50"
+        >
+          <Link2 size={12} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 p-3">
+        <ImageLinkField
+          onSubmit={(url) => {
+            onSubmit(url);
+            setIsOpen(false);
+          }}
+          onCancel={() => setIsOpen(false)}
+          disabled={disabled}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

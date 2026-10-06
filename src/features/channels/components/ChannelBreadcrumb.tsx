@@ -8,7 +8,13 @@ import {
 } from "@/shared/ui/Breadcrumb";
 import Link from "next/link";
 
-export function ChannelBreadcrumb({ current }: { current: string }) {
+export function ChannelBreadcrumb({
+  current,
+  parent,
+}: {
+  current: string;
+  parent?: { label: string; href: string };
+}) {
   return (
     <Breadcrumb className="mb-3">
       <BreadcrumbList>
@@ -18,6 +24,16 @@ export function ChannelBreadcrumb({ current }: { current: string }) {
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
+        {parent && (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={parent.href}>{parent.label}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        )}
         <BreadcrumbItem>
           <BreadcrumbPage>{current}</BreadcrumbPage>
         </BreadcrumbItem>

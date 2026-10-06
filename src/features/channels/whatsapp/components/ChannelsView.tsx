@@ -1,5 +1,5 @@
 "use client";
-import { OrderApiCard } from "@/features/channels/apiKey/components/OrderApiCard";
+import { WebsiteApiCard } from "@/features/channels/apiKey/components/WebsiteApiCard";
 import { WhatsAppCard } from "./WhatsAppCard";
 
 export function ChannelsView() {
@@ -16,7 +16,7 @@ export function ChannelsView() {
 
       <div data-tour="page-content" className="grid gap-4 md:grid-cols-2">
         <WhatsAppCard />
-        <OrderApiCard />
+        <WebsiteApiCard />
       </div>
     </div>
   );

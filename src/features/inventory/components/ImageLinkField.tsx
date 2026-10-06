@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
-import { Link2 } from "lucide-react";
+import { Check, Link2 } from "lucide-react";
 import { useState } from "react";
 import {
   isSupportedImageUrl,
@@ -17,9 +17,11 @@ import {
  */
 export function ImageLinkField({
   onSubmit,
+  onCancel,
   disabled,
 }: Readonly<{
   onSubmit: (url: string) => void;
+  onCancel?: () => void;
   disabled?: boolean;
 }>) {
   const [link, setLink] = useState("");
@@ -40,20 +42,38 @@ export function ImageLinkField({
   };
 
   return (
-    <div className="flex max-w-[300px] flex-col gap-1.5">
-      <span className="text-[11px] text-[var(--ink-mute)]">
-        Or paste a photo link
-      </span>
+    <div className="flex w-full flex-col gap-2.5">
+      <div className="flex flex-col items-center gap-1 text-center">
+        <span className="flex size-9 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+          <Link2 size={16} />
+        </span>
+        <span className="text-[13px] font-medium text-[var(--ink)]">
+          Add a photo from a link
+        </span>
+        <span className="text-[11px] text-[var(--ink-mute)]">
+          A direct link to a {SUPPORTED_IMAGE_EXTENSIONS_LABEL} image.
+        </span>
+      </div>
       <div className="flex items-center gap-1.5">
         <Input
+          autoFocus
+          type="url"
+          inputMode="url"
           value={link}
           placeholder="https://…/photo.jpg"
+          aria-label="Photo link"
+          aria-invalid={Boolean(error)}
           disabled={disabled}
           onChange={(event) => {
             setLink(event.target.value);
             setError(null);
           }}
           onKeyDown={(event) => {
+            if (event.key === "Escape" && onCancel) {
+              event.preventDefault();
+              onCancel();
+              return;
+            }
             if (event.key !== "Enter") return;
             event.preventDefault();
             applyLink();
@@ -62,15 +82,20 @@ export function ImageLinkField({
         <Button
           type="button"
           size="icon"
-          variant="outline"
           onClick={applyLink}
           disabled={disabled || !link.trim()}
           title="Use this link"
+          aria-label="Use this link"
+          className="shrink-0"
         >
-          <Link2 size={15} />
+          <Check size={15} />
         </Button>
       </div>
-      {error && <p className="text-destructive text-[11px]">{error}</p>}
+      {error && (
+        <p role="alert" className="text-[11px] text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

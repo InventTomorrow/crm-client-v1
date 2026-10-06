@@ -9,7 +9,7 @@ import {
   revokeApiKey,
   sendTestExternalOrder,
 } from "../services/apiKey.service";
-import type { ApiKey, CreateApiKeyDto, ExternalOrderTestResult } from "../types";
+import type { ApiKey, CreateApiKeyDto, SandboxHttpResponse } from "../types";
 
 const API_KEYS_QUERY_KEY = ["api-keys"];
 
@@ -73,7 +73,12 @@ export function useDeleteApiKey() {
 }
 
 export function useSendTestExternalOrder() {
-  return useMutation<ExternalOrderTestResult, unknown, { key: string; payload: unknown }>({
-    mutationFn: ({ key, payload }) => sendTestExternalOrder(key, payload),
+  return useMutation<SandboxHttpResponse, unknown, { apiKey: string; payload: unknown }>({
+    mutationFn: ({ apiKey, payload }) => sendTestExternalOrder(apiKey, payload),
   });
+}
+
+export function useActiveApiKeys(): ApiKey[] {
+  const { data: apiKeys = [] } = useApiKeysQuery();
+  return apiKeys.filter((apiKey) => !apiKey.revokedAt);
 }
