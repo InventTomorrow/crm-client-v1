@@ -1,5 +1,4 @@
 "use client";
-import { ProductCustomOptions } from "@/features/product-custom-options/components/ProductCustomOptions";
 import { cn, pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -7,7 +6,6 @@ import { FileUpload } from "@/shared/ui/FileUpload";
 import { Input } from "@/shared/ui/Input";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/RadioGroup";
 import { SearchSelect } from "@/shared/ui/SearchSelect";
-import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import {
   Form,
@@ -25,6 +23,7 @@ import { GENDERS } from "../types";
 import { describeVariantStock, formatPriceRange } from "../utils/variants";
 import { ProductFormSkeleton } from "./InventorySkeletons";
 import { PhotoSourceField } from "./PhotoSourceField";
+import { ProductCustomOptionsField } from "./ProductCustomOptionsField";
 import { ProductVariantsField } from "./ProductVariantsField";
 import { SizeSelector } from "./SizeSelector";
 
@@ -58,12 +57,10 @@ export function ProductFormView({ productId }: { productId?: string }) {
     setDeleteConfirmOpen,
     handleSubmit,
     confirmDelete,
-    customOptionsEnabled,
     variantFields,
     hasVariants,
     variantTotals,
     variantSkuSuggestions,
-    variantSizeOptions,
     appendVariant,
     removeVariant,
     setVariantImage,
@@ -427,7 +424,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
               <ProductVariantsField
                 form={form}
                 fields={variantFields.fields}
-                sizeOptions={variantSizeOptions}
+                sizeCategory={selectedCategory}
                 coverImageUrl={imageUrls[0]}
                 skuSuggestions={variantSkuSuggestions}
                 onAppend={appendVariant}
@@ -438,82 +435,7 @@ export function ProductFormView({ productId }: { productId?: string }) {
               />
             </div>
 
-            {/* Made-to-order customization */}
-            <div className="card p-5 flex flex-col gap-4">
-              <FormField
-                control={form.control}
-                name="customOptionsEnabled"
-                render={({ field }) => (
-                  <FormItem>
-                    <label className="flex items-start gap-3">
-                      <FormControl>
-                        <Switch
-                          checked={field.value ?? false}
-                          onCheckedChange={field.onChange}
-                          disabled={busy}
-                          className="mt-0.5"
-                        />
-                      </FormControl>
-                      <span className="min-w-0">
-                        <span className="block text-[13px] font-medium text-[var(--ink)]">
-                          Custom options
-                        </span>
-                        <span className="block text-[12px] text-[var(--ink-mute)]">
-                          Let customers ask for something specific on this
-                          product — a size, a colour, a name to add. The
-                          assistant collects what you tick below before it takes
-                          the order.
-                        </span>
-                      </span>
-                    </label>
-                  </FormItem>
-                )}
-              />
-
-              {customOptionsEnabled && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="customOptionKeys"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <ProductCustomOptions
-                            selectedKeys={field.value ?? []}
-                            onSelectedKeysChange={field.onChange}
-                            disabled={busy}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="customOptionNote"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes for the assistant</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            rows={2}
-                            placeholder="e.g. Printing on the back only, maximum two colours."
-                            {...field}
-                            value={field.value ?? ""}
-                            disabled={busy}
-                          />
-                        </FormControl>
-                        <p className="text-[12px] text-[var(--ink-mute)]">
-                          Limits specific to this product. Not shown to the
-                          customer.
-                        </p>
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-            </div>
+            <ProductCustomOptionsField form={form} disabled={busy} />
 
             <div className="flex justify-between gap-2">
               {isEditMode ? (

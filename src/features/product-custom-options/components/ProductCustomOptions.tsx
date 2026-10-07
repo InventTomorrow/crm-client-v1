@@ -1,12 +1,20 @@
 "use client";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { Checkbox } from "@/shared/ui/Checkbox";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Label } from "@/shared/ui/Label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/Dialog";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useCustomOptionEditor } from "../hooks/useCustomOptionEditor";
+import { Pencil, Trash2 } from "lucide-react";
+import type { CustomOptionEditor } from "../hooks/useCustomOptionEditor";
 import {
   describeSurcharge,
   INPUT_TYPE_LABELS,
@@ -20,18 +28,20 @@ import { CustomOptionEditorPanel } from "./CustomOptionEditorPanel";
  * The options themselves belong to the workspace, not to this product: one
  * added here can be ticked on any product, and editing or deleting one changes
  * it everywhere. The tick decides only whether *this* product offers it.
+ *
+ * The editor is passed in so the section around this list can own its "Add option" button.
  */
 export function ProductCustomOptions({
+  editor,
   selectedKeys,
   onSelectedKeysChange,
   disabled,
 }: Readonly<{
+  editor: CustomOptionEditor;
   selectedKeys: string[];
   onSelectedKeysChange: (keys: string[]) => void;
   disabled: boolean;
 }>) {
-  const editor = useCustomOptionEditor();
-
   if (editor.isLoading) {
     return (
       <div className="space-y-2">
@@ -83,33 +93,37 @@ export function ProductCustomOptions({
             onEdit={() => editor.startEditing(option)}
             onDelete={() => editor.setOptionPendingDeletion(option)}
             disabled={disabled}
-            isBeingEdited={editor.editingId === option.id}
           />
         ))}
       </ul>
 
-      {editor.options.length === 0 && !editor.isAdding && (
+      {editor.options.length === 0 && (
         <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-xs">
-          Nothing here yet. Add what customers can ask for — a size, a colour, a
-          name to print — and the assistant will collect it before ordering.
+          Nothing here yet. Use Add option to set what customers can ask for — a
+          size, a colour, a name to print — and the assistant will collect it
+          before ordering.
         </p>
       )}
 
-      {editor.editingId !== null ? (
-        <CustomOptionEditorPanel editor={editor} onSaved={handleSaved} />
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={editor.startAdding}
-          disabled={disabled}
-        >
-          <Plus className="size-4" />
-          Add option
-        </Button>
-      )}
+      {/* Closing the dialog any way other than saving discards the draft, like Cancel. */}
+      <Dialog
+        open={editor.editingId !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) editor.cancelEditing();
+        }}
+      >
+        <DialogContent className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="gap-1 border-b border-[var(--line)] px-6 py-4 text-left">
+            <DialogTitle className="text-base">
+              {editor.isAdding ? "Add a custom option" : "Edit custom option"}
+            </DialogTitle>
+            <DialogDescription>
+              Shared by every product, so editing it changes it everywhere.
+            </DialogDescription>
+          </DialogHeader>
+          <CustomOptionEditorPanel editor={editor} onSaved={handleSaved} />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={Boolean(editor.optionPendingDeletion)}
@@ -142,6 +156,36 @@ function deletionWarning(
   return `“${option.label}” will be removed from every product in this workspace, and the assistant will stop offering it. ${scope} Orders already placed keep what the customer asked for.`;
 }
 
+/** How a customer answers, what it costs, and whether it must be answered — one row of badges. */
+function CustomOptionBadges({
+  option,
+  className,
+}: Readonly<{ option: ProductCustomOption; className?: string }>) {
+  return (
+    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+      <Badge variant="outline" className="text-[10px]">
+        {INPUT_TYPE_LABELS[option.inputType]}
+      </Badge>
+      <Badge
+        variant={option.requiresQuote ? "outline" : "secondary"}
+        className="text-[10px]"
+      >
+        {describeSurcharge(option)}
+      </Badge>
+      {option.isRequired && (
+        <Badge variant="secondary" className="text-[10px]">
+          Must answer
+        </Badge>
+      )}
+      {!option.isActive && (
+        <Badge variant="outline" className="text-[10px]">
+          Switched off
+        </Badge>
+      )}
+    </div>
+  );
+}
+
 function CustomOptionRow({
   option,
   isOffered,
@@ -149,7 +193,6 @@ function CustomOptionRow({
   onEdit,
   onDelete,
   disabled,
-  isBeingEdited,
 }: Readonly<{
   option: ProductCustomOption;
   isOffered: boolean;
@@ -157,11 +200,7 @@ function CustomOptionRow({
   onEdit: () => void;
   onDelete: () => void;
   disabled: boolean;
-  isBeingEdited: boolean;
 }>) {
-  // The panel below is already showing this option; a duplicate row is noise.
-  if (isBeingEdited) return null;
-
   return (
     <li className="hover:bg-muted/50 flex items-start gap-3 rounded-lg border p-3 transition">
       <Checkbox
@@ -174,27 +213,7 @@ function CustomOptionRow({
 
       <div className="min-w-0 flex-1">
         <p className="text-sm">{option.label}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline" className="text-[10px]">
-            {INPUT_TYPE_LABELS[option.inputType]}
-          </Badge>
-          <Badge
-            variant={option.requiresQuote ? "outline" : "secondary"}
-            className="text-[10px]"
-          >
-            {describeSurcharge(option)}
-          </Badge>
-          {option.isRequired && (
-            <Badge variant="secondary" className="text-[10px]">
-              Must answer
-            </Badge>
-          )}
-          {!option.isActive && (
-            <Badge variant="outline" className="text-[10px]">
-              Switched off
-            </Badge>
-          )}
-        </div>
+        <CustomOptionBadges option={option} className="mt-1" />
       </div>
 
       <Button

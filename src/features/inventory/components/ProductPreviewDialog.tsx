@@ -14,7 +14,8 @@ import { Separator } from "@/shared/ui/Separator";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import { ImageIcon, Pencil } from "lucide-react";
 import { useState } from "react";
-import type { Product } from "../types";
+import type { Product, ProductVariant } from "../types";
+import { formatPriceRange, getVariantTotals } from "../utils/variants";
 
 const STATUS_STYLES: Record<
   Product["status"],
@@ -58,6 +59,11 @@ export function ProductPreviewDialog({
     : product.size
       ? [product.size]
       : [];
+  const variants = product.variants ?? [];
+  const hasVariants = variants.length > 0;
+  const variantTotals = getVariantTotals(variants);
+  const hasPriceRange =
+    hasVariants && variantTotals.minPrice !== variantTotals.maxPrice;
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
@@ -123,7 +129,12 @@ export function ProductPreviewDialog({
           <div className="flex flex-col gap-1.5">
             <div className="flex items-baseline gap-2.5 flex-wrap">
               <span className="text-[20px] font-semibold font-[var(--font-mono)] text-[var(--ink)]">
-                {pkr(product.price)}
+                {hasVariants
+                  ? formatPriceRange(
+                      variantTotals.minPrice,
+                      variantTotals.maxPrice,
+                    )
+                  : pkr(product.price)}
               </span>
               {discountedPrice !== null && (
                 <Badge variant="secondary">{discount}% negotiable</Badge>
@@ -131,7 +142,7 @@ export function ProductPreviewDialog({
             </div>
             {discountedPrice !== null && (
               <p className="text-[11.5px] leading-relaxed text-[var(--ink-mute)]">
-                Negotiation price:{" "}
+                Negotiation price{hasPriceRange ? " from" : ""}:{" "}
                 <span className="font-[var(--font-mono)] text-[var(--ink-soft)]">
                   {pkr(discountedPrice)}
                 </span>{" "}
@@ -180,7 +191,28 @@ export function ProductPreviewDialog({
             )}
           </dl>
 
-          {sizes.length > 0 && (
+          {hasVariants && (
+            <div className="flex flex-col gap-2">
+              <h4 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
+                Variants
+                <span className="rounded-full bg-[var(--accent-soft)] px-1.5 text-[10px] font-semibold text-[var(--accent)]">
+                  {variants.length}
+                </span>
+              </h4>
+              <ul className="flex flex-col gap-1.5">
+                {variants.map((variant) => (
+                  <VariantRow
+                    key={variant.id}
+                    variant={variant}
+                    coverImageUrl={images[0]}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* With variants, each one lists its own sizes above. */}
+          {!hasVariants && sizes.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
                 Sizes
@@ -206,5 +238,65 @@ export function ProductPreviewDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** One variant: its photo (or the product's, faded), what it is, and its own price and stock. */
+function VariantRow({
+  variant,
+  coverImageUrl,
+}: {
+  variant: ProductVariant;
+  coverImageUrl?: string;
+}) {
+  const imageUrl = variant.imageUrl || coverImageUrl;
+  const attributes = [variant.color, variant.sizes.join(", ")]
+    .filter(Boolean)
+    .join(" · ");
+  const isSoldOut = variant.stock <= 0;
+
+  return (
+    <li className="flex items-center gap-3 rounded-lg border border-[var(--line)] p-2">
+      <div className="relative size-11 shrink-0 overflow-hidden rounded-md bg-[var(--surface-2)]">
+        {imageUrl ? (
+          <ShimmerImage
+            src={getImageUrl(imageUrl)}
+            alt={variant.name}
+            wrapperClassName="absolute inset-0"
+            className={cn(
+              "h-full w-full object-cover",
+              !variant.imageUrl && "opacity-40",
+            )}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-[var(--ink-mute)] opacity-50">
+            <ImageIcon size={16} />
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-medium text-[var(--ink)]">
+          {variant.name}
+        </p>
+        {attributes && (
+          <p className="truncate text-[11.5px] text-[var(--ink-mute)]">
+            {attributes}
+          </p>
+        )}
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="font-[var(--font-mono)] text-[13px] font-semibold text-[var(--ink)]">
+          {pkr(variant.price)}
+        </p>
+        <p
+          className={cn(
+            "text-[11px]",
+            isSoldOut ? "text-destructive" : "text-[var(--ink-mute)]",
+          )}
+        >
+          {isSoldOut ? "Sold out" : `${variant.stock} pcs`}
+        </p>
+      </div>
+    </li>
   );
 }

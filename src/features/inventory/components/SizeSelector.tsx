@@ -4,12 +4,7 @@ import { Input } from "@/shared/ui/Input";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Check, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getSizeGroupsForCategory, SIZE_GROUPS } from "../types";
-
-/** Every size the built-in groups know about, in any category. */
-const KNOWN_SIZES = new Set<string>(
-  SIZE_GROUPS.flatMap((group) => [...group.options]),
-);
+import { getSizeGroupsForCategory, isBuiltInSize } from "../types";
 
 /**
  * Size picker: the groups relevant to the selected category, plus anything the
@@ -24,11 +19,19 @@ export function SizeSelector({
   value,
   onChange,
   disabled,
+  pruneHiddenSizes = true,
+  extraSizes = [],
+  onCustomSizeAdded,
 }: {
   category?: string;
   value: string[];
   onChange: (value: string[]) => void;
   disabled?: boolean;
+  /** Off where the picker mounts on demand (a popover), so opening it never drops a saved size. */
+  pruneHiddenSizes?: boolean;
+  /** The seller's own sizes offered even when unticked — used on other products, or added before. */
+  extraSizes?: readonly string[];
+  onCustomSizeAdded?: (size: string) => void;
 }) {
   const groups = getSizeGroupsForCategory(category);
   const [isAdding, setIsAdding] = useState(false);
@@ -36,12 +39,20 @@ export function SizeSelector({
 
   const selected = value ?? [];
   const visible = new Set<string>(groups.flatMap((group) => [...group.options]));
-  const customSizes = selected.filter((size) => !KNOWN_SIZES.has(size));
+  const offeredExtraSizes = extraSizes.filter((size) => !visible.has(size));
+  // Anything else ticked that the groups don't show — so an unpruned size from another group can still be unticked.
+  const customSizes = [
+    ...offeredExtraSizes,
+    ...selected.filter(
+      (size) => !visible.has(size) && !offeredExtraSizes.includes(size),
+    ),
+  ];
 
   useEffect(() => {
+    if (!pruneHiddenSizes) return;
     // Drop sizes from groups this category no longer shows; keep custom ones.
     const next = (value ?? []).filter(
-      (size) => visible.has(size) || !KNOWN_SIZES.has(size),
+      (size) => visible.has(size) || !isBuiltInSize(size),
     );
     if (next.length !== (value ?? []).length) onChange(next);
     // Prune only when the category (and therefore the visible groups) changes.
@@ -49,11 +60,15 @@ export function SizeSelector({
   }, [category]);
 
   const addSize = () => {
-    const size = newSize.trim();
-    if (!size) return;
-    if (!selected.some((existing) => existing.toLowerCase() === size.toLowerCase())) {
-      onChange([...selected, size]);
-    }
+    const typedSize = newSize.trim();
+    if (!typedSize) return;
+    // Reuse a listed spelling, so "500G" ticks the "500g" already offered instead of adding a twin.
+    const size =
+      [...visible, ...customSizes].find(
+        (option) => option.toLowerCase() === typedSize.toLowerCase(),
+      ) ?? typedSize;
+    if (!selected.includes(size)) onChange([...selected, size]);
+    if (!isBuiltInSize(size)) onCustomSizeAdded?.(size);
     setNewSize("");
     setIsAdding(false);
   };

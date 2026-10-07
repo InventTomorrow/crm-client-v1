@@ -208,3 +208,5 @@ export function useCustomOptionEditor() {
     isDeleting: deleteOption.isPending,
   };
 }
+
+export type CustomOptionEditor = ReturnType<typeof useCustomOptionEditor>;

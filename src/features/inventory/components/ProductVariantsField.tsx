@@ -5,7 +5,6 @@ import { Button } from "@/shared/ui/Button";
 import { FileUpload } from "@/shared/ui/FileUpload";
 import { Input } from "@/shared/ui/Input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/Popover";
-import { SearchSelect } from "@/shared/ui/SearchSelect";
 import { ShimmerImage } from "@/shared/ui/ShimmerImage";
 import {
   FormControl,
@@ -21,6 +20,7 @@ import {
   type FieldArrayWithId,
   type UseFormReturn,
 } from "react-hook-form";
+import { useCustomSizeOptions } from "../hooks/useCustomSizeOptions";
 import { usePresignedUpload } from "../hooks/useProducts";
 import {
   getVariantLabel,
@@ -28,6 +28,7 @@ import {
   type ProductFormInput,
 } from "../types";
 import { ImageLinkField } from "./ImageLinkField";
+import { VariantSizesPicker } from "./VariantSizesPicker";
 
 const FIELD_LABEL_CLASS = "text-[12px] text-[var(--ink-soft)]";
 
@@ -39,7 +40,7 @@ type ProductForm = UseFormReturn<ProductFormInput, unknown, ProductFormData>;
 export function ProductVariantsField({
   form,
   fields,
-  sizeOptions,
+  sizeCategory,
   coverImageUrl,
   skuSuggestions,
   onAppend,
@@ -50,7 +51,7 @@ export function ProductVariantsField({
 }: {
   form: ProductForm;
   fields: FieldArrayWithId<ProductFormInput, "variants">[];
-  sizeOptions: string[];
+  sizeCategory?: string;
   coverImageUrl?: string;
   skuSuggestions: (string | undefined)[];
   onAppend: () => void;
@@ -61,6 +62,7 @@ export function ProductVariantsField({
 }) {
   // Only `upload` is shared — each FileUpload tracks its own progress, so rows never race.
   const { upload: uploadVariantImage } = usePresignedUpload("products");
+  const { customSizeOptions, saveCustomSize } = useCustomSizeOptions(sizeCategory);
 
   return (
     <div className="flex flex-col gap-3">
@@ -75,8 +77,9 @@ export function ProductVariantsField({
             )}
           </span>
           <span className="block text-[12px] text-[var(--ink-mute)]">
-            Each version a customer can buy, with its own photo, size, colour,
-            price and stock. The cheapest one sets the product price.
+            Each version a customer can buy, with its own photo, sizes, colour,
+            price and stock — all of a version&apos;s sizes share its stock. The
+            cheapest one sets the product price.
           </span>
         </div>
         <Button
@@ -95,7 +98,9 @@ export function ProductVariantsField({
           key={variantField.id}
           form={form}
           index={index}
-          sizeOptions={sizeOptions}
+          sizeCategory={sizeCategory}
+          customSizeOptions={customSizeOptions}
+          onCustomSizeAdded={saveCustomSize}
           coverImageUrl={coverImageUrl}
           skuSuggestion={skuSuggestions[index]}
           onUpload={uploadVariantImage}
@@ -112,7 +117,9 @@ export function ProductVariantsField({
 function ProductVariantCard({
   form,
   index,
-  sizeOptions,
+  sizeCategory,
+  customSizeOptions,
+  onCustomSizeAdded,
   coverImageUrl,
   skuSuggestion,
   onUpload,
@@ -123,7 +130,9 @@ function ProductVariantCard({
 }: {
   form: ProductForm;
   index: number;
-  sizeOptions: string[];
+  sizeCategory?: string;
+  customSizeOptions: readonly string[];
+  onCustomSizeAdded: (size: string) => void;
   coverImageUrl?: string;
   skuSuggestion?: string;
   onUpload: (file: File) => Promise<string>;
@@ -138,7 +147,7 @@ function ProductVariantCard({
   });
   const productName = useWatch({ control: form.control, name: "name" });
   const autoLabel = getVariantLabel(
-    { size: variant?.size, color: variant?.color },
+    { sizes: variant?.sizes, color: variant?.color },
     productName ?? "",
   );
   // The photo column is as wide as the field rows are tall, so the square fills the card's height.
@@ -217,24 +226,18 @@ function ProductVariantCard({
           />
           <FormField
             control={form.control}
-            name={`variants.${index}.size`}
+            name={`variants.${index}.sizes`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className={FIELD_LABEL_CLASS}>Size</FormLabel>
+                <FormLabel className={FIELD_LABEL_CLASS}>Sizes</FormLabel>
                 <FormControl>
-                  <SearchSelect
-                    options={sizeOptions}
-                    value={field.value ?? ""}
+                  <VariantSizesPicker
+                    category={sizeCategory}
+                    value={field.value ?? []}
                     onChange={field.onChange}
-                    placeholder="Select"
-                    searchPlaceholder="Search or type a size…"
-                    emptyMessage="Type to add your own size."
-                    clearOptionLabel="Clear size"
-                    customValueLabel="Add custom size"
-                    customValuePlaceholder="e.g. 500g, 12 inch"
-                    creatable
+                    customSizeOptions={customSizeOptions}
+                    onCustomSizeAdded={onCustomSizeAdded}
                     disabled={disabled}
-                    className="h-10"
                   />
                 </FormControl>
                 <FormMessage />
