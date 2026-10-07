@@ -4,6 +4,7 @@ import {
   formatPriceRange,
   getSuggestedVariantSkus,
   getVariantTotals,
+  orderSizes,
 } from "./variants";
 
 describe("getVariantTotals", () => {
@@ -43,19 +44,23 @@ describe("getSuggestedVariantSkus", () => {
   it("builds product SKU + colour + size for blank variants only", () => {
     expect(
       getSuggestedVariantSkus("bs-006", [
-        { color: "Red", size: "XL" },
-        { sku: "CUSTOM-1", color: "Black", size: "M" },
-        { color: "Navy Blue", size: "EU 42" },
+        { color: "Red", sizes: ["XL"] },
+        { sku: "CUSTOM-1", color: "Black", sizes: ["M"] },
+        { color: "Navy Blue", sizes: ["EU 42"] },
       ]),
     ).toEqual(["BS-006-RED-XL", undefined, "BS-006-NAVY-BLUE-EU-42"]);
+  });
+
+  it("leaves the size out of a variant that comes in several", () => {
+    expect(getSuggestedVariantSkus("BS-006", [{ color: "Red", sizes: ["S", "M"] }])).toEqual(["BS-006-RED"]);
   });
 
   it("numbers a variant with no colour or size, and never repeats a SKU", () => {
     expect(
       getSuggestedVariantSkus("BS-006", [
         {},
-        { color: "Red", size: "XL" },
-        { color: "red", size: "xl" },
+        { color: "Red", sizes: ["XL"] },
+        { color: "red", sizes: ["xl"] },
         { sku: "bs-006-red-xl-3" },
       ]),
     ).toEqual(["BS-006-1", "BS-006-RED-XL", "BS-006-RED-XL-2", undefined]);
@@ -63,5 +68,11 @@ describe("getSuggestedVariantSkus", () => {
 
   it("suggests nothing without a product SKU", () => {
     expect(getSuggestedVariantSkus("  ", [{ color: "Red" }])).toEqual([undefined]);
+  });
+});
+
+describe("orderSizes", () => {
+  it("puts known sizes in their natural order and keeps the seller's own last, as added", () => {
+    expect(orderSizes(["XL", "500g", "S", "12 inch", "M"])).toEqual(["S", "M", "XL", "500g", "12 inch"]);
   });
 });

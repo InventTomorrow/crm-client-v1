@@ -9,6 +9,7 @@ interface ApiProductVariant {
   name: string;
   value: string | null;
   size: string | null;
+  sizes?: string[] | null;
   color: string | null;
   sku: string | null;
   imageUrl: string | null;
@@ -63,7 +64,7 @@ export interface CreateProductPayload {
 export interface VariantPayload {
   id?: string;
   name: string;
-  size?: string;
+  sizes: string[];
   color?: string;
   sku?: string;
   imageUrl?: string;
@@ -103,12 +104,13 @@ function mapVariant(
   productPrice: number,
 ): ProductVariant {
   const legacyValue = variant.value?.trim();
+  const legacySize =
+    variant.size ??
+    (legacyValue && /size/i.test(variant.name) ? legacyValue : undefined);
   return {
     id: variant.id,
     name: legacyValue || variant.name,
-    size:
-      variant.size ??
-      (legacyValue && /size/i.test(variant.name) ? legacyValue : undefined),
+    sizes: variant.sizes?.length ? variant.sizes : legacySize ? [legacySize] : [],
     color:
       variant.color ??
       (legacyValue && /colou?r/i.test(variant.name) ? legacyValue : undefined),

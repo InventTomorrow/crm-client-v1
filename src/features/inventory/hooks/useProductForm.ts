@@ -10,7 +10,6 @@ import {
 import type { Product, ProductVariant } from "../types";
 import {
   CATEGORIES,
-  getSizeGroupsForCategory,
   getVariantLabel,
   productSchema,
   type ProductFormData,
@@ -22,13 +21,14 @@ import {
   useProducts,
   useUpdateProduct,
 } from "./useProducts";
+import { mergeSizeLists } from "../utils/customSizes";
 import { getSuggestedVariantSkus, getVariantTotals } from "../utils/variants";
 
 type SavedVariant = ProductFormData["variants"][number];
 
 const EMPTY_VARIANT = {
   name: "",
-  size: "",
+  sizes: [],
   sku: "",
   imageUrl: "",
 } satisfies Omit<ProductVariantFormInput, "price" | "stock" | "color">;
@@ -41,7 +41,7 @@ const toVariantFormValues = (
 ): ProductVariantFormInput => ({
   id: variant.id,
   name: variant.name,
-  size: variant.size ?? "",
+  sizes: variant.sizes,
   color: variant.color ?? "",
   sku: variant.sku ?? "",
   imageUrl: variant.imageUrl ?? "",
@@ -50,15 +50,8 @@ const toVariantFormValues = (
 });
 
 /** Sizes the versions come in, first spelling kept — becomes the product's size list. */
-const getVariantSizes = (variants: SavedVariant[]): string[] => {
-  const seen = new Set<string>();
-  return variants.flatMap((variant) => {
-    const size = variant.size?.trim();
-    if (!size || seen.has(size.toLowerCase())) return [];
-    seen.add(size.toLowerCase());
-    return [size];
-  });
-};
+const getVariantSizes = (variants: SavedVariant[]): string[] =>
+  mergeSizeLists(...variants.map((variant) => variant.sizes));
 
 // The API prices a variant as an offset from the product, which carries the cheapest one.
 const toVariantPayloads = (
@@ -71,7 +64,7 @@ const toVariantPayloads = (
   return variants.map((variant, index) => ({
     ...(variant.id ? { id: variant.id } : {}),
     name: getVariantLabel(variant, productName),
-    size: variant.size || undefined,
+    sizes: variant.sizes,
     color: variant.color || undefined,
     sku: variant.sku || suggestedSkus[index],
     imageUrl: variant.imageUrl || undefined,
@@ -170,10 +163,6 @@ export function useProductForm(productId?: string) {
   }, [products]);
 
   const selectedCategory = useWatch({ control: form.control, name: "cat" });
-  const customOptionsEnabled = useWatch({
-    control: form.control,
-    name: "customOptionsEnabled",
-  });
   const watchedPrice = useWatch({ control: form.control, name: "price" });
   const watchedDiscount = useWatch({
     control: form.control,
@@ -196,13 +185,6 @@ export function useProductForm(productId?: string) {
   const watchedVariants = useWatch({ control: form.control, name: "variants" });
   const watchedSku = useWatch({ control: form.control, name: "sku" });
   const hasVariants = (watchedVariants?.length ?? 0) > 0;
-  const variantSizeOptions = useMemo(
-    () =>
-      getSizeGroupsForCategory(selectedCategory).flatMap((group) => [
-        ...group.options,
-      ]),
-    [selectedCategory],
-  );
   const variantTotals = useMemo(
     () => getVariantTotals(watchedVariants ?? []),
     [watchedVariants],
@@ -419,12 +401,10 @@ export function useProductForm(productId?: string) {
     setDeleteConfirmOpen,
     handleSubmit,
     confirmDelete,
-    customOptionsEnabled,
     variantFields,
     hasVariants,
     variantTotals,
     variantSkuSuggestions,
-    variantSizeOptions,
     appendVariant,
     removeVariant,
     setVariantImage,

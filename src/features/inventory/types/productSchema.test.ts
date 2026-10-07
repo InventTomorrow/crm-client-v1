@@ -38,7 +38,7 @@ describe("productSchema", () => {
   });
 
   describe("variants", () => {
-    const variant = { name: "Maroon, Large", size: "L", color: "Maroon", price: "9499", stock: "4" };
+    const variant = { name: "Maroon, Large", sizes: ["L"], color: "Maroon", price: "9499", stock: "4" };
 
     it("defaults to none and coerces a variant's price and stock", () => {
       expect(productSchema.parse(valid).variants).toEqual([]);
@@ -53,9 +53,21 @@ describe("productSchema", () => {
 
     it("labels a nameless variant by colour and size, then by the product name", () => {
       expect(getVariantLabel({ name: " Eid Edition " }, "Lawn Suit")).toBe("Eid Edition");
-      expect(getVariantLabel({ name: "", color: "Maroon", size: "L" }, "Lawn Suit")).toBe("Maroon / L");
-      expect(getVariantLabel({ size: "XL" }, "Lawn Suit")).toBe("XL");
+      expect(getVariantLabel({ name: "", color: "Maroon", sizes: ["L"] }, "Lawn Suit")).toBe("Maroon / L");
+      expect(getVariantLabel({ sizes: ["XL"] }, "Lawn Suit")).toBe("XL");
       expect(getVariantLabel({}, "Lawn Suit ")).toBe("Lawn Suit");
+    });
+
+    it("labels a variant in several sizes by its colour, then by the product name", () => {
+      expect(getVariantLabel({ color: "Maroon", sizes: ["S", "M"] }, "Lawn Suit")).toBe("Maroon");
+      expect(getVariantLabel({ sizes: ["S", "M"] }, "Lawn Suit")).toBe("Lawn Suit");
+    });
+
+    it("keeps every size on a variant, defaulting to none", () => {
+      const parsed = productSchema.parse({ ...valid, variants: [{ ...variant, sizes: ["S", "M", "L"] }] });
+      expect(parsed.variants[0]?.sizes).toEqual(["S", "M", "L"]);
+      const unsizedVariant = { name: "Maroon", price: "9499", stock: "4" };
+      expect(productSchema.parse({ ...valid, variants: [unsizedVariant] }).variants[0]?.sizes).toEqual([]);
     });
 
     it("rejects fractional or negative variant stock", () => {

@@ -60,7 +60,7 @@ export interface Product {
 export interface ProductVariant {
   id: string;
   name: string;
-  size?: string;
+  sizes: string[];
   color?: string;
   sku?: string;
   imageUrl?: string;

@@ -44,6 +44,13 @@ export const SIZE_GROUPS = [
   { label: "General", options: ["One Size", "Free Size"] },
 ] as const;
 
+const BUILT_IN_SIZES = new Set<string>(
+  SIZE_GROUPS.flatMap((group) => [...group.options]),
+);
+
+/** A size one of the groups above offers; anything else is the seller's own ("500g", "12 inch"). */
+export const isBuiltInSize = (size: string): boolean => BUILT_IN_SIZES.has(size);
+
 /** Returns the size groups relevant to a category. Apparel → clothing, Footwear → shoe sizes, everything else → general. */
 export function getSizeGroupsForCategory(
   category?: string,
@@ -57,20 +64,29 @@ export function getSizeGroupsForCategory(
 
 /** A blank variant name falls back to "Colour / Size", then the product name — the assistant quotes it to customers. */
 export function getVariantLabel(
-  variant: { name?: string; size?: string; color?: string },
+  variant: { name?: string; sizes?: readonly string[]; color?: string },
   productName: string,
 ): string {
   const typedName = variant.name?.trim();
   if (typedName) return typedName;
-  const attributes = [variant.color?.trim(), variant.size?.trim()].filter(Boolean);
+  // A variant in several sizes is labelled without them — the assistant offers each size beside the label.
+  const onlySize = variant.sizes?.length === 1 ? variant.sizes[0]?.trim() : undefined;
+  const attributes = [variant.color?.trim(), onlySize].filter(Boolean);
   return attributes.length ? attributes.join(" / ") : productName.trim();
 }
+
+/** Mirrors the server's per-variant cap. */
+const MAX_SIZES_PER_VARIANT = 30;
 
 // `id` is set only on rows already saved, so the API updates them instead of recreating.
 export const productVariantSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().max(120).optional(),
-  size: z.string().trim().max(60).optional(),
+  // One stock count covers every size listed here.
+  sizes: z
+    .array(z.string().trim().min(1).max(60))
+    .max(MAX_SIZES_PER_VARIANT, `Keep it to ${MAX_SIZES_PER_VARIANT} sizes`)
+    .default([]),
   color: z.string().trim().max(60).optional(),
   sku: z.string().trim().max(120).optional(),
   imageUrl: z.string().optional(),

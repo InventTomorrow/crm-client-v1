@@ -1,7 +1,19 @@
 import { pkr } from "@/lib/utils";
+import { SIZE_GROUPS } from "../types";
 
 type VariantAmounts = { price?: unknown; stock?: unknown } | undefined;
-type VariantSkuParts = { sku?: string; color?: string; size?: string } | undefined;
+type VariantSkuParts = { sku?: string; color?: string; sizes?: readonly string[] } | undefined;
+
+const KNOWN_SIZE_ORDER: readonly string[] = SIZE_GROUPS.flatMap((group) => [...group.options]);
+
+/** Known sizes in their natural order (S before L), then the seller's own in the order they were added. */
+export function orderSizes(sizes: readonly string[]): string[] {
+  const rank = (size: string): number => {
+    const index = KNOWN_SIZE_ORDER.indexOf(size);
+    return index === -1 ? KNOWN_SIZE_ORDER.length : index;
+  };
+  return [...sizes].sort((first, second) => rank(first) - rank(second));
+}
 
 export interface VariantTotals {
   variantCount: number;
@@ -48,7 +60,8 @@ const toSkuSegment = (value: string | undefined): string =>
     .replace(/^-+|-+$/g, "");
 
 /**
- * The SKU a blank variant is saved with: product SKU + colour + size ("BS-006-RED-XL").
+ * The SKU a blank variant is saved with: product SKU + colour + size ("BS-006-RED-XL"),
+ * the size left out when the variant comes in several.
  * Typed SKUs are kept as-is, and a repeat gets "-2", "-3" so no two variants share one.
  */
 export function getSuggestedVariantSkus(
@@ -67,7 +80,8 @@ export function getSuggestedVariantSkus(
 
   return variants.map((variant, index) => {
     if (variant?.sku?.trim()) return undefined;
-    const attributes = [toSkuSegment(variant?.color), toSkuSegment(variant?.size)].filter(Boolean);
+    const onlySize = variant?.sizes?.length === 1 ? variant.sizes[0] : undefined;
+    const attributes = [toSkuSegment(variant?.color), toSkuSegment(onlySize)].filter(Boolean);
     const stem = [base, ...(attributes.length ? attributes : [String(index + 1)])].join("-");
     let candidate = stem;
     for (let copy = 2; taken.has(candidate); copy++) candidate = `${stem}-${copy}`;
