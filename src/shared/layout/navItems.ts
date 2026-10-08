@@ -20,6 +20,7 @@ import {
   Package,
   PlayCircle,
   Settings,
+  ShieldCheck,
   ShoppingCart,
   Stethoscope,
   User,
@@ -190,6 +191,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: "Doctor bookings",
         capability: "PRACTITIONERS",
       },
+      // Appointments the assistant took in chat where it cannot book a time itself.
+      {
+        href: "/bookings/requests",
+        label: "Appointment requests",
+        capability: "CATALOG_CLINICAL",
+      },
       {
         href: "/bookings/availability",
         label: "Availability",
@@ -235,6 +242,14 @@ export const NAV_ITEMS: NavItem[] = [
         label: "Chatbot",
         perm: "chatbot:view",
         Icon: MessageSquare,
+      },
+      // Only clinics run the escalation, file and appointment rules this page sets.
+      {
+        href: "/settings/assistant",
+        label: "Assistant rules",
+        perm: "chatbot:view",
+        capability: "CATALOG_CLINICAL",
+        Icon: ShieldCheck,
       },
       {
         href: "/settings/business",
