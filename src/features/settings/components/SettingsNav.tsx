@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
+import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
+import { hasCapability } from "@/lib/business-verticals";
 import { NAV_ITEMS } from "@/shared/layout/navItems";
 import { cn } from "@/lib/utils";
 
@@ -13,11 +15,15 @@ import { cn } from "@/lib/utils";
 export function SettingsNav() {
   const pathname = usePathname();
   const { can, isLoading: permsLoading } = usePermissions();
+  const { tenant } = useCurrentTenant();
 
   const settingsSections =
     NAV_ITEMS.find((item) => item.href === "/settings")?.children ?? [];
   const visibleSections = settingsSections.filter(
-    (section) => permsLoading || !section.perm || can(section.perm),
+    (section) =>
+      (permsLoading || !section.perm || can(section.perm)) &&
+      // Same rule as the sidebar: a vertical-specific tab only where it applies.
+      (!section.capability || hasCapability(tenant?.businessVertical, section.capability)),
   );
 
   return (
