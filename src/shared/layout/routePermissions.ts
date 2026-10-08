@@ -30,6 +30,7 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   { prefix: "/settings/workspaces", permission: "settings:edit" },
   { prefix: "/settings/billing", permission: "billing:view" },
   { prefix: "/settings/chatbot", permission: "chatbot:view" },
+  { prefix: "/settings/assistant", permission: "chatbot:view" },
   { prefix: "/settings/business", permission: "settings:view" },
   { prefix: "/settings/usage", permission: "billing:view" },
   { prefix: "/settings/access", permission: "members:view" },
@@ -56,6 +57,8 @@ const ROUTE_CAPABILITIES: { prefix: string; capability: VerticalCapability }[] =
   // but the route has to refuse the wrong vertical on a typed URL too.
   { prefix: "/bookings/clinical", capability: "CATALOG_CLINICAL" },
   { prefix: "/bookings/doctors", capability: "PRACTITIONERS" },
+  { prefix: "/bookings/requests", capability: "CATALOG_CLINICAL" },
+  { prefix: "/settings/assistant", capability: "CATALOG_CLINICAL" },
   { prefix: "/resources", capability: "RESOURCES" },
   // Mirrors the server: API keys are ORDERS-gated, so every Website API page is too.
   { prefix: "/channels/api", capability: "ORDERS" },
