@@ -55,7 +55,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMessageAllowance } from "../../billing/hooks/useBilling";
@@ -65,8 +65,7 @@ import { checkWhatsAppNumber } from "../../channels/whatsapp/services/whatsapp.s
 import LeadStatusSelect from "../../leads/components/LeadStatusSelect";
 import { useLead, useUpdateLeadStatus } from "../../leads/hooks/useLeads";
 import { useLeadVocabulary } from "../../leads/utils/leadVocabulary";
-import { OrderForm } from "../../orders/components/OrderForm";
-import { useCreateOrder, useLeadOrders } from "../../orders/hooks/useOrders";
+import { useLeadOrders } from "../../orders/hooks/useOrders";
 import {
   BUILT_IN_TABS,
   CHAT_BG_PRESETS,
@@ -229,8 +228,7 @@ export function InboxView() {
     }
     return {};
   });
-  const [orderFormOpen, setOrderFormOpen] = useState(false);
-  const createOrder = useCreateOrder();
+  const router = useRouter();
   const [pendingFile, setPendingFile] = useState<{
     file: File;
     previewUrl: string;
@@ -1094,7 +1092,14 @@ export function InboxView() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setOrderFormOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (!activeConv) return;
+                      router.push(
+                        `/orders/new?lead=${encodeURIComponent(activeConv.lead.id)}&conversation=${encodeURIComponent(activeConv.id)}`,
+                      );
+                    }}
+                  >
                     <ShoppingCart size={13} className="mr-2" /> Create Order
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -1965,21 +1970,6 @@ export function InboxView() {
             : undefined
         }
       />
-
-      {activeConv && (
-        <OrderForm
-          open={orderFormOpen}
-          onClose={() => setOrderFormOpen(false)}
-          presetLeadId={activeConv.lead.id}
-          presetConversationId={activeConv.id}
-          isSubmitting={createOrder.isPending}
-          onSubmit={(values) =>
-            createOrder.mutate(values, {
-              onSuccess: () => setOrderFormOpen(false),
-            })
-          }
-        />
-      )}
 
       {/* Invalid WhatsApp Number Dialog */}
       <ConfirmDialog

@@ -19,8 +19,13 @@ import {
   updateOrder,
   updateOrderStatus,
 } from '../services/ordersService';
-import type { OrderExportParams, OrderFilters, OrderStatus } from '../types';
-import type { OrderFormValues } from '../validations.order';
+import type {
+  CreateOrderPayload,
+  OrderExportParams,
+  OrderFilters,
+  OrderStatus,
+  UpdateOrderPayload,
+} from '../types';
 
 const PAGE_SIZE = 25;
 
@@ -88,7 +93,7 @@ export function useRefreshOrders() {
 export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: OrderFormValues) => createOrder(payload),
+    mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
     onSuccess: () => {
       toast.success('Order created');
       invalidateAll(qc);
@@ -100,7 +105,7 @@ export function useCreateOrder() {
 export function useUpdateOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<OrderFormValues> }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateOrderPayload }) =>
       updateOrder(id, payload),
     onSuccess: () => {
       toast.success('Order updated');
