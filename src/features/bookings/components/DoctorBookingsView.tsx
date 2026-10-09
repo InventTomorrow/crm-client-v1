@@ -1,16 +1,17 @@
 "use client";
 import { useInfinitePractitioners } from "@/features/practitioners/hooks/usePractitioners";
 import { practitionerDisplayName } from "@/features/practitioners/types";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   AutoCompleteSelect,
   type AutoCompleteSelectOption,
 } from "@/shared/ui/AutoCompleteSelect";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { BookingsSegmentView } from "./BookingsSegmentView";
 
 /** Appointments booked with a named practitioner, on that doctor's own calendar. */
 export function DoctorBookingsView() {
-  const [practitionerFilter, setPractitionerFilter] = useState<string>("");
+  const [practitionerFilter, setPractitionerFilter] = useUrlState("doctor");
   const practitionersQuery = useInfinitePractitioners({ isActive: true });
 
   const practitionerOptions: AutoCompleteSelectOption[] = useMemo(

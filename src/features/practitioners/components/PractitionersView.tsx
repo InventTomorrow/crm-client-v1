@@ -1,5 +1,6 @@
 "use client";
 import { useBookingConfigQuery } from "@/features/bookings/hooks/useBookings";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { Alert, AlertDescription } from "@/shared/ui/Alert";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -10,7 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Info, LayoutGrid, List, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   useDeletePractitioner,
   useInfinitePractitioners,
@@ -25,8 +26,6 @@ import { PractitionersEmptyState } from "./PractitionersEmptyState";
 import { PractitionersListView } from "./PractitionersListView";
 import { PractitionerTimeOffDialog } from "./PractitionerTimeOffDialog";
 
-const SEARCH_DEBOUNCE_MS = 300;
-
 const VIEW_BUTTONS = [
   { id: "grid", label: "Grid", Icon: LayoutGrid },
   { id: "list", label: "List", Icon: List },
@@ -34,25 +33,17 @@ const VIEW_BUTTONS = [
 
 export function PractitionersView() {
   const router = useRouter();
-  const { view, setView, searchTerm, setSearchTerm } = usePractitionersUiStore();
-  // Seeded from the store so returning to the page with a search active does not
-  // fire one unfiltered request before the debounce catches up.
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(() =>
-    searchTerm.trim(),
-  );
+  const { view, setView } = usePractitionersUiStore();
+  // Debounced so each keystroke doesn't restart pagination from the first cursor.
+  const {
+    search: debouncedSearchTerm,
+    searchInput: searchTerm,
+    setSearchInput: setSearchTerm,
+  } = useDebouncedUrlSearch("q");
   const [practitionerForTimeOff, setPractitionerForTimeOff] =
     useState<Practitioner | null>(null);
   const [practitionerPendingDeletion, setPractitionerPendingDeletion] =
     useState<Practitioner | null>(null);
-
-  // Each keystroke would otherwise restart pagination from the first cursor.
-  useEffect(() => {
-    const timer = setTimeout(
-      () => setDebouncedSearchTerm(searchTerm.trim()),
-      SEARCH_DEBOUNCE_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const practitionersQuery = useInfinitePractitioners(
     debouncedSearchTerm ? { search: debouncedSearchTerm } : {},

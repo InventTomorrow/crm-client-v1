@@ -1,8 +1,8 @@
 "use client";
 import { Loader2, MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Badge } from "@/shared/ui/Badge";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/NativeSelect";
 import { useAppointmentRequests, useUpdateAppointmentRequestStatus } from "../hooks/useAppointmentRequests";
@@ -15,10 +15,14 @@ const STATUSES: { key: AppointmentRequestStatus; label: string }[] = [
   { key: "CLOSED", label: "Closed" },
 ];
 
-const FILTERS: { key: AppointmentRequestStatus | undefined; label: string }[] = [
+const ALL_REQUESTS = "ALL";
+type RequestFilter = Extract<AppointmentRequestStatus, "NEW"> | typeof ALL_REQUESTS;
+
+const FILTERS: { key: RequestFilter; label: string }[] = [
   { key: "NEW", label: "New" },
-  { key: undefined, label: "All" },
+  { key: ALL_REQUESTS, label: "All" },
 ];
+const FILTER_KEYS = FILTERS.map((option) => option.key);
 
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
@@ -28,8 +32,10 @@ const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeS
  * the team; a coordinator books it and moves the request along here.
  */
 export function AppointmentRequestsView() {
-  const [filter, setFilter] = useState<AppointmentRequestStatus | undefined>("NEW");
-  const { data: requests = [], isLoading } = useAppointmentRequests(filter);
+  const [filter, setFilter] = useUrlEnumState<RequestFilter>("status", FILTER_KEYS, "NEW");
+  const { data: requests = [], isLoading } = useAppointmentRequests(
+    filter === ALL_REQUESTS ? undefined : filter,
+  );
   const { mutate: setStatus, isPending, variables } = useUpdateAppointmentRequestStatus();
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Button } from "@/shared/ui/Button";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import {
@@ -48,6 +49,7 @@ const BookingsCalendar = dynamic(
 import { QuickAppointmentDialog } from "./QuickAppointmentDialog";
 
 const ALL_STATUSES = "ALL";
+const STATUS_FILTERS = [ALL_STATUSES, ...APPOINTMENT_STATUSES] as const;
 const DEFAULT_TIMEZONE = "Asia/Karachi";
 const DEFAULT_DURATION_MINUTES = 30;
 
@@ -104,9 +106,9 @@ export function BookingsSegmentView({
   siblingLink,
 }: BookingsSegmentViewProps) {
   const [viewMode, setViewMode] = useState<BookingsViewMode>("table");
-  const [statusFilter, setStatusFilter] = useState<
+  const [statusFilter, setStatusFilter] = useUrlEnumState<
     AppointmentStatus | typeof ALL_STATUSES
-  >(ALL_STATUSES);
+  >("status", STATUS_FILTERS, ALL_STATUSES);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   // Set when the dialog was opened from a calendar slot rather than the header button.
   const [addDialogStartsAt, setAddDialogStartsAt] = useState<string | null>(
