@@ -1,5 +1,7 @@
 'use client';
 import { useClinicalServices } from '@/features/clinical-services/hooks/useClinicalServices';
+import { useDebouncedUrlSearch } from '@/shared/hooks/useDebouncedUrlSearch';
+import { useUrlEnumState } from '@/shared/hooks/useUrlEnumState';
 import { Alert, AlertDescription } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
@@ -46,7 +48,8 @@ import {
   type CoverageCellTarget,
 } from './CoverageStatusDialog';
 
-type CoverageTab = 'grid' | 'locations';
+const COVERAGE_TABS = ['grid', 'locations'] as const;
+type CoverageTab = (typeof COVERAGE_TABS)[number];
 /** How the service × area coverage is laid out — same data, two shapes. */
 type CoverageViewMode = 'matrix' | 'cards';
 
@@ -59,9 +62,13 @@ const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
 };
 
 export function CoverageAreasView() {
-  const [activeTab, setActiveTab] = useState<CoverageTab>('grid');
+  const [activeTab, setActiveTab] = useUrlEnumState('tab', COVERAGE_TABS, 'grid');
   const [viewMode, setViewMode] = useState<CoverageViewMode>('matrix');
-  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    search: searchTerm,
+    searchInput,
+    setSearchInput,
+  } = useDebouncedUrlSearch('q');
   const [cellBeingEdited, setCellBeingEdited] =
     useState<CoverageCellTarget | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -138,7 +145,7 @@ export function CoverageAreasView() {
     setIsLocationFormOpen(true);
   };
 
-  const clearSearch = () => setSearchTerm('');
+  const clearSearch = () => setSearchInput('');
 
   const noMatches = (label: string) => (
     <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-14 text-center">
@@ -230,8 +237,8 @@ export function CoverageAreasView() {
             )}
 
             <SearchField
-              value={searchTerm}
-              onValueChange={setSearchTerm}
+              value={searchInput}
+              onValueChange={setSearchInput}
               placeholder={SEARCH_PLACEHOLDER[activeTab]}
               aria-label="Search coverage"
               className="w-full sm:w-auto sm:min-w-[260px]"

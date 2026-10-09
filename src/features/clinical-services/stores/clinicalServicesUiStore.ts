@@ -12,34 +12,16 @@ export type ClinicalServiceTypeFilter =
 
 interface ClinicalServicesUiState {
   view: ClinicalServicesView;
-  searchTerm: string;
-  typeFilter: ClinicalServiceTypeFilter;
   setView: (view: ClinicalServicesView) => void;
-  setSearchTerm: (searchTerm: string) => void;
-  setTypeFilter: (typeFilter: ClinicalServiceTypeFilter) => void;
-  resetFilters: () => void;
 }
 
-/**
- * Listing-screen UI state only — the services themselves live in TanStack Query.
- * Filters stay in the store so stepping into a service's form and back does not
- * silently drop what the admin was looking at; only the view choice is persisted.
- */
+/** Listing-screen view choice, persisted across reloads; search and type filters live in the URL. */
 export const useClinicalServicesUiStore = create<ClinicalServicesUiState>()(
   persist(
     (set) => ({
       view: "grid",
-      searchTerm: "",
-      typeFilter: ALL_SERVICE_TYPES,
       setView: (view) => set({ view }),
-      setSearchTerm: (searchTerm) => set({ searchTerm }),
-      setTypeFilter: (typeFilter) => set({ typeFilter }),
-      resetFilters: () =>
-        set({ searchTerm: "", typeFilter: ALL_SERVICE_TYPES }),
     }),
-    {
-      name: "sf:clinical-services-ui",
-      partialize: (state) => ({ view: state.view }),
-    },
+    { name: "sf:clinical-services-ui" },
   ),
 );

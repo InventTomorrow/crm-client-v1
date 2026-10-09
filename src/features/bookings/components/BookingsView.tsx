@@ -1,6 +1,7 @@
 "use client";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { cn } from "@/lib/utils";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
@@ -55,6 +56,7 @@ const BookingsCalendar = dynamic(
 );
 
 const ALL_STATUSES = "ALL";
+const STATUS_FILTERS = [ALL_STATUSES, ...APPOINTMENT_STATUSES] as const;
 const DEFAULT_TIMEZONE = "Asia/Karachi";
 const DEFAULT_DURATION_MINUTES = 30;
 
@@ -74,9 +76,9 @@ const VIEW_MODES: {
 export function BookingsView() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<BookingsViewMode>("table");
-  const [statusFilter, setStatusFilter] = useState<
+  const [statusFilter, setStatusFilter] = useUrlEnumState<
     AppointmentStatus | typeof ALL_STATUSES
-  >(ALL_STATUSES);
+  >("status", STATUS_FILTERS, ALL_STATUSES);
   const [isBookingSheetOpen, setIsBookingSheetOpen] = useState(false);
   const [isQuickDialogOpen, setIsQuickDialogOpen] = useState(false);
   // Set when the dialog was opened from a calendar slot rather than the header button.

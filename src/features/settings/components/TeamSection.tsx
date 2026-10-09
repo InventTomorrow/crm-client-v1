@@ -20,6 +20,8 @@ import type {
   RoleItem,
 } from "@/features/auth/services/authService";
 import { cn } from "@/lib/utils";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { Checkbox } from "@/shared/ui/Checkbox";
@@ -121,6 +123,7 @@ const ROLE_META: Record<string, { color: string; bg: string; desc: string }> = {
 };
 
 const ROLE_ORDER = ["OWNER", "SALES", "FINANCE", "SUPPORT"] as const;
+const ROLE_FILTERS = ["all", ...ROLE_ORDER] as const;
 
 // ── Role badge ────────────────────────────────────────────────────────────────
 function RoleBadge({ name }: { name: string }) {
@@ -737,8 +740,8 @@ function MembersTab() {
   const [showInvite, setShowInvite] = useState(false);
   const [detailMember, setDetailMember] = useState<MemberItem | null>(null);
   const [removeTarget, setRemoveTarget] = useState<MemberItem | null>(null);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const { search, searchInput, setSearchInput } = useDebouncedUrlSearch("q");
+  const [roleFilter, setRoleFilter] = useUrlEnumState("role", ROLE_FILTERS, "all");
 
   const memberName = (m: MemberItem) =>
     [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email;
@@ -887,10 +890,10 @@ function MembersTab() {
         <Input
           className="h-10 rounded-[10px] border-[var(--line)] bg-[var(--surface)] pl-10 pr-20 text-[13px] shadow-sm focus-visible:border-[var(--accent)]"
           placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
         />
-        {search && (
+        {searchInput && (
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
             <span className="text-[11px] tabular-nums text-[var(--ink-mute)]">
               {filtered.length} found
@@ -898,7 +901,7 @@ function MembersTab() {
             <button
               type="button"
               aria-label="Clear search"
-              onClick={() => setSearch("")}
+              onClick={() => setSearchInput("")}
               className="flex size-5 items-center justify-center rounded-full text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
             >
               <X className="size-3.5" />
@@ -911,7 +914,7 @@ function MembersTab() {
         aria-label="Filter members by role"
         className="flex flex-wrap items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] p-1"
       >
-        {(["all", ...ROLE_ORDER] as const).map((r) => {
+        {ROLE_FILTERS.map((r) => {
           const isSelected = roleFilter === r;
           return (
             <button
@@ -959,7 +962,7 @@ function MembersTab() {
           return (
             <button
               key={r}
-              onClick={() => setRoleFilter((cur) => (cur === r ? "all" : r))}
+              onClick={() => setRoleFilter(roleFilter === r ? "all" : r)}
               className={cn(
                 "card p-4 text-left transition-colors hover:bg-[var(--surface-2)]",
                 roleFilter === r && "ring-1 ring-[var(--accent)]",
@@ -1260,12 +1263,12 @@ function PermissionsTab() {
 }
 
 // ── TeamSection (exported) ────────────────────────────────────────────────────
-type TeamTab = "members" | "permissions";
+const TEAM_TABS = ["members", "permissions"] as const;
 
 export function TeamSection() {
   const { can } = usePermissions();
   const canViewRoles = can("roles:view");
-  const [tab, setTab] = useState<TeamTab>("members");
+  const [tab, setTab] = useUrlEnumState("tab", TEAM_TABS, "members");
 
   // Same queries the tabs use — React Query dedupes, so the counts are free.
   const { data: members = [] } = useMembers();

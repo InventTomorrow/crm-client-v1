@@ -1,7 +1,7 @@
 "use client";
 import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -50,7 +50,8 @@ import TableView from "./views/TableView";
 // ──────────────────── LeadsView (root) ────────────────────
 export function LeadsView() {
   const vocabulary = useLeadVocabulary();
-  const [archived, setArchived] = useState(false);
+  const [archivedParam, setArchivedParam] = useUrlState("archived");
+  const archived = archivedParam === "1";
   const {
     data,
     isLoading,
@@ -75,15 +76,11 @@ export function LeadsView() {
   };
   const { leadsView, setLeadsView } = useAppStore();
 
-  const [filter, setFilter] = useState<LeadsFilter>({
-    channel: "all",
-    search: "",
-  });
   // Input stays instant; the (client-side) list re-filters only once typing pauses.
-  const debouncedLeadSearch = useDebouncedValue(filter.search);
-  const viewFilter = useMemo(
-    () => ({ ...filter, search: debouncedLeadSearch }),
-    [filter, debouncedLeadSearch],
+  const { search, searchInput, setSearchInput } = useDebouncedUrlSearch("q");
+  const viewFilter = useMemo<LeadsFilter>(
+    () => ({ channel: "all", search }),
+    [search],
   );
   const [selected, setSelected] = useState<Lead | null>(null);
   // Deep-link support: `/leads?lead=<id>` opens the detail sheet (e.g. from the inbox).
@@ -270,10 +267,8 @@ export function LeadsView() {
           <Input
             className="pl-8"
             placeholder={`Search ${vocabulary.plural}...`}
-            value={filter.search}
-            onChange={(e) =>
-              setFilter((f) => ({ ...f, search: e.target.value }))
-            }
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
         {/* <ToggleGroup
@@ -303,7 +298,7 @@ export function LeadsView() {
           spacing={0}
           value={archived ? "archived" : "active"}
           onValueChange={(v) => {
-            if (v) setArchived(v === "archived");
+            if (v) setArchivedParam(v === "archived" ? "1" : "");
           }}
         >
           <ToggleGroupItem value="active" className="h-10">

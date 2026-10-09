@@ -1,4 +1,6 @@
 "use client";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { NativeSelect } from "@/shared/ui/NativeSelect";
@@ -8,7 +10,7 @@ import { CardGridSkeleton } from "@/shared/ui/CardGridSkeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { LayoutGrid, List, Plus, Stethoscope } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   useDeleteClinicalService,
   useInfiniteClinicalServices,
@@ -27,7 +29,7 @@ import {
 import { ClinicalServiceCard } from "./ClinicalServiceCard";
 import { ClinicalServicesListView } from "./ClinicalServicesListView";
 
-const SEARCH_DEBOUNCE_MS = 300;
+const TYPE_FILTERS = [ALL_SERVICE_TYPES, ...CLINICAL_SERVICE_TYPES] as const;
 
 const VIEW_BUTTONS = [
   { id: "grid", label: "Grid", Icon: LayoutGrid },
@@ -36,24 +38,20 @@ const VIEW_BUTTONS = [
 
 export function ClinicalServicesView() {
   const router = useRouter();
-  const { view, setView, searchTerm, setSearchTerm, typeFilter, setTypeFilter } =
-    useClinicalServicesUiStore();
-  // Seeded from the store so returning to the page with a search active does not
-  // fire one unfiltered request before the debounce catches up.
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(() =>
-    searchTerm.trim(),
+  const { view, setView } = useClinicalServicesUiStore();
+  // Debounced so each keystroke doesn't restart pagination from the first cursor.
+  const {
+    search: debouncedSearchTerm,
+    searchInput: searchTerm,
+    setSearchInput: setSearchTerm,
+  } = useDebouncedUrlSearch("q");
+  const [typeFilter, setTypeFilter] = useUrlEnumState<ClinicalServiceTypeFilter>(
+    "type",
+    TYPE_FILTERS,
+    ALL_SERVICE_TYPES,
   );
   const [servicePendingDeletion, setServicePendingDeletion] =
     useState<ClinicalService | null>(null);
-
-  // Each keystroke would otherwise restart pagination from the first cursor.
-  useEffect(() => {
-    const timer = setTimeout(
-      () => setDebouncedSearchTerm(searchTerm.trim()),
-      SEARCH_DEBOUNCE_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const servicesQuery = useInfiniteClinicalServices({
     ...(typeFilter === ALL_SERVICE_TYPES ? {} : { serviceType: typeFilter }),

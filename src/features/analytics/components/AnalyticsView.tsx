@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Button } from "@/shared/ui/Button";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { AnalyticsSkeleton } from "./AnalyticsSkeleton";
@@ -174,7 +174,7 @@ function AiHandoffCard({ data }: { data: AiHandoff }) {
 
 // ──────────────────── AnalyticsView (root) ────────────────────
 export function AnalyticsView() {
-  const [range, setRange] = useState<RangePreset>("30d");
+  const [range, setRange] = useUrlEnumState<RangePreset>("range", PRESETS, "30d");
   const vocabulary = useLeadVocabulary();
   const chartConfig = chartConfigFor(vocabulary);
 

@@ -1,5 +1,6 @@
 'use client';
-import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { useDebouncedUrlSearch } from '@/shared/hooks/useDebouncedUrlSearch';
+import { useUrlEnumState } from '@/shared/hooks/useUrlEnumState';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
@@ -28,11 +29,11 @@ import { ResourceFormDialog } from './ResourceFormDialog';
 import { ResourcesEmptyState } from './ResourcesEmptyState';
 
 const ALL_TYPES = 'ALL';
+const TYPE_FILTERS = [ALL_TYPES, ...RESOURCE_TYPES] as const;
 
 export function ResourcesView() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebouncedValue(searchTerm);
-  const [typeFilter, setTypeFilter] = useState<ResourceType | typeof ALL_TYPES>(ALL_TYPES);
+  const { search, searchInput, setSearchInput } = useDebouncedUrlSearch('q');
+  const [typeFilter, setTypeFilter] = useUrlEnumState('type', TYPE_FILTERS, ALL_TYPES);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [resourceBeingEdited, setResourceBeingEdited] = useState<TenantResource | null>(null);
   const [resourcePendingDeletion, setResourcePendingDeletion] =
@@ -40,7 +41,7 @@ export function ResourcesView() {
 
   const resourcesQuery = useResourcesQuery({
     ...(typeFilter === ALL_TYPES ? {} : { resourceType: typeFilter }),
-    ...(debouncedSearchTerm.trim() ? { search: debouncedSearchTerm.trim() } : {}),
+    ...(search ? { search } : {}),
   });
 
   const deleteResource = useDeleteResource();
@@ -85,7 +86,7 @@ export function ResourcesView() {
     </div>
   );
 
-  const hasFilters = searchTerm.trim().length > 0 || typeFilter !== ALL_TYPES;
+  const hasFilters = searchInput.trim().length > 0 || typeFilter !== ALL_TYPES;
   const isEmpty = !resourcesQuery.isLoading && resources.length === 0;
 
   return (
@@ -114,8 +115,8 @@ export function ResourcesView() {
 
           <div className="flex flex-wrap items-center gap-3">
             <SearchField
-              value={searchTerm}
-              onValueChange={setSearchTerm}
+              value={searchInput}
+              onValueChange={setSearchInput}
               placeholder="Search resources…"
             />
 

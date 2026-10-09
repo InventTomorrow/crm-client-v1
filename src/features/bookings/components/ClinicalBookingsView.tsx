@@ -1,15 +1,16 @@
 "use client";
 import { useClinicalServices } from "@/features/clinical-services/hooks/useClinicalServices";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import {
   AutoCompleteSelect,
   type AutoCompleteSelectOption,
 } from "@/shared/ui/AutoCompleteSelect";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { BookingsSegmentView } from "./BookingsSegmentView";
 
 /** Appointments on the clinic's own calendar — booked for a service, with no doctor named. */
 export function ClinicalBookingsView() {
-  const [serviceFilter, setServiceFilter] = useState<string>("");
+  const [serviceFilter, setServiceFilter] = useUrlState("service");
   const { data: clinicalServices } = useClinicalServices();
 
   const serviceOptions: AutoCompleteSelectOption[] = useMemo(

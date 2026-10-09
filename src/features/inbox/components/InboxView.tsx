@@ -1,5 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
+import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { NavigateIcon } from "@/shared/ui/NavigateIcon";
@@ -53,7 +55,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMessageAllowance } from "../../billing/hooks/useBilling";
@@ -110,8 +112,13 @@ import { ChatListSkeleton, MessageSkeleton } from "./Skeletons";
 export function InboxView() {
   const leadVocabulary = useLeadVocabulary();
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
+  const [, setLeadDeepLink] = useUrlState("lead");
+  const [, setVerifiedDeepLink] = useUrlState("verified");
+  // Drops only the deep-link params so the active filter and search stay in the URL.
+  const clearLeadDeepLink = useCallback(() => {
+    setLeadDeepLink("");
+    setVerifiedDeepLink("");
+  }, [setLeadDeepLink, setVerifiedDeepLink]);
   // Persist the open chat across tab switches / remounts so returning to the
   // Inbox doesn't silently jump back to a different conversation.
   const [selectedConversationId, setSelectedConversationIdState] = useState<
@@ -132,9 +139,13 @@ export function InboxView() {
   // can explain what happened instead of the generic "select a conversation"
   // placeholder.
   const [chatWasDeleted, setChatWasDeleted] = useState(false);
-  const [filter, setFilter] = useState<ConversationFilter>("all");
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterParam, setFilter] = useUrlState("filter", "all");
+  // Debounced so the server is queried only after typing settles.
+  const {
+    search: debouncedSearch,
+    searchInput: search,
+    setSearchInput: setSearch,
+  } = useDebouncedUrlSearch("q");
   // A chat just opened from the Leads page has no messages yet, so the server
   // list query omits it. Pin it locally so it shows until the first message.
   const [pinnedConv, setPinnedConv] = useState<ConversationListItem | null>(
@@ -149,7 +160,7 @@ export function InboxView() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(Boolean(search));
 
   const [isValidatingLead, setIsValidatingLead] = useState(false);
   const [invalidLeadDialog, setInvalidLeadDialog] = useState<{
@@ -201,6 +212,12 @@ export function InboxView() {
     }
     return [];
   });
+  // Custom tabs live in this browser only — a link naming an unknown tab falls back to All.
+  const filter: ConversationFilter = [...BUILT_IN_TABS, ...customTabs].some(
+    (tab) => tab.id === filterParam,
+  )
+    ? filterParam
+    : "all";
   const [addingTab, setAddingTab] = useState(false);
   const [newTabLabel, setNewTabLabel] = useState("");
   const [tabAssignments, setTabAssignments] = useState<
@@ -434,12 +451,6 @@ export function InboxView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations, hiddenChats]);
 
-  // Debounce the chat search so the server is queried only after typing settles.
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
   // Deep-link from the Leads page: /inbox?lead=<leadId> opens that lead's chat.
   // `verified=1` means the number was already checked on the way here — don't re-check it.
   const openedLeadRef = useRef<string | null>(null);
@@ -463,7 +474,7 @@ export function InboxView() {
         setSelectedConversationId(conv.id);
         setChatWasDeleted(false);
         setMobPane("chat");
-        router.replace(pathname, { scroll: false });
+        clearLeadDeepLink();
         return;
       }
       openConvMut.mutate(leadId, {
@@ -482,10 +493,10 @@ export function InboxView() {
           setSelectedConversationId(detail.id);
           setChatWasDeleted(false);
           setMobPane("chat");
-          router.replace(pathname, { scroll: false });
+          clearLeadDeepLink();
         },
         onError: () => {
-          router.replace(pathname, { scroll: false });
+          clearLeadDeepLink();
         },
       });
     };
@@ -501,7 +512,7 @@ export function InboxView() {
       .then((res) => {
         setIsValidatingLead(false);
         if (!res.exists) {
-          router.replace(pathname, { scroll: false });
+          clearLeadDeepLink();
           setInvalidLeadDialog({
             open: true,
             phone: res.phone,
@@ -513,7 +524,7 @@ export function InboxView() {
       })
       .catch(() => {
         setIsValidatingLead(false);
-        router.replace(pathname, { scroll: false });
+        clearLeadDeepLink();
         toast.error("Failed to verify WhatsApp registration.");
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
