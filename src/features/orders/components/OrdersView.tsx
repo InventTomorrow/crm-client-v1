@@ -1,7 +1,6 @@
 "use client";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useOpenLeadChat } from "@/features/leads/hooks/useOpenLeadChat";
-import { extractErrorMessage } from "@/lib/utils";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { useUrlState } from "@/shared/hooks/useUrlState";
 import { Button } from "@/shared/ui/Button";
@@ -29,29 +28,25 @@ import {
   Upload,
   Wallet,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  useCreateOrder,
   useDeleteOrder,
   useExportOrders,
   useOrders,
   useOrdersSummary,
   useRefreshOrders,
-  useUpdateOrder,
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
-import { getOrder } from "../services/ordersService";
 import {
   MAX_EXPORT_SELECTED_ORDERS,
   ORDER_STATUS_OPTIONS,
-  type Order,
   type OrderFilters,
   type OrderListItem,
   type OrderStatus,
 } from "../types";
 import { OrderDetailSheet } from "./OrderDetailSheet";
-import { OrderForm } from "./OrderForm";
 import { OrderPlatformBadge } from "./OrderPlatformBadge";
 import { OrderRowActions } from "./OrderRowActions";
 import { OrderStatusBadge } from "./OrderStatusBadge";
@@ -69,8 +64,7 @@ export function OrdersView() {
   const [customizationParam, setCustomizationParam] =
     useUrlState("customization");
   const [selectedId, setSelectedId] = useUrlState("order");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Order | null>(null);
+  const router = useRouter();
 
   const filters: OrderFilters = useMemo(
     () => ({
@@ -103,24 +97,16 @@ export function OrdersView() {
     useOrders(filters);
   const { data: summary } = useOrdersSummary();
   const { refreshOrders, isRefreshing } = useRefreshOrders();
-  const createOrder = useCreateOrder();
-  const updateOrder = useUpdateOrder();
   const deleteOrder = useDeleteOrder();
   const exportOrders = useExportOrders();
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
-  const openCreate = () => {
-    setEditing(null);
-    setFormOpen(true);
-  };
+  const openCreate = () => router.push("/orders/new");
   const openEdit = useCallback(
-    (order: Order) => {
-      setSelectedId("");
-      setEditing(order);
-      setFormOpen(true);
-    },
-    [setSelectedId],
+    (order: { id: string }) =>
+      router.push(`/orders/${encodeURIComponent(order.id)}/edit`),
+    [router],
   );
 
   // Tracked per order: many orders share one lead, so the lead id alone would spin every row.
@@ -136,17 +122,6 @@ export function OrdersView() {
       openLeadChat(order.lead);
     },
     [openLeadChat],
-  );
-
-  const loadAndEditOrder = useCallback(
-    async (listItem: OrderListItem) => {
-      try {
-        openEdit(await getOrder(listItem.id));
-      } catch (error) {
-        toast.error(extractErrorMessage(error, "Failed to load order"));
-      }
-    },
-    [openEdit],
   );
 
   const columns: ColumnDef<OrderListItem, unknown>[] = useMemo(
@@ -278,7 +253,7 @@ export function OrdersView() {
         cell: ({ row }) => (
           <OrderRowActions
             order={row.original}
-            onEdit={loadAndEditOrder}
+            onEdit={openEdit}
             onDelete={setOrderPendingDeletion}
             onOpenCustomerChat={openCustomerChat}
             isOpeningChat={
@@ -289,7 +264,7 @@ export function OrdersView() {
         ),
       },
     ],
-    [loadAndEditOrder, openCustomerChat, verifyingLeadId, openingChatOrderId],
+    [openEdit, openCustomerChat, verifyingLeadId, openingChatOrderId],
   );
 
   const canExportOrders = can("orders:export");
@@ -479,29 +454,6 @@ export function OrdersView() {
           onEdit={openEdit}
         />
       )}
-
-      <OrderForm
-        open={formOpen}
-        initial={editing}
-        onClose={() => setFormOpen(false)}
-        isSubmitting={createOrder.isPending || updateOrder.isPending}
-        onSubmit={(values) => {
-          if (editing) {
-            const editedId = editing.id;
-            updateOrder.mutate(
-              { id: editedId, payload: values },
-              {
-                onSuccess: () => {
-                  setFormOpen(false);
-                  setSelectedId(editedId);
-                },
-              },
-            );
-          } else {
-            createOrder.mutate(values, { onSuccess: () => setFormOpen(false) });
-          }
-        }}
-      />
 
       <ConfirmDialog
         open={!!orderPendingDeletion}

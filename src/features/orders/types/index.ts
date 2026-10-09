@@ -25,6 +25,15 @@ export const ORDER_STATUS_OPTIONS = [
   'CANCELLED',
 ] as const satisfies readonly OrderStatus[];
 
+// No CANCELLED: the server deducts stock for every non-draft order it creates.
+export const ORDER_CREATE_STATUSES = [
+  'PENDING',
+  'CONFIRMED',
+  'SHIPPED',
+  'DELIVERED',
+  'COMPLETED',
+] as const satisfies readonly OrderStatus[];
+
 export type OrderPlatform = 'SHOPIFY' | 'INTERNAL' | 'API';
 
 /** One answered custom option, snapshotted onto the line at order time. */
@@ -129,6 +138,50 @@ export interface Order extends Omit<OrderListItem, 'items'> {
   shippingDetail: OrderShippingDetail | null;
   /** Absent on orders that predate the quote workflow — treat as "NONE". */
   quoteStatus?: OrderQuoteStatus;
+}
+
+/** Mirrors the server's orderItemInputSchema. */
+export interface OrderItemPayload {
+  productId?: string;
+  variantId?: string;
+  name: string;
+  sku?: string;
+  quantity: number;
+  unitPrice: number;
+  customOptions?: OrderItemCustomOption[];
+}
+
+/** Mirrors the server's shippingDetailSchema. */
+export interface OrderShippingPayload {
+  customerName: string;
+  customerPhone: string;
+  email?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country: string;
+  notes?: string;
+}
+
+export interface CreateOrderPayload {
+  leadId: string;
+  conversationId?: string;
+  status: OrderStatus;
+  currency: string;
+  discount: number;
+  notes?: string;
+  items: OrderItemPayload[];
+  shipping?: OrderShippingPayload;
+}
+
+export interface UpdateOrderPayload {
+  currency?: string;
+  discount?: number;
+  notes?: string;
+  items?: OrderItemPayload[];
+  shipping?: OrderShippingPayload;
 }
 
 export interface OrdersSummary {
