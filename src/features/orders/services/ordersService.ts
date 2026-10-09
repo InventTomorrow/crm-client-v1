@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/apiClient';
 import { isAxiosError } from 'axios';
 import type {
+  CreateOrderPayload,
   Order,
   OrderExportParams,
   OrderFilters,
@@ -8,8 +9,8 @@ import type {
   OrderListItem,
   OrderStatus,
   OrdersSummary,
+  UpdateOrderPayload,
 } from '../types';
-import type { OrderFormValues } from '../validations.order';
 
 export async function getOrders(params: OrderFilters & { cursor?: string; limit?: number }) {
   const res = await apiClient.get<{ success: true; data: OrderListItem[] }>('/orders', { params });
@@ -26,12 +27,12 @@ export async function getOrder(id: string) {
   return res.data.data;
 }
 
-export async function createOrder(payload: OrderFormValues) {
+export async function createOrder(payload: CreateOrderPayload) {
   const res = await apiClient.post<{ success: true; data: Order }>('/orders', payload);
   return res.data.data;
 }
 
-export async function updateOrder(id: string, payload: Partial<OrderFormValues>) {
+export async function updateOrder(id: string, payload: UpdateOrderPayload) {
   const res = await apiClient.put<{ success: true; data: Order }>(`/orders/${id}`, payload);
   return res.data.data;
 }

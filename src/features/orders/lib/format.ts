@@ -1,13 +1,8 @@
 import type { OrderPlatform, OrderStatus } from '../types';
 
+// PKR only for now; an order saved in another currency still shows its own on edit.
 export const CURRENCIES: { code: string; name: string }[] = [
   { code: 'PKR', name: 'Pakistani Rupee' },
-  { code: 'USD', name: 'US Dollar' },
-  { code: 'EUR', name: 'Euro' },
-  { code: 'GBP', name: 'British Pound' },
-  { code: 'AED', name: 'UAE Dirham' },
-  { code: 'SAR', name: 'Saudi Riyal' },
-  { code: 'INR', name: 'Indian Rupee' },
 ];
 
 export function formatMoney(amount: string | number, currency = 'PKR'): string {
