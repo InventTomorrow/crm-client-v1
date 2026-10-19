@@ -63,7 +63,20 @@ export const businessProfileSchema = z.object({
   businessInfoMessage: z.string().max(2000),
   businessFaqs: z.array(businessFaqSchema).max(50),
   supportName: z.string().max(100),
-  supportPhone: z.string().max(30),
+  // Mirrors the server's supportPhoneSchema; whether it's on WhatsApp is checked on save.
+  supportPhone: z
+    .string()
+    .max(30)
+    .refine(
+      (phone) => {
+        const digitsOnly = phone.replace(/[\s\-()]/g, "");
+        return digitsOnly === "" || /^\+[1-9]\d{6,14}$/.test(digitsOnly);
+      },
+      {
+        message:
+          "Use digits only, starting with + and the country code, e.g. +923001234567",
+      },
+    ),
   supportEmail: z
     .string()
     .max(200)
