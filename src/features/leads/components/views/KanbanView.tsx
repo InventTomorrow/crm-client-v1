@@ -26,20 +26,18 @@ export default function KanbanView({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
+  // One bucket per column the vocabulary draws, so a status it adds (a clinic's "booked") is never dropped.
   const grouped = useMemo(() => {
-    const filtered = filterLeads(leads, filter);
-    const g: Record<string, Lead[]> = {
-      prospect: [],
-      cold: [],
-      warm: [],
-      hot: [],
-      closed: [],
-    };
-    filtered.forEach((l) => {
-      g[l.status]?.push(l);
+    const leadsByStatus: Record<string, Lead[]> = Object.fromEntries(
+      Object.keys(vocabulary.statusMeta).map((status) => [status, []]),
+    );
+    filterLeads(leads, filter).forEach((lead) => {
+      leadsByStatus[lead.status]?.push(lead);
     });
-    return g;
-  }, [leads, filter]);
+    return leadsByStatus;
+  }, [leads, filter, vocabulary.statusMeta]);
+
+  const columnCount = Object.keys(vocabulary.statusMeta).length;
 
   const handleDrop = (e: React.DragEvent, colKey: string) => {
     e.preventDefault();
@@ -51,7 +49,10 @@ export default function KanbanView({
   };
 
   return (
-    <div className="leads-kanban grid gap-3 flex-1 min-h-0 grid-cols-[repeat(5,minmax(220px,1fr))] overflow-x-auto">
+    <div
+      className="leads-kanban grid gap-3 flex-1 min-h-0 overflow-x-auto"
+      style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(220px, 1fr))` }}
+    >
       {Object.entries(vocabulary.statusMeta).map(([key, c]) => (
         <div
           key={key}

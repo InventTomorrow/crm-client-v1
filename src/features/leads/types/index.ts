@@ -51,3 +51,10 @@ export const STATUS_META: Record<string, LeadStatusMeta> = {
   hot:      { label: 'Hot',      color: '#EF4444', tint: 'rgba(239,68,68,0.08)' },
   closed:   { label: 'Closed',   color: '#8B5CF6', tint: 'rgba(139,92,246,0.10)' },
 };
+
+/** Healthcare only for now: a lead with a live appointment, between hot and closed. */
+export const BOOKED_STATUS_META: LeadStatusMeta = {
+  label: 'Booked',
+  color: '#10B981',
+  tint: 'rgba(16,185,129,0.10)',
+};

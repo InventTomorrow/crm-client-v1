@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const leadStatusEnum = z.enum(
-  ["prospect", "cold", "warm", "hot", "closed"],
+  ["prospect", "cold", "warm", "hot", "booked", "closed"],
   {
     message: "Status is required",
   },
