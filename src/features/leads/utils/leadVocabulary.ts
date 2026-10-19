@@ -3,20 +3,28 @@ import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import type { BusinessVertical } from "@/lib/business-verticals";
 import { CalendarCheck, Flame, type LucideIcon } from "lucide-react";
 import { useMemo } from "react";
-import { STATUS_META, type LeadStatusMeta } from "../types";
+import { BOOKED_STATUS_META, STATUS_META, type LeadStatusMeta } from "../types";
 
 /**
- * A clinic runs patient intake, not a sales pipeline. The stored enum is still
- * PROSPECT/COLD/WARM/HOT/CLOSED — only what the user reads changes, so nothing
- * here touches the API contract or the CSV's own status values.
+ * A clinic runs patient intake, not a sales pipeline. Its labels are its own,
+ * and it alone has BOOKED (a live appointment) — the server moves a patient
+ * there on booking and on to CLOSED once the appointment is completed.
  */
 const HEALTHCARE_STATUS_LABELS: Record<string, string> = {
   prospect: "New enquiry",
   cold: "Unresponsive",
   warm: "In intake",
   hot: "Ready to book",
-  closed: "Booked",
+  booked: "Booked",
+  closed: "Completed",
 };
+
+/** Default statuses with BOOKED placed after HOT, so the kanban reads left to right. */
+const HEALTHCARE_STATUS_META: Record<string, LeadStatusMeta> = Object.fromEntries(
+  Object.entries(STATUS_META).flatMap(([status, meta]) =>
+    status === "hot" ? [[status, meta], ["booked", BOOKED_STATUS_META]] : [[status, meta]],
+  ),
+);
 
 export interface LeadVocabulary {
   singular: string;
@@ -77,7 +85,7 @@ const HEALTHCARE_VOCABULARY: LeadVocabulary = {
   bookingSingularTitle: "Appointment",
   bookingSingularWithArticle: "an appointment",
   statusMeta: Object.fromEntries(
-    Object.entries(STATUS_META).map(([status, meta]) => [
+    Object.entries(HEALTHCARE_STATUS_META).map(([status, meta]) => [
       status,
       { ...meta, label: HEALTHCARE_STATUS_LABELS[status] ?? meta.label },
     ]),
