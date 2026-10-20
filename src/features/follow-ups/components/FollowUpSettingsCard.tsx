@@ -42,7 +42,8 @@ export function FollowUpSettingsCard() {
   if (isLoading || !isAvailable) return null;
 
   return (
-    <form onSubmit={submit} className="card p-[22px] flex flex-col gap-5">
+    // noValidate: the browser's own min/max bubble would hide the form's clearer messages.
+    <form noValidate onSubmit={submit} className="card p-[22px] flex flex-col gap-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="flex items-center gap-2 text-[15px] font-semibold">
