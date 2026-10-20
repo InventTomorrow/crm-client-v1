@@ -20,6 +20,8 @@ const toLead = (data: any): Lead => ({
   lastMsg: data.conversations?.[0]?.messages?.[0]?.content || '',
   createdAt: data.createdAt ?? undefined,
   lastContactedAt: data.lastContactedAt ?? undefined,
+  followUpsPausedAt: data.followUpsPausedAt ?? undefined,
+  followUpsPausedBy: data.followUpsPausedBy ?? undefined,
   time: formatActivityDate(data.lastContactedAt, 'Never contacted'),
   unread: 0,
   // Pipeline value = sum of the lead's realised (non-cancelled) order totals.

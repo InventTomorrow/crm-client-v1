@@ -4,6 +4,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { AISettingsWidget } from '@/features/channels/whatsapp/components/AISettingsWidget';
+import { FollowUpSettingsCard } from '@/features/follow-ups/components/FollowUpSettingsCard';
 import { useCurrentTenant } from '@/features/tenant/hooks/useCurrentTenant';
 import { hasCapability } from '@/lib/business-verticals';
 import { KEEP_FIELD_REFS } from '@/lib/formReset';
@@ -177,6 +178,7 @@ export function ChatbotSection() {
       </form>
 
       <AISettingsWidget />
+      <FollowUpSettingsCard />
     </>
   );
 }
