@@ -13,8 +13,8 @@ describe("business verticals", () => {
   });
 
   it("maps each vertical to its capabilities, mirroring the server registry", () => {
-    expect(capabilitiesFor("ECOMMERCE")).toEqual(["CATALOG_PRODUCTS", "ORDERS"]);
-    expect(capabilitiesFor("RESTAURANT")).toEqual(["CATALOG_MENU", "ORDERS"]);
+    expect(capabilitiesFor("ECOMMERCE")).toEqual(["CATALOG_PRODUCTS", "ORDERS", "FOLLOW_UPS"]);
+    expect(capabilitiesFor("RESTAURANT")).toEqual(["CATALOG_MENU", "ORDERS", "FOLLOW_UPS"]);
     expect(capabilitiesFor("MARKETING_AGENCY")).toEqual([
       "CATALOG_SERVICES",
       "SERVICE_ORDERS",
