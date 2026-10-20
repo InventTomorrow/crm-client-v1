@@ -49,6 +49,22 @@ export interface LeadFollowUpPause {
   followUpsPausedBy: FollowUpPauseSource | null;
 }
 
+export type FollowUpAnalyticsRange = '3d' | '7d' | '30d' | '90d';
+
+export interface ReplyRate {
+  sent: number;
+  replied: number;
+  replyRate: number;
+}
+
+/** Mirrors the server's FollowUpAnalyticsView. */
+export interface FollowUpAnalyticsView {
+  isAvailable: boolean;
+  replyWindowHours: number;
+  attempts: (ReplyRate & { attempt: number })[];
+  totals: ReplyRate;
+}
+
 export type FollowUpCycleState = 'SCHEDULED' | 'BLOCKED' | 'DONE';
 
 /** Mirrors the server's LeadFollowUpStatusView. */

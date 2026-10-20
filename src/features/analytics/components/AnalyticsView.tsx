@@ -22,6 +22,7 @@ import { Button } from "@/shared/ui/Button";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { AnalyticsSkeleton } from "./AnalyticsSkeleton";
 import { UsageSummaryCard } from "@/features/billing/components/UsageSummaryCard";
+import { FollowUpReplyRatesCard } from "@/features/follow-ups/components/FollowUpReplyRatesCard";
 import {
   useLeadVocabulary,
   type LeadVocabulary,
@@ -276,6 +277,10 @@ export function AnalyticsView() {
               <FunnelChart data={data.funnel} />
             </div>
             <AiHandoffCard data={data.aiHandoff} />
+          </div>
+
+          <div className="mt-3.5">
+            <FollowUpReplyRatesCard range={range} />
           </div>
 
           {/* Account plan consumption — full breakdown at Settings → Usage. */}

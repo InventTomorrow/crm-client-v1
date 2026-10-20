@@ -1,10 +1,22 @@
 import { apiClient } from '@/lib/apiClient';
 import type {
+  FollowUpAnalyticsRange,
+  FollowUpAnalyticsView,
   FollowUpSettingsForm,
   FollowUpSettingsView,
   LeadFollowUpPause,
   LeadFollowUpStatus,
 } from '../types';
+
+export async function getFollowUpAnalytics(
+  range: FollowUpAnalyticsRange,
+): Promise<FollowUpAnalyticsView> {
+  const response = await apiClient.get<{ success: true; data: FollowUpAnalyticsView }>(
+    '/follow-ups/analytics',
+    { params: { range } },
+  );
+  return response.data.data;
+}
 
 export async function getLeadFollowUpStatus(leadId: string): Promise<LeadFollowUpStatus> {
   const response = await apiClient.get<{ success: true; data: LeadFollowUpStatus }>(
