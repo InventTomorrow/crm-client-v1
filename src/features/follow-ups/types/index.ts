@@ -48,3 +48,14 @@ export interface LeadFollowUpPause {
   followUpsPausedAt: string | null;
   followUpsPausedBy: FollowUpPauseSource | null;
 }
+
+export type FollowUpCycleState = 'SCHEDULED' | 'BLOCKED' | 'DONE';
+
+/** Mirrors the server's LeadFollowUpStatusView. */
+export interface LeadFollowUpStatus extends LeadFollowUpPause {
+  isEnabled: boolean;
+  state: FollowUpCycleState | null;
+  nextFollowUpAt: string | null;
+  attemptsSent: number;
+  maxAttempts: number;
+}

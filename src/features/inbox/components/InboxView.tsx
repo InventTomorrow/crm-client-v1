@@ -104,6 +104,7 @@ import { ConversationRow } from "./ConversationRow";
 import { DateSeparator } from "./DateSeparator";
 import { EmptyChatState } from "./EmptyChatState";
 import { EscalationBadge } from "./EscalationBadge";
+import { useFollowUpMessageLabels } from "@/features/follow-ups/hooks/useFollowUpMessageLabels";
 import { MessageBubble } from "./MessageBubble";
 import { NewChatDialog } from "./NewChatDialog";
 import { ChatListSkeleton, MessageSkeleton } from "./Skeletons";
@@ -275,6 +276,7 @@ export function InboxView() {
     isFetchingNextPage: fetchingNextMsgs,
   } = useMessagesPaginated(selectedConversationId);
   const messages = [...(messagesData?.pages.flat() || [])].reverse();
+  const followUpLabels = useFollowUpMessageLabels(selectedLeadId, messages);
 
   const approveDraftMut = useApproveDraft(selectedConversationId ?? "");
   const sendReplyMut = useSendHumanReply(selectedConversationId ?? "");
@@ -1237,6 +1239,7 @@ export function InboxView() {
                       waConnected={waConnected}
                       approving={approveDraftMut.isPending}
                       peerName={displayName}
+                      followUpLabel={followUpLabels.get(msg.id)}
                       onEdit={handleEditMessage}
                       onDelete={setDeleteMsgTarget}
                       onApproveDraft={handleApproveDraft}

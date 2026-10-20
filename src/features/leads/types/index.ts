@@ -9,8 +9,6 @@ export interface Lead extends BaseLead {
   /** Raw ISO timestamps from the API — `time` is only their display form. */
   createdAt?: string;
   lastContactedAt?: string;
-  followUpsPausedAt?: string;
-  followUpsPausedBy?: 'CUSTOMER' | 'AGENT';
 }
 
 export type LeadsView = 'kanban' | 'list' | 'table';

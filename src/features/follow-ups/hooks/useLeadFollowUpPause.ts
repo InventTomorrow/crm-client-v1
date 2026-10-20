@@ -1,51 +1,58 @@
 'use client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useLead } from '@/features/leads/hooks/useLeads';
-import type { Lead } from '@/features/leads/types';
 import { extractErrorMessage } from '@/lib/utils';
-import { setLeadFollowUpPause } from '../services/followUpsService';
-import { useFollowUpSettings } from './useFollowUpSettings';
+import { getLeadFollowUpStatus, setLeadFollowUpPause } from '../services/followUpsService';
+import type { LeadFollowUpStatus } from '../types';
 
-const leadDetailKey = (leadId: string) => ['leads', 'detail', leadId] as const;
+const leadFollowUpStatusKey = (leadId: string) => ['follow-ups', 'lead', leadId] as const;
+
+export function useLeadFollowUpStatus(leadId: string | null | undefined) {
+  return useQuery({
+    queryKey: leadFollowUpStatusKey(leadId ?? ''),
+    queryFn: () => getLeadFollowUpStatus(leadId!),
+    enabled: !!leadId,
+  });
+}
 
 export function useSetLeadFollowUpPause(leadId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (isPaused: boolean) => setLeadFollowUpPause(leadId, isPaused),
     onMutate: async (isPaused) => {
-      await queryClient.cancelQueries({ queryKey: leadDetailKey(leadId) });
-      const previousLead = queryClient.getQueryData<Lead>(leadDetailKey(leadId));
-      queryClient.setQueryData<Lead>(leadDetailKey(leadId), (currentLead) =>
-        currentLead
+      await queryClient.cancelQueries({ queryKey: leadFollowUpStatusKey(leadId) });
+      const previousStatus = queryClient.getQueryData<LeadFollowUpStatus>(leadFollowUpStatusKey(leadId));
+      queryClient.setQueryData<LeadFollowUpStatus>(leadFollowUpStatusKey(leadId), (currentStatus) =>
+        currentStatus
           ? {
-              ...currentLead,
-              followUpsPausedAt: isPaused ? new Date().toISOString() : undefined,
-              followUpsPausedBy: isPaused ? 'AGENT' : undefined,
+              ...currentStatus,
+              followUpsPausedAt: isPaused ? new Date().toISOString() : null,
+              followUpsPausedBy: isPaused ? 'AGENT' : null,
             }
-          : currentLead,
+          : currentStatus,
       );
-      return { previousLead };
+      return { previousStatus };
     },
     onSuccess: (_pause, isPaused) =>
       toast.success(isPaused ? 'Follow-ups paused for this lead' : 'Follow-ups turned back on'),
     onError: (error, _isPaused, context) => {
-      if (context?.previousLead) queryClient.setQueryData(leadDetailKey(leadId), context.previousLead);
+      if (context?.previousStatus) {
+        queryClient.setQueryData(leadFollowUpStatusKey(leadId), context.previousStatus);
+      }
       toast.error(extractErrorMessage(error, 'Failed to update follow-ups'));
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: leadDetailKey(leadId) }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: leadFollowUpStatusKey(leadId) }),
   });
 }
 
 export function useLeadFollowUpPauseToggle(leadId: string) {
-  const { data: settingsView } = useFollowUpSettings();
-  const { data: lead } = useLead(leadId);
+  const { data: status } = useLeadFollowUpStatus(leadId);
   const { mutate: setPaused, isPending } = useSetLeadFollowUpPause(leadId);
   const [isResumeConfirmOpen, setIsResumeConfirmOpen] = useState(false);
 
-  const isPaused = !!lead?.followUpsPausedAt;
-  const isPausedByCustomer = lead?.followUpsPausedBy === 'CUSTOMER';
+  const isPaused = !!status?.followUpsPausedAt;
+  const isPausedByCustomer = status?.followUpsPausedBy === 'CUSTOMER';
 
   // Undoing a customer's own "stop" is allowed, but never by accident.
   const toggleFollowUps = (shouldReceiveFollowUps: boolean) => {
@@ -61,10 +68,10 @@ export function useLeadFollowUpPauseToggle(leadId: string) {
   };
 
   return {
-    isVisible: !!lead && !!settingsView?.isAvailable && settingsView.settings.enabled,
+    status,
+    isVisible: !!status?.isEnabled,
     isPaused,
     isPausedByCustomer,
-    pausedAt: lead?.followUpsPausedAt,
     isPending,
     isResumeConfirmOpen,
     toggleFollowUps,

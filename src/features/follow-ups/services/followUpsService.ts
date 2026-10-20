@@ -1,5 +1,17 @@
 import { apiClient } from '@/lib/apiClient';
-import type { FollowUpSettingsForm, FollowUpSettingsView, LeadFollowUpPause } from '../types';
+import type {
+  FollowUpSettingsForm,
+  FollowUpSettingsView,
+  LeadFollowUpPause,
+  LeadFollowUpStatus,
+} from '../types';
+
+export async function getLeadFollowUpStatus(leadId: string): Promise<LeadFollowUpStatus> {
+  const response = await apiClient.get<{ success: true; data: LeadFollowUpStatus }>(
+    `/follow-ups/leads/${leadId}`,
+  );
+  return response.data.data;
+}
 
 export async function getFollowUpSettings(): Promise<FollowUpSettingsView> {
   const response = await apiClient.get<{ success: true; data: FollowUpSettingsView }>(

@@ -17,6 +17,7 @@ import {
   Edit2,
   FileText,
   Loader2,
+  MessageCircle,
   MoreVertical,
   Send,
   Trash2,
@@ -40,6 +41,8 @@ interface MessageBubbleProps {
   approving: boolean;
   /** Customer display name — drives the avatar shown beside inbound messages. */
   peerName: string;
+  /** e.g. "Follow-up 1/2" when the assistant sent this as an automatic follow-up. */
+  followUpLabel?: string;
   onEdit: (msg: ConversationMessage) => void;
   onDelete: (target: DeleteMessageTarget) => void;
   onApproveDraft: (id: string) => void;
@@ -50,6 +53,7 @@ function MessageBubbleBase({
   waConnected,
   approving,
   peerName,
+  followUpLabel,
   onEdit,
   onDelete,
   onApproveDraft,
@@ -79,6 +83,11 @@ function MessageBubbleBase({
           {isAI && (
             <span className="flex items-center gap-1 text-[10.5px] text-[var(--accent)] font-medium">
               <Zap size={10} /> AsaanRabta AI
+            </span>
+          )}
+          {followUpLabel && (
+            <span className="flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-1.5 py-px text-[10px] font-medium text-[var(--accent)]">
+              <MessageCircle size={9} /> {followUpLabel}
             </span>
           )}
           {isAgent && (
