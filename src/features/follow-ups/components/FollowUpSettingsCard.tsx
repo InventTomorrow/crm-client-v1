@@ -1,5 +1,6 @@
 'use client';
 import { AlertTriangle, Check, Info, Loader2, MessageCircle } from 'lucide-react';
+import type { ComponentProps, ReactNode } from 'react';
 import { Controller } from 'react-hook-form';
 import { SettingsSaveBar } from '@/features/settings/components/SettingsSaveBar';
 import { useLeadVocabulary } from '@/features/leads/utils/leadVocabulary';
@@ -15,7 +16,66 @@ const ATTEMPT_OPTIONS = [1, 2, 3] as const;
 
 function FieldError({ message }: { message: string | undefined }) {
   if (!message) return null;
-  return <p className="text-[11px] text-[var(--destructive)]">{message}</p>;
+  return <p className="mt-2 text-[11px] text-[var(--destructive)]">{message}</p>;
+}
+
+function SectionHeading({ title, description }: { title: string; description: string }) {
+  return (
+    <div>
+      <h4 className="text-[12.5px] font-semibold text-[var(--ink)]">{title}</h4>
+      <p className="mt-0.5 text-[11px] text-[var(--ink-mute)]">{description}</p>
+    </div>
+  );
+}
+
+// Same bordered row as the priority list, so both columns read as one system.
+function SettingRow({
+  label,
+  labelFor,
+  hint,
+  control,
+  children,
+}: {
+  label: string;
+  labelFor?: string;
+  hint: string;
+  control: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3.5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <label htmlFor={labelFor} className="block text-[12.5px] font-medium text-[var(--ink)]">
+            {label}
+          </label>
+          <p className="mt-0.5 text-[11px] text-[var(--ink-mute)]">{hint}</p>
+        </div>
+        {control}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// The unit sits inside the box and the spinner arrows are hidden: typing is faster than clicking.
+function UnitNumberInput({ unit, className, ...inputProps }: ComponentProps<'input'> & { unit: string }) {
+  return (
+    <div className="relative w-32 shrink-0">
+      <Input
+        type="number"
+        inputMode="numeric"
+        className={cn(
+          'pr-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+          className,
+        )}
+        {...inputProps}
+      />
+      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] text-[var(--ink-mute)]">
+        {unit}
+      </span>
+    </div>
+  );
 }
 
 export function FollowUpSettingsCard() {
@@ -26,6 +86,7 @@ export function FollowUpSettingsCard() {
     isLoading,
     isSaving,
     isAvailable,
+    areSettingsEditable,
     eligibleStatuses,
     numberAgeDays,
     highRiskDailyLimit,
@@ -62,113 +123,124 @@ export function FollowUpSettingsCard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="follow-up-interval" className="text-[12px] font-medium text-[var(--ink-soft)]">
-            Wait before following up
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="follow-up-interval"
-              type="number"
-              min={FOLLOW_UP_BOUNDS.intervalHours.min}
-              max={FOLLOW_UP_BOUNDS.intervalHours.max}
-              className="w-24"
-              {...register('intervalHours', { valueAsNumber: true })}
-            />
-            <span className="text-[12px] text-[var(--ink-mute)]">hours of silence</span>
-          </div>
-          <p className="text-[11px] text-[var(--ink-mute)]">Each later follow-up waits twice as long.</p>
-          <FieldError message={errors.intervalHours?.message} />
-        </div>
+      {!areSettingsEditable && (
+        <p className="-mt-2 text-[11.5px] text-[var(--ink-mute)]">
+          Turn follow-ups on to change these settings.
+        </p>
+      )}
 
-        <div className="flex flex-col gap-1">
-          <span className="text-[12px] font-medium text-[var(--ink-soft)]">Follow-ups per conversation</span>
-          <Controller
-            name="maxAttempts"
-            control={control}
-            render={({ field }) => (
-              <div className="flex gap-2">
-                {ATTEMPT_OPTIONS.map((attemptCount) => (
-                  <button
-                    key={attemptCount}
-                    type="button"
-                    onClick={() => field.onChange(attemptCount)}
-                    className={cn(
-                      'h-10 w-12 rounded-xl border text-[13px] font-medium transition-all',
-                      field.value === attemptCount
-                        ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--ink)]'
-                        : 'border-[var(--line)] bg-[var(--surface)] text-[var(--ink-mute)] hover:border-[var(--accent)]',
-                    )}
-                  >
-                    {attemptCount}
-                  </button>
-                ))}
+      {/* A disabled fieldset locks every control inside, including the priority checkboxes and arrows. */}
+      <fieldset
+        disabled={!areSettingsEditable}
+        className="m-0 grid min-w-0 grid-cols-1 gap-6 border-0 p-0 transition-opacity disabled:opacity-50 lg:grid-cols-2"
+      >
+        <div className="flex flex-col gap-2">
+          <SectionHeading
+            title="When to follow up"
+            description="Timing, how many to send, and a safe daily cap for your number."
+          />
+
+          <SettingRow
+            label="Wait before following up"
+            labelFor="follow-up-interval"
+            hint="Silence after your reply. Each later follow-up waits twice as long."
+            control={
+              <UnitNumberInput
+                id="follow-up-interval"
+                unit="hours"
+                min={FOLLOW_UP_BOUNDS.intervalHours.min}
+                max={FOLLOW_UP_BOUNDS.intervalHours.max}
+                aria-invalid={!!errors.intervalHours}
+                {...register('intervalHours', { valueAsNumber: true })}
+              />
+            }
+          >
+            <FieldError message={errors.intervalHours?.message} />
+          </SettingRow>
+
+          <SettingRow
+            label="Follow-ups per conversation"
+            hint="The last one closes politely."
+            control={
+              <Controller
+                name="maxAttempts"
+                control={control}
+                render={({ field }) => (
+                  <div className="seg shrink-0" role="group" aria-label="Follow-ups per conversation">
+                    {ATTEMPT_OPTIONS.map((attemptCount) => (
+                      <button
+                        key={attemptCount}
+                        type="button"
+                        aria-pressed={field.value === attemptCount}
+                        className={cn('min-w-9', field.value === attemptCount && 'on')}
+                        onClick={() => field.onChange(attemptCount)}
+                      >
+                        {attemptCount}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              />
+            }
+          />
+
+          <SettingRow
+            label="Daily limit for your number"
+            labelFor="follow-up-daily-limit"
+            hint={`Between ${FOLLOW_UP_BOUNDS.dailyLimit.min} and ${FOLLOW_UP_BOUNDS.dailyLimit.max} follow-ups a day.`}
+            control={
+              <UnitNumberInput
+                id="follow-up-daily-limit"
+                unit="a day"
+                min={FOLLOW_UP_BOUNDS.dailyLimit.min}
+                max={FOLLOW_UP_BOUNDS.dailyLimit.max}
+                aria-invalid={!!errors.dailyLimit}
+                {...register('dailyLimit', { valueAsNumber: true })}
+              />
+            }
+          >
+            <FieldError message={errors.dailyLimit?.message} />
+            {isHighRiskLimit && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--warning-soft)] p-2.5 text-[11.5px] text-[var(--warning-foreground)]">
+                <AlertTriangle size={14} className="mt-px shrink-0" />
+                <span>
+                  More than {highRiskDailyLimit} a day raises the risk of WhatsApp banning your number.
+                  You can still save it, but keep it lower unless the number is well established.
+                </span>
               </div>
             )}
-          />
-          <p className="text-[11px] text-[var(--ink-mute)]">The last one closes politely.</p>
+            {isCappedByNumberAge && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--surface-2)] p-2.5 text-[11.5px] text-[var(--ink-mute)]">
+                <Info size={14} className="mt-px shrink-0" />
+                <span>
+                  This number connected {numberAgeDays} {numberAgeDays === 1 ? 'day' : 'days'} ago, so at
+                  most {effectiveDailyLimit} a day go out for now. The cap rises as the number ages.
+                </span>
+              </div>
+            )}
+          </SettingRow>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="follow-up-daily-limit" className="text-[12px] font-medium text-[var(--ink-soft)]">
-          Daily limit for your number
-        </label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="follow-up-daily-limit"
-            type="number"
-            min={FOLLOW_UP_BOUNDS.dailyLimit.min}
-            max={FOLLOW_UP_BOUNDS.dailyLimit.max}
-            className="w-24"
-            {...register('dailyLimit', { valueAsNumber: true })}
+        {/* Stacks under the settings on narrow screens */}
+        <div className="flex flex-col gap-2 border-t border-[var(--line)] pt-5 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0">
+          <SectionHeading
+            title="Who gets follow-ups first"
+            description="When the daily limit is reached, the top of this list goes first. Untick a status to skip it."
           />
-          <span className="text-[12px] text-[var(--ink-mute)]">
-            follow-ups a day ({FOLLOW_UP_BOUNDS.dailyLimit.min}–{FOLLOW_UP_BOUNDS.dailyLimit.max})
-          </span>
+          <Controller
+            name="priority"
+            control={control}
+            render={({ field }) => (
+              <FollowUpPriorityEditor
+                priority={field.value}
+                eligibleStatuses={eligibleStatuses}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <FieldError message={errors.priority?.message ?? errors.priority?.root?.message} />
         </div>
-        <FieldError message={errors.dailyLimit?.message} />
-        {isHighRiskLimit && (
-          <div className="mt-1 flex items-start gap-2 rounded-xl bg-[var(--warning-soft)] p-3 text-[11.5px] text-[var(--warning-foreground)]">
-            <AlertTriangle size={14} className="mt-px flex-shrink-0" />
-            <span>
-              More than {highRiskDailyLimit} a day raises the risk of WhatsApp banning your number.
-              You can still save it, but keep it lower unless the number is well established.
-            </span>
-          </div>
-        )}
-        {isCappedByNumberAge && (
-          <div className="mt-1 flex items-start gap-2 rounded-xl bg-[var(--surface-2)] p-3 text-[11.5px] text-[var(--ink-mute)]">
-            <Info size={14} className="mt-px flex-shrink-0" />
-            <span>
-              This number connected {numberAgeDays} {numberAgeDays === 1 ? 'day' : 'days'} ago, so at
-              most {effectiveDailyLimit} a day go out for now. The cap rises as the number ages.
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div>
-          <span className="text-[12px] font-medium text-[var(--ink-soft)]">Who gets follow-ups first</span>
-          <p className="mt-0.5 text-[11px] text-[var(--ink-mute)]">
-            When the daily limit is reached, the top of this list goes first. Untick a status to skip it.
-          </p>
-        </div>
-        <Controller
-          name="priority"
-          control={control}
-          render={({ field }) => (
-            <FollowUpPriorityEditor
-              priority={field.value}
-              eligibleStatuses={eligibleStatuses}
-              onChange={field.onChange}
-            />
-          )}
-        />
-        <FieldError message={errors.priority?.message ?? errors.priority?.root?.message} />
-      </div>
+      </fieldset>
 
       <SettingsSaveBar variant="inset">
         <Button type="submit" disabled={isSaving || !isDirty}>

@@ -94,6 +94,33 @@ describe("FollowUpSettingsCard", () => {
     expect(screen.getByText(/connected 3 days ago, so at most 30 a day/)).toBeInTheDocument();
   });
 
+  it("locks the settings while follow-ups are off and unlocks them when switched on", async () => {
+    await renderLoadedCard({ ...AVAILABLE_VIEW, settings: { ...AVAILABLE_VIEW.settings, enabled: false } });
+
+    expect(screen.getByText("Turn follow-ups on to change these settings.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Wait before following up")).toBeDisabled();
+    expect(screen.getByLabelText("Daily limit for your number")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "3" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: "Stop following up Hot" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Move Warm up" })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("switch"));
+
+    expect(screen.getByLabelText("Wait before following up")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Move Warm up" })).toBeEnabled();
+    expect(screen.queryByText("Turn follow-ups on to change these settings.")).not.toBeInTheDocument();
+  });
+
+  it("can still save turning follow-ups off", async () => {
+    await renderLoadedCard();
+    await userEvent.click(screen.getByRole("switch"));
+    await userEvent.click(screen.getByRole("button", { name: /Save follow-ups/ }));
+
+    await waitFor(() =>
+      expect(mockedUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ enabled: false })),
+    );
+  });
+
   it("saves a reordered priority with an excluded status left out", async () => {
     await renderLoadedCard();
     await userEvent.click(screen.getByRole("button", { name: "Move Warm up" }));

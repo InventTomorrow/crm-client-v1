@@ -30,6 +30,8 @@ export function useFollowUpSettingsForm() {
   }, [view, form]);
 
   const dailyLimit = useWatch({ control: form.control, name: 'dailyLimit' });
+  // Settings only matter while follow-ups are on, so they lock when the switch is off.
+  const areSettingsEditable = useWatch({ control: form.control, name: 'enabled' });
   const highRiskDailyLimit = view?.highRiskDailyLimit ?? 150;
   // Warn as they type, not only after saving: the server never blocks a high limit.
   const isHighRiskLimit = Number.isFinite(dailyLimit) && dailyLimit > highRiskDailyLimit;
@@ -46,6 +48,7 @@ export function useFollowUpSettingsForm() {
     isLoading,
     isSaving,
     isAvailable: view?.isAvailable ?? false,
+    areSettingsEditable,
     eligibleStatuses: view?.eligibleStatuses ?? [],
     numberAgeDays: view?.numberAgeDays ?? 0,
     highRiskDailyLimit,
