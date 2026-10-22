@@ -52,3 +52,8 @@ export async function setLeadFollowUpPause(
   );
   return response.data.data;
 }
+
+// Resolves once the follow-up is queued; the send itself happens in the background.
+export async function sendFollowUpNow(leadId: string): Promise<void> {
+  await apiClient.post(`/follow-ups/leads/${leadId}/send-now`);
+}

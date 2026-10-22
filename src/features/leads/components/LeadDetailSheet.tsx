@@ -1,6 +1,6 @@
 "use client";
 import { useGenerateCheckout, useSendReceipt } from "@/features/checkout/hooks";
-import { LeadFollowUpPauseCard } from "@/features/follow-ups/components/LeadFollowUpPauseCard";
+import { LeadFollowUpCard } from "@/features/follow-ups/components/LeadFollowUpCard";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
 import { formatDateTime } from "@/lib/date";
 import { pkr } from "@/lib/utils";
@@ -260,7 +260,7 @@ export default function LeadDetailSheet({
             ))}
           </div>
 
-          <LeadFollowUpPauseCard leadId={lead.id} />
+          <LeadFollowUpCard leadId={lead.id} />
 
           {/* Order history */}
           <div className="flex flex-col gap-2">

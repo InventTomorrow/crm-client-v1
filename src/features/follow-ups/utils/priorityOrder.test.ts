@@ -7,6 +7,7 @@ const VALID_SETTINGS: FollowUpSettingsForm = {
   intervalHours: 24,
   maxAttempts: 2,
   dailyLimit: 100,
+  sendWindow: 'ANY_TIME',
   priority: ['HOT', 'WARM', 'PROSPECT'],
 };
 

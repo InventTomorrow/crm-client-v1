@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: FollowUpSettingsForm = {
   intervalHours: 24,
   maxAttempts: 2,
   dailyLimit: 100,
+  sendWindow: 'ANY_TIME',
   priority: ['HOT', 'WARM', 'PROSPECT'],
 };
 
@@ -25,8 +26,11 @@ export function useFollowUpSettingsForm() {
 
   useEffect(() => {
     if (!view) return;
-    const { enabled, intervalHours, maxAttempts, dailyLimit, priority } = view.settings;
-    form.reset({ enabled, intervalHours, maxAttempts, dailyLimit, priority }, KEEP_FIELD_REFS);
+    const { enabled, intervalHours, maxAttempts, dailyLimit, sendWindow, priority } = view.settings;
+    form.reset(
+      { enabled, intervalHours, maxAttempts, dailyLimit, sendWindow, priority },
+      KEEP_FIELD_REFS,
+    );
   }, [view, form]);
 
   const dailyLimit = useWatch({ control: form.control, name: 'dailyLimit' });
@@ -51,6 +55,7 @@ export function useFollowUpSettingsForm() {
     areSettingsEditable,
     eligibleStatuses: view?.eligibleStatuses ?? [],
     numberAgeDays: view?.numberAgeDays ?? 0,
+    businessHours: view?.businessHours ?? { summary: 'Open all the time', isSet: false },
     highRiskDailyLimit,
     isHighRiskLimit,
     effectiveDailyLimit,

@@ -20,6 +20,7 @@ const AVAILABLE_VIEW: FollowUpSettingsView = {
     intervalHours: 24,
     maxAttempts: 2,
     dailyLimit: 100,
+    sendWindow: "ANY_TIME",
     priority: ["HOT", "WARM", "PROSPECT"],
   },
   isAvailable: true,
@@ -28,6 +29,7 @@ const AVAILABLE_VIEW: FollowUpSettingsView = {
   effectiveDailyLimit: 100,
   numberAgeDays: 90,
   limitRisk: "NONE",
+  businessHours: { summary: "Mon–Fri 9am–6pm, Sat–Sun closed (Asia/Karachi)", isSet: true },
 };
 
 const mockedGetSettings = vi.mocked(getFollowUpSettings);
@@ -119,6 +121,32 @@ describe("FollowUpSettingsCard", () => {
     await waitFor(() =>
       expect(mockedUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ enabled: false })),
     );
+  });
+
+  it("sends at any time by default and shows the business hours when switched", async () => {
+    await renderLoadedCard();
+    expect(screen.getByText("Follow-ups go out as soon as they are due, day or night.")).toBeInTheDocument();
+    expect(screen.queryByText(/Mon–Fri 9am–6pm/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Business hours" }));
+    expect(screen.getByText(/Mon–Fri 9am–6pm, Sat–Sun closed \(Asia\/Karachi\)/)).toBeInTheDocument();
+    expect(screen.getByText(/goes out at the next opening/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Change hours" })).toHaveAttribute("href", "/settings/business?tab=timings");
+
+    await userEvent.click(screen.getByRole("button", { name: /Save follow-ups/ }));
+    await waitFor(() =>
+      expect(mockedUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ sendWindow: "BUSINESS_HOURS" })),
+    );
+  });
+
+  it("says so when no business hours are saved and links to set them", async () => {
+    await renderLoadedCard({
+      ...AVAILABLE_VIEW,
+      settings: { ...AVAILABLE_VIEW.settings, sendWindow: "BUSINESS_HOURS" },
+      businessHours: { summary: "Open all the time", isSet: false },
+    });
+    expect(screen.getByText(/You have not set business hours, so you are open all the time/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Set business hours" })).toHaveAttribute("href", "/settings/business?tab=timings");
   });
 
   it("saves a reordered priority with an excluded status left out", async () => {

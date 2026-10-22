@@ -1,7 +1,8 @@
 'use client';
-import { AlertTriangle, Check, Info, Loader2, MessageCircle } from 'lucide-react';
+import { AlertTriangle, Check, Clock, Info, Loader2, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
-import { Controller } from 'react-hook-form';
+import { type Control, Controller, useWatch } from 'react-hook-form';
 import { SettingsSaveBar } from '@/features/settings/components/SettingsSaveBar';
 import { useLeadVocabulary } from '@/features/leads/utils/leadVocabulary';
 import { cn } from '@/lib/utils';
@@ -9,10 +10,14 @@ import { Button } from '@/shared/ui/Button';
 import { CRMSwitch } from '@/shared/ui/CRMSwitch';
 import { Input } from '@/shared/ui/Input';
 import { useFollowUpSettingsForm } from '../hooks/useFollowUpSettingsForm';
-import { FOLLOW_UP_BOUNDS } from '../types';
+import { FOLLOW_UP_BOUNDS, type FollowUpSettingsForm } from '../types';
 import { FollowUpPriorityEditor } from './FollowUpPriorityEditor';
 
 const ATTEMPT_OPTIONS = [1, 2, 3] as const;
+const SEND_WINDOW_OPTIONS = [
+  { key: 'ANY_TIME', label: 'Any time' },
+  { key: 'BUSINESS_HOURS', label: 'Business hours' },
+] as const;
 
 function FieldError({ message }: { message: string | undefined }) {
   if (!message) return null;
@@ -78,6 +83,44 @@ function UnitNumberInput({ unit, className, ...inputProps }: ComponentProps<'inp
   );
 }
 
+function SendWindowNote({
+  control,
+  businessHours,
+}: {
+  control: Control<FollowUpSettingsForm>;
+  businessHours: { summary: string; isSet: boolean };
+}) {
+  const sendWindow = useWatch({ control, name: 'sendWindow' });
+  const isBusinessHours = sendWindow === 'BUSINESS_HOURS';
+
+  return (
+    <div className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--surface-2)] p-2.5 text-[11.5px] text-[var(--ink-mute)]">
+      <Clock size={14} className="mt-px shrink-0" />
+      <span>
+        {!isBusinessHours ? (
+          'Follow-ups go out as soon as they are due, day or night.'
+        ) : businessHours.isSet ? (
+          <>
+            Follow-ups wait for <strong className="font-medium text-[var(--ink)]">{businessHours.summary}</strong>.
+            Anything due outside them goes out at the next opening.{' '}
+            <Link href="/settings/business?tab=timings" className="font-medium text-[var(--accent)] hover:underline">
+              Change hours
+            </Link>
+          </>
+        ) : (
+          <>
+            You have not set business hours, so you are open all the time and follow-ups go out as soon
+            as they are due.{' '}
+            <Link href="/settings/business?tab=timings" className="font-medium text-[var(--accent)] hover:underline">
+              Set business hours
+            </Link>
+          </>
+        )}
+      </span>
+    </div>
+  );
+}
+
 export function FollowUpSettingsCard() {
   const vocabulary = useLeadVocabulary();
   const {
@@ -89,6 +132,7 @@ export function FollowUpSettingsCard() {
     areSettingsEditable,
     eligibleStatuses,
     numberAgeDays,
+    businessHours,
     highRiskDailyLimit,
     isHighRiskLimit,
     effectiveDailyLimit,
@@ -156,6 +200,34 @@ export function FollowUpSettingsCard() {
             }
           >
             <FieldError message={errors.intervalHours?.message} />
+          </SettingRow>
+
+          <SettingRow
+            label="Send time"
+            hint="When a due follow-up is allowed to go out."
+            control={
+              <Controller
+                name="sendWindow"
+                control={control}
+                render={({ field }) => (
+                  <div className="seg shrink-0" role="group" aria-label="Send time">
+                    {SEND_WINDOW_OPTIONS.map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        aria-pressed={field.value === option.key}
+                        className={cn(field.value === option.key && 'on')}
+                        onClick={() => field.onChange(option.key)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              />
+            }
+          >
+            <SendWindowNote control={control} businessHours={businessHours} />
           </SettingRow>
 
           <SettingRow
