@@ -1,4 +1,5 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
@@ -98,6 +99,7 @@ export function ServicesView() {
       {/* <Button variant="outline" size="xl" onClick={() => router.push('/services/plans')}>
         <LayoutList size={14} className="mr-1.5" /> Plans
       </Button> */}
+      <SeedRecordsButton target={{ recordType: "SERVICE_OFFERING", label: "Services" }} />
       <Button size="xl" onClick={() => router.push("/services/new")}>
         <Plus size={14} className="mr-1.5" /> Add service
       </Button>

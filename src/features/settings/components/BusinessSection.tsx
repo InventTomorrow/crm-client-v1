@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/Tabs";
 import {
   Building2,
   Check,
+  Clock,
   Headset,
   Info,
   Loader2,
@@ -17,6 +18,7 @@ import {
 import { useBusinessProfileForm } from "../hooks/useBusinessProfileForm";
 import { BusinessAboutFields } from "./business/BusinessAboutFields";
 import { BusinessCategoryCard } from "./business/BusinessCategoryCard";
+import { BusinessHoursCard } from "./business/BusinessHoursCard";
 import { BusinessQaFields } from "./business/BusinessQaFields";
 import { BusinessSupportFields } from "./business/BusinessSupportFields";
 import { BusinessNameCard } from "./BusinessNameCard";
@@ -25,6 +27,7 @@ import { SettingsSaveBar } from "./SettingsSaveBar";
 
 const GENERAL_TAB = "general";
 const PAYMENTS_TAB = "payments";
+const TIMINGS_TAB = "timings";
 const PROFILE_FORM_TABS = ["about", "qa", "support"] as const;
 
 // Radix marks the selected tab with data-state="active", not a data-active attribute.
@@ -98,6 +101,9 @@ export function BusinessSection() {
             >
               <Headset size={14} /> Support
             </TabsTrigger>
+            <TabsTrigger value={TIMINGS_TAB} className={tabTriggerClassName}>
+              <Clock size={14} /> Timings
+            </TabsTrigger>
             {showsPayments && (
               <TabsTrigger value={PAYMENTS_TAB} className={tabTriggerClassName}>
                 <Wallet size={14} /> Payments
@@ -160,6 +166,10 @@ export function BusinessSection() {
             </SettingsSaveBar>
           </form>
         </Form>
+
+        <TabsContent value={TIMINGS_TAB} className="flex flex-col gap-3.5">
+          <BusinessHoursCard />
+        </TabsContent>
 
         {showsPayments && (
           <TabsContent value={PAYMENTS_TAB} className="flex flex-col gap-3.5">

@@ -211,6 +211,8 @@ export interface ChatbotConfigResponse {
     shareSupportContactOnHandoff: boolean;
     notifyOnEscalation: boolean;
     captureCustomizationRequests: boolean;
+    /** Null (or no open day) means open all the time. */
+    businessHours?: BusinessHoursPayload | null;
   } | null;
   workspaceName: string | null;
 }
@@ -231,3 +233,60 @@ export const SYSTEM_STATS = [
   { l: "Encryption", v: "AES-256", ok: true },
   { l: "Sync (Shopify)", v: "Live", ok: true },
 ] as const;
+
+// ─── Business hours ───────────────────────────────────────────────────────────
+
+export const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  MON: "Monday",
+  TUE: "Tuesday",
+  WED: "Wednesday",
+  THU: "Thursday",
+  FRI: "Friday",
+  SAT: "Saturday",
+  SUN: "Sunday",
+};
+
+/** Mirrors the server's business hours: a window per day, null for a closed day. */
+export type BusinessHoursPayload = Record<Weekday, { open: string; close: string } | null>;
+
+const dayHoursSchema = z.object({
+  isOpen: z.boolean(),
+  open: z.string(),
+  close: z.string(),
+});
+
+export const businessHoursFormSchema = z
+  .object({
+    isOpenAllTime: z.boolean(),
+    days: z.object(
+      Object.fromEntries(WEEKDAYS.map((weekday) => [weekday, dayHoursSchema])) as Record<
+        Weekday,
+        typeof dayHoursSchema
+      >,
+    ),
+  })
+  .superRefine((form, context) => {
+    if (form.isOpenAllTime) return;
+
+    if (!WEEKDAYS.some((weekday) => form.days[weekday].isOpen)) {
+      context.addIssue({
+        code: "custom",
+        path: ["days"],
+        message: "Pick at least one open day, or set the business as open all the time",
+      });
+    }
+    for (const weekday of WEEKDAYS) {
+      const { isOpen, open, close } = form.days[weekday];
+      if (isOpen && close <= open) {
+        context.addIssue({
+          code: "custom",
+          path: ["days", weekday, "close"],
+          message: "Closing time must be after opening time",
+        });
+      }
+    }
+  });
+export type BusinessHoursForm = z.infer<typeof businessHoursFormSchema>;

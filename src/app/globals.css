@@ -611,9 +611,9 @@ html.dark .wa-bg {
 
 /* chat bubbles — WhatsApp style */
 .bubble {
-  max-width: 78%;
+  max-width: 100%;
   padding: 7px 12px 8px;
-  border-radius: 7.5px;
+  border-radius: 14px;
   font-size: 13.5px;
   line-height: 1.5;
   word-wrap: break-word;
