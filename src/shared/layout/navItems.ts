@@ -27,6 +27,7 @@ import {
   Users,
   UtensilsCrossed,
   Wifi,
+  FlaskConical,
 } from "lucide-react";
 
 export interface NavChild {
@@ -35,6 +36,8 @@ export interface NavChild {
   perm?: string;
   /** Restricts this child to workspaces whose vertical has this capability; omit to show for all. */
   capability?: VerticalCapability;
+  /** Shown only to users an admin has marked as testers. */
+  testerOnly?: boolean;
   /** Verticals that do not get this child — the page still exists, it is just redundant there. */
   hiddenForVerticals?: BusinessVertical[];
   /** Per-vertical label override — the same page, named the way that trade names it. */
@@ -287,6 +290,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: "Workspaces",
         perm: "settings:edit",
         Icon: LayoutGrid,
+      },
+      {
+        href: "/settings/test-data",
+        label: "Test data",
+        testerOnly: true,
+        Icon: FlaskConical,
       },
     ],
   },

@@ -1,5 +1,6 @@
 "use client";
 import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
+import { TestUserBanner } from "@/features/seed/components/TestUserBanner";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
 import { AppOfferSurfaces } from "@/features/offers/components/AppOfferSurfaces";
 import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
@@ -47,6 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="app-main">
             {/* Campaign strip sits above the bar so it never covers navigation. */}
             <AppOfferSurfaces />
+            <TestUserBanner />
             <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
             <main key={currentWorkspaceId} className="app-content">
               <RouteGuard>{children}</RouteGuard>

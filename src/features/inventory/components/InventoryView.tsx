@@ -1,4 +1,5 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable } from "@/shared/ui/DataTable";
@@ -210,6 +211,7 @@ export function InventoryView() {
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
+              <SeedRecordsButton target={{ recordType: "PRODUCT", label: "Products" }} size="default" />
               <PermissionGuard permission="inventory:edit">
                 <div ref={addMenuRef} className="relative">
                   <Button onClick={() => setAddMenuOpen((v) => !v)}>

@@ -175,6 +175,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               onNavigate={onCloseMobile}
               canAccess={canAccess}
               canUseCapability={canUseCapability}
+              isTester={!!user?.isTester}
             />
           ))}
         </nav>

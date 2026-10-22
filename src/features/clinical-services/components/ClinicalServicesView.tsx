@@ -1,4 +1,5 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Button } from "@/shared/ui/Button";
@@ -151,10 +152,13 @@ export function ClinicalServicesView() {
           What the clinic offers, what each service covers, and what it costs.
         </p>
       </div>
-      <Button size="xl" onClick={openCreate}>
-        <Plus className="size-4" />
-        Add service
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <SeedRecordsButton target={{ recordType: "CLINICAL_SERVICE", label: "Clinical services" }} />
+        <Button size="xl" onClick={openCreate}>
+          <Plus className="size-4" />
+          Add service
+        </Button>
+      </div>
     </div>
   );
 

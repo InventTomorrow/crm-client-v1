@@ -1,4 +1,5 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { useBookingConfigQuery } from "@/features/bookings/hooks/useBookings";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { Alert, AlertDescription } from "@/shared/ui/Alert";
@@ -74,10 +75,13 @@ export function PractitionersView() {
           The doctors and therapists who see patients, and the hours they work.
         </p>
       </div>
-      <Button size="xl" onClick={openCreate}>
-        <Plus className="size-4" />
-        Add practitioner
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <SeedRecordsButton target={{ recordType: "PRACTITIONER", label: "Practitioners" }} />
+        <Button size="xl" onClick={openCreate}>
+          <Plus className="size-4" />
+          Add practitioner
+        </Button>
+      </div>
     </div>
   );
 

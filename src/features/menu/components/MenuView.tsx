@@ -1,4 +1,5 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { Skeleton } from "@/shared/ui/Motion";
@@ -73,6 +74,7 @@ export function MenuView() {
           >
             <BookOpen size={14} /> Preview menu
           </Button>
+          <SeedRecordsButton target={{ recordType: "MENU_ITEM", label: "Menu items" }} size="lg" />
           <Button size="lg" onClick={() => router.push("/menu/new")}>
             <Plus size={14} /> Add menu item
           </Button>
