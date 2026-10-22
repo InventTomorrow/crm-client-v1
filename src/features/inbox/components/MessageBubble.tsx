@@ -1,5 +1,6 @@
 "use client";
 import { cn, getImageUrl } from "@/lib/utils";
+import { Button } from "@/shared/ui/Button";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import {
   DropdownMenu,
@@ -24,10 +25,11 @@ import {
   Zap,
 } from "lucide-react";
 import { memo, useState } from "react";
-import type { ConversationMessage } from "../types";
+import { structureCaption } from "../lib/messageFormat";
 import { shortTime } from "../lib/time";
+import type { ConversationMessage } from "../types";
 import { AudioBubble } from "./AudioBubble";
-import { Button } from "@/shared/ui/Button";
+import { MessageText } from "./MessageText";
 
 export interface DeleteMessageTarget {
   messageId: string;
@@ -72,10 +74,24 @@ function MessageBubbleBase({
       className={`flex group relative ${isOutbound ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`flex flex-col max-w-[82%] ${isOutbound ? "items-end" : "items-start"}`}
+        className={cn(
+          "flex items-start gap-2 max-w-[82%]",
+          isOutbound ? "flex-row-reverse" : "flex-row",
+        )}
       >
-        {/* Sender label */}
-        <div className="flex items-center gap-1 px-1 mb-1">
+        <CRMAvatar
+          name={isOutbound ? (isAI ? "AsaanRabta AI" : "You") : peerName}
+          size={28}
+        />
+
+        <div
+          className={cn(
+            "flex min-w-0 flex-col",
+            isOutbound ? "items-end" : "items-start",
+          )}
+        >
+        {/* Sender label — sits directly above the bubble, aligned to its outer edge */}
+        <div className={cn("flex items-center gap-1 px-1", isOutbound && "mb-1")}>
           {isAI && (
             <span className="flex items-center gap-1 text-[10.5px] text-[var(--accent)] font-medium">
               <Zap size={10} /> AsaanRabta AI
@@ -87,19 +103,6 @@ function MessageBubbleBase({
             </span>
           )}
         </div>
-
-        {/* Avatar + bubble — avatar bottom-aligns flush with the bubble */}
-        <div
-          className={cn(
-            "flex items-end gap-1",
-            isOutbound ? "flex-row-reverse" : "flex-row",
-          )}
-        >
-          {/* Sender avatar */}
-          <CRMAvatar
-            name={isOutbound ? (isAI ? "AsaanRabta AI" : "You") : peerName}
-            size={28}
-          />
 
           {/* Bubble + Options wrapper */}
           <div className="flex items-center gap-2">
@@ -158,10 +161,8 @@ function MessageBubbleBase({
           ) : msg.mediaType === "IMAGE" && msg.mediaUrl ? (
             <div
               className={cn(
-                "rounded-[14px] overflow-hidden max-w-[240px]",
-                isOutbound
-                  ? "bg-[var(--accent)]"
-                  : "bg-[var(--surface-2)] border border-[var(--line)]",
+                "bubble w-[260px] max-w-full overflow-hidden p-0!",
+                isOutbound ? "sent" : "received",
                 msg.isDraft && "ring-1 ring-dashed ring-[var(--accent)]",
               )}
             >
@@ -169,22 +170,17 @@ function MessageBubbleBase({
                 src={getImageUrl(msg.mediaUrl)}
                 alt="Product image"
                 wrapperClassName="w-full"
-                loadingClassName="h-[180px] w-[220px]"
-                className="w-full object-cover"
-                style={{ maxHeight: 240 }}
+                loadingClassName="h-[220px]"
+                className="block w-full object-cover"
+                style={{ maxHeight: 300 }}
               />
               {/* Caption = product details (shown only when content isn't just the URL) */}
               {msg.content && msg.content !== msg.mediaUrl && (
-                <div
-                  className={cn(
-                    "px-2.5 py-1.5 text-[12.5px] leading-snug",
-                    isOutbound ? "text-white" : "text-[var(--ink)]",
-                  )}
-                >
-                  {msg.content}
+                <div className="px-2.5 py-1.5 text-[13px] leading-snug">
+                  <MessageText content={structureCaption(msg.content)} />
                   {msg.isDraft && (
-                    <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                      · Draft
+                    <span className="text-[10px] font-medium uppercase tracking-wide opacity-70">
+                      Draft
                     </span>
                   )}
                 </div>
@@ -280,16 +276,15 @@ function MessageBubbleBase({
                   "border border-dashed border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[14px] px-[14px] py-[8px] text-[13.5px]",
               )}
             >
-              {msg.content ?? ""}
+              <MessageText content={msg.content ?? ""} />
               {msg.isDraft && (
-                <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                  · Draft
+                <span className="text-[10px] font-medium uppercase tracking-wide opacity-70">
+                  Draft
                 </span>
               )}
             </div>
           )}
           </div>
-        </div>
 
         {/* Draft approve button */}
         {msg.isDraft && (
@@ -313,6 +308,7 @@ function MessageBubbleBase({
           {shortTime(msg.createdAt)}
           {!isDeleted && msg.editedAt && <span>· Edited</span>}
           {isOutbound && !msg.isDraft && !isDeleted && <Check size={10} />}
+        </div>
         </div>
       </div>
     </motion.div>
