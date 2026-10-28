@@ -92,4 +92,40 @@ describe("BusinessHoursCard", () => {
     expect(await screen.findByText(/Pick at least one open day/)).toBeInTheDocument();
     expect(mockedUpdateHours).not.toHaveBeenCalled();
   });
+
+  it("opens time dialog and applies time to all days", async () => {
+    renderCard(SAVED_HOURS);
+    await screen.findByText("Monday");
+
+    // Click Monday's opening time button
+    const mondayOpenBtn = screen.getByRole("button", { name: "Monday opening time" });
+    await userEvent.click(mondayOpenBtn);
+
+    // Dialog opens
+    expect(await screen.findByText("Set hours for Monday")).toBeInTheDocument();
+
+    // Select "All days"
+    const allDaysRadio = screen.getByRole("radio", { name: /All days/ });
+    await userEvent.click(allDaysRadio);
+
+    // Change opening time
+    const openInput = screen.getByLabelText("Opening time");
+    await userEvent.clear(openInput);
+    await userEvent.type(openInput, "10:00");
+
+    // Click Apply timing
+    await userEvent.click(screen.getByRole("button", { name: "Apply timing" }));
+
+    // Verify dialog closes and Monday shows new time
+    await waitFor(() => {
+      expect(screen.queryByText("Set hours for Monday")).not.toBeInTheDocument();
+    });
+
+    // Save
+    await userEvent.click(screen.getByRole("button", { name: /Save business hours/ }));
+    await waitFor(() => expect(mockedUpdateHours).toHaveBeenCalled());
+    const [{ businessHours }] = mockedUpdateHours.mock.calls[0]!;
+    expect(businessHours?.MON?.open).toBe("10:00");
+    expect(businessHours?.TUE?.open).toBe("10:00");
+  });
 });
