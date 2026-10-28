@@ -280,11 +280,11 @@ export const businessHoursFormSchema = z
     }
     for (const weekday of WEEKDAYS) {
       const { isOpen, open, close } = form.days[weekday];
-      if (isOpen && close <= open) {
+      if (isOpen && close === open) {
         context.addIssue({
           code: "custom",
           path: ["days", weekday, "close"],
-          message: "Closing time must be after opening time",
+          message: "Closing time must be different from opening time",
         });
       }
     }

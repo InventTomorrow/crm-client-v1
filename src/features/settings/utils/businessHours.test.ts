@@ -50,10 +50,18 @@ describe("businessHoursFormSchema", () => {
     expect(businessHoursFormSchema.safeParse(customHours).success).toBe(true);
   });
 
-  it("rejects a closing time at or before opening, on that day only", () => {
+  it("accepts overnight business hours spanning from PM to AM next day", () => {
     const result = businessHoursFormSchema.safeParse({
       ...customHours,
-      days: { ...customHours.days, TUE: { isOpen: true, open: "18:00", close: "09:00" } },
+      days: { ...customHours.days, TUE: { isOpen: true, open: "18:00", close: "03:00" } },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a closing time identical to opening, on that day only", () => {
+    const result = businessHoursFormSchema.safeParse({
+      ...customHours,
+      days: { ...customHours.days, TUE: { isOpen: true, open: "09:00", close: "09:00" } },
     });
     expect(result.success).toBe(false);
     expect(!result.success && result.error.issues.map((issue) => issue.path.join("."))).toEqual(["days.TUE.close"]);
