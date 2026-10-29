@@ -1,6 +1,10 @@
 "use client";
 import { cn } from "@/lib/utils";
 import type { FormWizardStepState } from "@/shared/hooks/useFormWizard";
+import {
+  FormWizardRailHeading,
+  FormWizardRailProgress,
+} from "@/shared/ui/FormWizardRailParts";
 import { FormWizardStepTabs } from "@/shared/ui/FormWizardStepTabs";
 import { Check } from "lucide-react";
 import type { FieldValues } from "react-hook-form";
@@ -22,11 +26,6 @@ export function FormWizardNav<TFieldValues extends FieldValues>({
   requiredStepCount,
   onStepSelect,
 }: FormWizardNavProps<TFieldValues>) {
-  const progressPercent =
-    requiredStepCount === 0
-      ? 100
-      : (completedRequiredCount / requiredStepCount) * 100;
-
   return (
     <>
       <FormWizardStepTabs
@@ -42,9 +41,7 @@ export function FormWizardNav<TFieldValues extends FieldValues>({
       />
 
       <nav className="card sticky top-4 hidden h-fit w-[240px] shrink-0 overflow-hidden p-0 lg:block">
-        <div className="border-b border-[var(--line)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
-          {title}
-        </div>
+        <FormWizardRailHeading title={title} />
 
         <div className="flex flex-col divide-y divide-[var(--line)]">
           {stepStates.map(
@@ -58,8 +55,8 @@ export function FormWizardNav<TFieldValues extends FieldValues>({
                 className={cn(
                   "relative flex w-full items-center gap-2.5 border-l-2 py-3 pl-3.5 pr-9 text-left text-[13.5px] transition-colors",
                   isActive
-                    ? "border-[var(--accent)] bg-[var(--surface-2)] font-semibold text-[var(--ink)]"
-                    : "border-transparent font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
+                    ? "border-l-[var(--accent)] font-semibold text-[var(--ink)]"
+                    : "border-l-transparent font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
                   !isReachable &&
                     "cursor-not-allowed opacity-50 hover:bg-transparent",
                 )}
@@ -92,20 +89,10 @@ export function FormWizardNav<TFieldValues extends FieldValues>({
           )}
         </div>
 
-        <div className="border-t border-[var(--line)] px-4 py-3">
-          <div className="flex items-center justify-between text-[11px] font-medium text-[var(--ink-mute)]">
-            <span>Completed</span>
-            <span className="text-[var(--ink)]">
-              {completedRequiredCount} of {requiredStepCount}
-            </span>
-          </div>
-          <div className="mt-2 h-1 bg-[var(--line)]">
-            <div
-              className="h-full bg-[var(--accent)] transition-[width] duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
+        <FormWizardRailProgress
+          completedCount={completedRequiredCount}
+          totalCount={requiredStepCount}
+        />
       </nav>
     </>
   );

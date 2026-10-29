@@ -64,8 +64,8 @@ export function FormWizardStepTabs({
               className={cn(
                 "relative flex shrink-0 snap-center items-center gap-1.5 whitespace-nowrap border-l-2 py-2 pl-3 pr-7 text-[12.5px] transition-colors duration-200",
                 tab.isActive
-                  ? "border-[var(--accent)] bg-[var(--surface-2)] font-semibold text-[var(--ink)]"
-                  : "border-transparent font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
+                  ? "border-l-[var(--accent)] font-semibold text-[var(--ink)]"
+                  : "border-l-transparent font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
                 tab.isLocked &&
                   "cursor-not-allowed opacity-45 hover:bg-transparent",
               )}

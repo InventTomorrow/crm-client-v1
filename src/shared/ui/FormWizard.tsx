@@ -2,6 +2,10 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import {
+  FormWizardRailHeading,
+  FormWizardRailProgress,
+} from "@/shared/ui/FormWizardRailParts";
+import {
   FormWizardStepTabs,
   type FormWizardStepTab,
 } from "@/shared/ui/FormWizardStepTabs";
@@ -96,8 +100,8 @@ function StepRailItem({
       className={cn(
         "relative flex w-full items-start gap-2.5 border-l-2 py-2 pl-3 pr-8 text-left transition-colors",
         isCurrent
-          ? "border-[var(--accent)] bg-[var(--surface-2)]"
-          : "border-transparent hover:bg-[var(--surface-2)]",
+          ? "border-l-[var(--accent)]"
+          : "border-l-transparent hover:bg-[var(--surface-2)]",
         isLocked && "cursor-not-allowed opacity-45 hover:bg-transparent",
       )}
     >
@@ -199,6 +203,8 @@ export function FormWizard({
     };
   });
 
+  const completedStepCount = stepTabs.filter((tab) => tab.isComplete).length;
+
   return (
     <div className="scroll h-full overflow-y-auto">
       <div className="mx-auto w-full max-w-7xl p-4 md:p-8">
@@ -241,18 +247,25 @@ export function FormWizard({
         <div className="mt-2 grid gap-6 md:mt-6 md:grid-cols-[264px_minmax(0,1fr)] md:items-start lg:gap-8">
           <nav
             aria-label="Form steps"
-            className="card sticky top-4 hidden flex-col divide-y divide-[var(--line)] overflow-hidden p-0 md:flex"
+            className="card sticky top-4 hidden flex-col overflow-hidden p-0 md:flex"
           >
-            {steps.map((step, index) => (
-              <StepRailItem
-                key={step.id}
-                step={step}
-                index={index}
-                currentStepIndex={currentStepIndex}
-                furthestStepIndex={furthestStepIndex}
-                onSelect={() => onStepSelect(index)}
-              />
-            ))}
+            <FormWizardRailHeading title="Steps" />
+            <div className="flex flex-col divide-y divide-[var(--line)]">
+              {steps.map((step, index) => (
+                <StepRailItem
+                  key={step.id}
+                  step={step}
+                  index={index}
+                  currentStepIndex={currentStepIndex}
+                  furthestStepIndex={furthestStepIndex}
+                  onSelect={() => onStepSelect(index)}
+                />
+              ))}
+            </div>
+            <FormWizardRailProgress
+              completedCount={completedStepCount}
+              totalCount={steps.length}
+            />
           </nav>
 
           <div className="flex min-w-0 flex-col gap-4">

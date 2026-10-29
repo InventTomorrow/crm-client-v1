@@ -175,9 +175,9 @@
   --shadow-3: 0 12px 32px rgba(15, 23, 42, 0.08);
   --shadow-pop: 0 24px 56px rgba(15, 23, 42, 0.18);
 
-  --radius-card: 14px;
+  --radius-card: 12px;
   --r-12: 12px;
-  --r-10: 10px;
+  --r-10: 8px;
 
   /* Urdu glyphs fall through Manrope to Nastaliq; Latin never does (unicode-range). */
   --font-body:
@@ -219,7 +219,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.651 0.157 154); /* brand green #1DAA61 */
@@ -395,7 +395,7 @@ html.dark .wa-chat-bg {
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 500;
   font-size: 13px;
   cursor: pointer;
@@ -613,7 +613,7 @@ html.dark .wa-bg {
 .bubble {
   max-width: 100%;
   padding: 7px 12px 8px;
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 13.5px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -855,7 +855,7 @@ html.dark .ch-fb {
 .seg {
   display: inline-flex;
   padding: 3px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   gap: 2px;
@@ -865,7 +865,7 @@ html.dark .ch-fb {
   background: transparent;
   padding: 5px 12px;
   font-size: 12.5px;
-  border-radius: 7px;
+  border-radius: 6px;
   color: var(--ink-soft);
   cursor: pointer;
   font-weight: 500;
@@ -1083,7 +1083,7 @@ html.dark .seg button.on {
     border: none;
     background: transparent;
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: 8px;
     color: var(--ink-mute);
     position: relative;
     font-family: inherit;
@@ -1276,7 +1276,7 @@ html.dark .seg button.on {
   display: grid;
   grid-template-columns: 1fr 1fr;
   padding: 3px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   position: relative;
@@ -1288,7 +1288,7 @@ html.dark .seg button.on {
   font-size: 12px;
   color: var(--ink-soft);
   cursor: pointer;
-  border-radius: 7px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1340,13 +1340,14 @@ html.dark .theme-seg button.on {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  /* sm: dense/inner · md: nav, menu items · lg: buttons, inputs · xl/2xl: cards, modals, menus · 3xl: hero panels · 4xl: pills */
+  --radius-sm: 4px;
+  --radius-md: 6px;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+  --radius-3xl: 16px;
+  --radius-4xl: 9999px;
   --color-invert-foreground: var(--invert-foreground);
   --color-invert: var(--invert);
   --color-warning-foreground: var(--warning-foreground);
@@ -1990,7 +1991,7 @@ html.dark .theme-seg button.on {
 
 .article-body img,
 .article-body figure img {
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid var(--color-brand-mint-2);
 }
 .article-body figure {
@@ -2004,7 +2005,7 @@ html.dark .theme-seg button.on {
 }
 
 .article-body code {
-  border-radius: 5px;
+  border-radius: 6px;
   background: var(--color-brand-mint);
   padding: 0.15em 0.4em;
   font-size: 0.88em;
@@ -2012,7 +2013,7 @@ html.dark .theme-seg button.on {
 }
 .article-body pre {
   overflow-x: auto;
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--color-brand-dark);
   padding: 1.1em 1.3em;
   font-size: 14px;
@@ -2034,7 +2035,7 @@ html.dark .theme-seg button.on {
   max-width: 100%;
   margin-block: 2.2em;
   border: 1px solid var(--color-brand-mint-2);
-  border-radius: 14px;
+  border-radius: 6px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 15px;
@@ -2077,5 +2078,5 @@ html.dark .theme-seg button.on {
   aspect-ratio: 16 / 9;
   width: 100%;
   border: 0;
-  border-radius: 16px;
+  border-radius: 12px;
 }

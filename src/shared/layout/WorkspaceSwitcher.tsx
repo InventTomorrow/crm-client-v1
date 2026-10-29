@@ -139,7 +139,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
         onClick={() => setOpen((v) => !v)}
         disabled={isSwitching}
         className={cn(
-          "w-full flex items-center gap-2.5 border border-[var(--line)] rounded-[10px] cursor-pointer font-[inherit] transition-colors",
+          "w-full flex items-center gap-2.5 border border-[var(--line)] rounded-lg cursor-pointer font-[inherit] transition-colors",
           collapsed ? "justify-center p-1.5" : "justify-start px-[10px] py-2",
           open
             ? "bg-[var(--surface-2)]"

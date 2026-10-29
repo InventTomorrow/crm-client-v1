@@ -7,6 +7,7 @@ import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWor
 import { TourProvider } from "@/features/tour/components/TourProvider";
 import { WorkspaceTourStarter } from "@/features/tour/components/WorkspaceTourStarter";
 import { useAppStore } from "@/lib/appStore";
+import { AppFooter } from "@/shared/layout/AppFooter";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { AppTopBar } from "@/shared/layout/AppTopBar";
 import { AuthGate } from "@/shared/layout/AuthGate";
@@ -53,6 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <main key={currentWorkspaceId} className="app-content">
               <RouteGuard>{children}</RouteGuard>
             </main>
+            <AppFooter />
           </div>
           <MobileDock />
 

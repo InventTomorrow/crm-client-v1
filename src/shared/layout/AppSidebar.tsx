@@ -136,7 +136,7 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               width={32}
               height={32}
               priority
-              className="w-8 h-8 rounded-[9px] shrink-0"
+              className="w-8 h-8 rounded-lg shrink-0"
             />
             {!collapsed && (
               <span className="font-[var(--font-head)] font-bold text-[14px] tracking-[-0.02em] text-[var(--ink)]">

@@ -151,7 +151,7 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
           <button
             disabled={isSwitching}
             className={cn(
-              "group w-full flex items-center gap-2.5 border border-[var(--line)] rounded-[10px] cursor-pointer font-[inherit] bg-[var(--surface)] transition-colors hover:bg-[var(--surface-2)] data-open:bg-[var(--surface-2)]",
+              "group w-full flex items-center gap-2.5 border border-[var(--line)] rounded-lg cursor-pointer font-[inherit] bg-[var(--surface)] transition-colors hover:bg-[var(--surface-2)] data-open:bg-[var(--surface-2)]",
               collapsed
                 ? "justify-center p-1.5"
                 : "justify-start px-[10px] py-2",

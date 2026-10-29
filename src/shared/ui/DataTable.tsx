@@ -21,10 +21,11 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Trash2,
   Download,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { TableSelection } from "@/shared/hooks/useTableSelection";
+import { BulkActionBar } from "./BulkActionBar";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import {
@@ -39,11 +40,15 @@ export type { ColumnDef };
 
 const PAGE_SIZES = [10, 20, 50, 100] as const;
 
+const PAGINATION_BUTTON_CLASS = "rounded-none";
+
 interface DataTableProps<TData> {
   data: TData[];
   columns: ColumnDef<TData, unknown>[];
   /** Show checkboxes for row selection */
   selectable?: boolean;
+  /** Lifts selection to the page so it can show <BulkActionBar /> in place of its search field; the inline bar is then hidden. */
+  selection?: TableSelection<TData>;
   /** Called with selected rows when user clicks delete */
   onDeleteSelected?: (rows: TData[]) => void;
   /** Called with all rows for export */
@@ -71,6 +76,7 @@ export function DataTable<TData>({
   data,
   columns,
   selectable = false,
+  selection,
   onDeleteSelected,
   onExport,
   showExportAll = true,
@@ -85,7 +91,10 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [internalRowSelection, setInternalRowSelection] =
+    useState<RowSelectionState>({});
+  const rowSelection = selection?.rowSelection ?? internalRowSelection;
+  const setRowSelection = selection?.setRowSelection ?? setInternalRowSelection;
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
   // Prepend selection column if needed
@@ -145,7 +154,19 @@ export function DataTable<TData>({
     table.setPageSize(size);
   };
 
-  const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original);
+  // Row ids are data indexes, so selected rows resolve straight from the data.
+  const selectedRows = useMemo(
+    () => data.filter((_, index) => rowSelection[String(index)]),
+    [data, rowSelection],
+  );
+
+  const syncSelectedRows = selection?.setSelectedRows;
+  useEffect(() => {
+    syncSelectedRows?.(selectedRows);
+  }, [syncSelectedRows, selectedRows]);
+
+  const clearSelection = selection?.clearSelection;
+  useEffect(() => clearSelection, [clearSelection]);
 
   const { pageIndex } = table.getState().pagination;
   const totalPages = table.getPageCount();
@@ -163,38 +184,21 @@ export function DataTable<TData>({
     <div className={cn("flex flex-col gap-2", className)}>
       {/* Toolbar — the caller's row grows to the full width so it lays out identically to the
           same toolbar rendered outside a table (e.g. a grid view of the same data). */}
-      {(toolbar || selectable) && (
+      {(toolbar || (selectable && !selection)) && (
         <div className="flex items-center gap-2 flex-wrap">
           {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
-          {selectedRows.length > 0 && (
-            <div className="flex items-center gap-1.5 text-[12.5px] text-[var(--ink-soft)]">
-              <span className="font-medium text-[var(--ink)]">
-                {selectedRows.length}
-              </span>{" "}
-              selected
-              {onExport && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="ml-1"
-                  onClick={() => onExport(selectedRows)}
-                >
-                  <Download size={13} /> Export
-                </Button>
-              )}
-              {onDeleteSelected && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    onDeleteSelected(selectedRows);
-                    setRowSelection({});
-                  }}
-                >
-                  <Trash2 size={13} /> Delete
-                </Button>
-              )}
-            </div>
+          {!selection && selectedRows.length > 0 && (
+            <BulkActionBar
+              selectedCount={selectedRows.length}
+              onExport={onExport && (() => onExport(selectedRows))}
+              onDelete={
+                onDeleteSelected &&
+                (() => {
+                  onDeleteSelected(selectedRows);
+                  setRowSelection({});
+                })
+              }
+            />
           )}
           {onExport && showExportAll && selectedRows.length === 0 && (
             <Button
@@ -214,7 +218,7 @@ export function DataTable<TData>({
       <div
         ref={scrollContainerRef}
         className={cn(
-          "card overflow-x-auto",
+          "card overflow-x-auto rounded-none",
           bodyMaxHeight !== undefined && "overflow-y-auto scroll-smooth",
         )}
         style={
@@ -337,7 +341,7 @@ export function DataTable<TData>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-3 flex-wrap text-[12.5px] text-[var(--ink-soft)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-[12.5px] text-[var(--ink-soft)]">
         {/* Items per page */}
         <div className="flex items-center gap-2">
           <span>Rows per page</span>
@@ -350,13 +354,17 @@ export function DataTable<TData>({
             <SelectTrigger
               size="sm"
               aria-label="Rows per page"
-              className="w-[72px]"
+              className="w-[72px] rounded-none"
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-none">
               {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)}>
+                <SelectItem
+                  key={size}
+                  value={String(size)}
+                  className="rounded-none"
+                >
                   {size}
                 </SelectItem>
               ))}
@@ -376,6 +384,7 @@ export function DataTable<TData>({
           <Button
             variant="ghost"
             size="icon"
+            className={PAGINATION_BUTTON_CLASS}
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
             title="First page"
@@ -385,6 +394,7 @@ export function DataTable<TData>({
           <Button
             variant="ghost"
             size="icon"
+            className={PAGINATION_BUTTON_CLASS}
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             title="Previous page"
@@ -404,7 +414,7 @@ export function DataTable<TData>({
                 key={page}
                 variant={page === pageIndex ? "default" : "ghost"}
                 size="icon"
-                className="w-7 h-7 text-[12px]"
+                className={cn(PAGINATION_BUTTON_CLASS, "w-7 h-7 text-[12px]")}
                 onClick={() => table.setPageIndex(page)}
               >
                 {page + 1}
@@ -415,6 +425,7 @@ export function DataTable<TData>({
           <Button
             variant="ghost"
             size="icon"
+            className={PAGINATION_BUTTON_CLASS}
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             title="Next page"
@@ -424,6 +435,7 @@ export function DataTable<TData>({
           <Button
             variant="ghost"
             size="icon"
+            className={PAGINATION_BUTTON_CLASS}
             onClick={() => table.setPageIndex(totalPages - 1)}
             disabled={!table.getCanNextPage()}
             title="Last page"

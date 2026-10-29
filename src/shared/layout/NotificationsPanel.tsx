@@ -138,7 +138,7 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
               )}
             >
               <span
-                className="w-8 h-8 rounded-[10px] flex-shrink-0 inline-flex items-center justify-center"
+                className="w-8 h-8 rounded-lg flex-shrink-0 inline-flex items-center justify-center"
                 style={{ background: bg, color }}
               >
                 <Icon size={14} />
