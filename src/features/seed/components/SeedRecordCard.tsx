@@ -4,11 +4,16 @@ import { FadeUp, ScaleIn } from "@/shared/ui/Motion";
 import { Spinner } from "@/shared/ui/Spinner";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  CalendarClock,
   Check,
+  FolderOpen,
+  Inbox,
+  MapPin,
   ClipboardList,
   Package,
   Plus,
   Stethoscope,
+  UserSearch,
   Users,
   UtensilsCrossed,
   type LucideIcon,
@@ -24,6 +29,12 @@ const ICON_BY_RECORD_TYPE: Record<SeedRecordType, LucideIcon> = {
   SERVICE_OFFERING: ClipboardList,
   CLINICAL_SERVICE: Stethoscope,
   PRACTITIONER: Users,
+  JOB_APPLICANT: UserSearch,
+  APPOINTMENT: CalendarClock,
+  APPOINTMENT_REQUEST: Inbox,
+  LEAD: Users,
+  RESOURCE: FolderOpen,
+  CLINIC_LOCATION: MapPin,
 };
 
 interface SeedRecordCardProps {

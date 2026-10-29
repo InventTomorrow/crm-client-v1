@@ -8,6 +8,7 @@ import type { VerticalCapability } from "@/lib/business-verticals";
 const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   { prefix: "/inbox", permission: "conversations:view" },
   { prefix: "/leads", permission: "leads:view" },
+  { prefix: "/job-seekers", permission: "leads:view" },
   { prefix: "/orders", permission: "orders:view" },
   { prefix: "/service-orders", permission: "orders:view" },
   { prefix: "/inventory", permission: "inventory:view" },
@@ -49,6 +50,7 @@ const ROUTE_CAPABILITIES: { prefix: string; capability: VerticalCapability }[] =
   { prefix: "/services", capability: "CATALOG_SERVICES" },
   { prefix: "/service-orders", capability: "SERVICE_ORDERS" },
   { prefix: "/clinical-services", capability: "CATALOG_CLINICAL" },
+  { prefix: "/job-seekers", capability: "CATALOG_CLINICAL" },
   { prefix: "/practitioners", capability: "PRACTITIONERS" },
   { prefix: "/coverage-areas", capability: "CLINIC_COVERAGE" },
   { prefix: "/qualification", capability: "QUALIFICATION" },

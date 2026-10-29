@@ -24,6 +24,7 @@ import {
   ShoppingCart,
   Stethoscope,
   User,
+  UserSearch,
   Users,
   UtensilsCrossed,
   Wifi,
@@ -225,6 +226,13 @@ export const NAV_ITEMS: NavItem[] = [
     //   // Ingests website orders — nothing to ingest in a vertical without ORDERS.
     //   { href: "/channels/order-api", label: "Order API", capability: "ORDERS" },
     // ],
+  },
+  {
+    href: "/job-seekers",
+    label: "Job applications",
+    Icon: UserSearch,
+    perm: "leads:view",
+    capability: "CATALOG_CLINICAL",
   },
   // Auth-only — a user's own notification feed. Delivery preferences live under Settings.
   // { href: "/notifications", label: "Notifications", Icon: Bell },

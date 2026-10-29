@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
@@ -209,6 +210,10 @@ export function LeadsView() {
           data-tour="page-actions"
           className="flex flex-wrap gap-2 items-center"
         >
+          <SeedRecordsButton
+            target={{ recordType: "LEAD", label: vocabulary.plural }}
+            size="default"
+          />
           <RefreshButton
             onRefresh={() => refetch()}
             isRefreshing={isFetching}

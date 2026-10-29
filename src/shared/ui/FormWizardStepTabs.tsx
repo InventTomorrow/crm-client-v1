@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { AlertCircle, Check } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 export interface FormWizardStepTab {
@@ -49,10 +49,10 @@ export function FormWizardStepTabs({
         className,
       )}
     >
-      <nav aria-label="Form steps" className="card p-1.5">
+      <nav aria-label="Form steps" className="card overflow-hidden p-0">
         <div
           ref={tabScrollRef}
-          className="relative flex snap-x gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="relative flex snap-x divide-x divide-[var(--line)] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {tabs.map((tab, index) => (
             <button
@@ -62,43 +62,42 @@ export function FormWizardStepTabs({
               aria-current={tab.isActive ? "step" : undefined}
               onClick={() => onStepSelect(index)}
               className={cn(
-                "flex shrink-0 snap-center items-center gap-2 whitespace-nowrap rounded-lg py-1.5 pl-1.5 pr-3 text-[12.5px] transition-colors duration-200",
+                "relative flex shrink-0 snap-center items-center gap-1.5 whitespace-nowrap border-l-2 py-2 pl-3 pr-7 text-[12.5px] transition-colors duration-200",
                 tab.isActive
-                  ? "bg-[var(--accent-soft)] font-semibold text-[var(--accent)]"
-                  : "font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
+                  ? "border-[var(--accent)] bg-[var(--surface-2)] font-semibold text-[var(--ink)]"
+                  : "border-transparent font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
                 tab.isLocked &&
                   "cursor-not-allowed opacity-45 hover:bg-transparent",
               )}
             >
-              <span
-                className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10.5px] font-semibold transition-colors duration-200",
-                  tab.hasError
-                    ? "border-[var(--destructive)] text-[var(--destructive)]"
-                    : tab.isComplete
-                      ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                      : tab.isActive
-                        ? "border-[var(--accent)] text-[var(--accent)]"
-                        : "border-[var(--line)] text-[var(--ink-mute)]",
-                )}
-              >
-                {tab.isComplete && !tab.hasError ? (
-                  <Check size={11} strokeWidth={3} />
-                ) : (
-                  index + 1
-                )}
+              <span className="text-[10.5px] text-[var(--ink-mute)]">
+                {index + 1}
               </span>
+              {tab.hasError ? (
+                <AlertCircle
+                  size={12}
+                  className="absolute right-1.5 top-1.5 text-[var(--destructive)]"
+                />
+              ) : (
+                tab.isComplete && (
+                  <Check
+                    size={12}
+                    strokeWidth={3}
+                    className="absolute right-1.5 top-1.5 text-[var(--accent)]"
+                  />
+                )
+              )}
               {tab.label}
             </button>
           ))}
         </div>
 
-        <div className="mt-1.5 flex gap-1 px-1 pb-0.5" aria-hidden>
+        <div className="flex" aria-hidden>
           {tabs.map((tab) => (
             <span
               key={tab.id}
               className={cn(
-                "h-1 flex-1 rounded-full transition-colors duration-300",
+                "h-0.5 flex-1 transition-colors duration-300",
                 tab.hasError
                   ? "bg-[var(--destructive)]"
                   : tab.isComplete

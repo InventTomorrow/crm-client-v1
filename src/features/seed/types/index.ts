@@ -8,6 +8,12 @@ export const seedRecordTypeSchema = z.enum([
   "SERVICE_OFFERING",
   "CLINICAL_SERVICE",
   "PRACTITIONER",
+  "JOB_APPLICANT",
+  "APPOINTMENT",
+  "APPOINTMENT_REQUEST",
+  "LEAD",
+  "RESOURCE",
+  "CLINIC_LOCATION",
 ]);
 export type SeedRecordType = z.infer<typeof seedRecordTypeSchema>;
 

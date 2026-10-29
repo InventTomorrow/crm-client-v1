@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/Select";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { StatCard } from "@/shared/ui/StatCard";
 import {
   ArrowLeftRight,
@@ -147,7 +148,7 @@ export function BookingsSegmentView({
     <div
       role="tablist"
       aria-label="View mode"
-      className="inline-flex h-10 items-center gap-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5"
+      className="inline-flex h-10 items-center border border-[var(--line)] bg-[var(--surface-2)]"
     >
       {VIEW_MODES.map(({ id, label, Icon }) => (
         <button
@@ -157,11 +158,11 @@ export function BookingsSegmentView({
           aria-selected={viewMode === id}
           onClick={() => setViewMode(id)}
           className={cn(
-            "flex h-full items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+            "flex h-full items-center gap-1.5 border-b-2 px-3.5 text-[12.5px] font-medium transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
             viewMode === id
-              ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm"
-              : "text-[var(--ink-mute)] hover:text-[var(--ink)]",
+              ? "border-[var(--accent)] bg-[var(--surface)] text-[var(--ink)]"
+              : "border-transparent text-[var(--ink-mute)] hover:text-[var(--ink)]",
           )}
         >
           <Icon size={13} />
@@ -173,7 +174,7 @@ export function BookingsSegmentView({
 
   // One bar for both views, so a filter does not move or vanish when the view flips.
   const filterBar = (
-    <div className="card flex flex-row flex-wrap items-center gap-2 p-2">
+    <div className="card flex flex-row flex-wrap items-center gap-2 rounded-none p-2">
       <Select
         value={statusFilter}
         onValueChange={(nextStatus) =>
@@ -203,7 +204,10 @@ export function BookingsSegmentView({
         </SelectContent>
       </Select>
 
-      {filterControl}
+      {/* The control stretches to its parent, so it needs a width of its own to stay on this row. */}
+      {filterControl && (
+        <div className="w-[220px] max-w-full">{filterControl}</div>
+      )}
 
       {isFiltered && (
         <button
@@ -235,6 +239,10 @@ export function BookingsSegmentView({
           data-tour="page-actions"
           className="flex flex-wrap items-center gap-2"
         >
+          <SeedRecordsButton
+            target={{ recordType: "APPOINTMENT", label: "Appointments" }}
+            size="lg"
+          />
           <RefreshButton
             onRefresh={refreshBookings}
             isRefreshing={isRefreshing}

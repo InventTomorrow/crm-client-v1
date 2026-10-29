@@ -7,6 +7,7 @@ import {
 } from "@/shared/ui/FormWizardStepTabs";
 import {
   ArrowLeft,
+  AlertCircle,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +25,8 @@ export interface WizardStep {
   /** Renders the summary as a muted placeholder rather than a filled value. */
   isEmpty: boolean;
   hasError: boolean;
+  /** Whether every required field in the step is filled; omit for a step with none, which then ticks once passed. */
+  isRequiredFilled?: boolean;
 }
 
 interface FormWizardProps {
@@ -58,7 +61,8 @@ function getStepFlags(
 ) {
   return {
     isCurrent: index === currentStepIndex,
-    isComplete: index < furthestStepIndex && !step.hasError,
+    isComplete:
+      !step.hasError && (step.isRequiredFilled ?? index < furthestStepIndex),
     isLocked: index > furthestStepIndex,
   };
 }
@@ -90,29 +94,22 @@ function StepRailItem({
       disabled={isLocked}
       aria-current={isCurrent ? "step" : undefined}
       className={cn(
-        "flex w-full items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+        "relative flex w-full items-start gap-2.5 border-l-2 py-2 pl-3 pr-8 text-left transition-colors",
         isCurrent
           ? "border-[var(--accent)] bg-[var(--surface-2)]"
           : "border-transparent hover:bg-[var(--surface-2)]",
         isLocked && "cursor-not-allowed opacity-45 hover:bg-transparent",
       )}
     >
-      <span
+      <step.Icon
+        size={15}
         className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-[11px] font-semibold",
-          step.hasError
-            ? "border-[#DC2626] text-[#DC2626]"
-            : isComplete
-              ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-              : isCurrent
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-[var(--line)] text-[var(--ink-mute)]",
+          "mt-0.5 shrink-0",
+          isCurrent ? "text-[var(--accent)]" : "text-[var(--ink-mute)]",
         )}
-      >
-        {isComplete ? <Check size={13} /> : <step.Icon size={13} />}
-      </span>
+      />
 
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span className="flex min-w-0 flex-1 flex-col">
         <span
           className={cn(
             "truncate text-[13px] font-semibold",
@@ -123,9 +120,9 @@ function StepRailItem({
         </span>
         <span
           className={cn(
-            "truncate text-[11.5px] leading-relaxed",
+            "truncate text-[11.5px]",
             step.hasError
-              ? "text-[#DC2626]"
+              ? "text-[var(--destructive)]"
               : step.isEmpty
                 ? "text-[var(--ink-mute)] italic"
                 : "text-[var(--accent)]",
@@ -134,6 +131,23 @@ function StepRailItem({
           {step.hasError ? "Needs attention" : step.summary}
         </span>
       </span>
+
+      {step.hasError ? (
+        <AlertCircle
+          size={14}
+          aria-label="Needs attention"
+          className="absolute right-2 top-2 text-[var(--destructive)]"
+        />
+      ) : (
+        isComplete && (
+          <Check
+            size={14}
+            strokeWidth={3}
+            aria-label="Required fields filled"
+            className="absolute right-2 top-2 text-[var(--accent)]"
+          />
+        )
+      )}
     </button>
   );
 }
@@ -227,7 +241,7 @@ export function FormWizard({
         <div className="mt-2 grid gap-6 md:mt-6 md:grid-cols-[264px_minmax(0,1fr)] md:items-start lg:gap-8">
           <nav
             aria-label="Form steps"
-            className="card sticky top-4 hidden flex-col gap-1 p-2 md:flex"
+            className="card sticky top-4 hidden flex-col divide-y divide-[var(--line)] overflow-hidden p-0 md:flex"
           >
             {steps.map((step, index) => (
               <StepRailItem
@@ -295,7 +309,9 @@ export function FormWizard({
               <Button type="button" onClick={onNext} disabled={isSaving}>
                 {isSaving && <Loader2 className="size-4 animate-spin" />}
                 {isLastStep ? submitLabel : "Next"}
-                {!isLastStep && !isSaving && <ChevronRight className="size-4" />}
+                {!isLastStep && !isSaving && (
+                  <ChevronRight className="size-4" />
+                )}
               </Button>
             </div>
           </div>
