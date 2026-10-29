@@ -1,7 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
 import type { FormWizardStepState } from "@/shared/hooks/useFormWizard";
-import { Button } from "@/shared/ui/Button";
 import { FormWizardStepTabs } from "@/shared/ui/FormWizardStepTabs";
 import { Check } from "lucide-react";
 import type { FieldValues } from "react-hook-form";
@@ -42,63 +41,67 @@ export function FormWizardNav<TFieldValues extends FieldValues>({
         className="md:-mx-8 md:px-8 lg:hidden"
       />
 
-      <nav className="card sticky top-4 hidden h-fit w-[220px] shrink-0 p-3.5 lg:block">
-        <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
+      <nav className="card sticky top-4 hidden h-fit w-[240px] shrink-0 overflow-hidden p-0 lg:block">
+        <div className="border-b border-[var(--line)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
           {title}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col divide-y divide-[var(--line)]">
           {stepStates.map(
             ({ step, index, isComplete, isActive, isReachable }) => (
-              <Button
+              <button
                 key={step.id}
                 type="button"
-                variant="ghost"
                 disabled={!isReachable}
                 onClick={() => onStepSelect(index)}
+                aria-current={isActive ? "step" : undefined}
                 className={cn(
-                  "h-auto w-full shrink-0 justify-start gap-2.5 rounded-[10px] px-3 py-2.5 text-left text-[13.5px]",
+                  "relative flex w-full items-center gap-2.5 border-l-2 py-3 pl-3.5 pr-9 text-left text-[13.5px] transition-colors",
                   isActive
-                    ? "bg-[var(--accent-soft)] font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-                    : "bg-transparent font-medium text-[var(--ink-soft)]",
-                  // Locked steps keep the label readable — only the check indicator reads as inactive.
-                  !isReachable && "cursor-not-allowed disabled:opacity-100",
+                    ? "border-[var(--accent)] bg-[var(--surface-2)] font-semibold text-[var(--ink)]"
+                    : "border-transparent font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
+                  !isReachable &&
+                    "cursor-not-allowed opacity-50 hover:bg-transparent",
                 )}
               >
-                <span
+                <step.Icon
+                  size={15}
                   className={cn(
-                    "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border ring-2 transition-colors",
-                    isComplete && isReachable
-                      ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--surface)] ring-[var(--accent-soft)]"
-                      : "border-[var(--line)] bg-[var(--surface-2)] ring-[var(--surface-2)]",
-                    !isReachable && "opacity-40",
+                    "shrink-0",
+                    isActive
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--ink-mute)]",
                   )}
-                >
-                  {isComplete && isReachable && (
-                    <Check size={11} strokeWidth={3} />
-                  )}
-                </span>
-                <span className="flex-1 truncate">{step.label}</span>
+                />
+                <span className="truncate">{step.label}</span>
                 {step.isOptional && !isComplete && (
-                  <span className="text-[9.5px] font-medium uppercase tracking-wide text-[var(--ink-mute)] opacity-70">
+                  <span className="text-[9.5px] font-medium uppercase tracking-wide text-[var(--ink-mute)]">
                     Optional
                   </span>
                 )}
-              </Button>
+                {isComplete && isReachable && (
+                  <Check
+                    size={14}
+                    strokeWidth={3}
+                    aria-label="Complete"
+                    className="absolute right-3 top-3.5 text-[var(--accent)]"
+                  />
+                )}
+              </button>
             ),
           )}
         </div>
 
-        <div className="mt-3 border-t border-[var(--line)] px-2.5 pt-3">
+        <div className="border-t border-[var(--line)] px-4 py-3">
           <div className="flex items-center justify-between text-[11px] font-medium text-[var(--ink-mute)]">
             <span>Completed</span>
             <span className="text-[var(--ink)]">
               {completedRequiredCount} of {requiredStepCount}
             </span>
           </div>
-          <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--line)]">
+          <div className="mt-2 h-1 bg-[var(--line)]">
             <div
-              className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
+              className="h-full bg-[var(--accent)] transition-[width] duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

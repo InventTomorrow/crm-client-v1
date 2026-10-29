@@ -19,6 +19,7 @@ export type ClinicalServiceSectionId =
   | "pricing"
   | "terms"
   | "safety"
+  | "instructions"
   | "visibility";
 
 /**
@@ -60,6 +61,7 @@ export const SECTION_FIELDS: Record<
     "advancePaymentNote",
   ],
   safety: ["requiredStaffQualifications", "safetyNote"],
+  instructions: ["chatbotInstructions", "escalation"],
   visibility: ["isPubliclyListed", "requiresPractitioner", "isActive"],
 };
 
@@ -172,6 +174,18 @@ function summariseSafety(values: ClinicalServiceFormInput): string {
   );
 }
 
+function summariseInstructions(values: ClinicalServiceFormInput): string {
+  const instructions = count(values.chatbotInstructions);
+  const escalation = values.escalation;
+  return (
+    joinParts([
+      instructions > 0 ? plural(instructions, "instruction") : null,
+      escalation?.isEnabled === false ? "Escalation off" : null,
+      filled(escalation?.notifyNumber) ? "Own escalation number" : null,
+    ]) || NOTHING_FILLED_IN
+  );
+}
+
 /** Always reports something — every toggle has a meaning in both positions. */
 function summariseVisibility(values: ClinicalServiceFormInput): string {
   return joinParts([
@@ -191,8 +205,30 @@ const SUMMARISERS: Record<
   pricing: summarisePricing,
   terms: summariseTerms,
   safety: summariseSafety,
+  instructions: summariseInstructions,
   visibility: summariseVisibility,
 };
+
+/**
+ * Whether every required field in a section is filled, or undefined for a
+ * section with none — those tick only once the admin has moved past them.
+ */
+export function hasRequiredFieldsFilled(
+  sectionId: ClinicalServiceSectionId,
+  values: ClinicalServiceFormInput,
+): boolean | undefined {
+  if (sectionId === "basics") {
+    return (
+      filled(values.name) && filled(values.shortDescription) && filled(values.serviceType)
+    );
+  }
+  if (sectionId === "pricing") {
+    return values.pricingModel === "RANGE"
+      ? filled(values.priceMin) && filled(values.priceMax)
+      : filled(values.pricingModel);
+  }
+  return undefined;
+}
 
 /** The one-line recap shown on a section's accordion trigger. */
 export function summariseSection(

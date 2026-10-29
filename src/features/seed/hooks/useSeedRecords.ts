@@ -11,6 +11,12 @@ const QUERY_KEYS_BY_RECORD_TYPE: Record<SeedRecordType, string[]> = {
   SERVICE_OFFERING: ["services"],
   CLINICAL_SERVICE: ["clinical-services"],
   PRACTITIONER: ["practitioners"],
+  JOB_APPLICANT: ["job-seekers"],
+  APPOINTMENT: ["bookings"],
+  APPOINTMENT_REQUEST: ["appointment-requests"],
+  LEAD: ["leads"],
+  RESOURCE: ["resources"],
+  CLINIC_LOCATION: ["clinic-coverage"],
 };
 
 export function useSeedRecords(recordType: SeedRecordType, label: string) {

@@ -2,6 +2,7 @@
 import { useClinicalServices } from '@/features/clinical-services/hooks/useClinicalServices';
 import { useDebouncedUrlSearch } from '@/shared/hooks/useDebouncedUrlSearch';
 import { useUrlEnumState } from '@/shared/hooks/useUrlEnumState';
+import { SeedRecordsButton } from '@/features/seed/components/SeedRecordsButton';
 import { Alert, AlertDescription } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
@@ -10,6 +11,7 @@ import {
   CoverageLocationsSkeleton,
   CoverageMatrixSkeleton,
 } from './CoverageSkeletons';
+import { LINE_TAB_LIST_CLASS, LINE_TAB_TRIGGER_CLASS } from '@/shared/ui/tabStyles';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/Tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/ToggleGroup';
 import {
@@ -52,9 +54,6 @@ const COVERAGE_TABS = ['grid', 'locations'] as const;
 type CoverageTab = (typeof COVERAGE_TABS)[number];
 /** How the service × area coverage is laid out — same data, two shapes. */
 type CoverageViewMode = 'matrix' | 'cards';
-
-const COVERAGE_TAB_TRIGGER_CLASS =
-  'h-full gap-2 px-3 text-[13px] text-[var(--ink-soft)] hover:text-[var(--ink)] data-active:bg-[var(--surface-2)] data-active:text-[var(--ink)] data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-[var(--surface-2)] dark:data-active:text-[var(--ink)]';
 
 const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
   grid: 'Search a service, city or area…',
@@ -182,6 +181,10 @@ export function CoverageAreasView() {
           >
             <HelpCircle className="size-4" />
           </Button>
+          <SeedRecordsButton
+            target={{ recordType: "CLINIC_LOCATION", label: "Clinic locations" }}
+            size="default"
+          />
           <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <Upload className="size-4" />
             Import
@@ -197,20 +200,20 @@ export function CoverageAreasView() {
         value={activeTab}
         onValueChange={(nextTab) => setActiveTab(nextTab as CoverageTab)}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList className="h-11 gap-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-1">
-            <TabsTrigger value="grid" className={COVERAGE_TAB_TRIGGER_CLASS}>
-              <Table2 className="size-4" />
-              Service coverage
-              <TabCount value={services.length} />
-            </TabsTrigger>
-            <TabsTrigger value="locations" className={COVERAGE_TAB_TRIGGER_CLASS}>
-              <MapPin className="size-4" />
-              Locations by city
-              <TabCount value={locations.length} />
-            </TabsTrigger>
-          </TabsList>
+        <TabsList variant="line" className={LINE_TAB_LIST_CLASS}>
+          <TabsTrigger value="grid" className={LINE_TAB_TRIGGER_CLASS}>
+            <Table2 className="size-4" />
+            Service coverage
+            <TabCount value={services.length} />
+          </TabsTrigger>
+          <TabsTrigger value="locations" className={LINE_TAB_TRIGGER_CLASS}>
+            <MapPin className="size-4" />
+            Locations by city
+            <TabCount value={locations.length} />
+          </TabsTrigger>
+        </TabsList>
 
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
             {activeTab === 'grid' && (
               <ToggleGroup

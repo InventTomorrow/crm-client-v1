@@ -18,6 +18,7 @@ import {
 } from "../utils/clinicalServiceFormMapping";
 import {
   SECTION_FIELDS,
+  hasRequiredFieldsFilled,
   sectionsWithErrors,
   summariseSection,
   type ClinicalServiceSectionId,
@@ -39,6 +40,7 @@ export const CLINICAL_SERVICE_STEP_ORDER: ClinicalServiceSectionId[] = [
   "pricing",
   "terms",
   "safety",
+  "instructions",
   "visibility",
 ];
 
@@ -158,6 +160,17 @@ export function useClinicalServiceWizard(serviceId?: string) {
           summariseSection(id, values),
         ]),
       ) as Record<ClinicalServiceSectionId, string>,
+    [values],
+  );
+
+  const requiredFilledSections = useMemo(
+    () =>
+      Object.fromEntries(
+        CLINICAL_SERVICE_STEP_ORDER.map((id) => [
+          id,
+          hasRequiredFieldsFilled(id, values),
+        ]),
+      ) as Record<ClinicalServiceSectionId, boolean | undefined>,
     [values],
   );
 
@@ -342,6 +355,7 @@ export function useClinicalServiceWizard(serviceId?: string) {
     stepIndex,
     furthestStepIndex,
     summaries,
+    requiredFilledSections,
     erroredSections,
     goToStep,
     goBack,

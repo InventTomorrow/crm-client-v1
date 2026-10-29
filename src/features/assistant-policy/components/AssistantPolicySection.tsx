@@ -5,6 +5,7 @@ import { SettingsSaveBar } from "@/features/settings/components/SettingsSaveBar"
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
+import { InstructionListField } from "@/shared/ui/InstructionListField";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/NativeSelect";
 import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -228,29 +229,17 @@ export function AssistantPolicySection() {
         </PolicyCard>
 
         <PolicyCard
-          title="Your own rules"
-          hint="Plain-language rules the assistant follows. They can narrow what it does, never override its safety limits."
+          title="Your own instructions"
+          hint="Rules the assistant follows in every chat — tone, escalation, what to say or avoid. They can narrow what it does, never override its safety limits. Rules for one service go on that service."
         >
-          <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-medium text-[var(--ink-soft)]">House rules</label>
-            <Textarea
-              className="text-[13px] min-h-[96px] resize-y"
-              maxLength={3000}
-              placeholder={"e.g. Home visits are only within city limits.\nNever confirm a nurse's name before the coordinator does."}
-              value={draft.houseRules}
-              onChange={(event) => update({ houseRules: event.target.value })}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[12px] font-medium text-[var(--ink-soft)]">What to tell job applicants</label>
-            <Textarea
-              className="text-[13px] min-h-[72px] resize-y"
-              maxLength={1500}
-              placeholder="e.g. Only shortlisted candidates are contacted. Salary depends on experience and the interview."
-              value={draft.recruitmentPolicy}
-              onChange={(event) => update({ recruitmentPolicy: event.target.value })}
-            />
-          </div>
+          <InstructionListField
+            label="Assistant instructions"
+            placeholder={"e.g. Home visits are only within city limits.\nNever confirm a nurse's name before the coordinator does."}
+            addLabel="Add instruction"
+            emptyHint="No instructions yet. The assistant follows the recommended defaults."
+            values={draft.chatbotInstructions}
+            onChange={(chatbotInstructions) => update({ chatbotInstructions })}
+          />
         </PolicyCard>
 
         <SettingsSaveBar>

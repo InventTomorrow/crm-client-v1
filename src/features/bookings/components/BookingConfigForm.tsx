@@ -18,7 +18,9 @@ import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import {
   CalendarClock,
+  Check,
   Clock,
+  Loader2,
   MessageSquare,
   SlidersHorizontal,
   Stethoscope,
@@ -38,7 +40,13 @@ const meetingTypeOptions = MEETING_TYPES.map((meetingType) => ({
 }));
 
 /** Editor for the single BookingConfig per workspace — what the bot is allowed to offer. */
-export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
+export function BookingConfigForm({
+  onSaved,
+  onCancel,
+}: {
+  onSaved?: () => void;
+  onCancel?: () => void;
+}) {
   const { form, isLoading, isSaving, handleSubmit } = useBookingConfigForm({
     ...(onSaved ? { onSaved } : {}),
   });
@@ -63,15 +71,15 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-none" />
+        <Skeleton className="h-64 w-full rounded-none" />
       </div>
     );
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <FormSection
           title="The meeting"
           description={`What ${vocabulary.plural} are booking, and how it happens.`}
@@ -491,9 +499,28 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
           </FormSection>
         )}
 
-        <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving…" : "Save booking settings"}
+        <div className="card sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-2 rounded-none px-4 py-3">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={isSaving}
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" size="lg" disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Check size={14} className="mr-1.5" /> Save booking settings
+              </>
+            )}
           </Button>
         </div>
       </form>

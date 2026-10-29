@@ -142,6 +142,34 @@ export type ShiftOption = z.infer<typeof shiftOptionSchema>;
 /** What the shift editor actually holds — defaults are still unresolved there. */
 export type ShiftOptionInput = z.input<typeof shiftOptionSchema>;
 
+/** Mirrors the server's `serviceEscalationSchema`; whether the number is on WhatsApp is not checked here. */
+export const serviceEscalationSchema = z.object({
+  isEnabled: z.boolean().default(true),
+  whenToEscalate: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, EMPTY_LIST_ROW)
+        .max(300, "Keep each condition under 300 characters"),
+    )
+    .max(5, "At most 5 conditions per service")
+    .default([]),
+  notifyNumber: z
+    .string()
+    .max(30)
+    .refine(
+      (phone) => {
+        const digitsOnly = phone.replace(/[\s\-()]/g, "");
+        return digitsOnly === "" || /^\+[1-9]\d{6,14}$/.test(digitsOnly);
+      },
+      {
+        message:
+          "Use digits only, starting with + and the country code, e.g. +923001234567",
+      },
+    ),
+});
+
 /**
  * Mirrors `createClinicalServiceSchema` on the server, including its pricing
  * rules — a RANGE service needs both ends of the band, and an ON_ENQUIRY
@@ -186,6 +214,21 @@ export const clinicalServiceFormSchema = z
       .array(z.string().trim().min(1, EMPTY_LIST_ROW))
       .default([]),
     safetyNote: z.string().trim().optional(),
+    chatbotInstructions: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1, EMPTY_LIST_ROW)
+          .max(400, "Keep each instruction under 400 characters"),
+      )
+      .max(10, "At most 10 instructions per service")
+      .default([]),
+    escalation: serviceEscalationSchema.default({
+      isEnabled: true,
+      whenToEscalate: [],
+      notifyNumber: "",
+    }),
 
     requiresPractitioner: z.boolean().default(false),
     departmentKey: z.string().trim().optional(),
@@ -277,6 +320,13 @@ export interface ClinicalService {
 
   requiredStaffQualifications: string[];
   safetyNote: string | null;
+  chatbotInstructions: string[];
+  /** null until the owner first saves escalation settings — the workspace's default support applies. */
+  escalation: {
+    isEnabled: boolean;
+    whenToEscalate: string[];
+    notifyNumber: string | null;
+  } | null;
 
   requiresPractitioner: boolean;
   departmentKey: string | null;
