@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
@@ -27,7 +28,6 @@ import { useInfiniteJobSeekers } from "../hooks/useJobSeekers";
 import type { JobSeeker } from "../types";
 import { cvKindLabel } from "../utils/cv";
 import { JobSeekerDeleteDialog } from "./JobSeekerDeleteDialog";
-import { JobSeekerFormDialog } from "./JobSeekerFormDialog";
 
 const dateTime = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -180,20 +180,9 @@ export function JobSeekersList() {
     useInfiniteJobSeekers(search);
   const jobSeekers = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [applicantBeingEdited, setApplicantBeingEdited] =
-    useState<JobSeeker | null>(null);
+  const router = useRouter();
   const [applicantPendingDeletion, setApplicantPendingDeletion] =
     useState<JobSeeker | null>(null);
-
-  const openAddDialog = () => {
-    setApplicantBeingEdited(null);
-    setIsFormOpen(true);
-  };
-  const openEditDialog = (jobSeeker: JobSeeker) => {
-    setApplicantBeingEdited(jobSeeker);
-    setIsFormOpen(true);
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -210,7 +199,11 @@ export function JobSeekersList() {
             </span>
           )}
           <PermissionGuard permission="leads:create">
-            <Button type="button" size="lg" onClick={openAddDialog}>
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => router.push("/job-seekers/new")}
+            >
               <Plus size={14} className="mr-1.5" /> Add applicant
             </Button>
           </PermissionGuard>
@@ -246,7 +239,9 @@ export function JobSeekersList() {
             <ApplicantRow
               key={jobSeeker.leadId}
               jobSeeker={jobSeeker}
-              onEdit={() => openEditDialog(jobSeeker)}
+              onEdit={() =>
+                router.push(`/job-seekers/${jobSeeker.leadId}/edit`)
+              }
               onDelete={() => setApplicantPendingDeletion(jobSeeker)}
             />
           ))}
@@ -268,11 +263,6 @@ export function JobSeekersList() {
         </Button>
       )}
 
-      <JobSeekerFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        jobSeeker={applicantBeingEdited}
-      />
       <JobSeekerDeleteDialog
         jobSeeker={applicantPendingDeletion}
         onClose={() => setApplicantPendingDeletion(null)}

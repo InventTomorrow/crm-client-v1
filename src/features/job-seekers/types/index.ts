@@ -5,6 +5,7 @@ import { z } from "zod";
 export const MAX_JOB_SEEKER_FIELDS = 15;
 export const MAX_JOB_SEEKER_INSTRUCTIONS = 20;
 export const MAX_JOB_SEEKER_INSTRUCTION_LENGTH = 600;
+export const MAX_CV_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export const jobSeekerFieldSchema = z.object({
   /** Absent on a detail added in this session — the server assigns it. */
@@ -56,6 +57,14 @@ export const jobSeekerFormSchema = z.object({
     z.string(),
     z.string().max(500, "Keep it under 500 characters"),
   ),
+  /** null removes the CV; a file uploaded in this session replaces it. */
+  cv: z
+    .object({
+      url: z.string().url(),
+      fileName: z.string().nullable(),
+      mimeType: z.string().nullable(),
+    })
+    .nullable(),
 });
 
 export type JobSeekerFormValues = z.infer<typeof jobSeekerFormSchema>;
