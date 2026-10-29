@@ -19,7 +19,6 @@ import { Skeleton } from "@/shared/ui/Skeleton";
 import { useJobSeeker } from "../hooks/useJobSeekers";
 import { cvKindLabel } from "../utils/cv";
 import { JobSeekerDeleteDialog } from "./JobSeekerDeleteDialog";
-import { JobSeekerFormDialog } from "./JobSeekerFormDialog";
 
 const dateTime = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -40,7 +39,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export function JobSeekerDetailView({ leadId }: { leadId: string }) {
   const router = useRouter();
   const { data: jobSeeker, isLoading, isError } = useJobSeeker(leadId);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const backLink = (
@@ -113,7 +111,9 @@ export function JobSeekerDetailView({ leadId }: { leadId: string }) {
               type="button"
               variant="outline"
               size="xl"
-              onClick={() => setIsEditOpen(true)}
+              onClick={() =>
+                router.push(`/job-seekers/${jobSeeker.leadId}/edit`)
+              }
             >
               <Pencil className="size-4" /> Edit
             </Button>
@@ -226,11 +226,6 @@ export function JobSeekerDetailView({ leadId }: { leadId: string }) {
         </div>
       </div>
 
-      <JobSeekerFormDialog
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        jobSeeker={jobSeeker}
-      />
       <JobSeekerDeleteDialog
         jobSeeker={isDeleteOpen ? jobSeeker : null}
         onClose={() => setIsDeleteOpen(false)}

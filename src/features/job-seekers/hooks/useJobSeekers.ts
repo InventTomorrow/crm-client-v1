@@ -5,7 +5,12 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
+import {
+  getPresignedUrl,
+  uploadToS3,
+} from "@/features/inventory/services/productsService";
 import { extractErrorMessage } from "@/lib/utils";
 import {
   createJobSeeker,
@@ -39,10 +44,11 @@ export function useInfiniteJobSeekers(search: string) {
   });
 }
 
-export function useJobSeeker(leadId: string) {
+export function useJobSeeker(leadId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...JOB_SEEKERS_KEY, "detail", leadId] as const,
     queryFn: () => getJobSeeker(leadId),
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -132,4 +138,39 @@ export function useDeleteJobSeeker() {
     onSettled: () =>
       queryClient.invalidateQueries({ queryKey: JOB_SEEKERS_KEY }),
   });
+}
+
+/** Presigned upload of a CV, reporting progress for the drop zone. */
+export function useCvUpload() {
+  const [progress, setProgress] = useState<number | null>(null);
+  const [phase, setPhase] = useState<"idle" | "requesting-url" | "uploading">(
+    "idle",
+  );
+
+  const mutation = useMutation({
+    mutationFn: async (file: File) => {
+      setPhase("requesting-url");
+      const { uploadUrl, publicUrl } = await getPresignedUrl(
+        file.name,
+        file.type,
+        "cvs",
+      );
+      setPhase("uploading");
+      await uploadToS3(uploadUrl, file, setProgress);
+      return publicUrl;
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "CV upload failed")),
+    onSettled: () => {
+      setProgress(null);
+      setPhase("idle");
+    },
+  });
+
+  return {
+    upload: mutation.mutateAsync,
+    isUploading: mutation.isPending,
+    progress,
+    phase,
+  };
 }

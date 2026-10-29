@@ -61,7 +61,7 @@ export function JobSeekerSettingsForm() {
             </div>
 
             {fieldRows.fields.length === 0 ? (
-              <p className="border border-dashed border-[var(--line)] px-3 py-3 text-center text-[11px] text-[var(--ink-mute)]">
+              <p className="border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-center text-[11px] text-[var(--ink-mute)]">
                 No details yet. The assistant will only point applicants to your
                 HR contact.
               </p>
