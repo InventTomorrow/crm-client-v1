@@ -49,7 +49,7 @@ export function SeedRecordCard({ entry }: SeedRecordCardProps) {
   return (
     <FadeUp className="card flex flex-col gap-4 p-[18px]">
       <div className="flex items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--surface-2)] text-[var(--ink)]">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--ink)]">
           <Icon size={18} />
         </span>
         <div className="min-w-0">
@@ -86,7 +86,7 @@ export function SeedRecordCard({ entry }: SeedRecordCardProps) {
         {isDone && (
           <ScaleIn
             key="done"
-            className="flex items-center gap-2 rounded-[10px] bg-[var(--success-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--success-foreground)]"
+            className="flex items-center gap-2 rounded-lg bg-[var(--success-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--success-foreground)]"
           >
             <Check size={15} />
             {seededCount} {entry.label.toLowerCase()} added to your workspace

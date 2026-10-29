@@ -50,7 +50,7 @@ export function BillingHistory() {
   };
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden rounded-none">
       <div className="border-b border-[var(--line)] px-5 py-4">
         <h3 className="text-[15px] font-semibold">Billing history</h3>
         <p className="text-[12.5px] mt-0.5 text-[var(--ink-soft)]">

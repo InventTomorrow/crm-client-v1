@@ -68,7 +68,7 @@ export function ServiceOrderNotificationRow({
         className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[var(--surface-2)]"
       >
         <span
-          className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px]"
+          className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
           style={{ background: bg, color }}
         >
           <Icon size={15} />

@@ -1,5 +1,7 @@
 "use client";
 import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
+import { useTableSelection } from "@/shared/hooks/useTableSelection";
+import { BulkActionBar } from "@/shared/ui/BulkActionBar";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable } from "@/shared/ui/DataTable";
@@ -9,7 +11,7 @@ import { ProductGridSkeleton } from "./InventorySkeletons";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
+import { ViewTabs } from "@/shared/ui/ViewTabs";
 import {
   AlertTriangle,
   ChevronDown,
@@ -84,6 +86,11 @@ export function InventoryView() {
     duplicateProduct,
     deleteProduct,
   } = useInventoryView();
+  const productSelection = useTableSelection<Product>();
+  const {
+    selectedRows: selectedProducts,
+    clearSelection: clearProductSelection,
+  } = productSelection;
 
   const duplicatingProductId = duplicateProduct.isPending
     ? duplicateProduct.variables?.id
@@ -173,18 +180,29 @@ export function InventoryView() {
               data-tour="page-actions"
               className="flex flex-wrap items-center gap-2.5"
             >
-              <div className="relative w-full sm:min-w-[200px] sm:flex-[1_1_220px] sm:w-auto">
-                <Search
-                  size={13}
-                  className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
+              {selectedProducts.length > 0 ? (
+                <BulkActionBar
+                  className="w-full sm:min-w-[200px] sm:flex-[1_1_220px] sm:w-auto"
+                  selectedCount={selectedProducts.length}
+                  onDelete={() => {
+                    setBulkDeleteTargets(selectedProducts);
+                    clearProductSelection();
+                  }}
                 />
-                <Input
-                  className="pl-8"
-                  placeholder="Search products..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-              </div>
+              ) : (
+                <div className="relative w-full sm:min-w-[200px] sm:flex-[1_1_220px] sm:w-auto">
+                  <Search
+                    size={13}
+                    className="absolute left-2.5 top-2.5 text-[var(--ink-mute)]"
+                  />
+                  <Input
+                    className="pl-8"
+                    placeholder="Search products..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                  />
+                </div>
+              )}
               <div className="hidden flex-1 sm:block" />
               <RefreshButton
                 onRefresh={() => refetch()}
@@ -198,19 +216,12 @@ export function InventoryView() {
               >
                 <Download size={13} /> Export
               </Button>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                size="sm"
+              <ViewTabs
+                ariaLabel="View mode"
                 value={inventoryView}
-                onValueChange={(v) => v && setInventoryView(v as InvViewType)}
-              >
-                {VIEW_BTNS.map(({ id, label, Icon }) => (
-                  <ToggleGroupItem key={id} value={id} aria-label={label}>
-                    <Icon size={12} /> {label}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+                onValueChange={setInventoryView}
+                options={VIEW_BTNS}
+              />
               <SeedRecordsButton target={{ recordType: "PRODUCT", label: "Products" }} size="default" />
               <PermissionGuard permission="inventory:edit">
                 <div ref={addMenuRef} className="relative">
@@ -336,7 +347,7 @@ export function InventoryView() {
               columns={columns}
               selectable
               onRowClick={setPreviewProduct}
-              onDeleteSelected={setBulkDeleteTargets}
+              selection={productSelection}
               emptyMessage="No products match your filters."
               isLoading={isLoading}
             />

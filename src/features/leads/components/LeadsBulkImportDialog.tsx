@@ -143,7 +143,7 @@ function BulkCard({
   return (
     <div
       onClick={onClick}
-      className={`relative flex items-center gap-2.5 rounded-[10px] border cursor-pointer p-[9px] transition-all
+      className={`relative flex items-center gap-2.5 rounded-lg border cursor-pointer p-[9px] transition-all
         ${active ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : bad ? 'border-[#FCA5A5] bg-[var(--surface)]' : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]'}`}
     >
       <CRMAvatar name={display} size={32} />
@@ -278,10 +278,10 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) parseFile(f); }}
             onClick={() => fileRef.current?.click()}
-            className={`flex items-center gap-3 rounded-[10px] cursor-pointer transition-all py-3 px-4
+            className={`flex items-center gap-3 rounded-lg cursor-pointer transition-all py-3 px-4
               ${dragOver ? 'border-[1.5px] border-dashed border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)]'}`}
           >
-            <span className="w-8 h-8 rounded-[9px] inline-flex items-center justify-center bg-[var(--accent-soft)] text-[var(--accent)]">
+            <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center bg-[var(--accent-soft)] text-[var(--accent)]">
               {parseCsv.isPending ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             </span>
             <div className="flex-1 text-[12.5px]">
@@ -321,7 +321,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
               {items.length === 0 && (
                 <button
                   onClick={addBlank}
-                  className="flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[120px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                  className="flex flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed border-[var(--line)] bg-[var(--surface-2)] min-h-[120px] cursor-pointer text-[var(--ink-mute)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                 >
                   <Plus size={18} />
                   <span className="text-[11.5px] font-medium">Add {vocabulary.singular}</span>

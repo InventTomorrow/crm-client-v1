@@ -28,7 +28,7 @@ export function SystemSection() {
             return (
               <div
                 key={i}
-                className="rounded-[10px] p-3.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]"
+                className="rounded-lg p-3.5 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]"
               >
                 <div className="flex items-center justify-between">
                   <Icon size={15} className="text-[#C4B5FD]" />

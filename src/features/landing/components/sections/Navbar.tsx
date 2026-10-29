@@ -103,7 +103,7 @@ export default function Navbar() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative z-10 flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border border-gray-100 bg-white/80 backdrop-blur-md transition-shadow ${
+          className={`relative z-10 flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-md transition-shadow ${
             scrolled || menuOpen ? "shadow-nav" : ""
           }`}
         >
@@ -151,7 +151,7 @@ export default function Navbar() {
                 Login
               </Link>
             )}
-            <PrimaryCta signedInTarget="dashboard" className="hidden lg:inline-flex h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+            <PrimaryCta signedInTarget="dashboard" className="hidden lg:inline-flex h-auto rounded-lg bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
               Get Started
             </PrimaryCta>
             <button
@@ -159,7 +159,7 @@ export default function Navbar() {
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
-              className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-full text-brand-dark transition-colors hover:bg-brand-mint-soft active:scale-95"
+              className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-brand-dark transition-colors hover:bg-brand-mint-soft active:scale-95"
             >
               <AnimatePresence mode="wait" initial={false}>
                 {menuOpen ? (
@@ -196,7 +196,7 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.97 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:hidden absolute left-0 right-0 top-full mt-2 z-20 origin-top rounded-3xl border border-gray-100 bg-white/95 backdrop-blur-md shadow-nav overflow-hidden"
+              className="lg:hidden absolute left-0 right-0 top-full mt-2 z-20 origin-top rounded-xl border border-gray-100 bg-white/95 backdrop-blur-md shadow-nav overflow-hidden"
             >
               <div className="flex flex-col p-2">
                 {NAV_LINKS.map((link, i) => (
@@ -212,7 +212,7 @@ export default function Navbar() {
                       aria-current={
                         isLinkActive(link.href) ? "true" : undefined
                       }
-                      className={`relative block px-4 py-3 rounded-2xl text-[15px] font-medium transition-colors duration-300 active:scale-[0.98] ${
+                      className={`relative block px-4 py-3 rounded-lg text-[15px] font-medium transition-colors duration-300 active:scale-[0.98] ${
                         isLinkActive(link.href)
                           ? "text-brand-green"
                           : "text-brand-dark/90 hover:text-brand-dark hover:bg-brand-mint-soft"
@@ -221,7 +221,7 @@ export default function Navbar() {
                       {isLinkActive(link.href) && (
                         <motion.span
                           layoutId="mobile-nav-active"
-                          className="absolute inset-0 rounded-2xl bg-brand-mint-soft"
+                          className="absolute inset-0 rounded-lg bg-brand-mint-soft"
                           transition={{
                             type: "spring",
                             stiffness: 380,
@@ -238,12 +238,12 @@ export default function Navbar() {
                     <Link
                       href="/auth/login"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center justify-center rounded-2xl px-4 py-3 text-[15px] font-medium text-brand-dark/90 transition-colors hover:bg-brand-mint-soft hover:text-brand-dark"
+                      className="flex items-center justify-center rounded-lg px-4 py-3 text-[15px] font-medium text-brand-dark/90 transition-colors hover:bg-brand-mint-soft hover:text-brand-dark"
                     >
                       Login
                     </Link>
                   )}
-                  <PrimaryCta signedInTarget="dashboard" className="w-full justify-center h-auto rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:bg-brand-green-hover">
+                  <PrimaryCta signedInTarget="dashboard" className="w-full justify-center h-auto rounded-lg bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:bg-brand-green-hover">
                     Get Started
                   </PrimaryCta>
                 </div>

@@ -60,13 +60,13 @@ export function LoginVisualPanel() {
       </div>
 
       {/* Static funnel — fixed bar widths */}
-      <div className="rounded-[14px] bg-white/10 border border-white/20 p-4 flex flex-col gap-2">
+      <div className="rounded-xl bg-white/10 border border-white/20 p-4 flex flex-col gap-2">
         <div className="text-[11px] text-white/70 uppercase tracking-[0.10em] font-semibold mb-1">Lead pipeline</div>
         {funnel.map((row) => (
           <div key={row.label} className="flex items-center gap-2.5 text-[11.5px] text-white/95 font-medium">
             <span className="w-[96px] flex-shrink-0">{row.label}</span>
-            <div className="relative flex-1 h-[18px] rounded-[5px] bg-white/12 overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 rounded-[5px] bg-white/85" style={{ width: row.w }} />
+            <div className="relative flex-1 h-[18px] rounded-md bg-white/12 overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 rounded-md bg-white/85" style={{ width: row.w }} />
             </div>
             <span className="w-9 text-right font-mono text-[11px] text-white/85">{row.val}</span>
           </div>
@@ -153,7 +153,7 @@ export function ForgotPasswordVisualPanel() {
   return (
     <PanelShell>
       <div className="flex flex-col items-center gap-6 text-center">
-        <div className="w-[88px] h-[88px] rounded-[22px] bg-white/15 border border-white/25 flex items-center justify-center">
+        <div className="w-[88px] h-[88px] rounded-3xl bg-white/15 border border-white/25 flex items-center justify-center">
           <ShieldCheck size={42} className="text-white" strokeWidth={1.6} />
         </div>
         <h2 className="text-[30px] font-semibold leading-[1.15] tracking-[-0.025em] text-white">Your data is safe.</h2>
@@ -167,11 +167,11 @@ export function ForgotPasswordVisualPanel() {
           ))}
         </div>
 
-        <div className="w-full rounded-[14px] bg-white/10 border border-white/20 p-4">
+        <div className="w-full rounded-xl bg-white/10 border border-white/20 p-4">
           <div className="text-[11px] text-white/75 uppercase tracking-[0.10em] font-semibold mb-3 text-left">Security on every reset</div>
           <div className="grid grid-cols-2 gap-2.5">
             {grid.map((s) => (
-              <div key={s.val} className="flex flex-col items-center gap-1.5 p-3 bg-white/8 border border-white/15 rounded-[10px]">
+              <div key={s.val} className="flex flex-col items-center gap-1.5 p-3 bg-white/8 border border-white/15 rounded-lg">
                 <span className="w-7 h-7 rounded-full bg-white/18 inline-flex items-center justify-center">{s.icon}</span>
                 <div className="text-[13px] font-semibold text-white">{s.val}</div>
                 <div className="text-[10.5px] text-white/72">{s.sub}</div>

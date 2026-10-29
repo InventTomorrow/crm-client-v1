@@ -68,7 +68,7 @@ export function BookingConfirmStep({
       </div>
 
       {booking.isCustomTime && (
-        <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-2.5 text-[11.5px] text-[var(--ink-mute)]">
+        <p className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-2.5 text-[11.5px] text-[var(--ink-mute)]">
           This time sits outside your configured hours, so the bot would never
           have offered it. It is still checked against everything already
           booked.

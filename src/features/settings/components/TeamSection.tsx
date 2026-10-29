@@ -888,7 +888,7 @@ function MembersTab() {
           className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)]"
         />
         <Input
-          className="h-10 rounded-[10px] border-[var(--line)] bg-[var(--surface)] pl-10 pr-20 text-[13px] shadow-sm focus-visible:border-[var(--accent)]"
+          className="h-10 rounded-lg border-[var(--line)] bg-[var(--surface)] pl-10 pr-20 text-[13px] shadow-sm focus-visible:border-[var(--accent)]"
           placeholder="Search by name or email..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -912,7 +912,7 @@ function MembersTab() {
       <div
         role="tablist"
         aria-label="Filter members by role"
-        className="flex flex-wrap items-center gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] p-1"
+        className="flex flex-wrap items-center gap-1 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-1"
       >
         {ROLE_FILTERS.map((r) => {
           const isSelected = roleFilter === r;
@@ -923,7 +923,7 @@ function MembersTab() {
               aria-selected={isSelected}
               onClick={() => setRoleFilter(r)}
               className={cn(
-                "rounded-[7px] px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150",
+                "rounded-md px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150",
                 isSelected
                   ? "bg-accent-soft text-accent shadow-sm"
                   : "text-[var(--ink-mute)] hover:bg-[var(--surface)] hover:text-[var(--ink)]",
@@ -1208,7 +1208,7 @@ function PermissionsTab() {
   return (
     <div className="flex flex-col gap-4">
       {/* Info banner */}
-      <div className="flex items-start gap-2.5 rounded-[12px] bg-accent-soft border border-accent/20 px-4 py-3">
+      <div className="flex items-start gap-2.5 rounded-xl bg-accent-soft border border-accent/20 px-4 py-3">
         <Info size={14} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
         <p className="text-[12.5px] text-[var(--ink-soft)] leading-relaxed">
           The <strong>Owner</strong> role always has full access and cannot be
@@ -1300,7 +1300,7 @@ export function TeamSection() {
       <div
         role="tablist"
         aria-label="Access control sections"
-        className="flex items-center gap-1 p-1 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line)] w-fit"
+        className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] w-fit"
       >
         {tabs.map(({ id, label, icon: Icon, count }) => {
           const isSelected = tab === id;
@@ -1311,7 +1311,7 @@ export function TeamSection() {
               aria-selected={isSelected}
               onClick={() => setTab(id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-150",
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150",
                 isSelected
                   ? "bg-accent-soft text-accent shadow-sm"
                   : "text-[var(--ink-mute)] hover:text-[var(--ink)] hover:bg-[var(--surface)]",

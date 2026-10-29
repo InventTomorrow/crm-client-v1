@@ -15,7 +15,7 @@ export function ApiDocsView() {
       <div className="grid items-start gap-8 @4xl:grid-cols-[minmax(0,1fr)_240px]">
         {/* Top-level sections only (not the TOC <details>) get a divider above them. */}
         <article className="card flex min-w-0 flex-col gap-14 p-5 md:p-10 [&>section:not(:first-of-type)]:border-t [&>section:not(:first-of-type)]:border-[var(--line)] [&>section:not(:first-of-type)]:pt-14">
-          <details className="rounded-xl border border-[var(--line)] p-4 @4xl:hidden">
+          <details className="border border-[var(--line)] bg-[var(--surface-2)] p-4 @4xl:hidden">
             <summary className="cursor-pointer text-[15px] font-medium">
               Table of contents
             </summary>
@@ -32,7 +32,7 @@ export function ApiDocsView() {
           <ReferenceDocs />
         </article>
 
-        <aside className="sticky top-6 hidden max-h-[calc(100vh-8rem)] overflow-y-auto @4xl:block">
+        <aside className="sticky top-6 hidden max-h-[calc(100vh-8rem)] overflow-y-auto border border-[var(--line)] bg-[var(--surface)] @4xl:block">
           <DocsTableOfContents
             activeSectionId={activeSectionId}
             onNavigate={scrollToSection}

@@ -29,7 +29,7 @@ function LinkNotificationRow({ notification }: { notification: Notification }) {
       )}
     >
       <span
-        className="w-9 h-9 rounded-[10px] flex-shrink-0 inline-flex items-center justify-center"
+        className="w-9 h-9 rounded-lg flex-shrink-0 inline-flex items-center justify-center"
         style={{ background: bg, color }}
       >
         <Icon size={15} />

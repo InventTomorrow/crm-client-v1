@@ -407,7 +407,7 @@ export function BroadcasterDialog({
                   <label
                     key={l.id}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-[10px] border cursor-pointer px-3 py-2.5 transition-all hover:shadow-sm",
+                      "flex items-center gap-2.5 rounded-lg border cursor-pointer px-3 py-2.5 transition-all hover:shadow-sm",
                       checked
                         ? "border-[var(--accent)] bg-[var(--accent)]/5"
                         : "border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--surface-2)]",

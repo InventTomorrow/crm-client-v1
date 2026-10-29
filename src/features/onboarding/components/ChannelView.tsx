@@ -31,13 +31,13 @@ function QRFrame({ src }: { src: string }) {
             className={cn(
               "absolute w-[20px] h-[20px] border-[#25D366]",
               pos === "tl" &&
-                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[5px]",
+                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-md",
               pos === "tr" &&
-                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[5px]",
+                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-md",
               pos === "bl" &&
-                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[5px]",
+                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-md",
               pos === "br" &&
-                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[5px]",
+                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-md",
             )}
           />
         ))}

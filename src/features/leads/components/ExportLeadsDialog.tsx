@@ -151,7 +151,7 @@ export function ExportLeadsDialog({ open, onClose, leads }: {
               <label
                 key={l.id}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-[10px] border cursor-pointer px-2.5 py-2 transition-colors',
+                  'flex items-center gap-2.5 rounded-lg border cursor-pointer px-2.5 py-2 transition-colors',
                   checked ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] hover:bg-[var(--surface-2)]',
                 )}
               >

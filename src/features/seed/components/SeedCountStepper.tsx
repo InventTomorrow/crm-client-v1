@@ -13,7 +13,7 @@ interface SeedCountStepperProps {
 export function SeedCountStepper({ count, onChange, isDisabled, label }: SeedCountStepperProps) {
   return (
     <div
-      className="flex items-center gap-1 rounded-[10px] border border-[var(--line)] p-1"
+      className="flex items-center gap-1 rounded-lg border border-[var(--line)] p-1"
       role="group"
       aria-label={`Number of ${label.toLowerCase()} to seed`}
     >

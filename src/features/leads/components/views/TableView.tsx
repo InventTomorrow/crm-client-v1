@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { pkr } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { ChannelBadge } from "@/shared/ui/ChannelBadge";
+import type { TableSelection } from "@/shared/hooks/useTableSelection";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
 import { Button } from "@/shared/ui/Button";
 import {
@@ -37,8 +38,7 @@ export default function TableView({
   onArchive,
   onRestore,
   onDelete,
-  onBulkDelete,
-  onExport,
+  selection,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
@@ -52,8 +52,7 @@ export default function TableView({
   onArchive: (l: Lead) => void;
   onRestore: (l: Lead) => void;
   onDelete: (l: Lead) => void;
-  onBulkDelete: (rows: Lead[]) => void;
-  onExport: (rows: Lead[]) => void;
+  selection: TableSelection<Lead>;
 }) {
   const vocabulary = useLeadVocabulary();
   const filtered = useMemo(() => filterLeads(leads, filter), [leads, filter]);
@@ -204,9 +203,7 @@ export default function TableView({
       data={filtered}
       columns={columns}
       selectable
-      onDeleteSelected={onBulkDelete}
-      onExport={onExport}
-      showExportAll={false}
+      selection={selection}
       emptyMessage={`No matching ${vocabulary.plural}.`}
       defaultPageSize={20}
       maxVisibleRows={15}

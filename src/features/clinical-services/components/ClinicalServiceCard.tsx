@@ -59,7 +59,7 @@ export function ClinicalServiceCard({
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--accent)]/30 bg-[var(--surface)] shadow-[var(--shadow-1)] transition-[border-color,box-shadow] hover:border-[var(--accent)]/60 hover:shadow-[var(--shadow-2)]",
+        "group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface)] shadow-[var(--shadow-1)] transition-[border-color,box-shadow] hover:border-[var(--accent)]/60 hover:shadow-[var(--shadow-2)]",
         // A retired service stays readable but visibly recedes from the live ones.
         !service.isActive && "opacity-70",
       )}
@@ -106,7 +106,7 @@ export function ClinicalServiceCard({
         </p>
 
         {/* Price leads its own band so it survives a fast scan down a column of cards. */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--r-10)] bg-[var(--surface-2)] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-[var(--surface-2)] px-3 py-2">
           <span className="text-[15px] font-semibold text-[var(--ink)]">
             {formatServicePrice(service)}
           </span>
@@ -121,7 +121,7 @@ export function ClinicalServiceCard({
         {/* Surfaced on the card because getting it wrong is a safety problem, not
           a cosmetic one. */}
         {service.safetyNote && (
-          <p className="flex items-start gap-1.5 rounded-[var(--r-10)] bg-[var(--warning-soft)] px-2.5 py-1.5 text-xs text-[var(--ink)]">
+          <p className="flex items-start gap-1.5 rounded-lg bg-[var(--warning-soft)] px-2.5 py-1.5 text-xs text-[var(--ink)]">
             <AlertTriangle className="mt-px size-3.5 shrink-0 text-[var(--warning)]" />
             <span className="line-clamp-2">{service.safetyNote}</span>
           </p>

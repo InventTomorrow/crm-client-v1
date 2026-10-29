@@ -112,7 +112,7 @@ export default function KanbanView({
               />
             ))}
             {(grouped[key]?.length ?? 0) === 0 && (
-              <div className="p-5 text-center text-[12px] rounded-[10px] border border-dashed text-[var(--ink-mute)] border-[var(--line)]">
+              <div className="p-5 text-center text-[12px] rounded-lg border border-dashed text-[var(--ink-mute)] border-[var(--line)]">
                 {`Drop a ${vocabulary.singular} here`}
               </div>
             )}

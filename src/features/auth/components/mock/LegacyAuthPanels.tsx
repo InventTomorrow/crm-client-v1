@@ -161,7 +161,7 @@ export function LoginVisualPanel() {
       </div>
 
       {/* Funnel */}
-      <div className="rounded-[14px] bg-white/10 border border-white/20 p-4 backdrop-blur-[8px] flex flex-col gap-2">
+      <div className="rounded-xl bg-white/10 border border-white/20 p-4 backdrop-blur-[8px] flex flex-col gap-2">
         {[
           { label: "Inquiries", val: "3.1K", w: "92%", delay: "0.15s" },
           { label: "Qualified", val: "1.2K", w: "64%", delay: "0.30s" },
@@ -173,9 +173,9 @@ export function LoginVisualPanel() {
             className="flex items-center gap-2.5 text-[11.5px] text-white/95 font-medium"
           >
             <span className="w-[72px] flex-shrink-0">{row.label}</span>
-            <div className="relative flex-1 h-[18px] rounded-[5px] bg-white/12 overflow-hidden">
+            <div className="relative flex-1 h-[18px] rounded-md bg-white/12 overflow-hidden">
               <div
-                className="absolute left-0 top-0 bottom-0 rounded-[5px] bg-white/85"
+                className="absolute left-0 top-0 bottom-0 rounded-md bg-white/85"
                 style={{
                   width: row.w,
                   animation: `fvGrow 2.2s ${row.delay} ease-out forwards`,
@@ -357,7 +357,7 @@ export function ForgotPasswordVisualPanel() {
         <span className="auth-ring-1 absolute inset-0 rounded-full border border-white/30" />
         <span className="auth-ring-2 absolute inset-0 rounded-full border border-white/30" />
         <span className="auth-ring-3 absolute inset-0 rounded-full border border-white/30" />
-        <div className="auth-bob relative z-10 w-[88px] h-[88px] rounded-[22px] bg-white/18 border border-white/30 backdrop-blur-[8px] flex items-center justify-center">
+        <div className="auth-bob relative z-10 w-[88px] h-[88px] rounded-3xl bg-white/18 border border-white/30 backdrop-blur-[8px] flex items-center justify-center">
           <svg
             width="42"
             height="42"
@@ -450,7 +450,7 @@ export function ForgotPasswordVisualPanel() {
       </div>
 
       {/* Security stat grid */}
-      <div className="w-full rounded-[14px] bg-white/10 border border-white/20 p-4 backdrop-blur-[10px]">
+      <div className="w-full rounded-xl bg-white/10 border border-white/20 p-4 backdrop-blur-[10px]">
         <div className="text-[11px] text-white/75 uppercase tracking-[0.10em] font-semibold mb-3">
           Security on every reset
         </div>
@@ -534,7 +534,7 @@ export function ForgotPasswordVisualPanel() {
           ].map((s, i) => (
             <div
               key={i}
-              className="flex flex-col items-center gap-1.5 p-3 bg-white/8 border border-white/15 rounded-[10px]"
+              className="flex flex-col items-center gap-1.5 p-3 bg-white/8 border border-white/15 rounded-lg"
             >
               <span className="w-7 h-7 rounded-full bg-white/18 inline-flex items-center justify-center">
                 {s.icon}

@@ -25,6 +25,8 @@ import {
 } from "@/shared/ui/Dialog";
 import { Input } from "@/shared/ui/Input";
 import { Label } from "@/shared/ui/Label";
+import { Skeleton } from "@/shared/ui/Skeleton";
+import { StatCard } from "@/shared/ui/StatCard";
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -37,6 +39,7 @@ import {
   Shield,
   Trash2,
   UserMinus,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -86,8 +89,8 @@ function DeleteConfirmDialog({
       >
         <DialogHeader className="px-6 py-5 border-b border-[var(--line)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
-              <AlertTriangle size={18} className="text-red-500" />
+            <div className="w-10 h-10 rounded-xl bg-destructive-soft flex items-center justify-center">
+              <AlertTriangle size={18} className="text-destructive" />
             </div>
             <div>
               <DialogTitle className="text-[16px] font-semibold">
@@ -110,11 +113,11 @@ function DeleteConfirmDialog({
           <div>
             <label className="block text-[12px] font-semibold text-[var(--ink-soft)] mb-1.5">
               Type{" "}
-              <span className="font-mono text-red-500">{workspaceName}</span> to
+              <span className="font-mono text-destructive">{workspaceName}</span> to
               confirm
             </label>
             <Input
-              className="border-red-200 focus:border-red-400"
+              className="border-destructive/40 focus:border-destructive"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={workspaceName}
@@ -188,8 +191,8 @@ function LeaveConfirmDialog({
       >
         <DialogHeader className="px-6 py-5 border-b border-[var(--line)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
-              <LogOut size={18} className="text-red-500" />
+            <div className="w-10 h-10 rounded-xl bg-destructive-soft flex items-center justify-center">
+              <LogOut size={18} className="text-destructive" />
             </div>
             <div>
               <DialogTitle className="text-[16px] font-semibold">
@@ -299,12 +302,13 @@ function WorkspaceCard({
         isActive
           ? "border-[var(--accent)] shadow-[0_0_0_1px_var(--accent),var(--shadow-2)]"
           : "hover:shadow-[var(--shadow-2)]",
+        pendingDelete && "border-destructive/30 bg-[var(--surface-2)]",
       )}
     >
       {/* Status badge */}
       {pendingDelete ? (
         <div className="absolute top-3.5 right-3.5">
-          <span className="badge text-[11px] font-semibold bg-red-50 text-red-600 border border-red-100 flex items-center gap-1">
+          <span className="badge text-[11px] font-semibold bg-destructive-soft text-destructive flex items-center gap-1">
             <AlertTriangle size={10} /> Deletes in {daysLeft}d
           </span>
         </div>
@@ -332,7 +336,7 @@ function WorkspaceCard({
           </div>
           <div className="text-[12px] text-[var(--ink-mute)] mt-0.5 flex items-center gap-1.5">
             {isOwner ? (
-              <Crown size={11} className="text-amber-500" />
+              <Crown size={11} className="text-warning-foreground" />
             ) : (
               <Shield size={11} className="text-[var(--accent)]" />
             )}
@@ -387,7 +391,7 @@ function WorkspaceCard({
               )}
             </Button>
           ) : (
-            <div className="flex-1 rounded-[10px] bg-red-50 text-red-600 text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
+            <div className="flex-1 rounded-lg bg-destructive-soft text-destructive text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
               <AlertTriangle size={13} /> Pending deletion
             </div>
           )
@@ -403,7 +407,7 @@ function WorkspaceCard({
               </Button>
             )}
             {isActive && (
-              <div className="flex-1 rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)] text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
+              <div className="flex-1 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] text-[12.5px] font-medium flex items-center justify-center gap-1.5 py-2 px-3">
                 <Check size={13} /> Currently active
               </div>
             )}
@@ -411,7 +415,7 @@ function WorkspaceCard({
               <Button
                 variant="outline"
                 size="icon"
-                className="text-red-500 hover:bg-red-50 hover:border-red-200"
+                className="text-destructive hover:bg-destructive-soft hover:border-destructive/30"
                 onClick={onDelete}
                 title="Delete workspace"
               >
@@ -421,7 +425,7 @@ function WorkspaceCard({
               <Button
                 variant="outline"
                 size="icon"
-                className="text-red-500 hover:bg-red-50 hover:border-red-200"
+                className="text-destructive hover:bg-destructive-soft hover:border-destructive/30"
                 onClick={onLeave}
                 title="Leave workspace"
               >
@@ -466,15 +470,27 @@ export function WorkspacesManagementView() {
   } | null>(null);
 
   const memberships = user?.memberships ?? [];
+  const ownedCount = memberships.filter(
+    (membership) => membership.role.name.toLowerCase() === "owner",
+  ).length;
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
-          <span className="text-[13px] text-[var(--ink-mute)]">
-            Loading workspaces…
-          </span>
+      <div
+        className="flex h-full flex-col gap-5 overflow-y-auto p-[18px]"
+        aria-busy="true"
+        aria-label="Loading workspaces"
+      >
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-[74px] rounded-xl" />
+          ))}
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-[250px] rounded-xl" />
+          ))}
         </div>
       </div>
     );
@@ -500,41 +516,25 @@ export function WorkspacesManagementView() {
         )}
       </div>
 
-      {/* Stats banner */}
-      <div className="card p-4 bg-gradient-to-r from-[var(--accent)] to-[#4FC3F7] text-white border-none overflow-hidden relative shrink-0">
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-10">
-          <Building2 size={80} />
-        </div>
-        <div className="grid grid-cols-3 gap-6 relative z-10">
-          {[
-            { label: "Total workspaces", value: memberships.length },
-            {
-              label: "Owned by you",
-              value: memberships.filter(
-                (m: any) => m.role.name.toLowerCase() === "owner",
-              ).length,
-            },
-            {
-              label: "Member of",
-              value: memberships.filter(
-                (m: any) => m.role.name.toLowerCase() !== "owner",
-              ).length,
-            },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <div className="text-[26px] font-bold tracking-tight">
-                {value}
-              </div>
-              <div className="text-[12px] text-white/70 mt-0.5">{label}</div>
-            </div>
-          ))}
-        </div>
+      {/* Stats */}
+      <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatCard
+          label="Total workspaces"
+          value={memberships.length}
+          Icon={Building2}
+        />
+        <StatCard label="Owned by you" value={ownedCount} Icon={Crown} />
+        <StatCard
+          label="Member of"
+          value={memberships.length - ownedCount}
+          Icon={Users}
+        />
       </div>
 
       {/* Workspace grid */}
       {memberships.length === 0 ? (
         <div className="card flex flex-col items-center justify-center gap-4 py-14">
-          <div className="w-14 h-14 rounded-2xl bg-[var(--accent-soft)] flex items-center justify-center">
+          <div className="w-14 h-14 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center">
             <Building2 size={26} className="text-[var(--accent)]" />
           </div>
           <div className="text-center">
@@ -582,7 +582,7 @@ export function WorkspacesManagementView() {
             onClick={() => setShowCreate(true)}
             className="card flex flex-col items-center justify-center gap-3 py-12 border-dashed border-2 border-[var(--line)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-all duration-200 cursor-pointer group"
           >
-            <div className="w-12 h-12 rounded-xl bg-[var(--surface-2)] group-hover:bg-white flex items-center justify-center border border-dashed border-[var(--line)] group-hover:border-[var(--accent)] transition-all">
+            <div className="w-12 h-12 rounded-xl bg-[var(--surface-2)] group-hover:bg-[var(--surface)] flex items-center justify-center border border-dashed border-[var(--line)] group-hover:border-[var(--accent)] transition-all">
               <Plus
                 size={20}
                 className="text-[var(--ink-mute)] group-hover:text-[var(--accent)] transition-colors"

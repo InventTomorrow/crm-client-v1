@@ -90,7 +90,7 @@ export const ErpPanel = memo(function ErpPanel() {
   return (
     <div className="card p-[22px]">
       <div className="card flex items-center gap-3 mb-3.5 p-[14px] bg-[var(--surface-2)] border-[var(--accent)]">
-        <span className="w-[34px] h-[34px] rounded-[9px] inline-flex items-center justify-center flex-shrink-0 bg-[var(--accent)] text-white">
+        <span className="w-[34px] h-[34px] rounded-lg inline-flex items-center justify-center flex-shrink-0 bg-[var(--accent)] text-white">
           <Crown size={16} />
         </span>
         <div className="flex-1">

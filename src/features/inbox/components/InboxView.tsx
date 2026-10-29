@@ -1256,7 +1256,7 @@ export function InboxView() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
                     transition={{ duration: 0.18 }}
-                    className="flex items-center gap-1.5 self-start rounded-[14px] bg-[var(--surface-2)] border border-[var(--line)] px-3 py-2.5"
+                    className="flex items-center gap-1.5 self-start rounded-xl bg-[var(--surface-2)] border border-[var(--line)] px-3 py-2.5"
                   >
                     {[0, 1, 2].map((i) => (
                       <motion.span
@@ -1383,7 +1383,7 @@ export function InboxView() {
                   <button
                     onClick={cancelRecording}
                     title="Delete recording"
-                    className="flex items-center justify-center w-9 h-9 rounded-full text-[#EF4444] hover:bg-[#FECACA]/40 shrink-0"
+                    className="flex items-center justify-center w-9 h-9 rounded-lg text-[#EF4444] hover:bg-[#FECACA]/40 shrink-0"
                   >
                     <Trash2 size={17} />
                   </button>
@@ -1406,7 +1406,7 @@ export function InboxView() {
                   <button
                     onClick={sendRecording}
                     title="Send voice message"
-                    className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--accent)] text-white flex-shrink-0 transition-transform active:scale-95"
+                    className="flex items-center justify-center w-9 h-9 rounded-lg bg-[var(--accent)] text-white flex-shrink-0 transition-transform active:scale-95"
                   >
                     <Send size={16} />
                   </button>
@@ -1608,7 +1608,7 @@ export function InboxView() {
                         ? editMut.isPending
                         : sendReplyMut.isPending)
                     }
-                    className="shrink-0 w-9 h-9 rounded-full bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-transform active:scale-95"
+                    className="shrink-0 w-9 h-9 rounded-lg bg-[var(--accent)] text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-transform active:scale-95"
                   >
                     {(
                       editingMessageId

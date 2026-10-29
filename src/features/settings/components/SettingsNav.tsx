@@ -41,7 +41,7 @@ export function SettingsNav() {
             key={href}
             href={href}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-[12.5px] font-medium no-underline transition-colors",
+              "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-medium no-underline transition-colors",
               isActive
                 ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
                 : "text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",

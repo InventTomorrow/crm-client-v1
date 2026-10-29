@@ -2,7 +2,9 @@
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useOpenLeadChat } from "@/features/leads/hooks/useOpenLeadChat";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
+import { useTableSelection } from "@/shared/hooks/useTableSelection";
 import { useUrlState } from "@/shared/hooks/useUrlState";
+import { BulkActionBar } from "@/shared/ui/BulkActionBar";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DataTable, type ColumnDef } from "@/shared/ui/DataTable";
@@ -82,6 +84,9 @@ export function OrdersView() {
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<OrderListItem[]>(
     [],
   );
+  const orderSelection = useTableSelection<OrderListItem>();
+  const { selectedRows: selectedOrders, clearSelection: clearOrderSelection } =
+    orderSelection;
   const [ordersExportScope, setOrdersExportScope] =
     useState<OrdersExportScope | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -355,26 +360,40 @@ export function OrdersView() {
         isLoading={isLoading}
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
-        onExport={canExportOrders ? openSelectedExport : undefined}
-        showExportAll={false}
-        onDeleteSelected={(rows) => setBulkDeleteTargets(rows)}
+        selection={orderSelection}
         emptyMessage="No orders yet."
         defaultPageSize={20}
         maxVisibleRows={15}
         toolbar={
           <div className="card flex items-center gap-2 flex-1 flex-wrap p-2">
-            <div className="relative w-full md:w-[320px]">
-              <Search
-                size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
+            {selectedOrders.length > 0 ? (
+              <BulkActionBar
+                className="w-full md:w-[320px]"
+                selectedCount={selectedOrders.length}
+                onExport={
+                  canExportOrders
+                    ? () => openSelectedExport(selectedOrders)
+                    : undefined
+                }
+                onDelete={() => {
+                  setBulkDeleteTargets(selectedOrders);
+                  clearOrderSelection();
+                }}
               />
-              <Input
-                className="pl-8 text-[13px]"
-                placeholder="Search by order #, customer…"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-            </div>
+            ) : (
+              <div className="relative w-full md:w-[320px]">
+                <Search
+                  size={13}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
+                />
+                <Input
+                  className="pl-8 text-[13px]"
+                  placeholder="Search by order #, customer…"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+              </div>
+            )}
             <Select
               value={status || "__all__"}
               onValueChange={(v) =>

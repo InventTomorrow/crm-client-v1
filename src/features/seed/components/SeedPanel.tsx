@@ -46,8 +46,8 @@ export function SeedPanel() {
 function SeedPanelSkeleton() {
   return (
     <div className="grid gap-3.5 md:grid-cols-2">
-      <Skeleton className="h-[170px] rounded-[var(--radius-card)]" />
-      <Skeleton className="h-[170px] rounded-[var(--radius-card)]" />
+      <Skeleton className="h-[170px] rounded-xl" />
+      <Skeleton className="h-[170px] rounded-xl" />
     </div>
   );
 }

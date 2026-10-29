@@ -35,7 +35,7 @@ export function MessageSkeleton() {
       {rows.map(({ out, w }, i) => (
         <div key={i} className={`flex ${out ? "justify-end" : "justify-start"}`}>
           <div className="flex flex-col gap-1">
-            <Skeleton className={`h-9 ${w} rounded-[14px]`} />
+            <Skeleton className={`h-9 ${w} rounded-xl`} />
             <Skeleton className="h-[9px] w-10 ml-1" />
           </div>
         </div>

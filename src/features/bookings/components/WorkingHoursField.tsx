@@ -39,7 +39,7 @@ export function WorkingHoursField({
   return (
     <div className="flex flex-col gap-3">
       {value.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-3 text-center text-[11.5px] text-[var(--ink-mute)]">
+        <p className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-center text-[11.5px] text-[var(--ink-mute)]">
           No hours set — the bot has no times to offer.
         </p>
       ) : (

@@ -3,12 +3,12 @@ import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton"
 import { useBookingConfigQuery } from "@/features/bookings/hooks/useBookings";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { Alert, AlertDescription } from "@/shared/ui/Alert";
+import { ViewTabs } from "@/shared/ui/ViewTabs";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { SearchField } from "@/shared/ui/SearchField";
 import { CardGridSkeleton } from "@/shared/ui/CardGridSkeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Info, LayoutGrid, List, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,6 @@ import {
 } from "../hooks/usePractitioners";
 import {
   usePractitionersUiStore,
-  type PractitionersView as PractitionersViewMode,
 } from "../stores/practitionersUiStore";
 import { VISIBILITY_META, type Practitioner } from "../types";
 import { PractitionerCard } from "./PractitionerCard";
@@ -112,26 +111,12 @@ export function PractitionersView() {
       />
 
       <div className="ml-auto flex items-center gap-2">
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
+        <ViewTabs
+          ariaLabel="View mode"
           value={view}
-          onValueChange={(nextView) =>
-            nextView && setView(nextView as PractitionersViewMode)
-          }
-        >
-          {VIEW_BUTTONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem
-              key={id}
-              value={id}
-              aria-label={`${label} view`}
-              className="h-10"
-            >
-              <Icon size={12} /> {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          onValueChange={setView}
+          options={VIEW_BUTTONS}
+        />
         <RefreshButton
           onRefresh={() => practitionersQuery.refetch()}
           isRefreshing={practitionersQuery.isFetching}

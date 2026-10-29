@@ -1,19 +1,22 @@
-'use client';
-import { useClinicalServices } from '@/features/clinical-services/hooks/useClinicalServices';
-import { useDebouncedUrlSearch } from '@/shared/hooks/useDebouncedUrlSearch';
-import { useUrlEnumState } from '@/shared/hooks/useUrlEnumState';
-import { SeedRecordsButton } from '@/features/seed/components/SeedRecordsButton';
-import { Alert, AlertDescription } from '@/shared/ui/Alert';
-import { Button } from '@/shared/ui/Button';
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
-import { SearchField } from '@/shared/ui/SearchField';
+"use client";
+import { useClinicalServices } from "@/features/clinical-services/hooks/useClinicalServices";
+import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
+import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
+import { Alert, AlertDescription } from "@/shared/ui/Alert";
+import { Button } from "@/shared/ui/Button";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { SearchField } from "@/shared/ui/SearchField";
 import {
   CoverageLocationsSkeleton,
   CoverageMatrixSkeleton,
-} from './CoverageSkeletons';
-import { LINE_TAB_LIST_CLASS, LINE_TAB_TRIGGER_CLASS } from '@/shared/ui/tabStyles';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/Tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/ToggleGroup';
+} from "./CoverageSkeletons";
+import {
+  LINE_TAB_LIST_CLASS,
+  LINE_TAB_TRIGGER_CLASS,
+} from "@/shared/ui/tabStyles";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/Tabs";
+import { ViewTabs, type ViewTabOption } from "@/shared/ui/ViewTabs";
 import {
   HelpCircle,
   LayoutGrid,
@@ -23,51 +26,60 @@ import {
   Siren,
   Table2,
   Upload,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useMemo, useState } from 'react';
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   useClinicLocations,
   useCoverageCells,
   useCoverageRows,
   useDeleteClinicLocation,
-} from '../hooks/useClinicCoverage';
-import { areaKey, type ClinicLocation, type CoverageArea } from '../types';
+} from "../hooks/useClinicCoverage";
+import { areaKey, type ClinicLocation, type CoverageArea } from "../types";
 import {
   filterClinicLocations,
   filterCoverageGrid,
-} from '../utils/filterCoverage';
-import { buildCoverageLookup } from '../utils/coverageLookup';
-import { ClinicLocationFormDialog } from './ClinicLocationFormDialog';
-import { CoverageCsvImportDialog } from './CoverageCsvImportDialog';
-import { CoverageGrid } from './CoverageGrid';
-import { CoverageHelpSheet } from './CoverageHelpSheet';
-import { CoverageLocationBoard } from './CoverageLocationBoard';
-import { CoverageLegend } from './CoverageLegend';
-import { CoverageServiceCards } from './CoverageServiceCards';
+} from "../utils/filterCoverage";
+import { buildCoverageLookup } from "../utils/coverageLookup";
+import { ClinicLocationFormDialog } from "./ClinicLocationFormDialog";
+import { CoverageCsvImportDialog } from "./CoverageCsvImportDialog";
+import { CoverageGrid } from "./CoverageGrid";
+import { CoverageHelpSheet } from "./CoverageHelpSheet";
+import { CoverageLocationBoard } from "./CoverageLocationBoard";
+import { CoverageLegend } from "./CoverageLegend";
+import { CoverageServiceCards } from "./CoverageServiceCards";
 import {
   CoverageStatusDialog,
   type CoverageCellTarget,
-} from './CoverageStatusDialog';
+} from "./CoverageStatusDialog";
 
-const COVERAGE_TABS = ['grid', 'locations'] as const;
+const COVERAGE_TABS = ["grid", "locations"] as const;
 type CoverageTab = (typeof COVERAGE_TABS)[number];
 /** How the service × area coverage is laid out — same data, two shapes. */
-type CoverageViewMode = 'matrix' | 'cards';
+type CoverageViewMode = "matrix" | "cards";
+
+const COVERAGE_VIEW_OPTIONS: ViewTabOption<CoverageViewMode>[] = [
+  { id: "matrix", label: "Matrix", Icon: Table2 },
+  { id: "cards", label: "Cards", Icon: LayoutGrid },
+];
 
 const SEARCH_PLACEHOLDER: Record<CoverageTab, string> = {
-  grid: 'Search a service, city or area…',
-  locations: 'Search a branch, address, city or phone…',
+  grid: "Search a service, city or area…",
+  locations: "Search a branch, address, city or phone…",
 };
 
 export function CoverageAreasView() {
-  const [activeTab, setActiveTab] = useUrlEnumState('tab', COVERAGE_TABS, 'grid');
-  const [viewMode, setViewMode] = useState<CoverageViewMode>('matrix');
+  const [activeTab, setActiveTab] = useUrlEnumState(
+    "tab",
+    COVERAGE_TABS,
+    "grid",
+  );
+  const [viewMode, setViewMode] = useState<CoverageViewMode>("matrix");
   const {
     search: searchTerm,
     searchInput,
     setSearchInput,
-  } = useDebouncedUrlSearch('q');
+  } = useDebouncedUrlSearch("q");
   const [cellBeingEdited, setCellBeingEdited] =
     useState<CoverageCellTarget | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -144,12 +156,14 @@ export function CoverageAreasView() {
     setIsLocationFormOpen(true);
   };
 
-  const clearSearch = () => setSearchInput('');
+  const clearSearch = () => setSearchInput("");
 
   const noMatches = (label: string) => (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-14 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] py-14 text-center">
       <SearchX className="text-muted-foreground size-7" />
-      <p className="text-sm font-medium">No {label} match “{searchTerm.trim()}”</p>
+      <p className="text-sm font-medium">
+        No {label} match “{searchTerm.trim()}”
+      </p>
       <Button size="sm" variant="outline" onClick={clearSearch}>
         Clear search
       </Button>
@@ -170,24 +184,22 @@ export function CoverageAreasView() {
           </p>
         </div>
         <div className="flex gap-2">
-          {/* The explainer is read once, so it lives here rather than taking a
-              permanent block above the grid. */}
-          <Button
-            variant="outline"
-            size="icon"
-            title="How coverage works"
-            aria-label="How coverage works"
-            onClick={() => setIsHelpOpen(true)}
-          >
-            <HelpCircle className="size-4" />
-          </Button>
           <SeedRecordsButton
-            target={{ recordType: "CLINIC_LOCATION", label: "Clinic locations" }}
+            target={{
+              recordType: "CLINIC_LOCATION",
+              label: "Clinic locations",
+            }}
             size="default"
           />
           <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <Upload className="size-4" />
             Import
+          </Button>
+          {/* The explainer is read once, so it lives here rather than taking a
+              permanent block above the grid. */}
+          <Button variant="outline" onClick={() => setIsHelpOpen(true)}>
+            <HelpCircle className="size-4" />
+            How it works
           </Button>
           <Button onClick={openCreateLocation}>
             <Plus className="size-4" />
@@ -214,38 +226,23 @@ export function CoverageAreasView() {
         </TabsList>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
-            {activeTab === 'grid' && (
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                size="lg"
-                spacing={0}
-                value={viewMode}
-                // Radix clears the value when the active item is pressed again.
-                onValueChange={(nextMode) =>
-                  nextMode && setViewMode(nextMode as CoverageViewMode)
-                }
-                aria-label="Coverage layout"
-              >
-                <ToggleGroupItem value="matrix" aria-label="Matrix" className="h-10">
-                  <Table2 className="size-4" />
-                  Matrix
-                </ToggleGroupItem>
-                <ToggleGroupItem value="cards" aria-label="Cards" className="h-10">
-                  <LayoutGrid className="size-4" />
-                  Cards
-                </ToggleGroupItem>
-              </ToggleGroup>
-            )}
-
+          <div className="flex flex-1 flex-wrap items-center gap-2">
             <SearchField
               value={searchInput}
               onValueChange={setSearchInput}
               placeholder={SEARCH_PLACEHOLDER[activeTab]}
               aria-label="Search coverage"
-              className="w-full sm:w-auto sm:min-w-[260px]"
+              className="w-full sm:min-w-[260px] sm:flex-1"
             />
+
+            {activeTab === "grid" && (
+              <ViewTabs
+                ariaLabel="Coverage layout"
+                value={viewMode}
+                onValueChange={setViewMode}
+                options={COVERAGE_VIEW_OPTIONS}
+              />
+            )}
           </div>
         </div>
 
@@ -253,28 +250,28 @@ export function CoverageAreasView() {
           {isLoading && <CoverageMatrixSkeleton />}
 
           {!isLoading && !hasGridData && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
               <MapPin className="text-muted-foreground size-8" />
               <div className="space-y-1">
                 <p className="text-sm font-medium">
                   {services.length === 0
-                    ? 'No services yet'
-                    : 'No locations yet'}
+                    ? "No services yet"
+                    : "No locations yet"}
                 </p>
                 <p className="text-muted-foreground mx-auto max-w-sm text-sm">
                   {services.length === 0 ? (
                     <>
-                      The grid needs services to put in its rows.{' '}
+                      The grid needs services to put in its rows.{" "}
                       <Link
                         href="/clinical-services"
                         className="text-primary underline"
                       >
                         Add a service
-                      </Link>{' '}
+                      </Link>{" "}
                       first.
                     </>
                   ) : (
-                    'Add the cities and areas the clinic serves — they become the columns here.'
+                    "Add the cities and areas the clinic serves — they become the columns here."
                   )}
                 </p>
               </div>
@@ -290,11 +287,11 @@ export function CoverageAreasView() {
           {!isLoading &&
             hasGridData &&
             visibleGrid.services.length === 0 &&
-            noMatches('services or areas')}
+            noMatches("services or areas")}
 
           {!isLoading && hasGridData && visibleGrid.services.length > 0 && (
             <>
-              {viewMode === 'matrix' ? (
+              {viewMode === "matrix" ? (
                 <CoverageGrid
                   services={visibleGrid.services}
                   areas={visibleGrid.areas}
@@ -322,10 +319,10 @@ export function CoverageAreasView() {
               <Siren className="size-4" />
               <AlertDescription>
                 <p>
-                  No location handles emergencies. If the clinic&apos;s emergency
-                  policy is set to direct patients to a branch, it will safely
-                  fall back to telling them to go to the nearest emergency
-                  department instead.
+                  No location handles emergencies. If the clinic&apos;s
+                  emergency policy is set to direct patients to a branch, it
+                  will safely fall back to telling them to go to the nearest
+                  emergency department instead.
                 </p>
               </AlertDescription>
             </Alert>
@@ -334,7 +331,7 @@ export function CoverageAreasView() {
           {locationsQuery.isLoading && <CoverageLocationsSkeleton />}
 
           {!locationsQuery.isLoading && locations.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
               <MapPin className="text-muted-foreground size-8" />
               <p className="text-sm font-medium">No locations yet</p>
               <Button onClick={openCreateLocation}>
@@ -347,7 +344,7 @@ export function CoverageAreasView() {
           {!locationsQuery.isLoading &&
             locations.length > 0 &&
             visibleLocations.length === 0 &&
-            noMatches('locations')}
+            noMatches("locations")}
 
           {visibleLocations.length > 0 && (
             <CoverageLocationBoard
@@ -369,10 +366,7 @@ export function CoverageAreasView() {
         location={
           cellBeingEdited
             ? (locationByArea.get(
-                areaKey(
-                  cellBeingEdited.area.city,
-                  cellBeingEdited.area.area,
-                ),
+                areaKey(cellBeingEdited.area.city, cellBeingEdited.area.area),
               ) ?? null)
             : null
         }
@@ -400,8 +394,8 @@ export function CoverageAreasView() {
         title="Remove this location?"
         description={
           locationPendingDeletion
-            ? `${locationPendingDeletion.area ? `${locationPendingDeletion.area}, ` : ''}${locationPendingDeletion.city} will disappear from the coverage grid. Existing coverage rows for it are kept but no longer shown.`
-            : ''
+            ? `${locationPendingDeletion.area ? `${locationPendingDeletion.area}, ` : ""}${locationPendingDeletion.city} will disappear from the coverage grid. Existing coverage rows for it are kept but no longer shown.`
+            : ""
         }
         confirmLabel="Remove"
         loading={deleteLocation.isPending}

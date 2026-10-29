@@ -75,7 +75,7 @@ function SeedRecordsPopover({ target, size }: Required<SeedRecordsButtonProps>) 
           </div>
           {isSeeding && <SeedingProgress count={count} progress={progress} />}
           {isDone && (
-            <ScaleIn className="flex items-center gap-2 rounded-[10px] bg-[var(--success-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--success-foreground)]">
+            <ScaleIn className="flex items-center gap-2 rounded-lg bg-[var(--success-soft)] px-3 py-2 text-[12.5px] font-medium text-[var(--success-foreground)]">
               <Check size={15} />
               {seededCount} {label} added
             </ScaleIn>

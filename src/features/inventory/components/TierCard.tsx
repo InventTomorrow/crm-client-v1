@@ -36,7 +36,7 @@ export function TierCard({
       <div className="flex items-center justify-between">
         <div
           className={[
-            "w-8 h-8 rounded-[9px] flex items-center justify-center",
+            "w-8 h-8 rounded-lg flex items-center justify-center",
             active && !disabled
               ? "bg-[var(--accent)] text-white"
               : "bg-[var(--surface-2)] text-[var(--accent)] border border-[var(--line)]",

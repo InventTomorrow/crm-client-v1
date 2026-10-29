@@ -197,7 +197,7 @@ export default function Pricing({
                   <div className="mt-8">
                     <PlanCta
                       planId={plan.id}
-                      className={`w-full justify-center h-auto rounded-full px-7 py-3.5 text-base font-semibold transition-all hover:-translate-y-0.5 ${
+                      className={`w-full justify-center h-auto rounded-lg px-7 py-3.5 text-base font-semibold transition-all hover:-translate-y-0.5 ${
                         plan.featured
                           ? "bg-white text-brand-dark hover:bg-gray-100 dark:hover:bg-gray-100 hover:text-brand-dark"
                           : "bg-brand-green text-white shadow-cta hover:bg-brand-green-hover dark:hover:bg-brand-green-hover hover:shadow-cta-hover"

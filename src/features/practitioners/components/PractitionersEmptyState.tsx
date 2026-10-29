@@ -13,7 +13,7 @@ export function PractitionersEmptyState({
 }: PractitionersEmptyStateProps) {
   if (isFiltered) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
         <p className="text-sm font-medium text-[var(--ink)]">
           No practitioners match those filters
         </p>
@@ -25,7 +25,7 @@ export function PractitionersEmptyState({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
       <span className="inline-flex size-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
         <Stethoscope className="size-6" />
       </span>

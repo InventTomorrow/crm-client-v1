@@ -125,7 +125,7 @@ function MessageBubbleBase({
             >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full text-[var(--ink-mute)]">
+                  <Button variant="ghost" size="icon" className="rounded-lg text-[var(--ink-mute)]">
                     <MoreVertical size={14} />
                   </Button>
                 </DropdownMenuTrigger>
@@ -198,7 +198,7 @@ function MessageBubbleBase({
           ) : msg.mediaType === "AUDIO" && msg.mediaUrl ? (
             <div
               className={cn(
-                "rounded-[18px] overflow-hidden",
+                "rounded-xl overflow-hidden",
                 isOutbound
                   ? "bg-[var(--accent)]"
                   : "bg-[var(--surface-2)] border border-[var(--line)]",
@@ -245,7 +245,7 @@ function MessageBubbleBase({
               )}
             </div>
           ) : msg.mediaType === "VIDEO" && msg.mediaUrl ? (
-            <div className="rounded-[14px] overflow-hidden max-w-[260px] bg-black">
+            <div className="rounded-xl overflow-hidden max-w-[260px] bg-black">
               <video
                 src={getImageUrl(msg.mediaUrl) ?? msg.mediaUrl}
                 controls
@@ -282,7 +282,7 @@ function MessageBubbleBase({
                 !isOutbound && "received",
                 isOutbound && !msg.isDraft && "sent",
                 msg.isDraft &&
-                  "border border-dashed border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-[14px] px-[14px] py-[8px] text-[13.5px]",
+                  "border border-dashed border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] rounded-xl px-[14px] py-[8px] text-[13.5px]",
               )}
             >
               <MessageText content={msg.content ?? ""} />

@@ -99,7 +99,7 @@ function ReferenceTable({
   children: ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--line)]">
+    <div className="overflow-x-auto border border-[var(--line)]">
       <table className="w-full min-w-[600px] text-left text-[15px]">
         <thead className="bg-[var(--surface-2)] text-[13px] uppercase tracking-wide text-[var(--ink-mute)]">
           <tr>
