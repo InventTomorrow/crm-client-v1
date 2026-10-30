@@ -38,7 +38,7 @@ const STEP_META: Record<
     Icon: GraduationCap,
     title: "Expertise",
     description:
-      "What they treat and what they are qualified in — the assistant matches patients on these.",
+      "What they treat and what they are qualified in. The assistant matches patients on these.",
   },
   profile: {
     Icon: FileText,

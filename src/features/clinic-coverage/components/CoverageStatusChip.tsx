@@ -61,7 +61,7 @@ export function CoverageStatusControl({
       // Only this cell locks, and only while its own save is in flight.
       disabled={isSaving}
       aria-busy={isSaving}
-      aria-label={`Change coverage for ${label} — currently ${COVERAGE_META[level].label}`}
+      aria-label={`Change coverage for ${label}. Currently ${COVERAGE_META[level].label}`}
       className={cn(
         'group/status flex w-full items-center justify-between gap-2 rounded-md px-1.5 py-1 text-left transition-colors',
         'hover:bg-foreground/5 focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none',

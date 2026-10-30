@@ -68,6 +68,19 @@ export function ClinicalServiceIntakeFields({
           }
         };
 
+        const addQuestionButton = (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={editor.startAdding}
+            disabled={isSaving}
+          >
+            <Plus className="size-4" />
+            Add question
+          </Button>
+        );
+
         return (
           <FormItem>
             <div className="flex items-start justify-between gap-3">
@@ -104,10 +117,13 @@ export function ClinicalServiceIntakeFields({
             </ul>
 
             {editor.questions.length === 0 && (
-              <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-xs">
-                No intake questions. The assistant will hand every enquiry to a
-                coordinator with nothing but a phone number.
-              </p>
+              <div className="mt-3 flex flex-col items-center gap-3 rounded-lg border border-dashed p-5">
+                <p className="text-muted-foreground text-center text-xs">
+                  No intake questions. The assistant will hand every enquiry to
+                  a coordinator with nothing but a phone number.
+                </p>
+                {!editor.isAdding && addQuestionButton}
+              </div>
             )}
 
             {editor.isAdding ? (
@@ -150,17 +166,9 @@ export function ClinicalServiceIntakeFields({
                 </div>
               </div>
             ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={editor.startAdding}
-                disabled={isSaving}
-              >
-                <Plus className="size-4" />
-                Add question
-              </Button>
+              editor.questions.length > 0 && (
+                <div className="mt-3">{addQuestionButton}</div>
+              )
             )}
 
             <FormMessage />

@@ -1,1 +1,117 @@
-[]
+[
+  {
+    "id": "6ab4481f0011a43f2c9fd0a0",
+    "slug": "whatsapp-lead-management",
+    "title": "WhatsApp Lead Management for Small Business: A Practical Guide",
+    "excerpt": "For a small business, WhatsApp can start as a simple way to answer customer questions. Then the messages pile up.",
+    "coverImageUrl": "https://z8ojcxemjy5zvqwc.public.blob.vercel-storage.com/platform/blog/f8bb16f4-c28a-4735-9f76-b8441a51e4ae.webp",
+    "coverImageAlt": "WhatsApp Lead Management",
+    "tags": [],
+    "readingMinutes": 8,
+    "publishedAt": "2026-09-24T20:17:33.487Z",
+    "authorName": "Qaiser Nawaz",
+    "isFeatured": true,
+    "category": {
+      "name": "Guides",
+      "slug": "guides"
+    },
+    "author": {
+      "id": "6a8dc8e690e00aa0c1f53d80",
+      "name": "Qaiser Nawaz",
+      "slug": "qaiser-nawaz",
+      "avatarUrl": null,
+      "title": "Seo Executive",
+      "bio": "He is an SEO Content Writer and Digital Marketing Specialist with over 7 years of experience creating high-quality, search optimized content. He specializes in SEO, Local SEO, Google Business Profile optimization, content strategy, and AI-powered marketing."
+    }
+  },
+  {
+    "id": "6a838ae9b805030004bcbda0",
+    "slug": "whatsapp-crm-in-pakistan-the-complete-guide-for-small-businesses",
+    "title": "WhatsApp CRM in Pakistan: The Complete Guide for Small Businesses",
+    "excerpt": "Almost every small business in Pakistan sells on WhatsApp. Very few of them manage WhatsApp. The difference between the two is the reason a shop doing forty enquiries a day…",
+    "coverImageUrl": "https://z8ojcxemjy5zvqwc.public.blob.vercel-storage.com/platform/blog/5d61ccc0-59ca-49e1-8759-89d468586c9f.webp",
+    "coverImageAlt": "Whatsapp CRM",
+    "tags": [
+      "whatsapp crm",
+      "pakistan",
+      "small business",
+      "getting started"
+    ],
+    "readingMinutes": 3,
+    "publishedAt": "2026-08-02T19:00:00.000Z",
+    "authorName": "Qaiser Nawaz",
+    "isFeatured": true,
+    "category": {
+      "name": "WhatsApp CRM",
+      "slug": "whatsapp-crm"
+    },
+    "author": {
+      "id": "6a8dc8e690e00aa0c1f53d80",
+      "name": "Qaiser Nawaz",
+      "slug": "qaiser-nawaz",
+      "avatarUrl": null,
+      "title": "Seo Executive",
+      "bio": "He is an SEO Content Writer and Digital Marketing Specialist with over 7 years of experience creating high-quality, search optimized content. He specializes in SEO, Local SEO, Google Business Profile optimization, content strategy, and AI-powered marketing."
+    }
+  },
+  {
+    "id": "6a838aeab805030004bcbda2",
+    "slug": "whatsapp-broadcast-marketing-what-actually-works-in-pakistan",
+    "title": "WhatsApp Broadcast Marketing: What Actually Works in Pakistan",
+    "excerpt": "WhatsApp broadcasts have the highest open rate of any channel available to a Pakistani business — and the fastest route to getting your number blocked. Both facts come from the…",
+    "coverImageUrl": "https://z8ojcxemjy5zvqwc.public.blob.vercel-storage.com/platform/blog/c271ca91-f647-4200-9fcd-223ec90f986b.webp",
+    "coverImageAlt": "WhatsApp Broadcast Marketing",
+    "tags": [
+      "broadcast",
+      "marketing",
+      "campaigns",
+      "pakistan"
+    ],
+    "readingMinutes": 3,
+    "publishedAt": "2026-07-07T09:00:00.000Z",
+    "authorName": "Qaiser Nawaz",
+    "isFeatured": true,
+    "category": {
+      "name": "Marketing",
+      "slug": "marketing"
+    },
+    "author": {
+      "id": "6a8dc8e690e00aa0c1f53d80",
+      "name": "Qaiser Nawaz",
+      "slug": "qaiser-nawaz",
+      "avatarUrl": null,
+      "title": "Seo Executive",
+      "bio": "He is an SEO Content Writer and Digital Marketing Specialist with over 7 years of experience creating high-quality, search optimized content. He specializes in SEO, Local SEO, Google Business Profile optimization, content strategy, and AI-powered marketing."
+    }
+  },
+  {
+    "id": "6a838aeab805030004bcbda1",
+    "slug": "how-to-reply-to-customers-faster-on-whatsapp-without-hiring-more-staff",
+    "title": "How to Reply to Customers Faster on WhatsApp Without Hiring More Staff",
+    "excerpt": "The fastest way to sell more on WhatsApp is not a better product page or a bigger ad budget. It is answering sooner. Most businesses know this and still reply in ninety minutes…",
+    "coverImageUrl": "https://z8ojcxemjy5zvqwc.public.blob.vercel-storage.com/platform/blog/d0d69702-3aea-4425-9fc2-de28532634f4.webp",
+    "coverImageAlt": "Reply Faster on WhatsApp",
+    "tags": [
+      "response time",
+      "automation",
+      "customer support",
+      "conversion"
+    ],
+    "readingMinutes": 3,
+    "publishedAt": "2026-06-19T09:00:00.000Z",
+    "authorName": "Qaiser Nawaz",
+    "isFeatured": true,
+    "category": {
+      "name": "Sales & Leads",
+      "slug": "sales-leads"
+    },
+    "author": {
+      "id": "6a8dc8e690e00aa0c1f53d80",
+      "name": "Qaiser Nawaz",
+      "slug": "qaiser-nawaz",
+      "avatarUrl": null,
+      "title": "Seo Executive",
+      "bio": "He is an SEO Content Writer and Digital Marketing Specialist with over 7 years of experience creating high-quality, search optimized content. He specializes in SEO, Local SEO, Google Business Profile optimization, content strategy, and AI-powered marketing."
+    }
+  }
+]

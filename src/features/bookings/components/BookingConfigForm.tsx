@@ -130,7 +130,7 @@ export function BookingConfigForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    How the meeting is held — the bot tells the{" "}
+                    How the meeting is held. The bot tells the{" "}
                     {vocabulary.singular} this when confirming.
                   </FormDescription>
                   <FormMessage />
@@ -190,7 +190,7 @@ export function BookingConfigForm({
 
         <FormSection
           title="When you're available"
-          description="Slots are generated from these days and times — never stored, so editing here updates every future day at once."
+          description="Slots are generated from these days and times. Never stored, so editing here updates every future day at once."
           Icon={Clock}
         >
           {/* Fixed server-side: every calendar, slot key and spoken time resolves
@@ -489,7 +489,7 @@ export function BookingConfigForm({
                   />
                   <FormDescription>
                     This is the ceiling for the whole clinic. A practitioner may
-                    be set narrower than this, never wider — so moving it down
+                    be set narrower than this, never wider, so moving it down
                     to &ldquo;Don&apos;t show&rdquo; genuinely hides everyone.
                   </FormDescription>
                   <FormMessage />

@@ -17,8 +17,8 @@ describe("date formatting", () => {
     });
 
     it("falls back on empty and invalid input", () => {
-      expect(formatDate(null)).toBe("—");
-      expect(formatDate("")).toBe("—");
+      expect(formatDate(null)).toBe("N/A");
+      expect(formatDate("")).toBe("N/A");
       expect(formatDate("not-a-date", "n/a")).toBe("n/a");
     });
   });

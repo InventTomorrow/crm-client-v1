@@ -98,7 +98,7 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
                 <SectionLabel>Product</SectionLabel>
                 <div className="text-[13.5px] text-[var(--ink)]">
                   {request.productName}
-                  {request.variantLabel ? ` — ${request.variantLabel}` : ""}
+                  {request.variantLabel ? `: ${request.variantLabel}` : ""}
                   <span className="text-[var(--ink-mute)]">
                     {" "}
                     × {request.quantity}

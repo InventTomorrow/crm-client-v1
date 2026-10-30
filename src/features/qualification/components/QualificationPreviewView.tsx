@@ -170,7 +170,7 @@ export function QualificationPreviewView() {
           >
             {savedForm.questions.length === 0 ? (
               <PreviewEmptyHint>
-                No questions saved — the bot has nothing to ask.
+                No questions saved. The bot has nothing to ask.
               </PreviewEmptyHint>
             ) : (
               <QualificationQuestionsPreview questions={savedForm.questions} />
@@ -259,7 +259,7 @@ export function QualificationPreviewView() {
           >
             {mappedLeadFields.length === 0 ? (
               <PreviewEmptyHint>
-                No answers are mapped — they stay on the qualification record
+                No answers are mapped. They stay on the qualification record
                 only.
               </PreviewEmptyHint>
             ) : (

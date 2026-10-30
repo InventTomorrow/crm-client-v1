@@ -134,7 +134,7 @@ export const INITIAL_MESSAGES: Record<string, Message[]> = {
     { id: 'm1', from: 'cust',  t: '10:14', text: 'Assalam o alaikum, lawn suit 3-piece available hai?', ent: [] },
     { id: 'm2', from: 'agent', t: '10:15', text: 'Walaikum salam Ali bhai, ji bilkul. Rs. 8,999 hai unstitched.', ent: [{ type: 'money', val: 'Rs. 8,999' }] },
     { id: 'm3', from: 'cust',  t: '10:18', text: 'Karachi delivery kitne din mein aati hai? Mera number 0321-4567890 hai', ent: [{ type: 'location', val: 'Karachi' }, { type: 'phone', val: '0321-4567890' }] },
-    { id: 'm4', from: 'agent', t: '10:19', text: '2–3 working days. COD bhi available hai.', ent: [] },
+    { id: 'm4', from: 'agent', t: '10:19', text: '2 to 3 working days. COD bhi available hai.', ent: [] },
     { id: 'm5', from: 'cust',  t: '10:24', text: 'Ok, 2 pieces order karna hai. Pink aur teal.', ent: [{ type: 'intent', val: 'order' }] },
     { id: 'm6', from: 'agent', t: '10:25', text: 'Mashallah! Total Rs. 17,998 + shipping Rs. 250.', ent: [{ type: 'money', val: 'Rs. 17,998' }] },
     { id: 'm7', from: 'cust',  t: '10:31', text: 'Bhai final price kya hai? Karachi delivery confirm karein.', ent: [{ type: 'location', val: 'Karachi' }], unread: true },
@@ -161,7 +161,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   { id: 'P2', name: "Men's Peshawari Chappal",      sku: 'PSH-CHP-09', price: 4500,  stock: 12, status: 'low', cat: 'Footwear' },
   { id: 'P3', name: 'Karahi Non-Stick Set 4-pc',    sku: 'KAR-NS-04',  price: 8999,  stock: 28, status: 'in',  cat: 'Kitchen'  },
   { id: 'P4', name: 'Embroidered Kurti XL',          sku: 'EMB-KRT-XL', price: 11250, stock: 6,  status: 'low', cat: 'Apparel'  },
-  { id: 'P5', name: 'Khaadi Dupatta — Saffron',      sku: 'DUP-SF-22',  price: 2500,  stock: 0,  status: 'out', cat: 'Apparel'  },
+  { id: 'P5', name: 'Khaadi Dupatta: Saffron',      sku: 'DUP-SF-22',  price: 2500,  stock: 0,  status: 'out', cat: 'Apparel'  },
   { id: 'P6', name: 'Sialkot Leather Wallet',        sku: 'WAL-LTR-11', price: 3200,  stock: 88, status: 'in',  cat: 'Accessories' },
 ];
 

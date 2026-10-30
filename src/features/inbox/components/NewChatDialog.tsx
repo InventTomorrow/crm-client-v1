@@ -307,7 +307,7 @@ export function NewChatDialog({
 
           {!waConnected && (
             <p className="text-[11.5px] text-[#854D0E] bg-[#FEF9C3] rounded-lg px-2.5 py-1.5">
-              WhatsApp isn’t connected — reconnect in Channels to start a chat.
+              WhatsApp isn’t connected. Reconnect in Channels to start a chat.
             </p>
           )}
         </div>

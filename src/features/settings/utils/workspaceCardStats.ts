@@ -41,18 +41,18 @@ export function buildWorkspaceCardTiles(
   const closingTile: WorkspaceCardTile = hasCapability(businessVertical, "ORDERS")
     ? {
         label: "Revenue",
-        value: stats ? formatRevenue(stats.revenue) : "—",
+        value: stats ? formatRevenue(stats.revenue) : "N/A",
         Icon: TrendingUp,
       }
     : {
         label: "Bookings",
-        value: stats ? stats.appointments.toLocaleString() : "—",
+        value: stats ? stats.appointments.toLocaleString() : "N/A",
         Icon: Calendar,
       };
 
   return [
-    { label: "Leads", value: stats ? stats.leads.toLocaleString() : "—", Icon: UserPlus },
-    { label: "Members", value: stats ? stats.members.toLocaleString() : "—", Icon: Users },
+    { label: "Leads", value: stats ? stats.leads.toLocaleString() : "N/A", Icon: UserPlus },
+    { label: "Members", value: stats ? stats.members.toLocaleString() : "N/A", Icon: Users },
     closingTile,
   ];
 }

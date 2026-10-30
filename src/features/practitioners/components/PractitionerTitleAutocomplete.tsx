@@ -48,13 +48,14 @@ export function PractitionerTitleAutocomplete({
       // Committed as it goes, so a title typed by hand saves without having to
       // click the create row.
       onQueryChange={onChange}
+      showAllOnOpen
       onCreate={(label) => {
         const title = label.trim();
         onChange(title);
         return { id: title, label: title };
       }}
       placeholder="Dr."
-      emptyLabel="No match — keep typing to use your own."
+      emptyLabel="No match. Keep typing to use your own."
       disabled={disabled}
     />
   );

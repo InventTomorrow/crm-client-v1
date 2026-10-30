@@ -92,7 +92,7 @@ export function ServicePricingFields({ form, isSaving }: ServiceFormSectionProps
               </FormControl>
               <FormDescription>
                 {isQuoteOnly
-                  ? 'Optional — quote-only services are priced in conversation.'
+                  ? 'Optional. Quote-only services are priced in conversation.'
                   : 'Leads ask this first. Leave it empty only by switching to Custom Quote.'}
               </FormDescription>
               <FormMessage />

@@ -91,7 +91,7 @@ export function PractitionersView() {
       <AlertDescription className="flex flex-wrap items-center gap-1">
         <span>
           Clinic-wide setting:{" "}
-          <strong>{VISIBILITY_META[workspaceVisibility].label}</strong> —{" "}
+          <strong>{VISIBILITY_META[workspaceVisibility].label}</strong>:{" "}
           {VISIBILITY_META[workspaceVisibility].description}
         </span>
         <Link href="/bookings/availability" className="text-primary underline">

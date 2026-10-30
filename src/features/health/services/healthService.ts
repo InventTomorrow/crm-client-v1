@@ -26,7 +26,7 @@ function checkApiUrlConfig(apiOrigin: string): HealthCheck {
     // apiClient falls back to the rewrite proxy, which drops auth cookies — so login breaks.
     message: isConfigured
       ? "API URL is configured"
-      : "NEXT_PUBLIC_API_URL is missing or invalid — API calls and login will fail",
+      : "NEXT_PUBLIC_API_URL is missing or invalid: API calls and login will fail",
     latencyMs: 0,
   };
 }

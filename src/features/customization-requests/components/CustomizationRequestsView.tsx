@@ -168,7 +168,7 @@ export function CustomizationRequestsView() {
       <div className="flex items-start justify-between gap-3 mb-5">
         <p className="text-[13px] text-[var(--ink-mute)] max-w-[62ch]">
           Customizations the assistant could not confirm on its own. These are
-          not orders — nothing is priced or reserved until someone here answers
+          not orders. Nothing is priced or reserved until someone here answers
           the customer in their chat.
         </p>
         <RefreshButton

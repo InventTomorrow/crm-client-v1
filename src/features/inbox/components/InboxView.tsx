@@ -935,7 +935,7 @@ export function InboxView() {
                   </>
                 ) : filter === "unread" ? (
                   <p className="text-[12.5px]">
-                    All caught up — no unread messages
+                    All caught up. No unread messages
                   </p>
                 ) : filter === "favorites" ? (
                   <>
@@ -1032,7 +1032,7 @@ export function InboxView() {
                   <div className="text-[11.5px] text-[var(--ink-mute)] flex items-center gap-1">
                     <Phone size={9} className="shrink-0" />
                     <span className="truncate">
-                      {activeConv?.lead.phone ?? "—"}
+                      {activeConv?.lead.phone ?? "N/A"}
                     </span>
                     {activeConv?.escalationStatus === "RESOLVED" && (
                       <span className="text-[#15803D] font-medium shrink-0">
@@ -1047,8 +1047,8 @@ export function InboxView() {
               <div
                 title={
                   activeConv?.aiEnabled
-                    ? "AI is replying — switch off to take over"
-                    : "AI off — switch on to let the bot reply"
+                    ? "AI is replying. Switch off to take over"
+                    : "AI off. Switch on to let the bot reply"
                 }
                 className="flex-shrink-0 flex items-center gap-1.5"
               >
@@ -1437,7 +1437,7 @@ export function InboxView() {
                     className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E] hover:opacity-90"
                   >
                     <AlertTriangle size={12} className="shrink-0" />
-                    WhatsApp isn’t connected — reconnect in Channels to send
+                    WhatsApp isn’t connected. Reconnect in Channels to send
                     messages.
                   </Link>
                 )}
@@ -1447,7 +1447,7 @@ export function InboxView() {
                     fallback={
                       <div className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#FEF9C3] text-[#854D0E]">
                         <AlertTriangle size={12} className="shrink-0" />
-                        Your plan’s message limit is used up — ask the workspace
+                        Your plan’s message limit is used up. Ask the workspace
                         owner to upgrade.
                       </div>
                     }
@@ -1458,7 +1458,7 @@ export function InboxView() {
                     >
                       <span className="flex items-center gap-1.5">
                         <AlertTriangle size={12} className="shrink-0" />
-                        Current plan’s message limit reached — sending is
+                        Current plan’s message limit reached. Sending is
                         paused.
                       </span>
                       <span className="shrink-0 rounded-md bg-[#854D0E] px-2 py-0.5 text-[10.5px] font-semibold text-[#FEF9C3]">
@@ -1567,7 +1567,7 @@ export function InboxView() {
                         : editingMessageId
                           ? "Edit your message…"
                           : messageLimitReached
-                            ? "Message limit reached — upgrade your plan…"
+                            ? "Message limit reached. Upgrade your plan…"
                             : "Type a message…"
                     }
                     className="flex-1 resize-none rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] outline-none px-3.5 py-2 min-h-[38px] max-h-[120px] text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-mute)] disabled:opacity-60 disabled:cursor-not-allowed overflow-y-auto"
@@ -1753,7 +1753,7 @@ export function InboxView() {
               />
               <span className="text-[var(--ink-mute)]">Phone</span>
               <span className="font-medium text-[var(--ink)] ml-auto">
-                {activeConv.lead.phone ?? "—"}
+                {activeConv.lead.phone ?? "N/A"}
               </span>
             </div>
             {(activeConv as any).lead?.email && (
@@ -1889,7 +1889,7 @@ export function InboxView() {
             >
               <CheckCheck size={13} />{" "}
               {activeConv.escalationStatus === "RESOLVED"
-                ? "Done — Reopen"
+                ? "Done: Reopen"
                 : "Mark Done"}
             </button>
             <button
@@ -1904,7 +1904,7 @@ export function InboxView() {
             >
               <Flame size={13} className="text-[#EF4444]" />{" "}
               {activeConv.escalationStatus === "ESCALATED"
-                ? "Flagged — Remove"
+                ? "Flagged: Remove"
                 : "Flag"}
             </button>
           </div>

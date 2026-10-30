@@ -3,7 +3,7 @@ import { WorkspacesManagementView } from '@/features/settings/components/Workspa
 
 export const metadata: Metadata = {
   title: 'Workspaces',
-  description: 'Manage all your workspaces — view stats, switch context, create or delete workspaces.',
+  description: 'Manage all your workspaces. View stats, switch context, create or delete workspaces.',
 };
 
 export default function WorkspacesPage() {

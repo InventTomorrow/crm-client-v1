@@ -176,7 +176,7 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                       compact
                       compactHeight="h-[120px]"
                       description="Drop dish image or click to upload"
-                      hint="PNG, JPG, WEBP — up to 5 MB"
+                      hint="PNG, JPG, WEBP. Up to 5 MB"
                       tipsCollapsible
                       tipsTitle="Photo tips"
                       tips={[
@@ -297,7 +297,7 @@ export function MenuItemFormView({ menuItemId }: { menuItemId?: string }) {
                         >
                           <FormControl>
                             <SelectTrigger size="lg" className="w-full">
-                              <SelectValue placeholder="—" />
+                              <SelectValue placeholder="N/A" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

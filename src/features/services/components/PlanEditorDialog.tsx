@@ -191,7 +191,7 @@ export function PlanEditorDialog({
             onChange={(features) => updateDraft({ features })}
             placeholder="e.g. 12 posts per month"
             addLabel="Add feature"
-            emptyHint="No features yet — list what the client actually receives."
+            emptyHint="No features yet. List what the client actually receives."
             disabled={disabled}
             showOrderHandle
           />

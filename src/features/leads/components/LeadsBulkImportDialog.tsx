@@ -150,7 +150,7 @@ function BulkCard({
       <div className="flex-1 min-w-0">
         <div className="text-[12.5px] font-medium truncate">{display}</div>
         <div className={`text-[11px] truncate ${conflict ? (conflict.blocking ? 'text-[#DC2626]' : 'text-[#B45309]') : 'text-[var(--ink-mute)]'}`}>
-          {conflict?.message || item.phone || item.email || item.city || '—'}
+          {conflict?.message || item.phone || item.email || item.city || 'N/A'}
         </div>
       </div>
       <span className="badge py-px px-1.5 font-medium text-[10px]" style={{ background: st.tint, color: st.color }}>
@@ -249,7 +249,7 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
       // Re-check: rows edited since the last verification may have picked up a conflict.
       const clear = await verifyPhones(items.flatMap((item) => (item.phone ? [item.phone] : [])));
       if (!clear) {
-        toast.error(`Some ${vocabulary.plural} already exist — fix the highlighted rows.`);
+        toast.error(`Some ${vocabulary.plural} already exist. Fix the highlighted rows.`);
         return;
       }
       await bulkCreate.mutateAsync(items);
@@ -363,8 +363,8 @@ export function LeadsBulkImportDialog({ open, onClose }: { open: boolean; onClos
                   ? valid
                     ? <><Check size={12} className="text-[#15803D]" /> All {items.length} ready to save</>
                     : hasBlockingConflict
-                      ? `Some ${vocabulary.plural} already exist — fix the highlighted cards`
-                      : `Some ${vocabulary.plural} need a name, phone, or email — click a card to edit`
+                      ? `Some ${vocabulary.plural} already exist. Fix the highlighted cards`
+                      : `Some ${vocabulary.plural} need a name, phone, or email. Click a card to edit`
                   : `Drop a CSV or click "Add ${vocabulary.singular}" to begin`}
           </span>
           <div className="flex gap-2">

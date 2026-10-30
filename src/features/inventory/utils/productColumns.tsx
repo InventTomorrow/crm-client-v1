@@ -62,7 +62,7 @@ export function buildProductColumns({
             {(row.original.customOptionKeys?.length ?? 0) === 1 ? "" : "s"}
           </span>
         ) : (
-          <span className="text-[var(--ink-mute)]">—</span>
+          <span className="text-[var(--ink-mute)]">N/A</span>
         ),
     },
     {
@@ -72,7 +72,7 @@ export function buildProductColumns({
       enableSorting: true,
       cell: ({ row }) => (
         <span className="font-[var(--font-mono)] text-[11.5px] text-[var(--ink-mute)]">
-          {row.original.sku || "—"}
+          {row.original.sku || "N/A"}
         </span>
       ),
     },

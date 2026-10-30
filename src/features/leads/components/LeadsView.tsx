@@ -459,7 +459,7 @@ export function LeadsView() {
         title={`Delete ${vocabulary.singular} permanently?`}
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone — archive the ${vocabulary.singular} instead if you may need any of it.`
+            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone. Archive the ${vocabulary.singular} instead if you may need any of it.`
             : undefined
         }
         confirmLabel="Delete permanently"

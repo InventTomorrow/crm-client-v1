@@ -78,7 +78,7 @@ export function AppointmentRequestsView() {
         <div>
           <h1 className="text-[20px] font-semibold">Appointment requests</h1>
           <p className="mt-1 text-[12.5px] text-[var(--ink-mute)]">
-            Taken by the assistant in chat — book each one, then mark it here.
+            Taken by the assistant in chat. Book each one, then mark it here.
           </p>
         </div>
         <SeedRecordsButton

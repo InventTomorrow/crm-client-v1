@@ -375,7 +375,7 @@ export function DataTable<TData>({
         {/* Page info */}
         <span className="text-[var(--ink-mute)]">
           {table.getFilteredRowModel().rows.length > 0
-            ? `${pageIndex * pageSize + 1}–${Math.min((pageIndex + 1) * pageSize, table.getFilteredRowModel().rows.length)} of ${table.getFilteredRowModel().rows.length}`
+            ? `${pageIndex * pageSize + 1} to ${Math.min((pageIndex + 1) * pageSize, table.getFilteredRowModel().rows.length)} of ${table.getFilteredRowModel().rows.length}`
             : "0 results"}
         </span>
 

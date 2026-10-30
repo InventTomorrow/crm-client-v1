@@ -92,7 +92,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                           >
                             Upgrade your plan
                           </Link>{" "}
-                          or pick one to replace — it&apos;s scheduled for deletion
+                          or pick one to replace. It&apos;s scheduled for deletion
                           and restorable for 60 days.
                         </p>
                       </div>
@@ -142,7 +142,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>Internal label — can&apos;t be changed later.</FormDescription>
+                      <FormDescription>Internal label. Can&apos;t be changed later.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -158,7 +158,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                       <FormControl>
                         <Input placeholder="e.g. Karachi Karahi" disabled={isPending} {...field} />
                       </FormControl>
-                      <FormDescription>What customers see — editable later.</FormDescription>
+                      <FormDescription>What customers see. Editable later.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -197,7 +197,7 @@ export function CreateWorkspaceDialog({ onClose }: { onClose: () => void }) {
                 <Crown size={14} className="mt-0.5 shrink-0 text-accent" />
                 <p className="text-[12px] leading-relaxed text-ink-soft">
                   <span className="font-semibold text-ink">You&apos;ll be the Owner.</span>{" "}
-                  Invite your team after creation — data stays isolated from your
+                  Invite your team after creation. Data stays isolated from your
                   other workspaces.
                 </p>
               </div>

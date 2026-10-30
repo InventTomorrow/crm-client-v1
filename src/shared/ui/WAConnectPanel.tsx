@@ -117,11 +117,11 @@ function ConnectingView({ phoneNumber }: { phoneNumber?: string }) {
 
       <div className="text-center">
         <p className="text-[14px] font-semibold text-[var(--ink)]">
-          QR scanned — connecting
+          QR scanned. Connecting
         </p>
         <p className="text-[12px] text-[var(--ink-mute)] mt-1 max-w-[270px]">
           Linking your WhatsApp{phoneNumber ? ` (+${phoneNumber})` : ""}. This
-          only takes a moment — keep this open.
+          only takes a moment. Keep this open.
         </p>
       </div>
 
@@ -285,7 +285,7 @@ export function WAConnectPanel({
         <div className="flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
           <Smartphone size={13} className="shrink-0 mt-px" />
           <span>
-            WhatsApp Web approach — the QR is generated only when you click, to
+            WhatsApp Web approach. The QR is generated only when you click, to
             keep the connection light.
           </span>
         </div>
@@ -524,7 +524,7 @@ export function WAConnectPanel({
         <div className="flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
           <Smartphone size={13} className="flex-shrink-0 mt-px" />
           <span>
-            WhatsApp Web approach — no API keys or monthly fees. Uses your
+            WhatsApp Web approach. No API keys or monthly fees. Uses your
             personal or business number.
           </span>
         </div>

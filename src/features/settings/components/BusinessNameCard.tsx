@@ -40,7 +40,7 @@ export function BusinessNameCard() {
       <div>
         <h4 className="text-[13.5px] font-semibold">Business name</h4>
         <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
-          What customers see — AI replies, order receipts and checkout. Your
+          What customers see: AI replies, order receipts and checkout. Your
           workspace name stays the same.
         </p>
       </div>

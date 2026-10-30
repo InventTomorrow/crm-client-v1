@@ -153,8 +153,8 @@ export function QuickAppointmentDialog({
             Add an appointment
           </DialogTitle>
           <DialogDescription className="text-[12.5px] leading-relaxed text-[var(--ink-mute)]">
-            Books the exact time you enter, in {timezone.replace("_", " ")} —
-            your published availability is not enforced here.
+            Books the exact time you enter, in {timezone.replace("_", " ")}.
+            Your published availability is not enforced here.
           </DialogDescription>
         </DialogHeader>
 

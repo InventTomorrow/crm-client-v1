@@ -103,7 +103,7 @@ const ROLE_META: Record<string, { color: string; bg: string; desc: string }> = {
   OWNER: {
     color: "text-info-foreground",
     bg: "bg-info-soft",
-    desc: "Full access — billing, members, all data.",
+    desc: "Full access. Billing, members, all data.",
   },
   SALES: {
     color: "text-accent",
@@ -159,7 +159,7 @@ function RoleSelector({
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className="h-8 w-[140px] text-[12px]">
-        <SelectValue placeholder="—" />
+        <SelectValue placeholder="N/A" />
       </SelectTrigger>
       <SelectContent>
         {roles

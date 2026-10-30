@@ -45,8 +45,8 @@ export function ServicePaymentFields({
                 <FormLabel>Collect payment in chat</FormLabel>
                 <p className="mt-0.5 text-xs text-[var(--ink-mute)]">
                   {collectPayment
-                    ? "After an order, the bot sends the default account below and asks for a receipt — the next one only if the customer cannot pay into it. The order stays payment pending until a receipt arrives."
-                    : "Off — the bot takes the order and your team arranges payment."}
+                    ? "After an order, the bot sends the default account below and asks for a receipt. The next one only if the customer cannot pay into it. The order stays payment pending until a receipt arrives."
+                    : "Off. The bot takes the order and your team arranges payment."}
                 </p>
               </div>
               <FormControl>
@@ -130,7 +130,7 @@ export function ServicePaymentFields({
             accounts={serviceAccountList.accounts}
             effectiveDefaultId={effectiveDefaultId}
             isSaving={isSaving}
-            emptyText="None — the selected workspace accounts are used."
+            emptyText="None. The selected workspace accounts are used."
             onSave={serviceAccountList.saveAccount}
             onRemove={serviceAccountList.removeAccount}
             onMakeDefault={serviceAccountList.makeDefault}

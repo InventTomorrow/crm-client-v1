@@ -110,7 +110,7 @@ export function LeadFollowUpCard({ leadId }: { leadId: string }) {
   const nextFollowUp =
     !isPaused && status.state === 'SCHEDULED' && status.nextFollowUpAt
       ? formatDateTime(status.nextFollowUpAt)
-      : '—';
+      : 'N/A';
 
   return (
     <div className="flex flex-col gap-2">

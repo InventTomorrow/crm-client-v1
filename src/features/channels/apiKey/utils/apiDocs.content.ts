@@ -85,7 +85,7 @@ export const ORDER_FIELD_ROWS: DocFieldRow[] = [
   {
     field: "items",
     isRequired: true,
-    description: "Products in the order — at least one.",
+    description: "Products in the order. At least one.",
   },
   {
     field: "items[].name",
@@ -151,7 +151,7 @@ export const ERROR_ROWS: DocErrorRow[] = [
   {
     code: "validation/bad_request",
     httpStatus: 400,
-    meaning: "A field failed validation — see error.details for the exact field(s).",
+    meaning: "A field failed validation. See error.details for the exact field(s).",
   },
   {
     code: "common/not_found",

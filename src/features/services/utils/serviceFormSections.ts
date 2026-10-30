@@ -37,7 +37,7 @@ export const SERVICE_FORM_STEPS: FormWizardStep<ServiceOfferingFormInput>[] = [
     label: 'Plans',
     title: 'Plans',
     description:
-      'Pricing tiers for this service. Reorder them — the first tier is what the bot leads with.',
+      'Pricing tiers for this service. Reorder them. The first tier is what the bot leads with.',
     Icon: Layers,
     fields: ['plans'],
     isComplete: serviceCompletionRules.hasPlans,

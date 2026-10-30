@@ -31,7 +31,7 @@ export function PlanRequestCard({ request }: PlanRequestCardProps) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-[15px] font-semibold">Plan request — {request.plan.name}</h3>
+            <h3 className="text-[15px] font-semibold">Plan request: {request.plan.name}</h3>
             <span className={`badge font-medium ${STATUS_STYLES[request.status] ?? ''}`}>
               {STATUS_LABEL[request.status] ?? request.status}
             </span>

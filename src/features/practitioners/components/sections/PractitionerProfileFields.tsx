@@ -34,7 +34,7 @@ export function PractitionerProfileFields({
               />
             </FormControl>
             <FormDescription>
-              The assistant describes this practitioner from here — it never
+              The assistant describes this practitioner from here. It never
               writes a profile of its own.
             </FormDescription>
             <FormMessage />

@@ -141,7 +141,7 @@ export function TimeEditDialog({
                 onChange={() => setMode("all")}
                 className="text-[var(--accent)]"
               />
-              <span>All days (Monday – Sunday)</span>
+              <span>All days (Monday to Sunday)</span>
             </label>
 
             <label className="flex items-center gap-2.5 text-[12.5px] font-medium text-[var(--ink)] cursor-pointer">

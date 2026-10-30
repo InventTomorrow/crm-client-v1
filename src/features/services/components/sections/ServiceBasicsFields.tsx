@@ -42,7 +42,7 @@ export function ServiceBasicsFields({ form, isSaving }: ServiceFormSectionProps)
                 {...field}
               />
             </FormControl>
-            <FormDescription>Shown to leads first — keep it under one line.</FormDescription>
+            <FormDescription>Shown to leads first. Keep it under one line.</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -71,7 +71,7 @@ export function ServiceBasicsFields({ form, isSaving }: ServiceFormSectionProps)
                 />
               </FormControl>
               <FormDescription>
-                Indexed for the bot&apos;s knowledge search — more detail answers more questions
+                Indexed for the bot&apos;s knowledge search. More detail answers more questions
                 without a human.{characterCount > 0 && ` ${characterCount} characters`}
               </FormDescription>
               <FormMessage />

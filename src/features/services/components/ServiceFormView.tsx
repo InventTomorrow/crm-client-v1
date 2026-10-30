@@ -150,7 +150,7 @@ export function ServiceFormView({ serviceId }: { serviceId?: string }) {
                   title={
                     wizard.canSubmit
                       ? undefined
-                      : `Finish every section first — ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
+                      : `Finish every section first: ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
                   }
                 >
                   {isSaving ? (

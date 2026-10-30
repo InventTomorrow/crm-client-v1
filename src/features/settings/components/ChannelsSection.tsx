@@ -33,7 +33,7 @@ export function ChannelsSection() {
             <div className="text-[12px] text-[var(--ink-mute)] mt-px">
               {status === "CONNECTED"
                 ? `Connected · +${statusData?.phoneNumber ?? ""}`
-                : "Not connected — scan QR to link your number"}
+                : "Not connected. Scan QR to link your number"}
             </div>
           </div>
           <span

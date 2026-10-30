@@ -72,7 +72,7 @@ export function ServicesTableView({
               {row.original.category}
             </Badge>
           ) : (
-            <span className="text-[var(--ink-mute)]">—</span>
+            <span className="text-[var(--ink-mute)]">N/A</span>
           ),
       },
       {
@@ -122,7 +122,7 @@ export function ServicesTableView({
         cell: ({ row }) => {
           const { plans } = row.original;
           if (plans.length === 0) {
-            return <span className="text-[var(--ink-mute)]">—</span>;
+            return <span className="text-[var(--ink-mute)]">N/A</span>;
           }
           const hasHighlighted = plans.some((plan) => plan.isHighlighted);
           return (

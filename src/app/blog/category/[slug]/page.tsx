@@ -31,7 +31,7 @@ export async function generateMetadata({
   }
 
   return buildPageMetadata({
-    title: `${category.name} — ${BLOG_TITLE} | AsaanRabta`,
+    title: `${category.name}: ${BLOG_TITLE} | AsaanRabta`,
     description: category.description ?? BLOG_DESCRIPTION,
     path: `/blog/category/${category.slug}`,
     isPublic: true,
@@ -58,7 +58,7 @@ export default async function BlogCategoryPage({
       <JsonLd
         nodes={[
           blogSchema({
-            name: `${category.name} — ${BLOG_TITLE}`,
+            name: `${category.name}: ${BLOG_TITLE}`,
             description: category.description ?? BLOG_DESCRIPTION,
             path: `/blog/category/${category.slug}`,
             posts: firstPage.items.map((post) => ({ title: post.title, slug: post.slug })),

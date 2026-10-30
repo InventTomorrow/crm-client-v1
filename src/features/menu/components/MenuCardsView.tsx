@@ -81,7 +81,7 @@ export function MenuCardsView() {
         <p className="text-[13px] font-medium text-[var(--ink)]">How these are used</p>
         <p className="text-[12.5px] text-[var(--ink-mute)]">
           Customers browse these images like a physical menu, then order by name. Prices and
-          availability always come from the items you create on the Menu page — the cards are
+          availability always come from the items you create on the Menu page. The cards are
           pictures only, so keep both in sync.
         </p>
       </div>

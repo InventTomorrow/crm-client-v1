@@ -24,8 +24,8 @@ export function CoverageLegend({ className }: { className?: string }) {
             <span>
               <span className="font-medium">{COVERAGE_META[level].label}</span>
               <span className="text-muted-foreground">
-                {' '}
-                — {COVERAGE_META[level].description}
+                :{' '}
+                {COVERAGE_META[level].description}
               </span>
             </span>
           </li>

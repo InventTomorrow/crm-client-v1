@@ -92,7 +92,7 @@ export function ServiceOrdersView() {
         cell: ({ row }) => (
           <div className="min-w-0">
             <div className="truncate text-[12.5px] text-[var(--ink)]">
-              {row.original.lines.map((line) => `${line.serviceName} — ${line.planName}`).join(', ')}
+              {row.original.lines.map((line) => `${line.serviceName}: ${line.planName}`).join(', ')}
             </div>
             <div className="text-[11.5px] text-[var(--ink-mute)]">
               {getPriceSummary(row.original.lines, row.original.currency)}
@@ -150,7 +150,7 @@ export function ServiceOrdersView() {
     <div className="w-full">
       <p className="mb-5 max-w-[62ch] text-[13px] text-[var(--ink-mute)]">
         Orders the assistant closed in chat. Services with payment collection on stay payment pending
-        until the customer sends a receipt — open an order to view, download or add one.
+        until the customer sends a receipt. Open an order to view, download or add one.
       </p>
 
       <DataTable

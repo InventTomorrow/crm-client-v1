@@ -104,7 +104,7 @@ export function PaymentReceiptList({ serviceOrderId, orderLabel, receipts }: Pay
         open={!!previewedReceipt}
         onClose={() => setPreviewedReceipt(null)}
         imageUrl={previewedReceipt?.url ?? null}
-        caption={`${orderLabel} — payment receipt`}
+        caption={`${orderLabel}. Payment receipt`}
         filenameBase={`${orderLabel}-receipt`}
       />
 

@@ -69,7 +69,7 @@ export function BusinessSection() {
     <>
       <h2 className="text-[20px] font-semibold">Business</h2>
       <p className="text-[12.5px] text-[var(--ink-mute)] -mt-2">
-        Describe your business and add common Q&amp;A — the chatbot uses these
+        Describe your business and add common Q&amp;A. The chatbot uses these
         to answer questions about you.
       </p>
 

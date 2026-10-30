@@ -79,7 +79,7 @@ export function BookingSlotStep({
 
       {!isCustomTime && !hasAvailability && !isLoadingAvailability && (
         <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-4 text-center text-[12px] text-[var(--ink-mute)]">
-          No calendar set up yet — use a custom time, or set your hours to let the bot book too.
+          No calendar set up yet. Use a custom time, or set your hours to let the bot book too.
         </p>
       )}
 
@@ -102,8 +102,8 @@ export function BookingSlotStep({
                   />
                 </FormControl>
                 <FormDescription>
-                  Read in {timezone.replace('_', ' ')}. This books outside your usual hours —
-                  a time someone else already holds is still refused.
+                  Read in {timezone.replace('_', ' ')}. This books outside your usual hours.
+                  A time someone else already holds is still refused.
                 </FormDescription>
               </>
             ) : (

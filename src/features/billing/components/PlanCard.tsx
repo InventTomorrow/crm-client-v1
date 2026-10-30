@@ -162,7 +162,7 @@ export function PlanCard({ plan, isCurrent, isRequested, isScheduled, changeDire
       </button>
       {changeDirection === 'downgrade' && !isInert && !isScheduled && (
         <p className="mt-2 text-[11.5px] text-[var(--ink-mute)]">
-          Starts when your current plan ends — no refund for the time remaining.
+          Starts when your current plan ends. No refund for the time remaining.
         </p>
       )}
     </div>

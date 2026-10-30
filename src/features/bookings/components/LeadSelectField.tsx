@@ -113,7 +113,7 @@ export function LeadSelectField({
         !searchResults.isFetching &&
         searchResults.data?.length === 0 && (
           <p className="text-[11.5px] text-[var(--ink-mute)]">
-            No {vocabulary.singular} matches “{searchTerm.trim()}” — the booking
+            No {vocabulary.singular} matches “{searchTerm.trim()}”. The booking
             will be saved against the number below.
           </p>
         )}

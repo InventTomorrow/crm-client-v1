@@ -78,7 +78,7 @@ export function ProductVariantsField({
           </span>
           <span className="block text-[12px] text-[var(--ink-mute)]">
             Each version a customer can buy, with its own photo, sizes, colour,
-            price and stock — all of a version&apos;s sizes share its stock. The
+            price and stock. All of a version&apos;s sizes share its stock. The
             cheapest one sets the product price.
           </span>
         </div>

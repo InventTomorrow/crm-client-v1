@@ -69,7 +69,7 @@ export function FollowUpPriorityEditor({
             aria-label={`Follow up ${statusLabel(status)}`}
           />
           <span className="flex-1 text-[12.5px] text-[var(--ink-mute)]">
-            {statusLabel(status)} — not followed up
+            {statusLabel(status)}. Not followed up
           </span>
         </li>
       ))}

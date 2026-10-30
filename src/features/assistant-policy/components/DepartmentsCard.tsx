@@ -155,7 +155,7 @@ function DepartmentDialog({ department, onClose }: { department: Department | nu
               }
             />
           </Field>
-          <Field label="Key" hint="What rules route on. Lowercase letters, numbers and hyphens — e.g. hr, clinical, billing.">
+          <Field label="Key" hint="What rules route on. Lowercase letters, numbers and hyphens, e.g. hr, clinical, billing.">
             <Input
               value={form.key}
               maxLength={40}
@@ -178,7 +178,7 @@ function DepartmentDialog({ department, onClose }: { department: Department | nu
           </Field>
           <SwitchField
             label="Share this contact with customers"
-            desc="The assistant may give out this number and email — e.g. so applicants know where to send a CV."
+            desc="The assistant may give out this number and email, e.g. so applicants know where to send a CV."
             checked={form.isPublicContact}
             onChange={(isPublicContact) => set({ isPublicContact })}
           />

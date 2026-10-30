@@ -114,7 +114,7 @@ export function OrderFormView({
                   description={
                     isDeliveryRequired
                       ? "Where the order ships to."
-                      : "This order was saved without an address — add one, or leave it blank."
+                      : "This order was saved without an address. Add one, or leave it blank."
                   }
                 >
                   <OrderAddressFields

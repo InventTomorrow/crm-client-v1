@@ -87,7 +87,7 @@ export function ApiKeysList() {
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--ink-mute)]">
                   <code
                     className="font-mono text-[var(--ink-soft)]"
-                    title="The full key was shown once, at creation, and can't be retrieved again — revoke and create a new key if it's lost."
+                    title="The full key was shown once, at creation, and can't be retrieved again. Revoke and create a new key if it's lost."
                   >
                     {apiKey.keyPrefix}…
                   </code>

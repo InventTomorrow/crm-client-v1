@@ -24,7 +24,7 @@ export function AddReceiptDialog({ serviceOrderId, orderLabel, onClose }: AddRec
     <Dialog open={isOpen} onOpenChange={(nextOpen) => !nextOpen && !isBusy && onClose()}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle className="text-[15px] font-semibold">Add payment receipt — {orderLabel}</DialogTitle>
+          <DialogTitle className="text-[15px] font-semibold">Add payment receipt: {orderLabel}</DialogTitle>
           <DialogDescription className="text-[12.5px] text-[var(--ink-mute)]">
             Attaching a receipt marks the order as paid.
           </DialogDescription>
@@ -52,7 +52,7 @@ export function AddReceiptDialog({ serviceOrderId, orderLabel, onClose }: AddRec
                       accept="image/*"
                       maxSize={10 * 1024 * 1024}
                       title="Upload receipt image"
-                      description="Drag and drop, or click to browse — up to 10 MB"
+                      description="Drag and drop, or click to browse. Up to 10 MB"
                       value={field.value || null}
                       onChange={(uploadedUrl) => field.onChange(uploadedUrl ?? '')}
                       onUpload={receiptUpload.upload}

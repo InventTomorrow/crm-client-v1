@@ -10,7 +10,7 @@ export const UrlSyncPanel = memo(function UrlSyncPanel() {
     <div className="card p-[22px]">
       <h3 className="text-[15px] font-semibold mb-1.5">URL Sync</h3>
       <p className="text-[13px] mb-4 text-[var(--ink-soft)]">
-        Paste a product page URL — we extract title, price, images, and stock
+        Paste a product page URL. We extract title, price, images, and stock
         automatically.
       </p>
       <div className="flex gap-2 mb-4">
@@ -26,7 +26,7 @@ export const UrlSyncPanel = memo(function UrlSyncPanel() {
         <div className="placeholder-img w-16 h-16 aspect-auto">IMG</div>
         <div className="flex-1">
           <div className="font-medium">
-            Lawn Suit 3-Piece — Pink Embroidery
+            Lawn Suit 3-Piece: Pink Embroidery
           </div>
           <div className="text-[11.5px] mt-0.5 text-[var(--ink-mute)]">
             daraz.pk · extracted just now

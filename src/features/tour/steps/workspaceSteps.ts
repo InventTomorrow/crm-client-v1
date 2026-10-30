@@ -33,7 +33,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     route: '/dashboard',
     title: 'Your workspace, section by section',
     content:
-      'Every part of the CRM lives here — conversations, leads, orders and settings. You only see the sections your role can open, and the workspace switcher above swaps between businesses.',
+      'Every part of the CRM lives here. Conversations, leads, orders and settings. You only see the sections your role can open, and the workspace switcher above swaps between businesses.',
     selector: '[data-tour="sidebar-nav"]',
     side: 'right',
     pointerPadding: 8,
@@ -43,7 +43,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     route: '/dashboard',
     title: 'Find anything, fast',
     content:
-      'Search leads, orders and conversations from one box — press ⌘K (Ctrl+K on Windows) from any page. The bell beside it collects new messages and escalations.',
+      'Search leads, orders and conversations from one box. Press ⌘K (Ctrl+K on Windows) from any page. The bell beside it collects new messages and escalations.',
     selector: '[data-tour="global-search"]',
     side: 'bottom-right',
     pointerPadding: 6,
@@ -56,7 +56,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'settings:view',
     title: 'Pick your business category',
     content:
-      'This decides which AI agents you get and which pages appear in your sidebar — a restaurant gets a menu, a store gets inventory. Changing it switches the assistant immediately.',
+      'This decides which AI agents you get and which pages appear in your sidebar. A restaurant gets a menu, a store gets inventory. Changing it switches the assistant immediately.',
     selector: '[data-tour="business-category"]',
     side: 'bottom',
     scrollOffset: HEADER_CLEARANCE,
@@ -69,7 +69,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'settings:view',
     title: 'Describe what you do',
     content:
-      'Write a couple of lines about your business, then generate the intro message customers get when they ask about you. Edit it freely — the assistant answers from exactly this.',
+      'Write a couple of lines about your business, then generate the intro message customers get when they ask about you. Edit it freely. The assistant answers from exactly this.',
     selector: '[data-tour="business-description"]',
     side: 'bottom',
     scrollOffset: HEADER_CLEARANCE,
@@ -82,7 +82,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'settings:view',
     title: 'Add your common questions',
     content:
-      'Question and answer pairs — delivery times, refunds, opening hours. Every pair you add here is one less chat that has to reach you.',
+      'Question and answer pairs. Delivery times, refunds, opening hours. Every pair you add here is one less chat that has to reach you.',
     selector: '[data-tour="business-qa"]',
     side: 'top',
     scrollOffset: HEADER_CLEARANCE,
@@ -138,7 +138,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'inventory:view',
     title: 'Then add the dishes themselves',
     content:
-      'Cards are pictures; these are the real items. Add dishes with prices, categories and add-ons — this is what the assistant quotes and takes orders from.',
+      'Cards are pictures; these are the real items. Add dishes with prices, categories and add-ons. This is what the assistant quotes and takes orders from.',
     selector: '[data-tour="page-actions"]',
     side: 'bottom-right',
     scrollOffset: HEADER_CLEARANCE,
@@ -222,7 +222,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'qualification:view',
     title: 'Teach the bot what to ask',
     content:
-      'Set the questions that qualify a new enquiry — budget, timeline, company size — and how each answer scores. High scorers reach you as hot leads; the rest are answered without you.',
+      'Set the questions that qualify a new enquiry, budget, timeline, company size, and how each answer scores. High scorers reach you as hot leads; the rest are answered without you.',
     selector: '[data-tour="page-actions"]',
     side: 'bottom',
     scrollOffset: HEADER_CLEARANCE,
@@ -236,7 +236,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'resources:view',
     title: 'Give the bot something to send',
     content:
-      'Brochures, portfolios and case studies. Attach conditions so a file only goes to the right kind of lead — enterprise enquiries get the deck, small ones get the price list.',
+      'Brochures, portfolios and case studies. Attach conditions so a file only goes to the right kind of lead. Enterprise enquiries get the deck, small ones get the price list.',
     selector: '[data-tour="page-actions"]',
     side: 'bottom-right',
     scrollOffset: HEADER_CLEARANCE,
@@ -263,7 +263,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'leads:view',
     title: 'Chats become leads automatically',
     content:
-      'Every enquiry is captured and scored, so nothing is lost in a thread. Below this the pipeline board holds a column per status — drag a card across to move it along.',
+      'Every enquiry is captured and scored, so nothing is lost in a thread. Below this the pipeline board holds a column per status. Drag a card across to move it along.',
     selector: '[data-tour="page-list"]',
     side: 'bottom',
     scrollOffset: HEADER_CLEARANCE,
@@ -291,7 +291,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'bookings:view',
     title: 'Calls the bot books for you',
     content:
-      'Appointments land here as the assistant agrees them with leads. Set your working hours under Availability first — that is what it offers, so it never books you twice.',
+      'Appointments land here as the assistant agrees them with leads. Set your working hours under Availability first. That is what it offers, so it never books you twice.',
     selector: '[data-tour="page-actions"]',
     side: 'bottom-right',
     scrollOffset: HEADER_CLEARANCE,
@@ -306,7 +306,7 @@ const WORKSPACE_STEPS: WorkspaceStep[] = [
     perm: 'channels:view',
     title: 'Connect WhatsApp to go live',
     content:
-      'Scan the QR to link your number — that is the moment real conversations start flowing into everything you just set up, and your dashboard begins filling in. Replay this guide any time from your profile menu.',
+      'Scan the QR to link your number. That is the moment real conversations start flowing into everything you just set up, and your dashboard begins filling in. Replay this guide any time from your profile menu.',
     selector: '[data-tour="page-content"]',
     side: 'bottom',
     scrollOffset: HEADER_CLEARANCE,

@@ -21,6 +21,8 @@ export function ClinicalServiceScopeFields({
               emptyHint="What the clinic actually does under this service."
               values={field.value ?? []}
               onChange={field.onChange}
+              isLabelProminent
+              isAddButtonCentered
               disabled={isSaving}
             />
             <FormMessage />
@@ -40,6 +42,8 @@ export function ClinicalServiceScopeFields({
               emptyHint="The assistant will refuse these however the patient phrases the request."
               values={field.value ?? []}
               onChange={field.onChange}
+              isLabelProminent
+              isAddButtonCentered
               disabled={isSaving}
             />
             <FormMessage />
@@ -59,6 +63,8 @@ export function ClinicalServiceScopeFields({
               emptyHint="Helps the assistant match a described symptom to this service."
               values={field.value ?? []}
               onChange={field.onChange}
+              isLabelProminent
+              isAddButtonCentered
               disabled={isSaving}
             />
             <FormMessage />

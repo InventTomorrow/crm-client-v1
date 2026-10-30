@@ -130,7 +130,7 @@ export default function TableView({
           row.original.value > 0 ? (
             <span className="font-[var(--font-mono)] font-medium">{pkr(row.original.value)}</span>
           ) : (
-            <span className="text-[var(--ink-mute)]">—</span>
+            <span className="text-[var(--ink-mute)]">N/A</span>
           ),
       },
       {

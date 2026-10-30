@@ -124,7 +124,7 @@ export default function LeadDetailSheet({
                 ? "Email ✓"
                 : `Email: ${res.email.replace(/_/g, " ")}`,
             );
-          toast.success(`Receipt sent — ${parts.join(", ")}`);
+          toast.success(`Receipt sent: ${parts.join(", ")}`);
           setReceiptOpen(false);
         },
       },

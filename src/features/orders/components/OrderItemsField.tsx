@@ -120,7 +120,7 @@ export function OrderItemsField({
                       emptyText={
                         catalogLineOptions.length
                           ? "No matching products"
-                          : "Your catalog is empty — add products in Inventory first"
+                          : "Your catalog is empty. Add products in Inventory first"
                       }
                       onChange={(_optionId, option) => onSelectLine(lineIndex, option)}
                       renderRow={(option) => (
@@ -242,8 +242,8 @@ export function OrderItemsField({
               <p className="text-[11.5px] text-[var(--warning-foreground)]">
                 {selectedOption.stock > 0
                   ? `Only ${selectedOption.stock} in stock`
-                  : "Out of stock"}{" "}
-                — the order can still be saved.
+                  : "Out of stock"}.{" "}
+                The order can still be saved.
               </p>
             )}
 

@@ -75,6 +75,29 @@ export function PlanBuilder({ plans, onChange, currency, disabled = false }: Pla
             </Button>
           )}
 
+          {plans.length > 0 && (
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={disabled}
+              onClick={planEditor.addPlan}
+            >
+              <Plus size={14} className="mr-1.5" /> Add plan
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {plans.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-[var(--line)] px-4 py-10 text-center">
+          <div>
+            <p className="text-sm font-medium text-[var(--ink)]">No plans yet</p>
+            <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--ink-mute)]">
+              Add at least one tier so the bot has a price to quote. Leave the price empty and mark
+              it a custom quote when the scope decides the number.
+            </p>
+          </div>
           <Button
             type="button"
             size="lg"
@@ -84,16 +107,6 @@ export function PlanBuilder({ plans, onChange, currency, disabled = false }: Pla
           >
             <Plus size={14} className="mr-1.5" /> Add plan
           </Button>
-        </div>
-      </div>
-
-      {plans.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[var(--line)] px-4 py-10 text-center">
-          <p className="text-sm font-medium text-[var(--ink)]">No plans yet</p>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--ink-mute)]">
-            Add at least one tier so the bot has a price to quote. Leave the price empty and mark it
-            a custom quote when the scope decides the number.
-          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
