@@ -190,7 +190,7 @@ export function OrdersView() {
               {row.original.notes}
             </p>
           ) : (
-            <span className="text-[12px] text-[var(--ink-mute)]">—</span>
+            <span className="text-[12px] text-[var(--ink-mute)]">N/A</span>
           ),
       },
       {

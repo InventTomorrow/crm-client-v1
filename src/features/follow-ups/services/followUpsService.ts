@@ -6,6 +6,7 @@ import type {
   FollowUpSettingsView,
   LeadFollowUpPause,
   LeadFollowUpStatus,
+  UpcomingFollowUpsView,
 } from '../types';
 
 export async function getFollowUpAnalytics(
@@ -14,6 +15,13 @@ export async function getFollowUpAnalytics(
   const response = await apiClient.get<{ success: true; data: FollowUpAnalyticsView }>(
     '/follow-ups/analytics',
     { params: { range } },
+  );
+  return response.data.data;
+}
+
+export async function getUpcomingFollowUps(): Promise<UpcomingFollowUpsView> {
+  const response = await apiClient.get<{ success: true; data: UpcomingFollowUpsView }>(
+    '/follow-ups/upcoming',
   );
   return response.data.data;
 }

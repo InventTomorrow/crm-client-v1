@@ -38,13 +38,14 @@ export function CityAutocomplete({
       items={CITY_OPTIONS}
       selected={selected}
       onSelect={(option) => onChange(option.label)}
+      showAllOnOpen
       onCreate={(label) => {
         const city = label.trim();
         onChange(city);
         return { id: city, label: city };
       }}
       placeholder="Lahore"
-      emptyLabel="No match — type to add this city."
+      emptyLabel="No match. Type to add this city."
       disabled={disabled}
     />
   );

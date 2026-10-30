@@ -1,7 +1,5 @@
 "use client";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
-import { FileUpload } from "@/shared/ui/FileUpload";
 import {
   Form,
   FormControl,
@@ -13,8 +11,9 @@ import {
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/Input";
 import { Skeleton } from "@/shared/ui/Skeleton";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { useJobSeekerForm } from "../hooks/useJobSeekerForm";
-import { MAX_CV_FILE_SIZE_BYTES } from "../types";
+import { JobSeekerCvField } from "./JobSeekerCvField";
 
 /** Name and city have their own inputs, so their detail rows would be a second copy to keep in sync. */
 const DETAIL_KEYS_WITH_OWN_INPUT = ["fullName", "city"];
@@ -81,9 +80,13 @@ export function JobSeekerFormView({ leadId }: { leadId?: string }) {
         aria-busy="true"
       >
         {header}
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_296px]">
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+          </div>
+          <Skeleton className="min-h-80 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -94,116 +97,113 @@ export function JobSeekerFormView({ leadId }: { leadId?: string }) {
 
       <Form {...form}>
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <section className={sectionClass}>
-            <SectionTitle>Contact</SectionTitle>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full name</FormLabel>
-                  <FormControl>
-                    <Input disabled={isSaving} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="+923001234567"
-                        disabled={isSaving}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input disabled={isSaving} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </section>
-
-          {extraFields.length > 0 && (
-            <section className={sectionClass}>
-              <SectionTitle>Details collected</SectionTitle>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {extraFields.map((detail) => (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_296px]">
+            <div className="flex flex-col gap-4">
+              <section className={sectionClass}>
+                <SectionTitle>Contact</SectionTitle>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full name</FormLabel>
+                      <FormControl>
+                        <Input disabled={isSaving} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
-                    key={detail.key}
                     control={form.control}
-                    name={`details.${detail.key}`}
+                    name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{detail.label}</FormLabel>
+                        <FormLabel>Phone</FormLabel>
                         <FormControl>
                           <Input
+                            placeholder="+923001234567"
                             disabled={isSaving}
                             {...field}
-                            value={field.value ?? ""}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                ))}
-              </div>
-            </section>
-          )}
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input disabled={isSaving} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </section>
 
-          <section className={sectionClass}>
-            <SectionTitle>CV</SectionTitle>
-            <FormField
-              control={form.control}
-              name="cv"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <FileUpload
-                      compact
-                      value={field.value?.url ?? null}
-                      onChange={(url) => {
-                        if (!url) removeCv();
-                      }}
-                      onUpload={uploadCv}
-                      isUploading={isUploadingCv}
-                      progress={cvUploadProgress}
-                      uploadPhase={cvUploadPhase}
-                      accept="application/pdf,image/*"
-                      maxSize={MAX_CV_FILE_SIZE_BYTES}
-                      description="Drop the CV here"
-                      hint="PDF preferred, or a photo of it — up to 10 MB"
-                      disabled={isSaving}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Replacing the CV removes the previous file.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+              {extraFields.length > 0 && (
+                <section className={sectionClass}>
+                  <SectionTitle>Details collected</SectionTitle>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {extraFields.map((detail) => (
+                      <FormField
+                        key={detail.key}
+                        control={form.control}
+                        name={`details.${detail.key}`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{detail.label}</FormLabel>
+                            <FormControl>
+                              <Input
+                                disabled={isSaving}
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </div>
+                </section>
               )}
-            />
-          </section>
+            </div>
+
+            <section className={sectionClass}>
+              <SectionTitle>CV</SectionTitle>
+              <FormField
+                control={form.control}
+                name="cv"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <JobSeekerCvField
+                        cv={field.value}
+                        onRemove={removeCv}
+                        onUpload={uploadCv}
+                        isUploading={isUploadingCv}
+                        progress={cvUploadProgress}
+                        uploadPhase={cvUploadPhase}
+                        disabled={isSaving}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Replacing the CV removes the previous file.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </section>
+          </div>
 
           <div className="card sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-2 px-4 py-3">
             <Button

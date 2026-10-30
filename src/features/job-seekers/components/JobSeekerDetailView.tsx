@@ -17,7 +17,7 @@ import { Button } from "@/shared/ui/Button";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { useJobSeeker } from "../hooks/useJobSeekers";
-import { cvKindLabel } from "../utils/cv";
+import { cvKindLabel, getCvViewUrl } from "../utils/cv";
 import { JobSeekerDeleteDialog } from "./JobSeekerDeleteDialog";
 
 const dateTime = new Intl.DateTimeFormat(undefined, {
@@ -187,7 +187,7 @@ export function JobSeekerDetailView({ leadId }: { leadId: string }) {
                 </div>
                 <Button asChild variant="outline" size="lg" className="w-fit">
                   <a
-                    href={jobSeeker.cv.url}
+                    href={getCvViewUrl(jobSeeker.cv.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

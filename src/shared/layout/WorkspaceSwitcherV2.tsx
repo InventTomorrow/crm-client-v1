@@ -232,7 +232,7 @@ export function WorkspaceSwitcherV2({ collapsed }: { collapsed: boolean }) {
                         Workspace limit reached
                       </span>
                       <span className="block text-[11px] text-[var(--ink-mute)]">
-                        Your plan includes {workspaceAllowance?.limit} — upgrade
+                        Your plan includes {workspaceAllowance?.limit}. Upgrade
                         to add more
                       </span>
                     </span>

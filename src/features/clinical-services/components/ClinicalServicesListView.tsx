@@ -110,7 +110,7 @@ export function ClinicalServicesListView({
               {row.original.category}
             </span>
           ) : (
-            <span className="text-[var(--ink-mute)]">—</span>
+            <span className="text-[var(--ink-mute)]">N/A</span>
           ),
       },
       {
@@ -147,7 +147,7 @@ export function ClinicalServicesListView({
               {commitment}
             </span>
           ) : (
-            <span className="text-[var(--ink-mute)]">—</span>
+            <span className="text-[var(--ink-mute)]">N/A</span>
           );
         },
       },

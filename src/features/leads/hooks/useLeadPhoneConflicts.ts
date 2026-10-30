@@ -13,7 +13,7 @@ export interface PhoneConflict {
 /** An archived match is restored by the upsert, so it warns rather than blocks. */
 export const describeConflict = (match: DuplicatePhoneMatch): PhoneConflict =>
   match.archived
-    ? { message: `Matches archived lead ${match.name ?? match.phone} — it will be restored`, blocking: false }
+    ? { message: `Matches archived lead ${match.name ?? match.phone}. It will be restored`, blocking: false }
     : { message: `Already exists as ${match.name ?? match.phone}`, blocking: true };
 
 /**

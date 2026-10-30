@@ -125,7 +125,7 @@ export function ServicePlansView() {
         enableSorting: true,
         cell: ({ row }) => (
           <span className="text-[12px] text-[var(--ink-soft)]">
-            {row.original.plan.minContractMonths || '—'}
+            {row.original.plan.minContractMonths || 'N/A'}
           </span>
         ),
       },
@@ -202,7 +202,7 @@ export function ServicePlansView() {
             columns={columns}
             isLoading={isLoading}
             onRowClick={(row) => router.push(`/services/${row.serviceId}`)}
-            emptyMessage="No plans yet — plans are added inside a service."
+            emptyMessage="No plans yet. Plans are added inside a service."
             defaultPageSize={20}
           />
 

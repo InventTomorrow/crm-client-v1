@@ -57,7 +57,7 @@ export function ImportItemCard({
 
       <div className="flex items-center justify-between text-[11px]">
         <span className="font-[var(--font-mono)] text-[var(--ink-soft)]">
-          {item.price ? pkr(item.price) : "—"}
+          {item.price ? pkr(item.price) : "N/A"}
         </span>
         <span
           className={`badge px-1.5 py-px font-medium ${

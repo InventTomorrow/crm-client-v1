@@ -81,7 +81,7 @@ export function BillingHistory() {
                     {fmtDate(payment.paidAt ?? payment.createdAt)}
                   </td>
                   <td className="whitespace-nowrap px-5 py-3 font-medium">{fmtAmount(payment)}</td>
-                  <td className="px-5 py-3 text-[var(--ink-soft)]">{payment.method ?? '—'}</td>
+                  <td className="px-5 py-3 text-[var(--ink-soft)]">{payment.method ?? 'N/A'}</td>
                   <td className="px-5 py-3">
                     <span className={`badge font-medium ${STATUS_STYLES[payment.status]}`}>
                       {payment.status.charAt(0) + payment.status.slice(1).toLowerCase()}

@@ -11,13 +11,15 @@ import { Input } from "@/shared/ui/Input";
 import { InstructionListField } from "@/shared/ui/InstructionListField";
 import { Label } from "@/shared/ui/Label";
 import { Switch } from "@/shared/ui/Switch";
+import { useWatch } from "react-hook-form";
 import type { ClinicalServiceFormSectionProps } from "../../types";
 
 export function ClinicalServiceInstructionsFields({
   form,
   isSaving,
 }: ClinicalServiceFormSectionProps) {
-  const isEscalationEnabled = form.watch("escalation.isEnabled") ?? true;
+  const isEscalationEnabled =
+    useWatch({ control: form.control, name: "escalation.isEnabled" }) ?? true;
 
   return (
     <>
@@ -33,6 +35,8 @@ export function ClinicalServiceInstructionsFields({
               emptyHint="No instructions yet. The assistant follows its general rules for this service."
               maxItems={10}
               maxLength={400}
+              isLabelProminent
+              isAddButtonCentered
               values={field.value ?? []}
               onChange={field.onChange}
               disabled={isSaving}
@@ -53,7 +57,7 @@ export function ClinicalServiceInstructionsFields({
                   Escalate to your team for this service
                 </Label>
                 <p className="text-muted-foreground text-sm">
-                  Off means the assistant handles it itself — it still hands
+                  Off means the assistant handles it itself. It still hands
                   over for emergencies or when the patient asks for a person.
                 </p>
               </div>
@@ -83,6 +87,8 @@ export function ClinicalServiceInstructionsFields({
                     emptyHint="No conditions yet. The assistant uses its general escalation rules."
                     maxItems={5}
                     maxLength={300}
+                    isLabelProminent
+                    isAddButtonCentered
                     values={field.value ?? []}
                     onChange={field.onChange}
                     disabled={isSaving}
@@ -100,7 +106,7 @@ export function ClinicalServiceInstructionsFields({
                   <FormLabel>Escalation WhatsApp number</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="+923001234567"
+                      placeholder="0300 1234 567"
                       disabled={isSaving}
                       {...field}
                       value={field.value ?? ""}

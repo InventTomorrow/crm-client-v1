@@ -171,7 +171,7 @@ export function ServiceOrderNotificationRow({
             </Link>
             <p className="text-[11.5px] text-[var(--ink-mute)]">
               {order.paymentRequired
-                ? 'Payment details were shared in chat — the receipt appears on the order once sent.'
+                ? 'Payment details were shared in chat. The receipt appears on the order once sent.'
                 : 'Payment is not taken in chat.'}{' '}
               Reply 1, 2 or 3 to the WhatsApp alert to confirm, mark paid or cancel.
             </p>

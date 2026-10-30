@@ -400,12 +400,12 @@ export function ProductFormView({ productId }: { productId?: string }) {
                     className="max-w-[300px]"
                     title="Add a product photo"
                     description="Drop it here, or click to browse"
-                    hint="PNG, JPG, WEBP — up to 5 MB"
+                    hint="PNG, JPG, WEBP. Up to 5 MB"
                     tipsCollapsible
                     tipsTitle="Photo guidelines"
                     tips={[
                       "Use a plain background so the product stands out",
-                      "Shoot in good, even lighting — avoid harsh shadows",
+                      "Shoot in good, even lighting. Avoid harsh shadows",
                       "Show the actual product customers will receive",
                       "Recommended: square, 1000×1000px",
                     ]}

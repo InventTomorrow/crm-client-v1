@@ -21,7 +21,7 @@ export function useOrdersImport() {
       return;
     }
     if (file.size > MAX_ORDER_IMPORT_FILE_BYTES) {
-      toast.error('This file is too large — split it into files under 750 KB');
+      toast.error('This file is too large. Split it into files under 750 KB');
       return;
     }
     const text = await file.text();

@@ -92,7 +92,7 @@ export function ScoringRulesBuilder({
 
       {scorableQuestions.length === 0 ? (
         <p className="rounded-xl border border-dashed border-[var(--line)] px-4 py-6 text-center text-xs text-[var(--ink-mute)]">
-          Add a question with a field name first — rules score the answers to
+          Add a question with a field name first. Rules score the answers to
           those questions.
         </p>
       ) : (

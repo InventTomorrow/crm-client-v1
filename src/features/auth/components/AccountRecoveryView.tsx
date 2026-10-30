@@ -71,7 +71,7 @@ export function AccountRecoveryView() {
           </p>
           {restore.data.whatsappReconnectRequired && (
             <p className="text-[12.5px] text-[var(--ink-mute)]">
-              WhatsApp was disconnected during the deletion — reconnect it by scanning the QR code again in
+              WhatsApp was disconnected during the deletion. Reconnect it by scanning the QR code again in
               settings.
             </p>
           )}
@@ -116,7 +116,7 @@ export function AccountRecoveryView() {
           <p className="text-[13px] mt-1 text-[var(--ink-mute)]">
             {verifiedEmail
               ? 'Choose what to do with it, then confirm with the code we emailed you.'
-              : 'Enter the account email and we’ll send a one-time code so you can restore it — or close it for good.'}
+              : 'Enter the account email and we’ll send a one-time code so you can restore it, or close it for good.'}
           </p>
         </div>
 

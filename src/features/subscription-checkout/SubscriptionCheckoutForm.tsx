@@ -184,7 +184,7 @@ export function SubscriptionCheckoutForm({
                       </FormControl>
                       {emailLocked ? (
                         <p className="text-[11.5px] text-[var(--ink-mute)]">
-                          Linked to your account — contact us to change it.
+                          Linked to your account. Contact us to change it.
                         </p>
                       ) : null}
                       <FormMessage />
@@ -239,7 +239,7 @@ export function SubscriptionCheckoutForm({
             {requiresPayment ? (
               <FieldGroup>
                 {/* The amount is fixed by the link, so it is shown rather than
-                    asked for — a typo here used to fail the server's check. */}
+                    asked for. A typo here used to fail the server's check. */}
                 <div className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2.5">
                   <span className="text-[12.5px] text-[var(--ink-mute)]">
                     Amount to transfer
@@ -294,7 +294,7 @@ export function SubscriptionCheckoutForm({
               <div className="flex items-start gap-3 rounded-xl bg-[var(--surface-2)] p-3.5 text-[12.5px] text-[var(--ink-soft)]">
                 <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[var(--accent)]" />
                 <span>
-                  This plan is free — no payment needed. Submit and we&apos;ll
+                  This plan is free. No payment needed. Submit and we&apos;ll
                   activate your workspace.
                 </span>
               </div>

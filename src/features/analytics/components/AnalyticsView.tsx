@@ -64,7 +64,7 @@ const AnalyticsRevenueChart = dynamic(
 );
 
 function formatDelta(delta: number | null) {
-  if (delta === null) return "—";
+  if (delta === null) return "N/A";
   const pct = Math.round(delta * 100);
   return `${pct >= 0 ? "+" : ""}${pct}%`;
 }

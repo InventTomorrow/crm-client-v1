@@ -271,7 +271,7 @@ export function CoverageAreasView() {
                       first.
                     </>
                   ) : (
-                    "Add the cities and areas the clinic serves — they become the columns here."
+                    "Add the cities and areas the clinic serves. They become the columns here."
                   )}
                 </p>
               </div>

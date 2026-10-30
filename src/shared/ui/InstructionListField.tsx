@@ -14,6 +14,10 @@ interface InstructionListFieldProps {
   maxItems?: number;
   maxLength?: number;
   disabled?: boolean;
+  /** Renders the label at the same weight as a regular form label, for fields that head their own block. */
+  isLabelProminent?: boolean;
+  /** While the list is empty, the add button sits centered inside the empty-state box instead of below it. */
+  isAddButtonCentered?: boolean;
 }
 
 /** A list of free-text instructions where each entry gets its own multi-line box, because an
@@ -28,8 +32,11 @@ export function InstructionListField({
   maxItems = 20,
   maxLength = 600,
   disabled = false,
+  isLabelProminent = false,
+  isAddButtonCentered = false,
 }: InstructionListFieldProps) {
   const isAtLimit = values.length >= maxItems;
+  const isAddButtonInsideEmptyState = isAddButtonCentered && values.length === 0;
   const listRef = useRef<HTMLOListElement>(null);
   const previousCount = useRef(values.length);
 
@@ -48,19 +55,46 @@ export function InstructionListField({
     onChange(values.filter((_, i) => i !== index));
   }
 
+  const addButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      className={isAddButtonInsideEmptyState ? undefined : 'self-start'}
+      disabled={disabled || isAtLimit}
+      onClick={() => onChange([...values, ''])}
+    >
+      <Plus size={13} className="mr-1.5" />
+      {addLabel}
+    </Button>
+  );
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-[var(--ink-soft)]">{label}</label>
+        <label
+          className={
+            isLabelProminent
+              ? 'text-sm font-medium text-[var(--ink)]'
+              : 'text-xs font-medium text-[var(--ink-soft)]'
+          }
+        >
+          {label}
+        </label>
         <span className="text-[11px] text-[var(--ink-mute)]">
           {values.length} / {maxItems}
         </span>
       </div>
 
       {values.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-3 text-center text-[11px] text-[var(--ink-mute)]">
-          {emptyHint}
-        </p>
+        <div
+          className={`flex flex-col items-center gap-3 rounded-lg border border-dashed border-[var(--line)] px-3 ${
+            isAddButtonInsideEmptyState ? 'py-5' : 'py-3'
+          }`}
+        >
+          <p className="text-center text-[11px] text-[var(--ink-mute)]">{emptyHint}</p>
+          {isAddButtonInsideEmptyState && addButton}
+        </div>
       ) : (
         <ol ref={listRef} className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1">
           {values.map((value, index) => (
@@ -94,17 +128,7 @@ export function InstructionListField({
         </ol>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="self-start"
-        disabled={disabled || isAtLimit}
-        onClick={() => onChange([...values, ''])}
-      >
-        <Plus size={13} className="mr-1.5" />
-        {addLabel}
-      </Button>
+      {!isAddButtonInsideEmptyState && addButton}
     </div>
   );
 }

@@ -112,7 +112,7 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
         aria-label={
           failed ? "Retry loading voice message" : playing ? "Pause" : "Play"
         }
-        title={failed ? "Couldn't load voice message — tap to retry" : undefined}
+        title={failed ? "Couldn't load voice message. Tap to retry" : undefined}
         className={cn(
           "flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 transition-transform active:scale-95",
           outbound
@@ -167,7 +167,7 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
           />
           <span>
             {failed
-              ? "Couldn't load — tap to retry"
+              ? "Couldn't load. Tap to retry"
               : fmt(playing || progress > 0 ? progress : duration)}
           </span>
         </div>

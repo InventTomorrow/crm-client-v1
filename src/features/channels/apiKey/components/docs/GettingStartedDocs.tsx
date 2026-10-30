@@ -8,7 +8,7 @@ export function GettingStartedDocs() {
           The Website API lets your own systems talk to this CRM. Use the{" "}
           <strong className="text-[var(--ink)]">Orders API</strong> to create
           an order the moment a customer checks out. The customer gets an order
-          confirmation on WhatsApp — your own message, or an automatic receipt.
+          confirmation on WhatsApp. Your own message, or an automatic receipt.
         </DocParagraph>
         <DocParagraph>
           All requests and responses are JSON. A successful response always
@@ -42,18 +42,18 @@ export function GettingStartedDocs() {
         <DocList>
           <li>
             <InlineCode>sk_test_…</InlineCode>{" "}
-            <strong className="text-[var(--ink)]">Sandbox</strong> — for
+            <strong className="text-[var(--ink)]">Sandbox</strong>: for
             building and testing. Orders are flagged as sandbox orders in the
             CRM.
           </li>
           <li>
             <InlineCode>sk_live_…</InlineCode>{" "}
-            <strong className="text-[var(--ink)]">Live</strong> — creates real
+            <strong className="text-[var(--ink)]">Live</strong>: creates real
             orders. Switch to it once your integration is tested.
           </li>
         </DocList>
         <DocParagraph>
-          A key&apos;s mode can&apos;t be changed later — create a new Live key
+          A key&apos;s mode can&apos;t be changed later. Create a new Live key
           when you&apos;re ready to go live.
         </DocParagraph>
       </DocSection>

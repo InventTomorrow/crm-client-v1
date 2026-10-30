@@ -166,11 +166,11 @@ export function AISettingsWidget() {
       <div className="pt-3">
         {aiEnabled ? (
           <p className="rounded-lg border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[11.5px] text-[#15803D]">
-            AI is enabled — responding to lead messages.
+            AI is enabled. Responding to lead messages.
           </p>
         ) : (
           <p className="rounded-lg border border-[#FDE68A] bg-[#FEF9C3] px-3 py-2 text-[11.5px] text-[#854D0E]">
-            AI is paused — turn on AI Auto-Reply to start answering
+            AI is paused. Turn on AI Auto-Reply to start answering
             automatically.
           </p>
         )}

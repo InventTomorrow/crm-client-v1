@@ -26,7 +26,7 @@ import { SearchField } from "@/shared/ui/SearchField";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { useInfiniteJobSeekers } from "../hooks/useJobSeekers";
 import type { JobSeeker } from "../types";
-import { cvKindLabel } from "../utils/cv";
+import { cvKindLabel, getCvViewUrl } from "../utils/cv";
 import { JobSeekerDeleteDialog } from "./JobSeekerDeleteDialog";
 
 const dateTime = new Intl.DateTimeFormat(undefined, {
@@ -111,7 +111,7 @@ function ApplicantRow({
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {jobSeeker.cv ? (
           <a
-            href={jobSeeker.cv.url}
+            href={getCvViewUrl(jobSeeker.cv.url)}
             target="_blank"
             rel="noopener noreferrer"
             title={jobSeeker.cv.fileName ?? "CV"}

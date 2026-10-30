@@ -26,7 +26,7 @@ const SETUP_STEPS = [
   {
     title: 'Set each cell',
     detail:
-      'Changes save as you pick them — there is no separate save button. Use Import for a large grid.',
+      'Changes save as you pick them. There is no separate save button. Use Import for a large grid.',
   },
 ];
 

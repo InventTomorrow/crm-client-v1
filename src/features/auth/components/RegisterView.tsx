@@ -213,7 +213,7 @@ export function RegisterView() {
               render={({ field }) => (
                 <FormItem className="mt-0.5">
                   {/* The label owns the id so the whole sentence toggles the box.
-                      The two links stay clickable — browsers never forward a
+                      The two links stay clickable. Browsers never forward a
                       label click that lands on interactive content. */}
                   <div className="flex justify-start items-start gap-2">
                     <Checkbox

@@ -128,7 +128,7 @@ export function AssistantPolicySection() {
 
         <PolicyCard
           title="Files and photos customers send"
-          hint="The assistant works out what was sent — a CV, a medical report, a payment proof — and answers the customer. It never interprets medical files."
+          hint="The assistant works out what was sent (a CV, a medical report, a payment proof) and answers the customer. It never interprets medical files."
         >
           <ToggleRow
             label="Let the assistant look at photos"
@@ -169,7 +169,7 @@ export function AssistantPolicySection() {
 
         <PolicyCard
           title="Appointments"
-          hint="Applies when patients cannot book a time themselves — online booking is off in Clinic hours."
+          hint="Applies when patients cannot book a time themselves. Online booking is off in Clinic hours."
         >
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {INTAKE_OPTIONS.map((option) => (
@@ -214,7 +214,7 @@ export function AssistantPolicySection() {
           </div>
           {catalog.languages.map(({ language, label }) => (
             <div key={language} className="flex flex-col gap-1">
-              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Handoff message — {label}</label>
+              <label className="text-[12px] font-medium text-[var(--ink-soft)]">Handoff message: {label}</label>
               <Textarea
                 className="text-[13px] min-h-[56px] resize-y"
                 maxLength={500}
@@ -230,7 +230,7 @@ export function AssistantPolicySection() {
 
         <PolicyCard
           title="Your own instructions"
-          hint="Rules the assistant follows in every chat — tone, escalation, what to say or avoid. They can narrow what it does, never override its safety limits. Rules for one service go on that service."
+          hint="Rules the assistant follows in every chat. Tone, escalation, what to say or avoid. They can narrow what it does, never override its safety limits. Rules for one service go on that service."
         >
           <InstructionListField
             label="Assistant instructions"
@@ -325,7 +325,7 @@ function DepartmentSelect({
       aria-label="Department"
     >
       <NativeSelectOption value="">Default department</NativeSelectOption>
-      {unknown && <NativeSelectOption value={value}>{value} (not set up — uses default)</NativeSelectOption>}
+      {unknown && <NativeSelectOption value={value}>{value} (not set up, uses default)</NativeSelectOption>}
       {active.map((department) => (
         <NativeSelectOption key={department.id} value={department.key}>
           {department.name}

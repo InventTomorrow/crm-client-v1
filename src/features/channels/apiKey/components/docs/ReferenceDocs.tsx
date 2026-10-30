@@ -13,7 +13,7 @@ export function ReferenceDocs() {
       <DocSection id="rate-limits" title="Rate limits">
         <DocParagraph>
           Each API key can make <strong className="text-[var(--ink)]">60</strong>{" "}
-          requests per minute. Going over returns status 429 — wait a moment
+          requests per minute. Going over returns status 429. Wait a moment
           and retry.
         </DocParagraph>
       </DocSection>
@@ -28,8 +28,8 @@ export function ReferenceDocs() {
 
       <DocSection id="errors" title="Error codes">
         <DocParagraph>
-          Branch on <InlineCode>error.code</InlineCode>, not the message text —
-          messages may be reworded, codes won&apos;t change.
+          Branch on <InlineCode>error.code</InlineCode>, not the message text.
+          Messages may be reworded, codes won&apos;t change.
         </DocParagraph>
         <ErrorTable rows={ERROR_ROWS} />
       </DocSection>

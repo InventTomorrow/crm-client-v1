@@ -36,8 +36,8 @@ const formatRange = (startsAt: string, endsAt: string): string => {
   const time = new Intl.DateTimeFormat(undefined, { timeStyle: 'short' });
 
   return date.format(start) === date.format(end)
-    ? `${date.format(start)}, ${time.format(start)} – ${time.format(end)}`
-    : `${date.format(start)} – ${date.format(end)}`;
+    ? `${date.format(start)}, ${time.format(start)} to ${time.format(end)}`
+    : `${date.format(start)} to ${date.format(end)}`;
 };
 
 /** Leave and blocked windows. Anything listed here is subtracted from this
@@ -81,7 +81,7 @@ export function PractitionerTimeOffDialog({
         <DialogHeader>
           <DialogTitle>
             Time off
-            {practitioner ? ` — ${practitionerDisplayName(practitioner)}` : ''}
+            {practitioner ? `: ${practitionerDisplayName(practitioner)}` : ''}
           </DialogTitle>
           <DialogDescription>
             Leave, conferences or blocked afternoons. These times stop being

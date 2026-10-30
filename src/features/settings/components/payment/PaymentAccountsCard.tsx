@@ -26,7 +26,7 @@ export function PaymentAccountsCard() {
               <h4 className="text-[13.5px] font-semibold">Payment details</h4>
               <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
                 Accounts customers pay into. Any service that collects payment
-                can offer these — customers are sent the default one, and the next only if they cannot use it. Changes save
+                can offer these. Customers are sent the default one, and the next only if they cannot use it. Changes save
                 immediately.
               </p>
             </>

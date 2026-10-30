@@ -34,7 +34,7 @@ export const COVERAGE_META: Record<
   },
   UNKNOWN: {
     label: "Not set",
-    short: "—",
+    short: "N/A",
     description:
       "No row. The assistant will say coverage is unconfirmed and hand off.",
   },

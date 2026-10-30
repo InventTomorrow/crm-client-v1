@@ -166,7 +166,7 @@ export function JobSeekerSettingsForm() {
                 After getting the details
               </h3>
               <p className="mt-0.5 text-[11.5px] leading-snug text-[var(--ink-mute)]">
-                How the assistant behaves once it has them — e.g. that you are
+                How the assistant behaves once it has them, e.g. that you are
                 not hiring right now, or that you will consider them first when
                 you do. It never promises a job, interview, salary or callback
                 beyond what you write here.

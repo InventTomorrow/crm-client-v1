@@ -151,7 +151,7 @@ export const TIERS = [
   {
     id: 2,
     name: "URL Sync",
-    desc: "Paste a product page URL — we extract details automatically.",
+    desc: "Paste a product page URL. We extract details automatically.",
     cta: "Add URL",
     count: "12 synced",
   },
@@ -184,8 +184,8 @@ export const STOREFRONTS = [
     color: "#F85606",
     acct: "asaanrabta.daraz.pk",
   },
-  { name: "WooCommerce", status: "disconnected", color: "#7F54B3", acct: "—" },
-  { name: "BigCommerce", status: "disconnected", color: "#34313F", acct: "—" },
+  { name: "WooCommerce", status: "disconnected", color: "#7F54B3", acct: "N/A" },
+  { name: "BigCommerce", status: "disconnected", color: "#34313F", acct: "N/A" },
 ] as const;
 
 export const ERP_SYSTEMS = ["SAP S/4HANA", "Oracle NetSuite", "Odoo"] as const;

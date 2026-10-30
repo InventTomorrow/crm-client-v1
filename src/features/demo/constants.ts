@@ -37,6 +37,6 @@ export const DEMO_HIGHLIGHTS: DemoHighlight[] = [
   {
     Icon: Package,
     title: "Inventory",
-    body: "Keep stock in sync — it adjusts automatically as orders are booked or cancelled.",
+    body: "Keep stock in sync. It adjusts automatically as orders are booked or cancelled.",
   },
 ];

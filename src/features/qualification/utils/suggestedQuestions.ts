@@ -18,7 +18,7 @@ const SERVICE_BUSINESS_QUESTIONS: SuggestedQuestion[] = [
   {
     questionText: "What's your monthly budget?",
     inputType: "QUICK_REPLY",
-    options: ["Under 50k", "50k–150k", "150k–500k", "Over 500k"],
+    options: ["Under 50k", "50k to 150k", "150k to 500k", "Over 500k"],
     isRequired: true,
     mapsToLeadField: null,
   },
@@ -70,8 +70,8 @@ const HEALTHCARE_QUESTIONS: SuggestedQuestion[] = [
     inputType: "QUICK_REPLY",
     options: [
       "Less than a week",
-      "1–4 weeks",
-      "1–6 months",
+      "1 to 4 weeks",
+      "1 to 6 months",
       "More than 6 months",
     ],
     isRequired: true,

@@ -36,7 +36,7 @@ const SALES_STYLES = [
   {
     key: 'BALANCED' as const,
     label: 'Balanced',
-    desc: 'Recommends with confidence, one add-on, easy close — never pushes past a no',
+    desc: 'Recommends with confidence, one add-on, easy close. Never pushes past a no',
   },
 ];
 
@@ -121,7 +121,7 @@ export function ChatbotSection() {
           />
           <p className="text-[11px] text-[var(--ink-mute)]">
             Applies to the assistant&apos;s replies. The greeting, escalation and fallback messages
-            below are sent exactly as written — write them in the same language.
+            below are sent exactly as written. Write them in the same language.
           </p>
         </div>
 

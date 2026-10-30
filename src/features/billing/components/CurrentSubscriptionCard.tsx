@@ -23,7 +23,7 @@ const STATUS_LABEL: Record<SubscriptionStatus, string> = {
 };
 
 function fmtDate(value: string | null) {
-  if (!value) return '—';
+  if (!value) return 'N/A';
   return new Date(value).toLocaleDateString('en-PK', {
     year: 'numeric',
     month: 'short',

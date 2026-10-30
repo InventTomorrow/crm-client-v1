@@ -26,10 +26,10 @@ describe("getVariantTotals", () => {
 });
 
 describe("formatPriceRange", () => {
-  it("shows one price, a range, or a dash when nothing is priced", () => {
+  it("shows one price, a range, or N/A when nothing is priced", () => {
     expect(formatPriceRange(8999, 8999)).toBe(`Rs. ${(8999).toLocaleString("en-PK")}`);
-    expect(formatPriceRange(100, 250)).toBe("Rs. 100 – Rs. 250");
-    expect(formatPriceRange(null, null)).toBe("—");
+    expect(formatPriceRange(100, 250)).toBe("Rs. 100 to Rs. 250");
+    expect(formatPriceRange(null, null)).toBe("N/A");
   });
 });
 

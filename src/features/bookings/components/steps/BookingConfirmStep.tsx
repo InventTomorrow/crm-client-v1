@@ -55,7 +55,7 @@ export function BookingConfirmStep({
           label={vocabulary.singularTitle}
           value={booking.customerName || `Unnamed ${vocabulary.singular}`}
         />
-        <SummaryRow label="Contact" value={booking.customerPhone || "—"} />
+        <SummaryRow label="Contact" value={booking.customerPhone || "N/A"} />
         <SummaryRow
           label="When"
           value={
@@ -84,7 +84,7 @@ export function BookingConfirmStep({
         </p>
         {answeredQuestions.length === 0 ? (
           <p className="text-[11.5px] text-[var(--ink-mute)]">
-            None — the {vocabulary.singular} keeps whatever score they already
+            None. The {vocabulary.singular} keeps whatever score they already
             had.
           </p>
         ) : (
@@ -96,8 +96,8 @@ export function BookingConfirmStep({
               >
                 <span className="text-[var(--ink)]">
                   {question.questionText}
-                </span>{" "}
-                — {answers[question.fieldName]}
+                </span>:{" "}
+                {answers[question.fieldName]}
               </li>
             ))}
           </ul>

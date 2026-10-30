@@ -52,9 +52,9 @@ const DEFAULT_COPY: QualificationCopy = {
   statusDescription:
     "Turn the form off to let the bot chat without qualifying anyone.",
   statusToggleHint:
-    "While off, leads still arrive — they just come in unscored.",
+    "While off, leads still arrive. They just come in unscored.",
   questionsDescription:
-    "Keep it short — every extra question is another chance for the lead to drop off.",
+    "Keep it short. Every extra question is another chance for the lead to drop off.",
   scoringDescription:
     "Points awarded per answer, then compared against your thresholds.",
   thresholdsDescription:
@@ -62,7 +62,7 @@ const DEFAULT_COPY: QualificationCopy = {
 
   emptyTitle: "No questions yet",
   emptyDescription:
-    "Leads still reach your pipeline — they just arrive unscored. Add questions and the bot will ask, score and sort them before anyone opens a chat.",
+    "Leads still reach your pipeline. They just arrive unscored. Add questions and the bot will ask, score and sort them before anyone opens a chat.",
   emptyAction: "Add bot questions",
   builderEmptyHint:
     "Add the questions the bot should ask before a lead counts as qualified.",
@@ -76,7 +76,7 @@ const DEFAULT_COPY: QualificationCopy = {
 
   scoringSummary:
     "Each matching rule adds its score. The total decides the lead's temperature.",
-  noScoringRules: "No rules yet — every lead totals zero and lands as cold.",
+  noScoringRules: "No rules yet. Every lead totals zero and lands as cold.",
   noScoringRulesHint: "Every lead scores zero",
   mappedFieldsTitle: "Saved to the lead",
   mappedFieldsDescription: "Answers written straight onto the lead record.",
@@ -94,9 +94,9 @@ const COPY_BY_VERTICAL: Partial<
     statusDescription:
       "Turn intake off to let the assistant answer questions without taking any details.",
     statusToggleHint:
-      "While off, enquiries still arrive — they just come in without an intake.",
+      "While off, enquiries still arrive. They just come in without an intake.",
     questionsDescription:
-      "Keep it short — a patient in distress abandons a long form, and a coordinator can always ask the rest.",
+      "Keep it short. A patient in distress abandons a long form, and a coordinator can always ask the rest.",
     scoringDescription:
       "Points awarded per answer, so the urgent enquiries surface first.",
     thresholdsDescription:
@@ -104,7 +104,7 @@ const COPY_BY_VERTICAL: Partial<
 
     emptyTitle: "No intake questions yet",
     emptyDescription:
-      "Enquiries still reach your inbox — they just arrive with nothing but a name. Add questions and the assistant will collect the details a coordinator would otherwise have to chase.",
+      "Enquiries still reach your inbox. They just arrive with nothing but a name. Add questions and the assistant will collect the details a coordinator would otherwise have to chase.",
     emptyAction: "Add intake questions",
     builderEmptyHint:
       "Add the details the assistant should collect before a coordinator picks up the enquiry.",
@@ -119,7 +119,7 @@ const COPY_BY_VERTICAL: Partial<
     scoringSummary:
       "Each matching rule adds its score. The total decides how urgent the enquiry is.",
     noScoringRules:
-      "No rules yet — every enquiry totals zero and lands as routine.",
+      "No rules yet. Every enquiry totals zero and lands as routine.",
     noScoringRulesHint: "Every enquiry scores zero",
     mappedFieldsTitle: "Saved to the patient",
     mappedFieldsDescription:

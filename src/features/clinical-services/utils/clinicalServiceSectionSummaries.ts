@@ -135,7 +135,7 @@ function summarisePricing(values: ClinicalServiceFormInput): string {
   if (values.pricingModel === "RANGE") {
     price =
       filled(values.priceMin) && filled(values.priceMax)
-        ? `${money(values.priceMin)}–${Number(values.priceMax).toLocaleString()}`
+        ? `${money(values.priceMin)} to ${Number(values.priceMax).toLocaleString()}`
         : null;
   } else if (filled(values.price)) {
     price = money(values.price);

@@ -297,7 +297,7 @@ export function BroadcasterDialog({
                 </div>
               </div>
               <p className="text-[11px] text-[var(--ink-mute)] text-center px-4">
-                Messages are sent with randomized 2–5s delays to mimic human
+                Messages are sent with randomized 2 to 5s delays to mimic human
                 behavior and protect your WhatsApp session.
               </p>
             </div>
@@ -425,7 +425,7 @@ export function BroadcasterDialog({
                         {l.name}
                       </div>
                       <div className="text-[11.5px] text-[var(--ink-mute)] truncate">
-                        {l.phone || l.email || l.city || "—"}
+                        {l.phone || l.email || l.city || "N/A"}
                       </div>
                     </div>
                     <span

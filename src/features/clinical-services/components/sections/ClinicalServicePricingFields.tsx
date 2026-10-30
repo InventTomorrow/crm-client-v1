@@ -71,7 +71,7 @@ export function ClinicalServicePricingFields({
 
       {!quotable && (
         <p className="text-muted-foreground text-sm">
-          The assistant will never state a figure for this service — it tells
+          The assistant will never state a figure for this service. It tells
           the family a coordinator will confirm pricing, and hands the
           conversation over.
         </p>

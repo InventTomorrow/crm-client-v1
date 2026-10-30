@@ -8,7 +8,7 @@ const TOGGLES = [
   {
     name: "isPubliclyListed",
     label: "Show in the assistant's menu",
-    hint: 'Off means "available on enquiry" — never volunteered, but still found when a family names it directly.',
+    hint: 'Off means "available on enquiry". Never volunteered, but still found when a family names it directly.',
   },
   {
     name: "requiresPractitioner",
@@ -27,7 +27,8 @@ export function ClinicalServiceVisibilityFields({
   isSaving,
 }: ClinicalServiceFormSectionProps) {
   return (
-    <>
+    // One child for the step container, whose divider and padding rules would otherwise squash the bordered rows together.
+    <div className="flex flex-col gap-3">
       {TOGGLES.map((toggle) => (
         <FormField
           key={toggle.name}
@@ -36,8 +37,8 @@ export function ClinicalServiceVisibilityFields({
           // `flex-row` is explicit: FormItem is flex-col, and tailwind-merge
           // only drops a conflicting display, not the direction.
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border p-3">
-              <div className="space-y-0.5">
+            <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border p-4">
+              <div className="space-y-1">
                 <Label htmlFor={toggle.name}>{toggle.label}</Label>
                 <p className="text-muted-foreground text-sm">{toggle.hint}</p>
               </div>
@@ -53,6 +54,6 @@ export function ClinicalServiceVisibilityFields({
           )}
         />
       ))}
-    </>
+    </div>
   );
 }

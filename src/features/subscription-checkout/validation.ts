@@ -47,7 +47,7 @@ const baseSchema = z.object({
   paymentAmount: z.coerce
     .number({ message: "Enter the amount you paid" })
     .min(0, "Amount cannot be negative")
-    .max(10_000_000, "Amount seems too large — please check"),
+    .max(10_000_000, "Amount seems too large. Please check"),
 
   /** Set by the receipt uploader once the file lands. Required only for paid
    *  plans — see subscriptionCheckoutSchema below. */

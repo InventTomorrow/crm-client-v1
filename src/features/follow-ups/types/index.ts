@@ -71,6 +71,20 @@ export interface FollowUpAnalyticsView {
   totals: ReplyRate;
 }
 
+export interface ScheduledFollowUp {
+  leadId: string;
+  leadName: string | null;
+  leadPhone: string | null;
+  nextAttempt: number;
+  dueAt: string;
+}
+
+/** Mirrors the server's UpcomingFollowUpsView. */
+export interface UpcomingFollowUpsView {
+  isAvailable: boolean;
+  followUps: ScheduledFollowUp[];
+}
+
 /** The latest "Follow up now" outcome; the server keeps it for a few minutes. */
 export type ManualFollowUpResult =
   | { state: 'QUEUED'; at: string }

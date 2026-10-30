@@ -95,7 +95,7 @@ export function ClinicalServiceBasicsFields({
                 Escalation queue
                 <FieldHint label="the escalation queue">
                   When the assistant hands a conversation about this service to
-                  a person, this is the team it alerts — type the queue&apos;s
+                  a person, this is the team it alerts. Type the queue&apos;s
                   key, e.g. <code>clinical</code>. Leave it blank and hand-offs
                   go to the workspace&apos;s default queue.
                 </FieldHint>

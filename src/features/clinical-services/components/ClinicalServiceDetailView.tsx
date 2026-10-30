@@ -160,7 +160,7 @@ export function ClinicalServiceDetailView({
           <Alert>
             <Info className="size-4" />
             <AlertDescription>
-              This is what the assistant works from — priced, worded and limited
+              This is what the assistant works from. Priced, worded and limited
               exactly as it will be in a conversation.
             </AlertDescription>
           </Alert>
@@ -180,7 +180,7 @@ export function ClinicalServiceDetailView({
             {!pricing.quotable && (
               <p className="mt-2 flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
                 <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
-                No figure reaches the patient — the assistant always hands this
+                No figure reaches the patient. The assistant always hands this
                 to a coordinator to quote.
               </p>
             )}
@@ -223,7 +223,7 @@ export function ClinicalServiceDetailView({
                 <TickList
                   values={preview.includedActivities}
                   tone="yes"
-                  empty="Nothing listed — the assistant cannot confirm what this covers."
+                  empty="Nothing listed. The assistant cannot confirm what this covers."
                 />
               </div>
               <div className="border-t pt-4">
