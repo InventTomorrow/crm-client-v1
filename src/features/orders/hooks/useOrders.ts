@@ -1,11 +1,13 @@
 'use client';
 import {
-  useInfiniteQuery,
+  keepPreviousData,
   useIsFetching,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { downloadBlob, extractErrorMessage } from '@/lib/utils';
 import {
@@ -14,6 +16,7 @@ import {
   exportOrdersCsv,
   getOrder,
   getOrders,
+  getOrdersPage,
   getOrdersSummary,
   importOrdersCsv,
   updateOrder,
@@ -23,27 +26,67 @@ import type {
   CreateOrderPayload,
   OrderExportParams,
   OrderFilters,
+  OrderListItem,
   OrderStatus,
   UpdateOrderPayload,
 } from '../types';
 
-const PAGE_SIZE = 25;
+const DEFAULT_ORDERS_PAGE_SIZE = 20;
+const NO_ORDERS: OrderListItem[] = [];
 
 const keys = {
   all: ['orders'] as const,
-  list: (filters: OrderFilters) => ['orders', 'list', filters] as const,
+  page: (filters: OrderFilters, pagination: PaginationState) =>
+    ['orders', 'list', filters, pagination.pageIndex, pagination.pageSize] as const,
   summary: ['orders', 'summary'] as const,
   detail: (id: string) => ['orders', 'detail', id] as const,
 };
 
-export function useOrders(filters: OrderFilters) {
-  return useInfiniteQuery({
-    queryKey: keys.list(filters),
-    queryFn: ({ pageParam }) => getOrders({ ...filters, cursor: pageParam, limit: PAGE_SIZE }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1]?.id : undefined,
+/** Page state that falls back to page one whenever the filters change. */
+function useOrdersPagination(filters: OrderFilters) {
+  const filtersKey = JSON.stringify(filters);
+  const [paginationState, setPaginationState] = useState({
+    pageIndex: 0,
+    pageSize: DEFAULT_ORDERS_PAGE_SIZE,
+    filtersKey,
   });
+  const pagination: PaginationState = {
+    pageIndex: paginationState.filtersKey === filtersKey ? paginationState.pageIndex : 0,
+    pageSize: paginationState.pageSize,
+  };
+  const setPagination = useCallback(
+    (nextPagination: PaginationState) => setPaginationState({ ...nextPagination, filtersKey }),
+    [filtersKey],
+  );
+  return { pagination, setPagination };
+}
+
+export function usePaginatedOrders(filters: OrderFilters) {
+  const { pagination, setPagination } = useOrdersPagination(filters);
+  const { pageIndex, pageSize } = pagination;
+  const ordersPageQuery = useQuery({
+    queryKey: keys.page(filters, pagination),
+    queryFn: () => getOrdersPage({ ...filters, page: pageIndex + 1, limit: pageSize }),
+    placeholderData: keepPreviousData,
+  });
+
+  const totalOrders = ordersPageQuery.data?.total ?? 0;
+  const lastPageIndex = Math.max(0, Math.ceil(totalOrders / pageSize) - 1);
+  const isPastLastPage =
+    !!ordersPageQuery.data && !ordersPageQuery.isPlaceholderData && pageIndex > lastPageIndex;
+
+  // Deleting the last orders of the final page would otherwise leave an empty page behind.
+  useEffect(() => {
+    if (isPastLastPage) setPagination({ pageIndex: lastPageIndex, pageSize });
+  }, [isPastLastPage, lastPageIndex, pageSize, setPagination]);
+
+  return {
+    orders: ordersPageQuery.data?.orders ?? NO_ORDERS,
+    totalOrders,
+    isLoading: ordersPageQuery.isLoading,
+    pagination,
+    setPagination,
+  };
 }
 
 export function useOrdersSummary() {

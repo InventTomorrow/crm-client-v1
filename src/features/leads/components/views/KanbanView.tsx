@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { filterLeads } from "../../hooks/useLeads";
 import type { Lead, LeadStatus, LeadsFilter } from "../../types";
@@ -15,12 +15,16 @@ export default function KanbanView({
   onSelect,
   onStatusChange,
   onAddLead,
+  onColumnScrollNearEnd,
+  isLoadingMoreLeads,
 }: {
   leads: Lead[];
   filter: LeadsFilter;
   onSelect: (l: Lead) => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onAddLead: (status: LeadStatus) => void;
+  onColumnScrollNearEnd: (column: HTMLElement) => void;
+  isLoadingMoreLeads: boolean;
 }) {
   const vocabulary = useLeadVocabulary();
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -91,7 +95,14 @@ export default function KanbanView({
               <Plus size={13} />
             </Button>
           </div>
-          <div className="scroll overflow-y-auto flex-1 flex flex-col gap-2 pr-0.5 min-h-[80px]">
+          {/* Wheel covers short columns that never scroll but still need the next page. */}
+          <div
+            className="scroll overflow-y-auto flex-1 flex flex-col gap-2 pr-0.5 min-h-[80px]"
+            onScroll={(e) => onColumnScrollNearEnd(e.currentTarget)}
+            onWheel={(e) => {
+              if (e.deltaY > 0) onColumnScrollNearEnd(e.currentTarget);
+            }}
+          >
             {grouped[key]?.map((l) => (
               <LeadCard
                 key={l.id}
@@ -114,6 +125,11 @@ export default function KanbanView({
             {(grouped[key]?.length ?? 0) === 0 && (
               <div className="p-5 text-center text-[12px] rounded-lg border border-dashed text-[var(--ink-mute)] border-[var(--line)]">
                 {`Drop a ${vocabulary.singular} here`}
+              </div>
+            )}
+            {isLoadingMoreLeads && (
+              <div className="flex justify-center py-2 text-[var(--ink-mute)]">
+                <Loader2 size={14} className="animate-spin" />
               </div>
             )}
           </div>

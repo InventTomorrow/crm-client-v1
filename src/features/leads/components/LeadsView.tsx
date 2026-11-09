@@ -33,6 +33,7 @@ import {
   useDeleteLead,
   useInfiniteLeads,
   useLead,
+  useLoadMoreLeadsNearEnd,
   useRestoreLead,
   useUpdateLead,
   useUpdateLeadStatus,
@@ -65,6 +66,11 @@ export function LeadsView() {
     isFetching,
   } = useInfiniteLeads(archived);
   const leads = useMemo(() => data?.pages.flat() ?? [], [data]);
+  const loadMoreLeadsNearEnd = useLoadMoreLeadsNearEnd({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
   const addLead = useAddLead();
   const updateLead = useUpdateLead();
   const updateStatus = useUpdateLeadStatus();
@@ -349,6 +355,8 @@ export function LeadsView() {
               onSelect={setSelected}
               onStatusChange={handleStatusChange}
               onAddLead={openCreate}
+              onColumnScrollNearEnd={loadMoreLeadsNearEnd}
+              isLoadingMoreLeads={isFetchingNextPage}
             />
           </div>
           <div className="md:hidden">
@@ -401,8 +409,14 @@ export function LeadsView() {
         />
       )}
 
+      {/* Desktop kanban loads on scroll; phones show the table there, so they keep the button. */}
       {!isLoading && hasNextPage && (
-        <div className="flex justify-center py-1">
+        <div
+          className={cn(
+            "flex justify-center py-1",
+            isKanbanLayout && "md:hidden",
+          )}
+        >
           <Button
             variant="outline"
             size="sm"

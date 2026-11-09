@@ -23,7 +23,6 @@ import { StatCard } from "@/shared/ui/StatCard";
 import {
   Download,
   Image as ImageIcon,
-  Loader2,
   Plus,
   Search,
   StickyNote,
@@ -36,8 +35,8 @@ import { toast } from "sonner";
 import {
   useDeleteOrder,
   useExportOrders,
-  useOrders,
   useOrdersSummary,
+  usePaginatedOrders,
   useRefreshOrders,
 } from "../hooks/useOrders";
 import { ORDER_STATUS_META, formatMoney } from "../lib/format";
@@ -98,14 +97,12 @@ export function OrdersView() {
     dismissUnreachableMessage,
   } = useOpenLeadChat();
 
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useOrders(filters);
+  const { orders, totalOrders, isLoading, pagination, setPagination } =
+    usePaginatedOrders(filters);
   const { data: summary } = useOrdersSummary();
   const { refreshOrders, isRefreshing } = useRefreshOrders();
   const deleteOrder = useDeleteOrder();
   const exportOrders = useExportOrders();
-
-  const orders = useMemo(() => data?.pages.flat() ?? [], [data]);
 
   const openCreate = () => router.push("/orders/new");
   const openEdit = useCallback(
@@ -355,15 +352,19 @@ export function OrdersView() {
 
       {/* DataTable with toolbar */}
       <DataTable
-        data={orders as OrderListItem[]}
+        data={orders}
         columns={columns}
         isLoading={isLoading}
         selectable
         onRowClick={(o) => setSelectedId(o.id)}
         selection={orderSelection}
         emptyMessage="No orders yet."
-        defaultPageSize={20}
         maxVisibleRows={15}
+        serverPagination={{
+          ...pagination,
+          totalRows: totalOrders,
+          onPaginationChange: setPagination,
+        }}
         toolbar={
           <div className="card flex items-center gap-2 flex-1 flex-wrap p-2">
             {selectedOrders.length > 0 ? (
@@ -448,23 +449,6 @@ export function OrdersView() {
           </div>
         }
       />
-
-      {/* Load more for infinite scroll */}
-      {hasNextPage && (
-        <div className="flex justify-center mt-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage && (
-              <Loader2 size={13} className="animate-spin" />
-            )}
-            Load more
-          </Button>
-        </div>
-      )}
 
       {selectedId && (
         <OrderDetailSheet
