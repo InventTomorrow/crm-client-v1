@@ -80,7 +80,7 @@ function Tile({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] p-3">
+    <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-3">
       <div className="text-[11px] font-medium uppercase leading-tight tracking-wide text-[var(--ink-mute)]">
         {label}
       </div>

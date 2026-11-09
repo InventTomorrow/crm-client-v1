@@ -76,7 +76,7 @@ export function PreviewDetailRow({
     <div className="flex items-baseline justify-between gap-3 text-[12px]">
       <span className="shrink-0 text-[var(--ink-mute)]">{label}</span>
       <span className="min-w-0 truncate text-right font-medium text-[var(--ink)]">
-        {value ?? '—'}
+        {value ?? 'N/A'}
       </span>
     </div>
   );

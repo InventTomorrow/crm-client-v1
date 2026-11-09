@@ -76,7 +76,7 @@ export function CancelAppointmentDialog({
             id="cancel-reason"
             rows={3}
             maxLength={MAX_REASON_LENGTH}
-            placeholder="e.g. Something came up on our side — we'll rebook you."
+            placeholder="e.g. Something came up on our side. We'll rebook you."
             disabled={updateStatus.isPending}
             value={cancelReason}
             onChange={(event) => setCancelReason(event.target.value)}

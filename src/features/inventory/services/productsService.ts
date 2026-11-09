@@ -207,7 +207,8 @@ export type UploadFolder =
   | "avatars"
   | "attachments"
   | "resources"
-  | "receipts";
+  | "receipts"
+  | "cvs";
 
 /** Step 1: get a presigned PUT URL from our backend */
 export const getPresignedUrl = async (

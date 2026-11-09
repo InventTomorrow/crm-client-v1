@@ -57,7 +57,7 @@ export function PlanGrid({ plans, activePlanId, requestedPlanId, scheduledPlanId
         <div
           role="tablist"
           aria-label="Filter plans by billing period"
-          className="inline-flex flex-wrap gap-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface-2)] p-1"
+          className="inline-flex flex-wrap gap-1 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-1"
         >
           {tabs.map((tab) => {
             const isSelected = tab === selectedTab;
@@ -68,7 +68,7 @@ export function PlanGrid({ plans, activePlanId, requestedPlanId, scheduledPlanId
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => setActiveTab(tab)}
-                className={`rounded-[7px] px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
+                className={`rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
                   isSelected
                     ? 'bg-[var(--surface)] text-[var(--ink)] shadow-[var(--shadow-1)]'
                     : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'

@@ -44,7 +44,7 @@ export function CardGridSkeleton({
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-1)]"
+          className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-1)]"
         >
           <div className="flex items-start gap-3 border-b border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
             {withAvatar && <SkeletonBar className="size-11 shrink-0 rounded-full" />}
@@ -64,7 +64,7 @@ export function CardGridSkeleton({
               <SkeletonBar className="h-3 w-full" />
               <SkeletonBar className="h-3 w-4/5" />
             </div>
-            <div className="flex items-center gap-3 rounded-[var(--r-10)] bg-[var(--surface-2)] px-3 py-2.5">
+            <div className="flex items-center gap-3 rounded-lg bg-[var(--surface-2)] px-3 py-2.5">
               <SkeletonBar className="h-4 w-16" />
               <SkeletonBar className="h-3 w-20" />
             </div>

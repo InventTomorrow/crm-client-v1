@@ -68,7 +68,7 @@ export function ServiceOrderNotificationRow({
         className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[var(--surface-2)]"
       >
         <span
-          className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px]"
+          className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
           style={{ background: bg, color }}
         >
           <Icon size={15} />
@@ -171,7 +171,7 @@ export function ServiceOrderNotificationRow({
             </Link>
             <p className="text-[11.5px] text-[var(--ink-mute)]">
               {order.paymentRequired
-                ? 'Payment details were shared in chat — the receipt appears on the order once sent.'
+                ? 'Payment details were shared in chat. The receipt appears on the order once sent.'
                 : 'Payment is not taken in chat.'}{' '}
               Reply 1, 2 or 3 to the WhatsApp alert to confirm, mark paid or cancel.
             </p>

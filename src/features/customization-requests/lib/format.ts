@@ -32,13 +32,13 @@ export const REQUEST_STATUS_META: Record<CustomizationRequestStatus, StatusMeta>
     label: 'Answered',
     cls: 'bg-[var(--accent-soft)] text-[var(--accent)]',
     dot: 'bg-[var(--accent)]',
-    hint: 'Replied in the chat — waiting on the customer',
+    hint: 'Replied in the chat. Waiting on the customer',
   },
   ACCEPTED: {
     label: 'Accepted',
     cls: 'bg-[var(--success-soft)] text-[var(--success-foreground)]',
     dot: 'bg-[var(--success)]',
-    hint: 'Agreed as possible — raise the order next',
+    hint: 'Agreed as possible. Raise the order next',
   },
   DECLINED: {
     label: 'Declined',

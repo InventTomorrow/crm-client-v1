@@ -31,7 +31,7 @@ export const CURRENCIES = ['PKR'] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
 export const CURRENCY_LABELS: Record<Currency, string> = {
-  PKR: 'PKR — Pakistani Rupee',
+  PKR: 'PKR: Pakistani Rupee',
 };
 
 export const BILLING_CYCLE_LABELS: Record<BillingCycle, string> = {
@@ -241,7 +241,7 @@ export const serviceOfferingWizardSchema = serviceOfferingFormSchema.superRefine
       ctx.addIssue({
         code: 'custom',
         path: ['keyOutcomes'],
-        message: `Add at least ${MIN_KEY_OUTCOMES} outcomes — the bot leans on these when a lead is comparing options.`,
+        message: `Add at least ${MIN_KEY_OUTCOMES} outcomes. The bot leans on these when a lead is comparing options.`,
       });
     }
 

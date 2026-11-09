@@ -83,7 +83,7 @@ export function BusinessAboutFields({
             <FormControl>
               <Textarea
                 className="min-h-[96px] resize-y"
-                placeholder="Your business intro will appear here — or write your own."
+                placeholder="Your business intro will appear here, or write your own."
                 {...field}
               />
             </FormControl>

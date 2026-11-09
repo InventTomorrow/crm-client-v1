@@ -131,7 +131,7 @@ export default function LeadFormDialog({
             <DialogDescription className="text-[12px] mt-0.5 text-[var(--ink-mute)]">
               {mode === "edit"
                 ? `Update this ${vocabulary.singular}'s information.`
-                : `Manually create a ${vocabulary.singular} — channel sync will fill the rest.`}
+                : `Manually create a ${vocabulary.singular}. Channel sync will fill the rest.`}
             </DialogDescription>
           </div>
           <Button
@@ -225,7 +225,7 @@ export default function LeadFormDialog({
                         onValueChange={field.onChange}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger size="lg" className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>

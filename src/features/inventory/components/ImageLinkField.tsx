@@ -32,7 +32,7 @@ export function ImageLinkField({
     if (!url) return;
     if (!isSupportedImageUrl(url)) {
       setError(
-        `Paste a direct link to an image file — ${SUPPORTED_IMAGE_EXTENSIONS_LABEL}.`,
+        `Paste a direct link to an image file: ${SUPPORTED_IMAGE_EXTENSIONS_LABEL}.`,
       );
       return;
     }

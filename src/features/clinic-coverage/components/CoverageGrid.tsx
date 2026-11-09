@@ -39,7 +39,7 @@ export function CoverageGrid({
     // Wide grids scroll inside their own container rather than the page. The
     // header sticks to the top of that container so the city a column belongs
     // to stays readable once a clinic has more services than fit on screen.
-    <div className="bg-card max-h-[70vh] overflow-auto rounded-xl border shadow-xs">
+    <div className="bg-card max-h-[70vh] overflow-auto border shadow-xs">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-20">
           <tr>

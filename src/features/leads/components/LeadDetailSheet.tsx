@@ -1,5 +1,6 @@
 "use client";
 import { useGenerateCheckout, useSendReceipt } from "@/features/checkout/hooks";
+import { LeadFollowUpCard } from "@/features/follow-ups/components/LeadFollowUpCard";
 import { useLeadOrders } from "@/features/orders/hooks/useOrders";
 import { formatDateTime } from "@/lib/date";
 import { pkr } from "@/lib/utils";
@@ -123,7 +124,7 @@ export default function LeadDetailSheet({
                 ? "Email ✓"
                 : `Email: ${res.email.replace(/_/g, " ")}`,
             );
-          toast.success(`Receipt sent — ${parts.join(", ")}`);
+          toast.success(`Receipt sent: ${parts.join(", ")}`);
           setReceiptOpen(false);
         },
       },
@@ -258,6 +259,8 @@ export default function LeadDetailSheet({
               </div>
             ))}
           </div>
+
+          <LeadFollowUpCard leadId={lead.id} />
 
           {/* Order history */}
           <div className="flex flex-col gap-2">

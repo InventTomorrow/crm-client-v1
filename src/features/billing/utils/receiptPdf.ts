@@ -92,8 +92,8 @@ export async function downloadReceiptPdf(payment: Payment, account: ReceiptAccou
   y += 30;
   const rows: [string, string][] = [
     ['Status', humanize(payment.status)],
-    ['Payment method', payment.method ? humanize(payment.method) : '—'],
-    ['Reference', payment.reference ?? '—'],
+    ['Payment method', payment.method ? humanize(payment.method) : 'N/A'],
+    ['Reference', payment.reference ?? 'N/A'],
     ['Currency', payment.currency],
   ];
   doc.setFontSize(9.5);

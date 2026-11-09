@@ -78,7 +78,7 @@ export function CreateApiKeyDialog({
             <DialogHeader>
               <DialogTitle>API key created</DialogTitle>
               <DialogDescription>
-                Copy this key now — for your security, it will never be shown
+                Copy this key now. For your security, it will never be shown
                 again. If you lose it, revoke it and create a new one.
               </DialogDescription>
             </DialogHeader>
@@ -120,7 +120,7 @@ export function CreateApiKeyDialog({
             <DialogHeader>
               <DialogTitle>New API key</DialogTitle>
               <DialogDescription>
-                Sandbox keys are for testing — their orders are flagged as
+                Sandbox keys are for testing. Their orders are flagged as
                 sandbox orders. Live keys create real orders.
               </DialogDescription>
             </DialogHeader>

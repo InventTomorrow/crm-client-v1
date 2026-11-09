@@ -92,7 +92,7 @@ export function OrderCustomerPicker({
               ? "A saved order stays with its customer."
               : isCustomerLocked
                 ? "Set from the chat you started this order in. Their saved details are filled in below."
-                : "Picking a customer fills in their saved details below — edit them for this order if needed."}
+                : "Picking a customer fills in their saved details below. Edit them for this order if needed."}
           </FormDescription>
           <FormMessage />
         </FormItem>

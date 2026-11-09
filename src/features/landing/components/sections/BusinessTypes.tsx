@@ -64,7 +64,7 @@ export default function BusinessTypes() {
         </div>
         <Reveal delay={0.3}>
           <div className="mt-12 flex justify-center">
-            <PrimaryCta className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+            <PrimaryCta className="h-auto rounded-lg bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
               Create Your Account
             </PrimaryCta>
           </div>

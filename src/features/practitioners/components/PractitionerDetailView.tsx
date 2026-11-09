@@ -127,7 +127,7 @@ export function PractitionerDetailView({
                     {' '}
                     This is the clinic-wide setting (
                     {VISIBILITY_META[preview.workspaceVisibility].label})
-                    overriding their own — change it in{' '}
+                    overriding their own. Change it in{' '}
                     <Link
                       href="/bookings/availability"
                       className="text-primary underline"
@@ -145,7 +145,7 @@ export function PractitionerDetailView({
               <AlertDescription>
                 {preview.bookable
                   ? 'The assistant may show this profile and book against their own calendar.'
-                  : 'The assistant may show this profile, but never offers a time — a coordinator arranges the appointment.'}
+                  : 'The assistant may show this profile, but never offers a time. A coordinator arranges the appointment.'}
               </AlertDescription>
             </Alert>
           )}

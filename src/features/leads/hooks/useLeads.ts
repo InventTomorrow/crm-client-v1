@@ -201,7 +201,7 @@ export function useBulkCreateLeads() {
     onSuccess: (result) => {
       toast.success(`Imported ${result.successful} lead${result.successful === 1 ? '' : 's'} successfully.`);
       if (result.skipped > 0) {
-        toast.warning(`${result.skipped} skipped — a lead with that phone already exists.`);
+        toast.warning(`${result.skipped} skipped. A lead with that phone already exists.`);
       }
       if (result.failed > 0) {
         toast.warning(`${result.failed} lead${result.failed === 1 ? '' : 's'} failed to import.`);

@@ -53,7 +53,7 @@ export function ProductCustomOptionsField({
                     Custom options
                   </span>
                   <span className="block text-[12px] text-[var(--ink-mute)]">
-                    Let customers ask for something specific on this product — a
+                    Let customers ask for something specific on this product. A
                     size, a colour, a name to add. The assistant collects what
                     you tick below before it takes the order.
                   </span>

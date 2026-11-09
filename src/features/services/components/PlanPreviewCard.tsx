@@ -85,7 +85,7 @@ export function PlanPreviewCard({
 
         {features.length === 0 ? (
           <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-3 text-center text-[11px] text-[var(--ink-mute)]">
-            Nothing listed yet — the bot has no deliverables to read out for this tier.
+            Nothing listed yet. The bot has no deliverables to read out for this tier.
           </p>
         ) : (
           // Long ladders scroll inside the card rather than stretching the slide past the sheet.

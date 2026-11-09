@@ -32,7 +32,7 @@ export function useDeletedAccountRedirect(error: unknown, email: string) {
 export function useRequestAccountRecoveryOtp() {
   return useMutation({
     mutationFn: (data: AccountRecoveryOtpData) => requestAccountRecoveryOtp(data),
-    onSuccess: () => toast.success('Code sent — check your inbox.'),
+    onSuccess: () => toast.success('Code sent. Check your inbox.'),
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }

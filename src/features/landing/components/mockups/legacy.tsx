@@ -45,7 +45,7 @@ export function PhoneFrame({
           className="relative rounded-[36px] overflow-hidden bg-white"
           style={{ height }}
         >
-          <div className="absolute top-[6px] left-1/2 -translate-x-1/2 w-[110px] h-[26px] bg-black rounded-b-[16px] z-20" />
+          <div className="absolute top-[6px] left-1/2 -translate-x-1/2 w-[110px] h-[26px] bg-black rounded-b-3xl z-20" />
           {children}
         </div>
       </div>

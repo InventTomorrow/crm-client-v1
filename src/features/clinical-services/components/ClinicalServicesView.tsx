@@ -1,13 +1,14 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { useUrlEnumState } from "@/shared/hooks/useUrlEnumState";
 import { Button } from "@/shared/ui/Button";
+import { ViewTabs } from "@/shared/ui/ViewTabs";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { NativeSelect } from "@/shared/ui/NativeSelect";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { SearchField } from "@/shared/ui/SearchField";
 import { CardGridSkeleton } from "@/shared/ui/CardGridSkeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { LayoutGrid, List, Plus, Stethoscope } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -19,7 +20,6 @@ import {
   ALL_SERVICE_TYPES,
   useClinicalServicesUiStore,
   type ClinicalServiceTypeFilter,
-  type ClinicalServicesView as ClinicalServicesViewMode,
 } from "../stores/clinicalServicesUiStore";
 import {
   CLINICAL_SERVICE_TYPES,
@@ -97,26 +97,12 @@ export function ClinicalServicesView() {
       </NativeSelect>
 
       <div className="ml-auto flex items-center gap-2">
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
+        <ViewTabs
+          ariaLabel="View mode"
           value={view}
-          onValueChange={(nextView) =>
-            nextView && setView(nextView as ClinicalServicesViewMode)
-          }
-        >
-          {VIEW_BUTTONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem
-              key={id}
-              value={id}
-              aria-label={`${label} view`}
-              className="h-10"
-            >
-              <Icon size={12} /> {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          onValueChange={setView}
+          options={VIEW_BUTTONS}
+        />
         <RefreshButton
           onRefresh={() => servicesQuery.refetch()}
           isRefreshing={servicesQuery.isFetching}
@@ -151,10 +137,13 @@ export function ClinicalServicesView() {
           What the clinic offers, what each service covers, and what it costs.
         </p>
       </div>
-      <Button size="xl" onClick={openCreate}>
-        <Plus className="size-4" />
-        Add service
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <SeedRecordsButton target={{ recordType: "CLINICAL_SERVICE", label: "Clinical services" }} />
+        <Button size="xl" onClick={openCreate}>
+          <Plus className="size-4" />
+          Add service
+        </Button>
+      </div>
     </div>
   );
 
@@ -215,7 +204,7 @@ export function ClinicalServicesView() {
       {servicesQuery.isLoading && <CardGridSkeleton />}
 
       {!servicesQuery.isLoading && services.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface)] py-16 text-center">
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
             <Stethoscope className="size-6" />
           </span>

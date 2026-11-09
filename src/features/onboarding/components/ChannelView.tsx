@@ -31,13 +31,13 @@ function QRFrame({ src }: { src: string }) {
             className={cn(
               "absolute w-[20px] h-[20px] border-[#25D366]",
               pos === "tl" &&
-                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[5px]",
+                "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-md",
               pos === "tr" &&
-                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[5px]",
+                "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-md",
               pos === "bl" &&
-                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[5px]",
+                "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-md",
               pos === "br" &&
-                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[5px]",
+                "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-md",
             )}
           />
         ))}
@@ -121,7 +121,7 @@ function QRPanel({ onSuccess }: { onSuccess: () => void }) {
       <div className="flex flex-col items-center gap-3 py-6">
         <Loader2 size={24} className="animate-spin text-[#25D366]" />
         <p className="text-[13px] font-semibold text-[var(--ink)]">
-          QR scanned — connecting…
+          QR scanned. Connecting…
         </p>
         <p className="text-[12px] text-[var(--ink-mute)]">
           Keep this page open.
@@ -209,7 +209,7 @@ export function ChannelView() {
                 WhatsApp
               </div>
               <p className="text-[12px] text-[var(--ink-mute)] mt-0.5">
-                Connect via QR code scan — no API keys needed
+                Connect via QR code scan. No API keys needed
               </p>
             </div>
           </button>
@@ -218,7 +218,7 @@ export function ChannelView() {
             <div className="flex items-center justify-between mb-4">
               <p className="text-[12.5px] font-medium text-[var(--ink-soft)] flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#25D366] inline-block" />
-                WhatsApp — Scan to connect
+                WhatsApp: Scan to connect
               </p>
               <button
                 type="button"
@@ -241,7 +241,7 @@ export function ChannelView() {
           disabled={isSkipping}
         >
           {isSkipping ? <Loader2 size={13} className="animate-spin" /> : null}
-          Skip for now — set up later in Settings
+          Skip for now. Set up later in Settings
         </Button>
       </div>
     </OnboardingShell>

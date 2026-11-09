@@ -169,7 +169,7 @@ export function useReactivateSubscription() {
   return useMutation({
     mutationFn: reactivateSubscription,
     onSuccess: () => {
-      toast.success('Scheduled change cancelled — your plan continues as before');
+      toast.success('Scheduled change cancelled. Your plan continues as before');
       qc.invalidateQueries({ queryKey: keys.subscription });
     },
     onError: (e) => toast.error(extractErrorMessage(e, 'Could not undo the scheduled change')),

@@ -297,7 +297,7 @@ export function BroadcasterDialog({
                 </div>
               </div>
               <p className="text-[11px] text-[var(--ink-mute)] text-center px-4">
-                Messages are sent with randomized 2–5s delays to mimic human
+                Messages are sent with randomized 2 to 5s delays to mimic human
                 behavior and protect your WhatsApp session.
               </p>
             </div>
@@ -407,7 +407,7 @@ export function BroadcasterDialog({
                   <label
                     key={l.id}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-[10px] border cursor-pointer px-3 py-2.5 transition-all hover:shadow-sm",
+                      "flex items-center gap-2.5 rounded-lg border cursor-pointer px-3 py-2.5 transition-all hover:shadow-sm",
                       checked
                         ? "border-[var(--accent)] bg-[var(--accent)]/5"
                         : "border-[var(--line)] bg-[var(--surface)] hover:bg-[var(--surface-2)]",
@@ -425,7 +425,7 @@ export function BroadcasterDialog({
                         {l.name}
                       </div>
                       <div className="text-[11.5px] text-[var(--ink-mute)] truncate">
-                        {l.phone || l.email || l.city || "—"}
+                        {l.phone || l.email || l.city || "N/A"}
                       </div>
                     </div>
                     <span

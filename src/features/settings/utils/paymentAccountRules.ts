@@ -51,18 +51,18 @@ export function getAccountNumberError(method: PaymentMethod, accountNumber: stri
       : 'Enter the 11-digit mobile wallet number, e.g. 03001234567';
   }
   if (method === 'BANK_TRANSFER') {
-    return BANK_ACCOUNT_PATTERN.test(accountNumber) ? null : 'Bank account numbers are 8–20 digits';
+    return BANK_ACCOUNT_PATTERN.test(accountNumber) ? null : 'Bank account numbers are 8 to 20 digits';
   }
   return OTHER_ACCOUNT_PATTERN.test(accountNumber)
     ? null
-    : 'Use 3–50 letters, digits or @ . _ + -';
+    : 'Use 3 to 50 letters, digits or @ . _ + -';
 }
 
 export function getIbanError(method: PaymentMethod, iban: string): string | null {
   if (!iban) return null;
   if (method !== 'BANK_TRANSFER') return 'IBAN applies to bank transfers only';
   if (!PAKISTAN_IBAN_PATTERN.test(iban)) return 'Enter a 24-character Pakistani IBAN, e.g. PK36SCBL0000001123456702';
-  return hasValidIbanChecksum(iban) ? null : 'This IBAN has a typo — its check digits do not match';
+  return hasValidIbanChecksum(iban) ? null : 'This IBAN has a typo. Its check digits do not match';
 }
 
 export function getInstructionsError(instructions: string): string | null {

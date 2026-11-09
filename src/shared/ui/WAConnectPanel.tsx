@@ -34,13 +34,13 @@ function FrameCorners() {
           className={cn(
             "absolute w-[22px] h-[22px] border-[var(--accent)]",
             pos === "tl" &&
-              "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-[6px]",
+              "top-0 left-0 border-t-[3px] border-l-[3px] rounded-tl-md",
             pos === "tr" &&
-              "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-[6px]",
+              "top-0 right-0 border-t-[3px] border-r-[3px] rounded-tr-md",
             pos === "bl" &&
-              "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[6px]",
+              "bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-md",
             pos === "br" &&
-              "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[6px]",
+              "bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-md",
           )}
         />
       ))}
@@ -117,11 +117,11 @@ function ConnectingView({ phoneNumber }: { phoneNumber?: string }) {
 
       <div className="text-center">
         <p className="text-[14px] font-semibold text-[var(--ink)]">
-          QR scanned — connecting
+          QR scanned. Connecting
         </p>
         <p className="text-[12px] text-[var(--ink-mute)] mt-1 max-w-[270px]">
           Linking your WhatsApp{phoneNumber ? ` (+${phoneNumber})` : ""}. This
-          only takes a moment — keep this open.
+          only takes a moment. Keep this open.
         </p>
       </div>
 
@@ -285,7 +285,7 @@ export function WAConnectPanel({
         <div className="flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
           <Smartphone size={13} className="shrink-0 mt-px" />
           <span>
-            WhatsApp Web approach — the QR is generated only when you click, to
+            WhatsApp Web approach. The QR is generated only when you click, to
             keep the connection light.
           </span>
         </div>
@@ -524,7 +524,7 @@ export function WAConnectPanel({
         <div className="flex items-start gap-2.5 text-[11.5px] text-[var(--ink-mute)]">
           <Smartphone size={13} className="flex-shrink-0 mt-px" />
           <span>
-            WhatsApp Web approach — no API keys or monthly fees. Uses your
+            WhatsApp Web approach. No API keys or monthly fees. Uses your
             personal or business number.
           </span>
         </div>

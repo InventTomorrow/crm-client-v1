@@ -12,7 +12,7 @@ const SETUP_STEPS = [
   {
     id: 'availability',
     label: 'Set your hours',
-    description: 'The days and hours you take calls — slots are generated inside them.',
+    description: 'The days and hours you take calls. Slots are generated inside them.',
     Icon: Clock,
   },
   {

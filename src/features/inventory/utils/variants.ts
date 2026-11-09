@@ -48,8 +48,8 @@ export function getVariantTotals(variants: readonly VariantAmounts[]): VariantTo
 }
 
 export function formatPriceRange(minPrice: number | null, maxPrice: number | null): string {
-  if (minPrice === null || maxPrice === null) return "—";
-  return minPrice === maxPrice ? pkr(minPrice) : `${pkr(minPrice)} – ${pkr(maxPrice)}`;
+  if (minPrice === null || maxPrice === null) return "N/A";
+  return minPrice === maxPrice ? pkr(minPrice) : `${pkr(minPrice)} to ${pkr(maxPrice)}`;
 }
 
 const toSkuSegment = (value: string | undefined): string =>

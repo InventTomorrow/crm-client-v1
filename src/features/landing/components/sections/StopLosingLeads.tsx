@@ -38,7 +38,7 @@ export default function StopLosingLeads() {
             </Reveal>
             <Reveal delay={0.2}>
               <div className="mt-8 flex justify-center lg:justify-start">
-                <PrimaryCta className="h-auto rounded-full bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
+                <PrimaryCta className="h-auto rounded-lg bg-brand-green px-7 py-3.5 text-base font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover">
                   Start Closing More Sales
                 </PrimaryCta>
               </div>

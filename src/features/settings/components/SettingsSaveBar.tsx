@@ -18,7 +18,7 @@ export function SettingsSaveBar({ children, variant = "card", className }: Setti
         "sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-2 py-3 backdrop-blur-md",
         variant === "card"
           ? "card px-4"
-          : "-mx-[22px] -mb-[22px] rounded-b-[var(--radius-card)] border-t border-[var(--line)] bg-[var(--surface)]/95 px-[22px]",
+          : "-mx-[22px] -mb-[22px] rounded-b-xl border-t border-[var(--line)] bg-[var(--surface)]/95 px-[22px]",
         className,
       )}
     >

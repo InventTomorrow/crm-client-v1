@@ -78,7 +78,7 @@ export function DeleteAccountSection() {
           <DialogHeader>
             <DialogTitle>Delete your account?</DialogTitle>
             <DialogDescription>
-              Read what happens before you confirm — some of it cannot be
+              Read what happens before you confirm. Some of it cannot be
               undone.
             </DialogDescription>
           </DialogHeader>
@@ -86,8 +86,8 @@ export function DeleteAccountSection() {
           <ul className="flex flex-col gap-2 text-[12.5px] text-[var(--ink-soft)]">
             <li>You are signed out everywhere and can no longer sign in.</li>
             <li>
-              Every workspace you own is suspended and its members lose access —
-              they will be notified by email.
+              Every workspace you own is suspended and its members lose access.
+              They will be notified by email.
             </li>
             <li>
               WhatsApp is disconnected. Restoring the account will not restore

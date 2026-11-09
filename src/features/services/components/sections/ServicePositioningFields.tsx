@@ -26,7 +26,9 @@ export function ServicePositioningFields({ form, isSaving }: ServiceFormSectionP
                 onChange={field.onChange}
                 placeholder="e.g. 3x engagement in 90 days"
                 addLabel="Add outcome"
-                emptyHint={`Add at least ${MIN_KEY_OUTCOMES} — these are what the bot argues with.`}
+                emptyHint={`Add at least ${MIN_KEY_OUTCOMES}. These are what the bot argues with.`}
+                isLabelProminent
+                isAddButtonCentered
                 disabled={isSaving}
               />
             </FormControl>
@@ -47,7 +49,9 @@ export function ServicePositioningFields({ form, isSaving }: ServiceFormSectionP
                 onChange={field.onChange}
                 placeholder="e.g. Instagram"
                 addLabel="Add platform"
-                emptyHint="No platforms listed — add them if this service is channel-specific."
+                emptyHint="No platforms listed. Add them if this service is channel-specific."
+                isLabelProminent
+                isAddButtonCentered
                 disabled={isSaving}
               />
             </FormControl>

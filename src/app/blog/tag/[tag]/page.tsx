@@ -38,7 +38,7 @@ export async function generateMetadata({
   // are crawlable but kept out of the index to avoid thin duplicates.
   return {
     ...buildPageMetadata({
-      title: `Articles on ${tag ?? slug} — ${BLOG_TITLE}`,
+      title: `Articles on ${tag ?? slug}: ${BLOG_TITLE}`,
       description: BLOG_DESCRIPTION,
       path: `/blog/tag/${slug}`,
     }),

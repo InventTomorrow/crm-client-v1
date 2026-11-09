@@ -55,7 +55,7 @@ export function BookingConfirmStep({
           label={vocabulary.singularTitle}
           value={booking.customerName || `Unnamed ${vocabulary.singular}`}
         />
-        <SummaryRow label="Contact" value={booking.customerPhone || "—"} />
+        <SummaryRow label="Contact" value={booking.customerPhone || "N/A"} />
         <SummaryRow
           label="When"
           value={
@@ -68,7 +68,7 @@ export function BookingConfirmStep({
       </div>
 
       {booking.isCustomTime && (
-        <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-2.5 text-[11.5px] text-[var(--ink-mute)]">
+        <p className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-2.5 text-[11.5px] text-[var(--ink-mute)]">
           This time sits outside your configured hours, so the bot would never
           have offered it. It is still checked against everything already
           booked.
@@ -84,7 +84,7 @@ export function BookingConfirmStep({
         </p>
         {answeredQuestions.length === 0 ? (
           <p className="text-[11.5px] text-[var(--ink-mute)]">
-            None — the {vocabulary.singular} keeps whatever score they already
+            None. The {vocabulary.singular} keeps whatever score they already
             had.
           </p>
         ) : (
@@ -96,8 +96,8 @@ export function BookingConfirmStep({
               >
                 <span className="text-[var(--ink)]">
                   {question.questionText}
-                </span>{" "}
-                — {answers[question.fieldName]}
+                </span>:{" "}
+                {answers[question.fieldName]}
               </li>
             ))}
           </ul>

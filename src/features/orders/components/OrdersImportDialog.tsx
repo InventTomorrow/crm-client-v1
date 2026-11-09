@@ -172,13 +172,13 @@ export function OrdersImportDialog({
                 pickFile(event.dataTransfer.files[0]);
               }}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 rounded-[12px] border-[1.5px] border-dashed px-6 py-10 text-center transition-colors",
+                "flex flex-col items-center justify-center gap-2 rounded-xl border-[1.5px] border-dashed px-6 py-10 text-center transition-colors",
                 isDraggingFile
                   ? "border-[var(--accent)] bg-[var(--accent-soft)]"
                   : "border-[var(--line)] bg-[var(--surface-2)] hover:border-[var(--accent)]",
               )}
             >
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)]">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]">
                 {isPreviewing ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
@@ -216,7 +216,7 @@ export function OrdersImportDialog({
                   </Button>
                 )}
               </div>
-              <ul className="scroll min-h-0 flex-1 divide-y divide-[var(--line)] overflow-y-auto rounded-[10px] border border-[var(--line)]">
+              <ul className="scroll min-h-0 flex-1 divide-y divide-[var(--line)] overflow-y-auto rounded-lg border border-[var(--line)]">
                 {importResult.orders.map((outcome, index) => (
                   <ImportOutcomeRow
                     key={`${outcome.orderNumber}-${index}`}

@@ -20,6 +20,10 @@ interface EditableListFieldProps {
   emptyHint: string;
   disabled?: boolean;
   showOrderHandle?: boolean;
+  /** Renders the label at the same weight as a regular form label, for fields that head their own block. */
+  isLabelProminent?: boolean;
+  /** While the list is empty, the add button sits centered inside the empty-state box instead of below it. */
+  isAddButtonCentered?: boolean;
 }
 
 /** A list of strings where every entry stays an editable input rather than becoming a static
@@ -33,7 +37,11 @@ export function EditableListField({
   emptyHint,
   disabled = false,
   showOrderHandle = false,
+  isLabelProminent = false,
+  isAddButtonCentered = false,
 }: EditableListFieldProps) {
+  const isAddButtonInsideEmptyState = isAddButtonCentered && values.length === 0;
+
   function updateValueAt(index: number, nextValue: string) {
     onChange(values.map((value, i) => (i === index ? nextValue : value)));
   }
@@ -42,19 +50,47 @@ export function EditableListField({
     onChange(values.filter((_, i) => i !== index));
   }
 
+  const addButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      className={isAddButtonInsideEmptyState ? undefined : 'self-start'}
+      disabled={disabled}
+      onClick={() => onChange([...values, ''])}
+    >
+      <Plus size={13} className="mr-1.5" />
+      {addLabel}
+    </Button>
+  );
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-[var(--ink-soft)]">{label}</label>
+        <label
+          className={
+            isLabelProminent
+              ? 'text-sm font-medium text-[var(--ink)]'
+              : 'text-xs font-medium text-[var(--ink-soft)]'
+          }
+        >
+          {label}
+        </label>
         {values.length > 0 && (
           <span className="text-[11px] text-[var(--ink-mute)]">{values.length}</span>
         )}
       </div>
 
       {values.length === 0 ? (
-        <p className="text-[11px] text-[var(--ink-mute)] rounded-lg border border-dashed border-[var(--line)] px-3 py-3 text-center">
-          {emptyHint}
-        </p>
+        <div
+          className={cn(
+            'flex flex-col items-center gap-3 rounded-lg border border-dashed border-[var(--line)] px-3',
+            isAddButtonInsideEmptyState ? 'py-5' : 'py-3',
+          )}
+        >
+          <p className="text-center text-[11px] text-[var(--ink-mute)]">{emptyHint}</p>
+          {isAddButtonInsideEmptyState && addButton}
+        </div>
       ) : (
         <div
           className={cn(
@@ -93,17 +129,7 @@ export function EditableListField({
         </div>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="self-start"
-        disabled={disabled}
-        onClick={() => onChange([...values, ''])}
-      >
-        <Plus size={13} className="mr-1.5" />
-        {addLabel}
-      </Button>
+      {!isAddButtonInsideEmptyState && addButton}
     </div>
   );
 }

@@ -39,7 +39,7 @@ export function SlotPicker({
 
   if (daysWithOpenSlots.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-6 text-center text-[12px] text-[var(--ink-mute)]">
+      <p className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-6 text-center text-[12px] text-[var(--ink-mute)]">
         No open slots in this window. Widen your availability or look further ahead.
       </p>
     );

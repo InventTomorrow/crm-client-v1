@@ -145,7 +145,7 @@ function ClinicLocationFormBody({
             <Label htmlFor="area">Area</Label>
             <Input
               id="area"
-              placeholder="DHA — blank means the whole city"
+              placeholder="e.g. DHA, or leave blank for the whole city"
               value={form.area}
               onChange={(event) => patch({ area: event.target.value })}
             />
@@ -215,7 +215,7 @@ function ClinicLocationFormBody({
                   <Label htmlFor="emergencyHoursNote">Emergency hours</Label>
                   <Input
                     id="emergencyHoursNote"
-                    placeholder="Emergency desk 08:00–22:00"
+                    placeholder="Emergency desk 08:00 to 22:00"
                     value={form.emergencyHoursNote}
                     onChange={(event) =>
                       patch({ emergencyHoursNote: event.target.value })

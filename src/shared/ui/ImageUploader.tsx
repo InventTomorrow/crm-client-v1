@@ -128,7 +128,7 @@ export function ImageUploader({
             <span className="text-[var(--accent)]">click to upload</span>
           </p>
           <p className="mt-0.5 text-[11px] text-[var(--ink-mute)]">
-            PNG, JPG, WEBP — up to 5 MB
+            PNG, JPG, WEBP. Up to 5 MB
           </p>
         </div>
       )}

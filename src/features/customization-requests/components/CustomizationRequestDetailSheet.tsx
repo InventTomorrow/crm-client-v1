@@ -86,7 +86,7 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
 
               <section className="space-y-1.5">
                 <SectionLabel>What they asked for</SectionLabel>
-                <p className="text-[13.5px] leading-relaxed text-[var(--ink)] whitespace-pre-wrap rounded-[10px] bg-[var(--surface-2)] p-3">
+                <p className="text-[13.5px] leading-relaxed text-[var(--ink)] whitespace-pre-wrap rounded-lg bg-[var(--surface-2)] p-3">
                   {request.customerNote}
                 </p>
                 <p className="text-[12px] text-[var(--ink-mute)]">
@@ -98,7 +98,7 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
                 <SectionLabel>Product</SectionLabel>
                 <div className="text-[13.5px] text-[var(--ink)]">
                   {request.productName}
-                  {request.variantLabel ? ` — ${request.variantLabel}` : ""}
+                  {request.variantLabel ? `: ${request.variantLabel}` : ""}
                   <span className="text-[var(--ink-mute)]">
                     {" "}
                     × {request.quantity}
@@ -131,7 +131,7 @@ export function CustomizationRequestDetailSheet({ requestId, onClose }: Props) {
                         alt={`${answer.label} artwork`}
                         width={180}
                         height={180}
-                        className="rounded-[10px] border border-[var(--line)]"
+                        className="rounded-lg border border-[var(--line)]"
                       />
                     ))}
                 </section>

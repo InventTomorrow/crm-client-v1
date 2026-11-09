@@ -37,7 +37,7 @@ export function getQualificationBands(form: QualificationForm): QualificationBan
       label: 'Warm',
       range:
         warmCeiling > form.warmThreshold
-          ? `${form.warmThreshold} – ${warmCeiling}`
+          ? `${form.warmThreshold} to ${warmCeiling}`
           : `${form.warmThreshold}`,
       color: 'var(--warning)',
     },

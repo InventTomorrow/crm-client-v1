@@ -142,7 +142,7 @@ export function useVerifyEmail() {
 export function useResendVerification() {
   return useMutation({
     mutationFn: (email: string) => resendVerification(email),
-    onSuccess: () => toast.success('Verification email sent — check your inbox.'),
+    onSuccess: () => toast.success('Verification email sent. Check your inbox.'),
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }

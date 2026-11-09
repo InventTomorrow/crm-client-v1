@@ -38,7 +38,7 @@ export function ServiceCategoryAutocomplete({
         return { id: category, label: category };
       }}
       placeholder="e.g. Social Media, SEO, Branding"
-      emptyLabel="No categories yet — type to add one."
+      emptyLabel="No categories yet. Type to add one."
       disabled={disabled}
     />
   );

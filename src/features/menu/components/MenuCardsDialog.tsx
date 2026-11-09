@@ -70,7 +70,7 @@ export function MenuCardsDialog({
           </DialogTitle>
           <DialogDescription className="text-[12px]">
             {totalCards > 0
-              ? `Card ${activeIndex + 1} of ${totalCards} — exactly what customers receive.`
+              ? `Card ${activeIndex + 1} of ${totalCards}. Exactly what customers receive.`
               : "What customers receive when they ask to see the menu."}
           </DialogDescription>
         </DialogHeader>

@@ -36,7 +36,7 @@ export function EscalateDialog({ lead, onClose, onConfirm }: EscalateDialogProps
           <div className="card p-[14px] bg-[var(--surface-2)]">
             <div className="text-[11px] text-[var(--ink-mute)] uppercase tracking-[0.06em] font-semibold mb-2">Query summary</div>
             <div className="text-[13.5px] leading-[1.55] italic text-[var(--ink-soft)]">
-              "Bhai final price kya hai? Karachi delivery confirm karein. Mera number 0321-4567890 hai, 2 pieces order karna hai — pink aur teal."
+              "Bhai final price kya hai? Karachi delivery confirm karein. Mera number 0321-4567890 hai, 2 pieces order karna hai. Pink aur teal."
             </div>
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               <span className="entity-chip entity-phone"><Phone size={10} /> 0321-4567890</span>

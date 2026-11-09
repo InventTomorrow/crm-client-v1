@@ -38,7 +38,7 @@ export function ClinicalCategoryAutocomplete({
         return { id: category, label: category };
       }}
       placeholder="e.g. Cardiology, Physiotherapy, Dermatology"
-      emptyLabel="No categories yet — type to add one."
+      emptyLabel="No categories yet. Type to add one."
       disabled={disabled}
     />
   );

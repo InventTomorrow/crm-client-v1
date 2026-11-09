@@ -42,5 +42,5 @@ export const maskAccountNumber = (accountNumber: string): string =>
 
 export function getPaymentAccountLabel(account: Pick<PaymentAccount, "accountTitle" | "accountNumber" | "bankName">): string {
   const provider = account.bankName ? ` · ${account.bankName}` : "";
-  return `${account.accountTitle}${provider} — ${account.accountNumber}`;
+  return `${account.accountTitle}${provider}: ${account.accountNumber}`;
 }

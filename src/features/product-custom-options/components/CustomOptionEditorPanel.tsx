@@ -137,7 +137,7 @@ export function CustomOptionEditorPanel({
         {showsChoices && (
           <EditorSection
             title="What can they choose from?"
-            hint={`The answers you accept for “${draft.label.trim() || "this question"}” — one per line. The assistant offers these exactly as written and will never invent another.`}
+            hint={`The answers you accept for “${draft.label.trim() || "this question"}”. One per line. The assistant offers these exactly as written and will never invent another.`}
           >
             <div className="space-y-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)]/40 p-3">
               {draft.choices.map((choice, index) => (
@@ -321,7 +321,7 @@ export function CustomOptionEditorPanel({
                           : Number(event.target.value),
                     })
                   }
-                  placeholder="—"
+                  placeholder="N/A"
                   disabled={editor.isSubmitting}
                 />
               </div>
@@ -329,7 +329,7 @@ export function CustomOptionEditorPanel({
 
             <SwitchRow
               title="Made specially, not from stock"
-              hint="Turn on when a new one is made for the customer — your stock count stays untouched."
+              hint="Turn on when a new one is made for the customer. Your stock count stays untouched."
               isChecked={!draft.consumesStock}
               onCheckedChange={(isMadeToOrder) =>
                 patchDraft({ consumesStock: !isMadeToOrder })

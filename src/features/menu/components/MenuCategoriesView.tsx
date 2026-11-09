@@ -88,7 +88,7 @@ export function MenuCategoriesView() {
               rows={3}
               value={draft.description}
               onChange={(event) => setDraft({ ...draft, description: event.target.value })}
-              placeholder="Optional — shown to customers browsing this section"
+              placeholder="Optional. Shown to customers browsing this section"
             />
           </div>
 

@@ -77,7 +77,7 @@ function ActionIconBtn({
       </button>
 
       {/*
-        Floating label — absolutely positioned above, opacity transition only.
+        Floating label. Absolutely positioned above, opacity transition only.
         Uses `peer-hover:opacity-100` so it responds to the button's hover
         without wrapping the button inside itself (avoids z-index stacking).
       */}
@@ -278,7 +278,7 @@ export function AppointmentStatusActions({
         onClose={() => setIsDeleteOpen(false)}
         loading={deleteAppointment.isPending}
         title="Delete this appointment?"
-        description={`The booking is removed from the calendar for good. The ${vocabulary.customerSingular} is not notified — cancel it instead if they should hear about it.`}
+        description={`The booking is removed from the calendar for good. The ${vocabulary.customerSingular} is not notified. Cancel it instead if they should hear about it.`}
         confirmLabel="Delete"
         onConfirm={() =>
           deleteAppointment.mutate(appointment.id, {

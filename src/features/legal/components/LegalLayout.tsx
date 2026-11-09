@@ -100,7 +100,7 @@ export default function LegalLayout({
               </Link>
               <Link
                 href="/auth/login"
-                className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white bg-brand-green rounded-full shadow-cta hover:bg-brand-green-hover transition-all hover:scale-105"
+                className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white bg-brand-green rounded-lg shadow-cta hover:bg-brand-green-hover transition-all hover:scale-105"
               >
                 Get Started
               </Link>

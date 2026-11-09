@@ -151,7 +151,7 @@ export function CheckoutView({ token }: { token: string }) {
             </p>
             {data?.shipping?.customerName && (
               <p className="text-[11px] text-info-foreground">
-                Pre-filled from a previous attempt — please review before confirming.
+                Pre-filled from a previous attempt. Please review before confirming.
               </p>
             )}
             <FormField

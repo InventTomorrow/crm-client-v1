@@ -68,7 +68,7 @@ export function SandboxKeysHint() {
   if (!activeApiKeys.length) {
     return (
       <>
-        No API key yet —{" "}
+        No API key yet.{" "}
         <Link
           href={`${API_WORKSPACE_ROOT}/keys`}
           className="font-medium text-[var(--accent)] underline-offset-4 hover:underline"

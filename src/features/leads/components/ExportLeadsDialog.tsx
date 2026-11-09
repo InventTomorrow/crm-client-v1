@@ -151,7 +151,7 @@ export function ExportLeadsDialog({ open, onClose, leads }: {
               <label
                 key={l.id}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-[10px] border cursor-pointer px-2.5 py-2 transition-colors',
+                  'flex items-center gap-2.5 rounded-lg border cursor-pointer px-2.5 py-2 transition-colors',
                   checked ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] hover:bg-[var(--surface-2)]',
                 )}
               >
@@ -159,7 +159,7 @@ export function ExportLeadsDialog({ open, onClose, leads }: {
                 <CRMAvatar name={l.name} size={30} />
                 <div className="flex-1 min-w-0">
                   <div className="text-[12.5px] font-medium truncate">{l.name}</div>
-                  <div className="text-[11px] text-[var(--ink-mute)] truncate">{l.phone || l.email || l.city || '—'}</div>
+                  <div className="text-[11px] text-[var(--ink-mute)] truncate">{l.phone || l.email || l.city || 'N/A'}</div>
                 </div>
                 <span className="badge py-px px-1.5 font-medium text-[10px]" style={{ background: st.tint, color: st.color }}>
                   {st.label}

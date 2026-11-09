@@ -104,7 +104,7 @@ function ConversationRowBase({
             {lastMsg?.senderType === "AGENT" && (
               <span className="text-[var(--ink-mute)]">You: </span>
             )}
-            {lastMsg?.content ?? "—"}
+            {lastMsg?.content ?? "N/A"}
           </span>
           <div className="flex items-center gap-1 shrink-0">
             <EscalationBadge status={conv.escalationStatus} />

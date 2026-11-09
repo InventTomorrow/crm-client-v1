@@ -68,8 +68,8 @@ export function ResourceConditionsBuilder({
 
   if (questions.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-3 text-center text-[11.5px] text-[var(--ink-mute)]">
-        No qualification questions yet — add some first to target this file at specific leads.
+      <p className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-center text-[11.5px] text-[var(--ink-mute)]">
+        No qualification questions yet. Add some first to target this file at specific leads.
         For now it will be shared with everyone.
       </p>
     );
@@ -144,8 +144,8 @@ export function ResourceConditionsBuilder({
       </div>
 
       {usedFields.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-[var(--line)] px-3 py-3 text-center text-[11.5px] text-[var(--ink-mute)]">
-          No conditions — this file is shared with every lead.
+        <p className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-center text-[11.5px] text-[var(--ink-mute)]">
+          No conditions. This file is shared with every lead.
         </p>
       ) : (
         <div className="flex flex-col gap-2">

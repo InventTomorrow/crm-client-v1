@@ -26,8 +26,7 @@ export interface AgentPolicy {
   appointmentIntake: AppointmentIntake;
   handoffPauseMinutes: number;
   handoffMessages: Record<PolicyLanguage, string>;
-  houseRules: string;
-  recruitmentPolicy: string;
+  chatbotInstructions: string[];
   analysePhotos: boolean;
 }
 

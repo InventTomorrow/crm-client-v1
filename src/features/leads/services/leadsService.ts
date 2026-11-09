@@ -71,7 +71,7 @@ const CHANNEL_TO_BACKEND: Record<string, 'WHATSAPP' | 'INSTAGRAM' | 'MESSENGER'>
   wa: 'WHATSAPP',
   ig: 'INSTAGRAM',
   fb: 'MESSENGER',
-  tk: 'WHATSAPP', // TikTok has no backend channel yet — default to WhatsApp
+  tk: 'WHATSAPP', // TikTok has no backend channel yet. Default to WhatsApp
 };
 
 export const createLead = async (lead: Partial<Lead> & { phone?: string; email?: string }): Promise<Lead> => {

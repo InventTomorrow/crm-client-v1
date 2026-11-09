@@ -47,6 +47,8 @@ export const INITIAL_CLINICAL_SERVICE_FORM_VALUES: ClinicalServiceFormInput = {
 
   requiredStaffQualifications: [],
   safetyNote: "",
+  chatbotInstructions: [],
+  escalation: { isEnabled: true, whenToEscalate: [], notifyNumber: "" },
 
   requiresPractitioner: false,
   departmentKey: "",
@@ -95,6 +97,12 @@ export function toClinicalServiceFormValues(
 
     requiredStaffQualifications: service.requiredStaffQualifications,
     safetyNote: text(service.safetyNote),
+    chatbotInstructions: service.chatbotInstructions,
+    escalation: {
+      isEnabled: service.escalation?.isEnabled ?? true,
+      whenToEscalate: service.escalation?.whenToEscalate ?? [],
+      notifyNumber: text(service.escalation?.notifyNumber ?? null),
+    },
 
     requiresPractitioner: service.requiresPractitioner,
     departmentKey: text(service.departmentKey),

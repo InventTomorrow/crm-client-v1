@@ -10,11 +10,11 @@ export function DocsTableOfContents({
   onNavigate: (sectionId: string) => void;
 }) {
   return (
-    <nav aria-label="On this page" className="flex flex-col gap-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
+    <nav aria-label="On this page" className="flex flex-col">
+      <p className="border-b border-[var(--line)] bg-[var(--surface-2)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-mute)]">
         On this page
       </p>
-      <ul className="flex flex-col border-l border-[var(--line)]">
+      <ul className="flex flex-col py-1">
         {DOC_TABLE_OF_CONTENTS.map((tocEntry) => (
           <li key={tocEntry.id}>
             <TocLink
@@ -67,11 +67,11 @@ function TocLink({
         onNavigate(sectionId);
       }}
       className={cn(
-        "-ml-px block border-l-2 py-1.5 text-[15px] no-underline transition-colors",
-        isNested ? "pl-7" : "pl-4",
+        "block border-l-2 py-1.5 pr-3 text-[13.5px] no-underline transition-colors",
+        isNested ? "pl-8" : "pl-4",
         isActive
-          ? "border-[var(--accent)] font-medium text-[var(--accent)]"
-          : "border-transparent text-[var(--ink-mute)] hover:border-[var(--ink-mute)] hover:text-[var(--ink)]",
+          ? "border-[var(--accent)] bg-[var(--accent-soft)] font-semibold text-[var(--ink)]"
+          : "border-transparent text-[var(--ink-mute)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
       )}
     >
       {label}

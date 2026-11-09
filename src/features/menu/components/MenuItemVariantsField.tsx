@@ -150,7 +150,7 @@ export function MenuItemVariantsField({
                       disabled={disabled}
                     >
                       <SelectTrigger size="lg" className="w-40">
-                        <SelectValue placeholder="Serves —" />
+                        <SelectValue placeholder="Serves" />
                       </SelectTrigger>
                       <SelectContent>
                         {SERVING_SIZES.map((size) => (

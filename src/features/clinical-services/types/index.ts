@@ -1,6 +1,7 @@
 import { EMPTY_LIST_ROW } from "@/lib/validationMessages";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { isValidEscalationPhone } from "../utils/escalationPhone";
 
 /**
  * Mirrors what `GET /clinical-services/:id/preview` returns — the server
@@ -142,6 +143,54 @@ export type ShiftOption = z.infer<typeof shiftOptionSchema>;
 /** What the shift editor actually holds — defaults are still unresolved there. */
 export type ShiftOptionInput = z.input<typeof shiftOptionSchema>;
 
+/** What the arrangement dialog edits — cities stay one comma-separated string while typing, so a trailing comma survives. */
+export const shiftOptionFormSchema = z
+  .object({
+    label: z.string().trim().min(1, "Label is required"),
+    hoursPerDay: optionalNumber(
+      z.coerce
+        .number()
+        .int("Use whole hours")
+        .min(1, "At least 1 hour")
+        .max(24, "At most 24 hours"),
+    ),
+    price: optionalNumber(z.coerce.number().min(0, "Cannot be negative")),
+    priceMin: optionalNumber(z.coerce.number().min(0, "Cannot be negative")),
+    priceMax: optionalNumber(z.coerce.number().min(0, "Cannot be negative")),
+    billingPeriod: z.enum(SHIFT_BILLING_PERIODS),
+    availableCities: z.string(),
+  })
+  .refine(
+    (shift) =>
+      shift.priceMin == null ||
+      shift.priceMax == null ||
+      shift.priceMin <= shift.priceMax,
+    { path: ["priceMax"], message: "Max must be at least min" },
+  );
+export type ShiftOptionFormValues = z.infer<typeof shiftOptionFormSchema>;
+export type ShiftOptionFormInput = z.input<typeof shiftOptionFormSchema>;
+
+/** Mirrors the server's `serviceEscalationSchema`; whether the number is on WhatsApp is not checked here. */
+export const serviceEscalationSchema = z.object({
+  isEnabled: z.boolean().default(true),
+  whenToEscalate: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, EMPTY_LIST_ROW)
+        .max(300, "Keep each condition under 300 characters"),
+    )
+    .max(5, "At most 5 conditions per service")
+    .default([]),
+  notifyNumber: z
+    .string()
+    .max(30)
+    .refine(isValidEscalationPhone, {
+      message: "Enter a valid phone number, e.g. 03001234567 or +923001234567",
+    }),
+});
+
 /**
  * Mirrors `createClinicalServiceSchema` on the server, including its pricing
  * rules — a RANGE service needs both ends of the band, and an ON_ENQUIRY
@@ -186,6 +235,21 @@ export const clinicalServiceFormSchema = z
       .array(z.string().trim().min(1, EMPTY_LIST_ROW))
       .default([]),
     safetyNote: z.string().trim().optional(),
+    chatbotInstructions: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1, EMPTY_LIST_ROW)
+          .max(400, "Keep each instruction under 400 characters"),
+      )
+      .max(10, "At most 10 instructions per service")
+      .default([]),
+    escalation: serviceEscalationSchema.default({
+      isEnabled: true,
+      whenToEscalate: [],
+      notifyNumber: "",
+    }),
 
     requiresPractitioner: z.boolean().default(false),
     departmentKey: z.string().trim().optional(),
@@ -222,7 +286,7 @@ export const clinicalServiceFormSchema = z
             code: "custom",
             path: [field],
             message:
-              "An on-enquiry service must not carry a price — a coordinator quotes it",
+              "An on-enquiry service must not carry a price. A coordinator quotes it",
           });
         }
       }
@@ -277,6 +341,13 @@ export interface ClinicalService {
 
   requiredStaffQualifications: string[];
   safetyNote: string | null;
+  chatbotInstructions: string[];
+  /** null until the owner first saves escalation settings — the workspace's default support applies. */
+  escalation: {
+    isEnabled: boolean;
+    whenToEscalate: string[];
+    notifyNumber: string | null;
+  } | null;
 
   requiresPractitioner: boolean;
   departmentKey: string | null;
@@ -307,7 +378,7 @@ export function formatServicePrice(service: ClinicalService): string {
       return "On enquiry";
     case "RANGE":
       return service.priceMin != null && service.priceMax != null
-        ? `${service.currency} ${service.priceMin.toLocaleString()}–${service.priceMax.toLocaleString()}`
+        ? `${service.currency} ${service.priceMin.toLocaleString()} to ${service.priceMax.toLocaleString()}`
         : "On enquiry";
     case "PER_SESSION": {
       const parts = [];

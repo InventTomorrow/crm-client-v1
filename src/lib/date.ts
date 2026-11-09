@@ -17,7 +17,7 @@ const daysAgo = (date: Date): number =>
   Math.round((startOfLocalDay(new Date()) - startOfLocalDay(date)) / DAY_MS);
 
 /** "7 Aug 2026" — unambiguous, so it never reads as 8 July. */
-export function formatDate(value: string | Date | null | undefined, fallback = '—'): string {
+export function formatDate(value: string | Date | null | undefined, fallback = 'N/A'): string {
   const date = parse(value);
   if (!date) return fallback;
   return date.toLocaleDateString('en-GB', {
@@ -28,7 +28,7 @@ export function formatDate(value: string | Date | null | undefined, fallback = '
 }
 
 /** "7 Aug 2026, 3:42 PM" — for detail views where the exact moment matters. */
-export function formatDateTime(value: string | Date | null | undefined, fallback = '—'): string {
+export function formatDateTime(value: string | Date | null | undefined, fallback = 'N/A'): string {
   const date = parse(value);
   if (!date) return fallback;
   return `${formatDate(date)}, ${date.toLocaleTimeString('en-GB', {

@@ -39,6 +39,8 @@ export interface CreateableAutoCompleteProps<T extends CreateableOption> {
    * track the live query themselves (e.g. re-filtering server-side), since
    * `selected`/`onSelect` alone only update once the user picks a row. */
   onQueryChange?: (query: string) => void
+  /** Lists every item each time the field opens, even with a value filled in; typing still narrows the list. */
+  showAllOnOpen?: boolean
   placeholder?: string
   emptyLabel?: string
   disabled?: boolean
@@ -52,6 +54,7 @@ export function CreateableAutoComplete<T extends CreateableOption>({
   onSelect,
   onCreate,
   onQueryChange,
+  showAllOnOpen = false,
   placeholder = "Search or create…",
   emptyLabel = "No results.",
   disabled,
@@ -60,27 +63,35 @@ export function CreateableAutoComplete<T extends CreateableOption>({
   const [query, setQuery] = React.useState(selected?.label ?? "")
   const [isCreating, setIsCreating] = React.useState(false)
   const [open, setOpen] = React.useState(false)
+  const [isTyping, setIsTyping] = React.useState(false)
 
   React.useEffect(() => {
     setQuery(selected?.label ?? "")
   }, [selected])
 
-  const handleQueryChange = (next: string) => {
+  const handleQueryChange = (next: string, isTypedByUser: boolean) => {
+    setIsTyping(isTypedByUser)
     setQuery(next)
     onQueryChange?.(next)
   }
 
+  const handleOpenChange = (nextOpen: boolean, reason: string) => {
+    setOpen(nextOpen)
+    if (nextOpen && reason !== "input-change") setIsTyping(false)
+  }
+
+  const isFiltering = !showAllOnOpen || isTyping
   const trimmedQuery = query.trim()
   const filteredItems = React.useMemo(() => {
-    if (!trimmedQuery) return items
+    if (!isFiltering || !trimmedQuery) return items
     const term = trimmedQuery.toLowerCase()
     return items.filter((item) => item.label.toLowerCase().includes(term))
-  }, [items, trimmedQuery])
+  }, [items, isFiltering, trimmedQuery])
 
   const hasExactMatch = items.some(
     (item) => item.label.toLowerCase() === trimmedQuery.toLowerCase()
   )
-  const canCreate = trimmedQuery.length > 0 && !hasExactMatch
+  const canCreate = isFiltering && trimmedQuery.length > 0 && !hasExactMatch
 
   const listEntries: ListEntry<T>[] = canCreate
     ? [...filteredItems, { id: CREATE_ENTRY_ID, label: trimmedQuery }]
@@ -102,18 +113,24 @@ export function CreateableAutoComplete<T extends CreateableOption>({
     <Autocomplete
       items={listEntries}
       value={query}
-      onValueChange={handleQueryChange}
+      onValueChange={(next, details) =>
+        handleQueryChange(next, details.reason === "input-change")
+      }
       itemToStringValue={(entry: unknown) => (entry as ListEntry<T>).label}
+      // Filtering already happens above; the built-in one would narrow a pre-filled value back down.
+      filter={showAllOnOpen ? null : undefined}
       disabled={disabled}
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(nextOpen, details) =>
+        handleOpenChange(nextOpen, details.reason)
+      }
       openOnInputClick
     >
       <AutocompleteInput
         placeholder={placeholder}
         className={className}
         showClear
-        onFocus={() => setOpen(true)}
+        onFocus={() => handleOpenChange(true, "focus")}
       />
       <AutocompleteContent>
         {filteredItems.length === 0 && !canCreate && (

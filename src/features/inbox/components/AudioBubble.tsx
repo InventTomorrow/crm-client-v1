@@ -100,7 +100,7 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-[16px] px-3 py-2.5 min-w-[230px] max-w-[280px]",
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 min-w-[230px] max-w-[280px]",
         outbound
           ? "bg-[var(--accent)] text-white"
           : "bg-[var(--surface-2)] border border-[var(--line)] text-[var(--ink)]",
@@ -112,9 +112,9 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
         aria-label={
           failed ? "Retry loading voice message" : playing ? "Pause" : "Play"
         }
-        title={failed ? "Couldn't load voice message — tap to retry" : undefined}
+        title={failed ? "Couldn't load voice message. Tap to retry" : undefined}
         className={cn(
-          "flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 transition-transform active:scale-95",
+          "flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 transition-transform active:scale-95",
           outbound
             ? "bg-white text-[var(--accent)]"
             : "bg-[var(--accent)] text-white",
@@ -167,7 +167,7 @@ function AudioBubbleBase({ url, outbound }: { url: string; outbound: boolean }) 
           />
           <span>
             {failed
-              ? "Couldn't load — tap to retry"
+              ? "Couldn't load. Tap to retry"
               : fmt(playing || progress > 0 ? progress : duration)}
           </span>
         </div>

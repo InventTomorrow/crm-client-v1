@@ -1,11 +1,13 @@
 "use client";
 import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
+import { TestUserBanner } from "@/features/seed/components/TestUserBanner";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
 import { AppOfferSurfaces } from "@/features/offers/components/AppOfferSurfaces";
 import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWorkspace";
 import { TourProvider } from "@/features/tour/components/TourProvider";
 import { WorkspaceTourStarter } from "@/features/tour/components/WorkspaceTourStarter";
 import { useAppStore } from "@/lib/appStore";
+import { AppFooter } from "@/shared/layout/AppFooter";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { AppTopBar } from "@/shared/layout/AppTopBar";
 import { AuthGate } from "@/shared/layout/AuthGate";
@@ -47,10 +49,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="app-main">
             {/* Campaign strip sits above the bar so it never covers navigation. */}
             <AppOfferSurfaces />
+            <TestUserBanner />
             <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
             <main key={currentWorkspaceId} className="app-content">
               <RouteGuard>{children}</RouteGuard>
             </main>
+            <AppFooter />
           </div>
           <MobileDock />
 

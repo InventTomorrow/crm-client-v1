@@ -88,7 +88,7 @@ export function LeadsKanbanSkeleton() {
             {Array.from({ length: 3 - (columnIndex % 3) }).map((_, cardIndex) => (
               <div
                 key={cardIndex}
-                className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-2.5"
+                className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-2.5"
               >
                 <div className="flex items-center gap-2.5">
                   <SkeletonBar className="h-8 w-8 shrink-0 rounded-full" />

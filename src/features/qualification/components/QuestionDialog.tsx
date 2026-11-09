@@ -150,7 +150,7 @@ export function QuestionDialog({
                       onQueryChange={field.onChange}
                       onCreate={(label) => ({ id: label, label })}
                       placeholder={copy.questionPlaceholder}
-                      emptyLabel="No suggestion matches — keep typing to write your own."
+                      emptyLabel="No suggestion matches. Keep typing to write your own."
                     />
                   </FormControl>
                   <FormDescription>

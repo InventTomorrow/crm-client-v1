@@ -17,7 +17,7 @@ export function ServicePaymentPanel({ service }: { service: ServiceOffering }) {
       description={
         collectPayment
           ? 'After an order in chat, the bot sends only the default account and asks for a receipt. The next one goes only if the customer cannot pay into it.'
-          : 'Collection is off — the bot takes the order and your team arranges payment.'
+          : 'Collection is off. The bot takes the order and your team arranges payment.'
       }
     >
       {!collectPayment ? (
@@ -25,7 +25,7 @@ export function ServicePaymentPanel({ service }: { service: ServiceOffering }) {
       ) : isLoading ? (
         <Loader2 size={16} className="animate-spin text-[var(--ink-mute)]" />
       ) : offeredAccounts.length === 0 ? (
-        <PreviewEmptyHint>No accounts offered — customers will not be sent payment details.</PreviewEmptyHint>
+        <PreviewEmptyHint>No accounts offered. Customers will not be sent payment details.</PreviewEmptyHint>
       ) : (
         <ul className="flex flex-col gap-2">
           {offeredAccounts.map((account) => (

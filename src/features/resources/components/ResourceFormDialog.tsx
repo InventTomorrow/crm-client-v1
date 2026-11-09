@@ -107,7 +107,7 @@ export function ResourceFormDialog({
                       accept={ACCEPTED_TYPES}
                       maxSize={MAX_RESOURCE_FILE_SIZE_BYTES}
                       description="Drop a brochure, portfolio or case study"
-                      hint="Image or PDF — up to 10 MB"
+                      hint="Image or PDF. Up to 10 MB"
                       disabled={isSaving}
                     />
                   </FormControl>

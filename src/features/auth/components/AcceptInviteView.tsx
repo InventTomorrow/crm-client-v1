@@ -91,7 +91,7 @@ export function AcceptInviteView() {
         </div>
 
         {validation?.status === 'VALID' && (
-          <div className="flex items-start gap-2.5 rounded-[10px] bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.22)] px-3.5 py-3">
+          <div className="flex items-start gap-2.5 rounded-lg bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.22)] px-3.5 py-3">
             <ShieldCheck size={16} className="text-[#059669] flex-shrink-0 mt-0.5" />
             <div className="text-[12.5px] text-[var(--ink-soft)] leading-snug">
               You&apos;ve been invited to{' '}

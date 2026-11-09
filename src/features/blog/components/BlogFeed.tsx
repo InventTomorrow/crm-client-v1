@@ -58,7 +58,7 @@ export default function BlogFeed({ initialPage, category, tag }: BlogFeedProps) 
             type="button"
             onClick={loadMore}
             disabled={isLoading}
-            className="inline-flex h-auto items-center gap-2 rounded-full border border-brand-mint-2 bg-white px-7 py-3 text-[15px] font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-brand-green/40 hover:text-brand-green disabled:pointer-events-none disabled:opacity-60"
+            className="inline-flex h-auto items-center gap-2 rounded-lg border border-brand-mint-2 bg-white px-7 py-3 text-[15px] font-semibold text-brand-dark transition-all hover:-translate-y-0.5 hover:border-brand-green/40 hover:text-brand-green disabled:pointer-events-none disabled:opacity-60"
           >
             {isLoading && <Loader2 className="size-4 animate-spin" />}
             {isLoading ? "Loading…" : "Load more articles"}

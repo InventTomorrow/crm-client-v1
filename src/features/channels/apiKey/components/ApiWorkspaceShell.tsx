@@ -26,7 +26,7 @@ export function ApiWorkspaceShell({ children }: { children: ReactNode }) {
           current={activeSection?.label ?? WEBSITE_API_LABEL}
         />
 
-        <header className="mb-8 flex flex-col gap-5 border-b border-[var(--line)] pb-6 lg:flex-row lg:items-start lg:justify-between">
+        <header className="mb-5">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
               <LinkIcon size={22} />
@@ -39,10 +39,9 @@ export function ApiWorkspaceShell({ children }: { children: ReactNode }) {
               </p>
             </div>
           </div>
-          <div className="lg:pt-2">
-            <ApiSectionNav />
-          </div>
         </header>
+
+        <ApiSectionNav />
 
         {children}
       </div>

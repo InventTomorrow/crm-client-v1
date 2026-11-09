@@ -166,7 +166,7 @@ export function ImportProductsView() {
                 ) : (
                   <span className="text-[#B45309]">
                     {invalidCount} product{invalidCount === 1 ? "" : "s"} still
-                    need a name, price and stock — the ones marked in red
+                    need a name, price and stock. The ones marked in red
                   </span>
                 )}
               </span>
@@ -216,7 +216,7 @@ function FormatPicker({
           What kind of file do you have?
         </h2>
         <p className="text-[12px] text-[var(--ink-mute)]">
-          Pick one and choose the file — you can fix anything before saving.
+          Pick one and choose the file. You can fix anything before saving.
         </p>
       </div>
 
@@ -285,7 +285,7 @@ function ImportProgress({ value }: Readonly<{ value: number }>) {
 
       <div className="flex flex-col items-center gap-1">
         <span className="text-[13px] font-medium text-[var(--ink-soft)]">
-          {isDone ? "Ready — showing your products" : stage.label}
+          {isDone ? "Ready. Showing your products" : stage.label}
         </span>
         <span className="font-[var(--font-mono)] text-[11px] text-[var(--ink-mute)]">
           {value}%

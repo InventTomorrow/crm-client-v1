@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMe } from "@/features/auth/hooks/useAuth";
 import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { hasCapability } from "@/lib/business-verticals";
@@ -16,12 +17,14 @@ export function SettingsNav() {
   const pathname = usePathname();
   const { can, isLoading: permsLoading } = usePermissions();
   const { tenant } = useCurrentTenant();
+  const { user } = useMe();
 
   const settingsSections =
     NAV_ITEMS.find((item) => item.href === "/settings")?.children ?? [];
   const visibleSections = settingsSections.filter(
     (section) =>
       (permsLoading || !section.perm || can(section.perm)) &&
+      (!section.testerOnly || !!user?.isTester) &&
       // Same rule as the sidebar: a vertical-specific tab only where it applies.
       (!section.capability || hasCapability(tenant?.businessVertical, section.capability)),
   );
@@ -38,7 +41,7 @@ export function SettingsNav() {
             key={href}
             href={href}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-[12.5px] font-medium no-underline transition-colors",
+              "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-medium no-underline transition-colors",
               isActive
                 ? "bg-[var(--ink)] text-[var(--bg)] shadow-sm"
                 : "text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",

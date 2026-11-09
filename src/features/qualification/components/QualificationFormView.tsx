@@ -256,7 +256,7 @@ export function QualificationFormView() {
                     </span>
                     <span className="text-[var(--ink-mute)]">·</span>
                     <span className="text-[var(--ink)]">
-                      Warm {warmThreshold}–
+                      Warm {warmThreshold} to{' '}
                       {Math.max(
                         Number(hotThreshold) - 1,
                         Number(warmThreshold),
@@ -293,7 +293,7 @@ export function QualificationFormView() {
                 title={
                   wizard.canSubmit
                     ? undefined
-                    : `Finish every section first — ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
+                    : `Finish every section first: ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
                 }
                 onClick={handleSaveAndQuit}
               >
@@ -315,7 +315,7 @@ export function QualificationFormView() {
                   title={
                     wizard.canSubmit
                       ? undefined
-                      : `Finish every section first — ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
+                      : `Finish every section first: ${wizard.completedRequiredCount} of ${wizard.requiredStepCount} done.`
                   }
                   onClick={handleSaveAndNext}
                 >

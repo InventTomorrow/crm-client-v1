@@ -54,17 +54,17 @@ export function OrdersApiDocs() {
           </DocParagraph>
           <DocList>
             <li>
-              Send <InlineCode>confirmationMessage</InlineCode> — your text is
+              Send <InlineCode>confirmationMessage</InlineCode>: your text is
               sent exactly as written.
             </li>
             <li>
-              Leave it out (or send it blank) — an automatic receipt with the
+              Leave it out (or send it blank). An automatic receipt with the
               order number, items and total is sent instead.
             </li>
           </DocList>
           <DocParagraph>
             The message is saved to the customer&apos;s conversation in your
-            inbox. It&apos;s sent once per order — retrying the same{" "}
+            inbox. It&apos;s sent once per order. Retrying the same{" "}
             <InlineCode>externalOrderId</InlineCode> doesn&apos;t send it again.
             If WhatsApp isn&apos;t connected, the order is still created and no
             message is sent.

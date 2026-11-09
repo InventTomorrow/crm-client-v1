@@ -134,7 +134,7 @@ export function UsageView() {
                       ? "Unlimited"
                       : metric.limit != null
                         ? metric.limit.toLocaleString("en-PK")
-                        : "—"}
+                        : "N/A"}
                   </span>
                 </div>
                 <Progress
@@ -154,7 +154,7 @@ export function UsageView() {
                 />
                 {exhausted && (
                   <p className="mt-1 text-[11.5px] text-destructive-foreground">
-                    Limit reached — upgrade to keep going.
+                    Limit reached. Upgrade to keep going.
                   </p>
                 )}
               </div>

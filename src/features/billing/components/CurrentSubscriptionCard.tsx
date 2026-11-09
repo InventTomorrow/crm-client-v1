@@ -23,7 +23,7 @@ const STATUS_LABEL: Record<SubscriptionStatus, string> = {
 };
 
 function fmtDate(value: string | null) {
-  if (!value) return '—';
+  if (!value) return 'N/A';
   return new Date(value).toLocaleDateString('en-PK', {
     year: 'numeric',
     month: 'short',
@@ -117,7 +117,7 @@ export function CurrentSubscriptionCard({
       </div>
 
       {scheduledChange && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-warning-soft px-4 py-3">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-warning-soft px-4 py-3">
           <div className="flex items-start gap-2 text-[13px] text-warning-foreground">
             <CalendarClock size={15} className="mt-px shrink-0" />
             <span>

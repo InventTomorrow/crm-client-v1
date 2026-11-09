@@ -18,7 +18,9 @@ import { Switch } from "@/shared/ui/Switch";
 import { Textarea } from "@/shared/ui/Textarea";
 import {
   CalendarClock,
+  Check,
   Clock,
+  Loader2,
   MessageSquare,
   SlidersHorizontal,
   Stethoscope,
@@ -38,7 +40,13 @@ const meetingTypeOptions = MEETING_TYPES.map((meetingType) => ({
 }));
 
 /** Editor for the single BookingConfig per workspace — what the bot is allowed to offer. */
-export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
+export function BookingConfigForm({
+  onSaved,
+  onCancel,
+}: {
+  onSaved?: () => void;
+  onCancel?: () => void;
+}) {
   const { form, isLoading, isSaving, handleSubmit } = useBookingConfigForm({
     ...(onSaved ? { onSaved } : {}),
   });
@@ -63,15 +71,15 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-none" />
+        <Skeleton className="h-64 w-full rounded-none" />
       </div>
     );
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <FormSection
           title="The meeting"
           description={`What ${vocabulary.plural} are booking, and how it happens.`}
@@ -122,7 +130,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                     />
                   </FormControl>
                   <FormDescription>
-                    How the meeting is held — the bot tells the{" "}
+                    How the meeting is held. The bot tells the{" "}
                     {vocabulary.singular} this when confirming.
                   </FormDescription>
                   <FormMessage />
@@ -182,7 +190,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
 
         <FormSection
           title="When you're available"
-          description="Slots are generated from these days and times — never stored, so editing here updates every future day at once."
+          description="Slots are generated from these days and times. Never stored, so editing here updates every future day at once."
           Icon={Clock}
         >
           {/* Fixed server-side: every calendar, slot key and spoken time resolves
@@ -481,7 +489,7 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
                   />
                   <FormDescription>
                     This is the ceiling for the whole clinic. A practitioner may
-                    be set narrower than this, never wider — so moving it down
+                    be set narrower than this, never wider, so moving it down
                     to &ldquo;Don&apos;t show&rdquo; genuinely hides everyone.
                   </FormDescription>
                   <FormMessage />
@@ -491,9 +499,28 @@ export function BookingConfigForm({ onSaved }: { onSaved?: () => void }) {
           </FormSection>
         )}
 
-        <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving…" : "Save booking settings"}
+        <div className="card sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-2 rounded-none px-4 py-3">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={isSaving}
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" size="lg" disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Check size={14} className="mr-1.5" /> Save booking settings
+              </>
+            )}
           </Button>
         </div>
       </form>

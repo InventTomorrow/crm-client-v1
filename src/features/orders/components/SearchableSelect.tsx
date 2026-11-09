@@ -201,7 +201,7 @@ export function SearchableSelect<T>({
               })}
               {filtered.length > visibleOptions.length && (
                 <div className="px-3 py-2 text-center text-[11.5px] text-[var(--ink-mute)]">
-                  Showing {visibleOptions.length} of {filtered.length} — keep typing to narrow it down
+                  Showing {visibleOptions.length} of {filtered.length}. Keep typing to narrow it down
                 </div>
               )}
             </div>

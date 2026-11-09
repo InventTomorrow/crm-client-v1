@@ -27,6 +27,8 @@ export function ClinicalServiceSafetyFields({
               placeholder="MBBS, FCPS (Cardiology)"
               addLabel="Add qualification"
               emptyHint="The assistant will never propose a less-qualified alternative for this service."
+              isLabelProminent
+              isAddButtonCentered
               values={field.value ?? []}
               onChange={field.onChange}
               disabled={isSaving}

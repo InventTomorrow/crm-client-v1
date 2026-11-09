@@ -187,7 +187,7 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
             placeholder="Search leads, orders, or jump to a page…"
             className="flex-1 border-none outline-none bg-transparent text-[15px] text-[var(--ink)] font-[inherit]"
           />
-          <kbd className="text-[10px] text-[var(--ink-mute)] py-[2px] px-[6px] border border-[var(--line)] rounded-[5px] font-[var(--font-mono)] flex-shrink-0">
+          <kbd className="text-[10px] text-[var(--ink-mute)] py-[2px] px-[6px] border border-[var(--line)] rounded-md font-[var(--font-mono)] flex-shrink-0">
             ESC
           </kbd>
         </div>

@@ -8,6 +8,7 @@ import {
   Clock,
   Eye,
   ListChecks,
+  MessageSquareText,
   ShieldAlert,
   Stethoscope,
   type LucideIcon,
@@ -22,6 +23,7 @@ import {
   type ClinicalServiceSectionId,
 } from "../utils/clinicalServiceSectionSummaries";
 import { ClinicalServiceBasicsFields } from "./sections/ClinicalServiceBasicsFields";
+import { ClinicalServiceInstructionsFields } from "./sections/ClinicalServiceInstructionsFields";
 import { ClinicalServiceIntakeFields } from "./sections/ClinicalServiceIntakeFields";
 import { ClinicalServicePricingFields } from "./sections/ClinicalServicePricingFields";
 import { ClinicalServiceSafetyFields } from "./sections/ClinicalServiceSafetyFields";
@@ -78,6 +80,13 @@ const STEP_META: Record<
       "Who may deliver this service, and what must always be said about it.",
     Fields: ClinicalServiceSafetyFields,
   },
+  instructions: {
+    Icon: MessageSquareText,
+    title: "Assistant instructions",
+    description:
+      "Your own rules for how the assistant handles this service, and when and who to escalate to.",
+    Fields: ClinicalServiceInstructionsFields,
+  },
   visibility: {
     Icon: Eye,
     title: "Visibility",
@@ -96,6 +105,7 @@ export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
     stepIndex,
     furthestStepIndex,
     summaries,
+    requiredFilledSections,
     erroredSections,
     goToStep,
     goBack,
@@ -122,6 +132,7 @@ export function ClinicalServiceFormView({ serviceId }: { serviceId?: string }) {
     summary: summaries[id],
     isEmpty: summaries[id] === NOTHING_FILLED_IN,
     hasError: erroredSections.includes(id),
+    isRequiredFilled: requiredFilledSections[id],
   }));
 
   const CurrentFields = STEP_META[CLINICAL_SERVICE_STEP_ORDER[stepIndex]!].Fields;

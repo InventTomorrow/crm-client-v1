@@ -147,7 +147,7 @@ function ProductGridCardBase({
           </span>
         </div>
         <div className="text-[10.5px] mt-0.5 text-[var(--ink-mute)] font-[var(--font-mono)]">
-          {product.sku || "—"}
+          {product.sku || "N/A"}
         </div>
       </div>
     </div>

@@ -27,7 +27,7 @@ export function SubmissionSuccess({
           <p className="mt-1 text-[13px] text-[var(--ink-mute)]">
             Your request for <strong className="font-medium text-[var(--ink-soft)]">{planName}</strong>{" "}
             has been received. We&apos;ll verify your receipt and activate your
-            workspace shortly — you&apos;ll hear from us by email.
+            workspace shortly. You&apos;ll hear from us by email.
           </p>
         </div>
       </div>

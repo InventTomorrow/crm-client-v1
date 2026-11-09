@@ -212,7 +212,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
                 ) : (
                   <div className="mt-1.5">
                     <PreviewEmptyHint>
-                      Nothing written yet — the bot answers detailed questions from the short
+                      Nothing written yet. The bot answers detailed questions from the short
                       description alone.
                     </PreviewEmptyHint>
                   </div>
@@ -234,7 +234,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
             >
               {keyOutcomes.length === 0 ? (
                 <PreviewEmptyHint>
-                  No outcomes listed — the bot has nothing to lean on when a lead compares options.
+                  No outcomes listed. The bot has nothing to lean on when a lead compares options.
                 </PreviewEmptyHint>
               ) : (
                 <ul className="flex flex-col gap-2">
@@ -266,8 +266,8 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
               {plans.length === 0 ? (
                 <PreviewEmptyHint>
                   {service.pricingType === 'TIERED'
-                    ? 'Tiered pricing with no plans — the bot has no tiers to quote.'
-                    : 'No plans — this service is quoted from its starting price.'}
+                    ? 'Tiered pricing with no plans. The bot has no tiers to quote.'
+                    : 'No plans. This service is quoted from its starting price.'}
                 </PreviewEmptyHint>
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -316,7 +316,7 @@ export function ServicePreviewView({ serviceId }: { serviceId: string }) {
                   label="Closing"
                   value={SERVICE_CLOSE_MODE_LABELS[service.closeMode ?? 'CALL']}
                 />
-                <PreviewDetailRow label="Category" value={service.category || '—'} />
+                <PreviewDetailRow label="Category" value={service.category || 'N/A'} />
                 <PreviewDetailRow label="Currency" value={service.currency} />
                 <PreviewDetailRow label="List order" value={service.displayOrder} />
                 <PreviewDetailRow

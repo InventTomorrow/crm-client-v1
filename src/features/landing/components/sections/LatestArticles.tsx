@@ -39,7 +39,7 @@ export default function LatestArticles({ posts }: { posts: BlogPostCard[] }) {
           <Reveal delay={0.12}>
             <Link
               href="/blog"
-              className="inline-flex h-auto items-center gap-2 rounded-full bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover"
+              className="inline-flex h-auto items-center gap-2 rounded-lg bg-brand-green px-6 py-3 text-[15px] font-semibold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-brand-green-hover hover:shadow-cta-hover"
             >
               View all articles <MoveRight className="size-4" />
             </Link>

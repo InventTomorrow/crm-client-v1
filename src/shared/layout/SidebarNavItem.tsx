@@ -28,6 +28,7 @@ interface SidebarNavItemProps {
   onNavigate: () => void;
   canAccess: (perm?: string) => boolean;
   canUseCapability: (capability?: VerticalCapability) => boolean;
+  isTester: boolean;
   /** Drives per-vertical label overrides — see navLabelFor. */
   businessVertical?: BusinessVertical | undefined;
 }
@@ -42,6 +43,7 @@ export function SidebarNavItem({
   onNavigate,
   canAccess,
   canUseCapability,
+  isTester,
   businessVertical,
 }: SidebarNavItemProps) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -50,6 +52,7 @@ export function SidebarNavItem({
     (child) =>
       canAccess(child.perm) &&
       canUseCapability(child.capability) &&
+      (!child.testerOnly || isTester) &&
       !(businessVertical && child.hiddenForVerticals?.includes(businessVertical)),
   );
   const hasChildren = visibleChildren.length > 0;

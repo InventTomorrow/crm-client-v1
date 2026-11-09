@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import type {
+  BusinessHoursPayload,
   BusinessProfileForm,
   ChatbotConfigForm,
   ChatbotConfigResponse,
@@ -17,6 +18,12 @@ export async function updateChatbotConfig(data: ChatbotConfigForm): Promise<void
 
 export async function updateBusinessProfile(data: BusinessProfileForm): Promise<void> {
   await apiClient.put('/chatbot/business', data);
+}
+
+export async function updateBusinessHours(
+  payload: { businessHours: BusinessHoursPayload | null },
+): Promise<void> {
+  await apiClient.put('/chatbot/business-hours', payload);
 }
 
 export async function updatePaymentAccounts(data: PaymentAccountsForm): Promise<void> {

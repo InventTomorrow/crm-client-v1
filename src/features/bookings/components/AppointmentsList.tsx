@@ -123,7 +123,7 @@ export function AppointmentsList({
         const { clinicalService } = row.original;
         if (!clinicalService) {
           return (
-            <span className="text-[12px] text-[var(--ink-mute)]/60">—</span>
+            <span className="text-[12px] text-[var(--ink-mute)]/60">N/A</span>
           );
         }
 
@@ -235,7 +235,7 @@ export function AppointmentsList({
             return (
               <p className="max-w-[260px] truncate text-[12px] text-[var(--ink-mute)]">
                 <span className="font-medium text-destructive">
-                  Cancelled —{" "}
+                  Cancelled:{" "}
                 </span>
                 {appointment.cancelReason}
               </p>
@@ -249,7 +249,7 @@ export function AppointmentsList({
             );
           }
           return (
-            <span className="text-[12px] text-[var(--ink-mute)]/60">—</span>
+            <span className="text-[12px] text-[var(--ink-mute)]/60">N/A</span>
           );
         },
       },

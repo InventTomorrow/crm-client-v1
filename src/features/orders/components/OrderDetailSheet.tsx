@@ -239,8 +239,8 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                   </div>
                   <p className="mt-1 text-[11.5px] text-[var(--ink-mute)]">
                     This order includes custom work your team prices by hand. It
-                    stays a draft — no stock is held and the customer has not
-                    been charged — until you set the line prices and confirm it.
+                    stays a draft. No stock is held and the customer has not
+                    been charged. Until you set the line prices and confirm it.
                   </p>
                 </div>
               )}
@@ -353,7 +353,7 @@ export function OrderDetailSheet({ orderId, onClose, onEdit }: Props) {
                                               onClick={() =>
                                                 setPreviewImage({
                                                   url,
-                                                  caption: `${orderItem.name} — ${option.label}`,
+                                                  caption: `${orderItem.name}: ${option.label}`,
                                                   filenameBase: `${orderItem.name}-${option.label}`,
                                                 })
                                               }

@@ -99,7 +99,7 @@ export function PractitionersListView({
         cell: ({ row }) => {
           const { specialties } = row.original;
           if (specialties.length === 0) {
-            return <span className="text-[var(--ink-mute)]">—</span>;
+            return <span className="text-[var(--ink-mute)]">N/A</span>;
           }
           return (
             <span
@@ -125,7 +125,7 @@ export function PractitionersListView({
             <span
               title={
                 practitioner.visibility === null
-                  ? `Inherited — ${VISIBILITY_META[effective].description}`
+                  ? `Inherited: ${VISIBILITY_META[effective].description}`
                   : VISIBILITY_META[effective].description
               }
               className={cn(
@@ -167,7 +167,7 @@ export function PractitionersListView({
         cell: ({ row }) => {
           const practitioner = row.original;
           if (practitioner.consultationFee == null) {
-            return <span className="text-[var(--ink-mute)]">—</span>;
+            return <span className="text-[var(--ink-mute)]">N/A</span>;
           }
           return (
             <span className="whitespace-nowrap text-[13px] font-medium text-[var(--ink)]">

@@ -1,15 +1,10 @@
 "use client";
 import { Button } from "@/shared/ui/Button";
-import { Input } from "@/shared/ui/Input";
 import { Label } from "@/shared/ui/Label";
-import { NativeSelect } from "@/shared/ui/NativeSelect";
-import { Plus, Trash2 } from "lucide-react";
-import {
-  BILLING_PERIOD_LABELS,
-  SHIFT_BILLING_PERIODS,
-  type ShiftBillingPeriod,
-  type ShiftOptionInput,
-} from "../types";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { BILLING_PERIOD_LABELS, type ShiftOptionInput } from "../types";
+import { ShiftOptionDialog } from "./ShiftOptionDialog";
 
 interface ShiftOptionsFieldProps {
   value: ShiftOptionInput[];
@@ -18,25 +13,30 @@ interface ShiftOptionsFieldProps {
   disabled?: boolean;
 }
 
-const NEW_SHIFT: ShiftOptionInput = {
-  key: "",
-  label: "",
-  hoursPerDay: null,
-  price: null,
-  priceMin: null,
-  priceMax: null,
-  billingPeriod: "PER_MONTH",
-  availableCities: [],
-  isDefault: false,
+const formatAmount = (currency: string, amount: unknown): string =>
+  `${currency} ${Number(amount).toLocaleString("en-US")}`;
+
+const describePrice = (
+  shift: ShiftOptionInput,
+  currency: string,
+): string | null => {
+  if (shift.price != null) return formatAmount(currency, shift.price);
+  if (shift.priceMin != null && shift.priceMax != null)
+    return `${formatAmount(currency, shift.priceMin)} to ${Number(shift.priceMax).toLocaleString("en-US")}`;
+  return null;
 };
 
-/** "12-hour day" → "12_hour_day", so the key is stable without the admin typing one. */
-const slugify = (label: string): string =>
-  label
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+const describeShift = (shift: ShiftOptionInput, currency: string): string =>
+  [
+    describePrice(shift, currency) ?? "No price set",
+    BILLING_PERIOD_LABELS[shift.billingPeriod ?? "PER_MONTH"],
+    shift.hoursPerDay != null ? `${Number(shift.hoursPerDay)} h/day` : null,
+    shift.availableCities?.length
+      ? shift.availableCities.join(", ")
+      : "All covered cities",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
 /**
  * Priced duty arrangements. Clinics price the shift, not the service: the same
@@ -49,195 +49,111 @@ export function ShiftOptionsField({
   currency,
   disabled,
 }: ShiftOptionsFieldProps) {
-  const patch = (index: number, changes: Partial<ShiftOptionInput>) => {
-    onChange(
-      value.map((shift, i) => (i === index ? { ...shift, ...changes } : shift)),
-    );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editedShiftIndex, setEditedShiftIndex] = useState<number | null>(null);
+  const editedShift =
+    editedShiftIndex === null ? null : (value[editedShiftIndex] ?? null);
+
+  const openDialogFor = (shiftIndex: number | null) => {
+    setEditedShiftIndex(shiftIndex);
+    setIsDialogOpen(true);
   };
 
-  const remove = (index: number) =>
-    onChange(value.filter((_, i) => i !== index));
+  const saveShift = (shift: ShiftOptionInput) => {
+    onChange(
+      editedShiftIndex === null
+        ? [...value, shift]
+        : value.map((existing, index) =>
+            index === editedShiftIndex ? shift : existing,
+          ),
+    );
+    setIsDialogOpen(false);
+  };
+
+  const removeShiftAt = (shiftIndex: number) =>
+    onChange(value.filter((_, index) => index !== shiftIndex));
+
+  const addButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      className={value.length === 0 ? undefined : "self-start"}
+      disabled={disabled}
+      onClick={() => openDialogFor(null)}
+    >
+      <Plus className="size-4" />
+      Add arrangement
+    </Button>
+  );
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <div className="space-y-0.5">
         <Label>Duty arrangements</Label>
         <p className="text-muted-foreground text-sm">
-          Optional. Add one per shift the clinic offers — live-in, 12-hour day,
+          Optional. Add one per shift the clinic offers: live-in, 12-hour day,
           a short visit. Leave the cities blank to offer a shift everywhere the
           service is covered.
         </p>
       </div>
 
-      {value.map((shift, index) => (
-        <div key={index} className="space-y-3 rounded-lg border p-3">
-          <div className="flex items-start gap-2">
-            <div className="grid flex-1 gap-3 sm:grid-cols-[1fr_120px]">
-              <div className="space-y-1.5">
-                <Label htmlFor={`shift-label-${index}`}>Label</Label>
-                <Input
-                  id={`shift-label-${index}`}
-                  placeholder="12-hour day shift"
-                  value={shift.label}
-                  disabled={disabled}
-                  onChange={(event) =>
-                    patch(index, {
-                      label: event.target.value,
-                      // Key follows the label until someone edits it directly.
-                      key:
-                        shift.key && shift.key !== slugify(shift.label)
-                          ? shift.key
-                          : slugify(event.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor={`shift-hours-${index}`}>Hours/day</Label>
-                <Input
-                  id={`shift-hours-${index}`}
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="12"
-                  value={(shift.hoursPerDay as number | null) ?? ""}
-                  disabled={disabled}
-                  onChange={(event) =>
-                    patch(index, {
-                      hoursPerDay:
-                        event.target.value === ""
-                          ? null
-                          : Number(event.target.value),
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="text-destructive mt-6 shrink-0"
-              disabled={disabled}
-              onClick={() => remove(index)}
-            >
-              <Trash2 className="size-3.5" />
-            </Button>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_150px]">
-            <div className="space-y-1.5">
-              <Label htmlFor={`shift-price-${index}`}>Price ({currency})</Label>
-              <Input
-                id={`shift-price-${index}`}
-                type="number"
-                inputMode="numeric"
-                placeholder="120000"
-                value={(shift.price as number | null) ?? ""}
-                disabled={disabled}
-                onChange={(event) =>
-                  patch(index, {
-                    price:
-                      event.target.value === ""
-                        ? null
-                        : Number(event.target.value),
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`shift-range-${index}`}>Or a range</Label>
-              <div className="flex items-center gap-1.5">
-                <Input
-                  id={`shift-range-${index}`}
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="Min"
-                  value={(shift.priceMin as number | null) ?? ""}
-                  disabled={disabled}
-                  onChange={(event) =>
-                    patch(index, {
-                      priceMin:
-                        event.target.value === ""
-                          ? null
-                          : Number(event.target.value),
-                    })
-                  }
-                />
-                <span className="text-muted-foreground">–</span>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="Max"
-                  value={(shift.priceMax as number | null) ?? ""}
-                  disabled={disabled}
-                  onChange={(event) =>
-                    patch(index, {
-                      priceMax:
-                        event.target.value === ""
-                          ? null
-                          : Number(event.target.value),
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`shift-period-${index}`}>Billed</Label>
-              <NativeSelect
-                id={`shift-period-${index}`}
-                value={shift.billingPeriod}
-                disabled={disabled}
-                onChange={(event) =>
-                  patch(index, {
-                    billingPeriod: event.target.value as ShiftBillingPeriod,
-                  })
-                }
-              >
-                {SHIFT_BILLING_PERIODS.map((period) => (
-                  <option key={period} value={period}>
-                    {BILLING_PERIOD_LABELS[period]}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor={`shift-cities-${index}`}>
-              Offered only in these cities
-            </Label>
-            <Input
-              id={`shift-cities-${index}`}
-              placeholder="Lahore, Islamabad — leave blank for everywhere"
-              value={(shift.availableCities ?? []).join(", ")}
-              disabled={disabled}
-              onChange={(event) =>
-                patch(index, {
-                  availableCities: event.target.value
-                    .split(",")
-                    .map((city) => city.trim())
-                    .filter(Boolean),
-                })
-              }
-            />
-            <p className="text-muted-foreground text-xs">
-              The assistant will not quote this arrangement to a patient outside
-              these cities.
-            </p>
-          </div>
+      {value.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[var(--line)] px-3 py-5">
+          <p className="text-center text-[11px] text-[var(--ink-mute)]">
+            No arrangements added yet.
+          </p>
+          {addButton}
         </div>
-      ))}
+      ) : (
+        <>
+          <ul className="flex flex-col gap-2">
+            {value.map((shift, index) => (
+              <li
+                key={index}
+                className="flex items-center gap-2 rounded-lg border p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{shift.label}</p>
+                  <p className="text-muted-foreground truncate text-xs">
+                    {describeShift(shift, currency)}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={`Edit ${shift.label}`}
+                  disabled={disabled}
+                  onClick={() => openDialogFor(index)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={`Remove ${shift.label}`}
+                  className="text-destructive"
+                  disabled={disabled}
+                  onClick={() => removeShiftAt(index)}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+          {addButton}
+        </>
+      )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => onChange([...value, { ...NEW_SHIFT }])}
-      >
-        <Plus className="size-4" />
-        Add arrangement
-      </Button>
+      <ShiftOptionDialog
+        isOpen={isDialogOpen}
+        initialShift={editedShift}
+        currency={currency}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={saveShift}
+      />
     </div>
   );
 }

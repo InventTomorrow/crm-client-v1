@@ -171,7 +171,7 @@ export function PractitionerIdentityFields({
               />
             </FormControl>
             <FormDescription className="max-w-37.5">
-              Optional — PNG, JPG or WEBP up to 5 MB. With a photo, the
+              Optional: PNG, JPG or WEBP up to 5 MB. With a photo, the
               assistant sends this profile as a picture instead of plain text.
             </FormDescription>
             <FormMessage />

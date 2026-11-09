@@ -99,8 +99,8 @@ export function ProductCustomOptions({
 
       {editor.options.length === 0 && (
         <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-xs">
-          Nothing here yet. Use Add option to set what customers can ask for — a
-          size, a colour, a name to print — and the assistant will collect it
+          Nothing here yet. Use Add option to set what customers can ask for. A
+          size, a colour, a name to print, and the assistant will collect it
           before ordering.
         </p>
       )}

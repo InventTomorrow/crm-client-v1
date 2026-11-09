@@ -1,6 +1,7 @@
 'use client';
 import { useDebouncedUrlSearch } from '@/shared/hooks/useDebouncedUrlSearch';
 import { useUrlEnumState } from '@/shared/hooks/useUrlEnumState';
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { Button } from '@/shared/ui/Button';
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
@@ -74,6 +75,10 @@ export function ResourcesView() {
       </div>
 
       <div data-tour="page-actions" className="flex items-center gap-2">
+        <SeedRecordsButton
+          target={{ recordType: "RESOURCE", label: "Resources" }}
+          size="lg"
+        />
         <RefreshButton
           onRefresh={() => resourcesQuery.refetch()}
           isRefreshing={resourcesQuery.isFetching}

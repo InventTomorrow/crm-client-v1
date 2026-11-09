@@ -29,7 +29,7 @@ export function ImportItemCard({
   return (
     <div
       onClick={onClick}
-      className={`relative flex cursor-pointer flex-col gap-1.5 rounded-[10px] border p-[8px] transition-all
+      className={`relative flex cursor-pointer flex-col gap-1.5 rounded-lg border p-[8px] transition-all
         ${
           active
             ? "border-[var(--accent)] bg-[var(--accent-soft)]"
@@ -38,7 +38,7 @@ export function ImportItemCard({
               : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)]"
         }`}
     >
-      <div className="flex h-[72px] w-full items-center justify-center overflow-hidden rounded-[7px] bg-[var(--surface-2)]">
+      <div className="flex h-[72px] w-full items-center justify-center overflow-hidden rounded-md bg-[var(--surface-2)]">
         {item.imageUrl ? (
           <ShimmerImage
             src={getImageUrl(item.imageUrl)}
@@ -57,7 +57,7 @@ export function ImportItemCard({
 
       <div className="flex items-center justify-between text-[11px]">
         <span className="font-[var(--font-mono)] text-[var(--ink-soft)]">
-          {item.price ? pkr(item.price) : "—"}
+          {item.price ? pkr(item.price) : "N/A"}
         </span>
         <span
           className={`badge px-1.5 py-px font-medium ${

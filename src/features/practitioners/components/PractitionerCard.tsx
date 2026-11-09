@@ -58,7 +58,7 @@ export function PractitionerCard({
   return (
     <article
       className={cn(
-        "flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--accent)]/30 bg-[var(--surface)] shadow-[var(--shadow-1)] transition-[border-color,box-shadow] hover:border-[var(--accent)]/60 hover:shadow-[var(--shadow-2)]",
+        "flex h-full flex-col overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-[var(--surface)] shadow-[var(--shadow-1)] transition-[border-color,box-shadow] hover:border-[var(--accent)]/60 hover:shadow-[var(--shadow-2)]",
         // A retired profile stays readable but visibly recedes from the live ones.
         !practitioner.isActive && "opacity-70",
       )}
@@ -134,7 +134,7 @@ export function PractitionerCard({
         )}
 
         {/* Hours and fee share one band, the same way the service card leads with price. */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--r-10)] bg-[var(--surface-2)] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-[var(--surface-2)] px-3 py-2">
           <span className="flex items-center gap-1.5 text-xs text-[var(--ink-soft)]">
             <Clock className="size-3.5 shrink-0 text-[var(--ink-mute)]" />
             {hasOwnHours

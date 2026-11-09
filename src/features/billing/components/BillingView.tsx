@@ -40,7 +40,7 @@ function BillingViewInner() {
   // One-time toast for the redirect outcome.
   useEffect(() => {
     if (returnStatus === "success") {
-      toast.success("Payment received — activating your subscription…");
+      toast.success("Payment received. Activating your subscription…");
     } else if (returnStatus === "cancelled") {
       toast.info("Checkout cancelled");
     }

@@ -2,15 +2,18 @@
 import { useAppStore } from "@/lib/appStore";
 import { cn, pkr } from "@/lib/utils";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
+import { useTableSelection } from "@/shared/hooks/useTableSelection";
 import { useUrlState } from "@/shared/hooks/useUrlState";
+import { BulkActionBar } from "@/shared/ui/BulkActionBar";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { ExportDialog } from "@/shared/ui/ExportDialog";
 import { Input } from "@/shared/ui/Input";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { PermissionGuard } from "@/shared/ui/PermissionGuard";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { StatCard } from "@/shared/ui/StatCard";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
+import { ViewTabs, type ViewTabOption } from "@/shared/ui/ViewTabs";
 import {
   Archive,
   CircleCheck,
@@ -103,6 +106,9 @@ export function LeadsView() {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<Lead[]>([]);
+  const leadSelection = useTableSelection<Lead>();
+  const { selectedRows: selectedLeads, clearSelection: clearLeadSelection } =
+    leadSelection;
 
   const hot = leads.filter((l: Lead) => l.status === "hot").length;
   const totalValue = leads.reduce(
@@ -175,9 +181,15 @@ export function LeadsView() {
 
   const isSavingForm = addLead.isPending || updateLead.isPending;
 
-  const VIEW_BTNS: { id: LeadsView; label: string; Icon: React.ElementType }[] =
+  const STATUS_TABS: ViewTabOption<"active" | "archived">[] = [
+    { id: "active", label: "Active", Icon: CircleCheck },
+    { id: "archived", label: "Archived", Icon: Archive },
+  ];
+
+  const VIEW_BTNS: ViewTabOption<LeadsView>[] =
     [
-      { id: "kanban", label: "Kanban", Icon: Layers },
+      // Kanban isn't usable on phones — hide the tab there.
+      { id: "kanban", label: "Kanban", Icon: Layers, className: "max-md:hidden" },
       // { id: "list", label: "List", Icon: List },
       { id: "table", label: "Table", Icon: Grid2x2 },
     ];
@@ -209,6 +221,10 @@ export function LeadsView() {
           data-tour="page-actions"
           className="flex flex-wrap gap-2 items-center"
         >
+          <SeedRecordsButton
+            target={{ recordType: "LEAD", label: vocabulary.plural }}
+            size="default"
+          />
           <RefreshButton
             onRefresh={() => refetch()}
             isRefreshing={isFetching}
@@ -259,18 +275,30 @@ export function LeadsView() {
 
       {/* Toolbar */}
       <div className="card flex items-center gap-2 flex-wrap p-2">
-        <div className="relative w-full flex-none md:flex-[1_1_220px] md:w-auto md:min-w-[200px]">
-          <Search
-            size={13}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
+        {selectedLeads.length > 0 ? (
+          <BulkActionBar
+            className="w-full flex-none md:flex-[1_1_220px] md:w-auto md:min-w-[200px]"
+            selectedCount={selectedLeads.length}
+            onExport={() => openExport(selectedLeads)}
+            onDelete={() => {
+              setBulkDeleteTargets(selectedLeads);
+              clearLeadSelection();
+            }}
           />
-          <Input
-            className="pl-8"
-            placeholder={`Search ${vocabulary.plural}...`}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
+        ) : (
+          <div className="relative w-full flex-none md:flex-[1_1_220px] md:w-auto md:min-w-[200px]">
+            <Search
+              size={13}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-mute)] pointer-events-none z-10"
+            />
+            <Input
+              className="pl-8"
+              placeholder={`Search ${vocabulary.plural}...`}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+        )}
         {/* <ToggleGroup
           type="single"
           variant="outline"
@@ -291,47 +319,22 @@ export function LeadsView() {
             </ToggleGroupItem>
           ))}
         </ToggleGroup> */}
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          spacing={0}
+        <ViewTabs
+          ariaLabel="Lead status"
           value={archived ? "archived" : "active"}
-          onValueChange={(v) => {
-            if (v) setArchivedParam(v === "archived" ? "1" : "");
-          }}
-        >
-          <ToggleGroupItem value="active" className="h-10">
-            <CircleCheck size={12} /> Active
-          </ToggleGroupItem>
-          <ToggleGroupItem value="archived" className="h-10">
-            <Archive size={12} /> Archived
-          </ToggleGroupItem>
-        </ToggleGroup>
+          onValueChange={(nextStatus) =>
+            setArchivedParam(nextStatus === "archived" ? "1" : "")
+          }
+          options={STATUS_TABS}
+        />
         <div className="hidden md:block md:flex-1" />
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          spacing={0}
+        <ViewTabs
+          ariaLabel="View mode"
           className="max-md:ml-auto"
           value={leadsView}
-          onValueChange={(v) => {
-            if (v) setLeadsView(v as LeadsView);
-          }}
-        >
-          {VIEW_BTNS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem
-              key={id}
-              value={id}
-              title={label}
-              // Kanban isn't usable on phones — hide the toggle there.
-              className={cn(id === "kanban" && "hidden md:inline-flex", "h-10")}
-            >
-              <Icon size={12} /> {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          onValueChange={setLeadsView}
+          options={VIEW_BTNS}
+        />
       </div>
 
       {isLoading && <LeadsViewSkeleton view={leadsView} />}
@@ -361,8 +364,7 @@ export function LeadsView() {
               onArchive={handleArchive}
               onRestore={handleRestore}
               onDelete={handleDelete}
-              onBulkDelete={setBulkDeleteTargets}
-              onExport={openExport}
+              selection={leadSelection}
             />
           </div>
         </>
@@ -395,8 +397,7 @@ export function LeadsView() {
           onArchive={handleArchive}
           onRestore={handleRestore}
           onDelete={handleDelete}
-          onBulkDelete={setBulkDeleteTargets}
-          onExport={openExport}
+          selection={leadSelection}
         />
       )}
 
@@ -458,7 +459,7 @@ export function LeadsView() {
         title={`Delete ${vocabulary.singular} permanently?`}
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone — archive the ${vocabulary.singular} instead if you may need any of it.`
+            ? `"${deleteTarget.name}" will be permanently removed, along with their orders, appointments, qualification answers and chat history. This can't be undone. Archive the ${vocabulary.singular} instead if you may need any of it.`
             : undefined
         }
         confirmLabel="Delete permanently"

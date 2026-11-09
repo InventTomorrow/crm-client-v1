@@ -50,7 +50,7 @@ export function BillingHistory() {
   };
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden rounded-none">
       <div className="border-b border-[var(--line)] px-5 py-4">
         <h3 className="text-[15px] font-semibold">Billing history</h3>
         <p className="text-[12.5px] mt-0.5 text-[var(--ink-soft)]">
@@ -81,7 +81,7 @@ export function BillingHistory() {
                     {fmtDate(payment.paidAt ?? payment.createdAt)}
                   </td>
                   <td className="whitespace-nowrap px-5 py-3 font-medium">{fmtAmount(payment)}</td>
-                  <td className="px-5 py-3 text-[var(--ink-soft)]">{payment.method ?? '—'}</td>
+                  <td className="px-5 py-3 text-[var(--ink-soft)]">{payment.method ?? 'N/A'}</td>
                   <td className="px-5 py-3">
                     <span className={`badge font-medium ${STATUS_STYLES[payment.status]}`}>
                       {payment.status.charAt(0) + payment.status.slice(1).toLowerCase()}

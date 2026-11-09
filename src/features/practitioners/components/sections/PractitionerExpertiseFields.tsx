@@ -17,7 +17,7 @@ const LISTS = [
     placeholder: 'Post-surgical rehab',
     addLabel: 'Add specialty',
     emptyHint:
-      'What this practitioner is known for — the assistant matches patients on these.',
+      'What this practitioner is known for. The assistant matches patients on these.',
   },
   {
     name: 'qualifications',
@@ -53,6 +53,8 @@ export function PractitionerExpertiseFields({
                 placeholder={list.placeholder}
                 addLabel={list.addLabel}
                 emptyHint={list.emptyHint}
+                isLabelProminent
+                isAddButtonCentered
                 values={field.value ?? []}
                 onChange={field.onChange}
                 disabled={isSaving}

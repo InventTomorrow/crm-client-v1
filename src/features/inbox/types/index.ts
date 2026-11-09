@@ -10,6 +10,8 @@ export interface ConversationMessage {
   content: string | null;
   mediaUrl?: string | null;
   mediaType?: MediaType | null;
+  /** FOLLOW_UP marks an automatic follow-up the assistant sent. */
+  aiIntentTag?: 'PURCHASE' | 'INQUIRY' | 'COMPLAINT' | 'CANCEL' | 'FOLLOW_UP' | null;
   isDraft: boolean;
   createdAt: string;
   isDeleted: boolean;

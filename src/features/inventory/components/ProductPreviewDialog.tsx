@@ -145,8 +145,8 @@ export function ProductPreviewDialog({
                 Negotiation price{hasPriceRange ? " from" : ""}:{" "}
                 <span className="font-[var(--font-mono)] text-[var(--ink-soft)]">
                   {pkr(discountedPrice)}
-                </span>{" "}
-                — the lowest price staff can offer if a customer
+                </span>.{" "}
+                The lowest price staff can offer if a customer
                 negotiates. Not shown to customers upfront.
               </p>
             )}
@@ -165,7 +165,7 @@ export function ProductPreviewDialog({
               <dt className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)]">
                 Category
               </dt>
-              <dd className="mt-0.5 text-[var(--ink)]">{product.cat || "—"}</dd>
+              <dd className="mt-0.5 text-[var(--ink)]">{product.cat || "N/A"}</dd>
             </div>
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-[var(--ink-mute)]">

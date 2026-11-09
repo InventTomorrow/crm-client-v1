@@ -1,13 +1,14 @@
 "use client";
+import { SeedRecordsButton } from "@/features/seed/components/SeedRecordsButton";
 import { useBookingConfigQuery } from "@/features/bookings/hooks/useBookings";
 import { useDebouncedUrlSearch } from "@/shared/hooks/useDebouncedUrlSearch";
 import { Alert, AlertDescription } from "@/shared/ui/Alert";
+import { ViewTabs } from "@/shared/ui/ViewTabs";
 import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { RefreshButton } from "@/shared/ui/RefreshButton";
 import { SearchField } from "@/shared/ui/SearchField";
 import { CardGridSkeleton } from "@/shared/ui/CardGridSkeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/ToggleGroup";
 import { Info, LayoutGrid, List, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,6 @@ import {
 } from "../hooks/usePractitioners";
 import {
   usePractitionersUiStore,
-  type PractitionersView as PractitionersViewMode,
 } from "../stores/practitionersUiStore";
 import { VISIBILITY_META, type Practitioner } from "../types";
 import { PractitionerCard } from "./PractitionerCard";
@@ -74,10 +74,13 @@ export function PractitionersView() {
           The doctors and therapists who see patients, and the hours they work.
         </p>
       </div>
-      <Button size="xl" onClick={openCreate}>
-        <Plus className="size-4" />
-        Add practitioner
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <SeedRecordsButton target={{ recordType: "PRACTITIONER", label: "Practitioners" }} />
+        <Button size="xl" onClick={openCreate}>
+          <Plus className="size-4" />
+          Add practitioner
+        </Button>
+      </div>
     </div>
   );
 
@@ -88,7 +91,7 @@ export function PractitionersView() {
       <AlertDescription className="flex flex-wrap items-center gap-1">
         <span>
           Clinic-wide setting:{" "}
-          <strong>{VISIBILITY_META[workspaceVisibility].label}</strong> —{" "}
+          <strong>{VISIBILITY_META[workspaceVisibility].label}</strong>:{" "}
           {VISIBILITY_META[workspaceVisibility].description}
         </span>
         <Link href="/bookings/availability" className="text-primary underline">
@@ -108,26 +111,12 @@ export function PractitionersView() {
       />
 
       <div className="ml-auto flex items-center gap-2">
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
+        <ViewTabs
+          ariaLabel="View mode"
           value={view}
-          onValueChange={(nextView) =>
-            nextView && setView(nextView as PractitionersViewMode)
-          }
-        >
-          {VIEW_BUTTONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem
-              key={id}
-              value={id}
-              aria-label={`${label} view`}
-              className="h-10"
-            >
-              <Icon size={12} /> {label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          onValueChange={setView}
+          options={VIEW_BUTTONS}
+        />
         <RefreshButton
           onRefresh={() => practitionersQuery.refetch()}
           isRefreshing={practitionersQuery.isFetching}
