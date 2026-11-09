@@ -54,8 +54,10 @@ export function CoverageHelpSheet({ open, onOpenChange }: CoverageHelpSheetProps
               never a promise that staff are free.
             </p>
             <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
-              The assistant always says a coordinator will confirm, and anything
-              other than &ldquo;Available&rdquo; is handed to a human.
+              The assistant always says a coordinator will confirm. For anything
+              other than &ldquo;Available&rdquo; it keeps helping and alerts your
+              team once the family has given the patient&apos;s details or asked
+              to book.
             </p>
           </div>
 

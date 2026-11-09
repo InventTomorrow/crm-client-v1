@@ -57,8 +57,9 @@ export function ClinicalServiceInstructionsFields({
                   Escalate to your team for this service
                 </Label>
                 <p className="text-muted-foreground text-sm">
-                  Off means the assistant handles it itself. It still hands
-                  over for emergencies or when the patient asks for a person.
+                  Off means the assistant handles this service on its own and
+                  your team gets no alerts about it. Emergencies and a request
+                  to speak to a person still reach your team.
                 </p>
               </div>
               <FormControl>
@@ -93,6 +94,13 @@ export function ClinicalServiceInstructionsFields({
                     onChange={field.onChange}
                     disabled={isSaving}
                   />
+                  <FormDescription>
+                    When one applies, the assistant alerts your team and keeps
+                    helping the family. The alert is sent once they have
+                    answered this service&apos;s intake questions or asked to
+                    book, so your team only hears about families who want the
+                    service.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -113,8 +121,9 @@ export function ClinicalServiceInstructionsFields({
                     />
                   </FormControl>
                   <FormDescription>
-                    Alerted instead of your default support contact when this
-                    service is escalated. Leave empty to use the default.
+                    Every alert about this service goes to this number instead
+                    of your default support contact. Leave empty to use the
+                    default.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

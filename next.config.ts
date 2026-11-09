@@ -6,6 +6,12 @@ const apiUrl = new URL(apiOrigin);
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Pin the project root. Without this, a stray lockfile in a parent folder
+  // (e.g. C:\Users\<you>\package-lock.json) makes Turbopack watch that whole
+  // folder and run out of memory.
+  turbopack: {
+    root: __dirname,
+  },
   reactCompiler: true,
   images: {
     formats: ["image/avif", "image/webp"],
