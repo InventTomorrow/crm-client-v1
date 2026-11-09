@@ -8,7 +8,9 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type PaginationState,
   type SortingState,
+  type Updater,
   type RowSelectionState,
 } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,14 @@ const PAGE_SIZES = [10, 20, 50, 100] as const;
 
 const PAGINATION_BUTTON_CLASS = "rounded-none";
 
+/** The server owns paging: `data` is only the current page and `totalRows` counts every match. */
+export interface ServerPagination {
+  pageIndex: number;
+  pageSize: number;
+  totalRows: number;
+  onPaginationChange: (pagination: PaginationState) => void;
+}
+
 interface DataTableProps<TData> {
   data: TData[];
   columns: ColumnDef<TData, unknown>[];
@@ -70,6 +80,7 @@ interface DataTableProps<TData> {
   maxBodyHeight?: string;
   /** Shows at most this many rows of the current page; the rest scroll inside the table. */
   maxVisibleRows?: number;
+  serverPagination?: ServerPagination;
 }
 
 export function DataTable<TData>({
@@ -88,6 +99,7 @@ export function DataTable<TData>({
   className,
   maxBodyHeight,
   maxVisibleRows,
+  serverPagination,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -95,7 +107,17 @@ export function DataTable<TData>({
     useState<RowSelectionState>({});
   const rowSelection = selection?.rowSelection ?? internalRowSelection;
   const setRowSelection = selection?.setRowSelection ?? setInternalRowSelection;
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [clientPagination, setClientPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: defaultPageSize,
+  });
+  const pagination: PaginationState = serverPagination
+    ? {
+        pageIndex: serverPagination.pageIndex,
+        pageSize: serverPagination.pageSize,
+      }
+    : clientPagination;
+  const { pageIndex, pageSize } = pagination;
 
   // Prepend selection column if needed
   const allColumns: ColumnDef<TData, unknown>[] = selectable
@@ -134,25 +156,36 @@ export function DataTable<TData>({
       ]
     : columns;
 
+  // Row ids are data indexes, so a new server page must drop the old page's selection.
+  const handlePaginationChange = (updater: Updater<PaginationState>) => {
+    const nextPagination =
+      typeof updater === "function" ? updater(pagination) : updater;
+    if (!serverPagination) {
+      setClientPagination(nextPagination);
+      return;
+    }
+    setRowSelection({});
+    serverPagination.onPaginationChange(nextPagination);
+  };
+
   const table = useReactTable({
     data,
     columns: allColumns,
-    state: { sorting, columnFilters, rowSelection },
+    state: { sorting, columnFilters, rowSelection, pagination },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize } },
+    manualPagination: !!serverPagination,
+    rowCount: serverPagination?.totalRows,
   });
 
-  // Sync pageSize into table when changed
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    table.setPageSize(size);
-  };
+  const handlePageSizeChange = (size: number) =>
+    handlePaginationChange({ pageIndex: 0, pageSize: size });
 
   // Row ids are data indexes, so selected rows resolve straight from the data.
   const selectedRows = useMemo(
@@ -168,8 +201,9 @@ export function DataTable<TData>({
   const clearSelection = selection?.clearSelection;
   useEffect(() => clearSelection, [clearSelection]);
 
-  const { pageIndex } = table.getState().pagination;
   const totalPages = table.getPageCount();
+  const totalRows =
+    serverPagination?.totalRows ?? table.getFilteredRowModel().rows.length;
 
   const pageRows = table.getRowModel().rows;
   const { containerRef: scrollContainerRef, maxHeight: visibleRowsMaxHeight } =
@@ -374,8 +408,8 @@ export function DataTable<TData>({
 
         {/* Page info */}
         <span className="text-[var(--ink-mute)]">
-          {table.getFilteredRowModel().rows.length > 0
-            ? `${pageIndex * pageSize + 1} to ${Math.min((pageIndex + 1) * pageSize, table.getFilteredRowModel().rows.length)} of ${table.getFilteredRowModel().rows.length}`
+          {totalRows > 0
+            ? `${pageIndex * pageSize + 1} to ${Math.min((pageIndex + 1) * pageSize, totalRows)} of ${totalRows}`
             : "0 results"}
         </span>
 

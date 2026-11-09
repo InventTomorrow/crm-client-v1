@@ -190,6 +190,11 @@ export interface OrdersSummary {
   byStatus: { status: OrderStatus; count: number }[];
 }
 
+export interface OrdersPage {
+  orders: OrderListItem[];
+  total: number;
+}
+
 export interface OrderFilters {
   search?: string;
   status?: OrderStatus;
