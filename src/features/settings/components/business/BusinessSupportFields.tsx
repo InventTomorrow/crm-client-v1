@@ -118,22 +118,20 @@ export function BusinessSupportFields({
               <div>
                 <FormLabel className="text-[12.5px]">
                   {isClinic
-                    ? "Notify me on WhatsApp about promising patients and escalations"
+                    ? "Notify me on WhatsApp about promising patients and team notes"
                     : "Notify me on WhatsApp when a chat is escalated"}
                 </FormLabel>
                 <p className="text-[11px] text-[var(--ink-mute)] mt-0.5">
                   {isClinic
-                    ? "Off by default. Turn on to receive the patient's details on the support number above when they're ready to book, when the AI books their appointment (the AI keeps working the chat), and whenever the AI hands a conversation off to a human."
+                    ? "Handoffs to a human, emergencies and handoffs nobody has answered always reach the support number above on WhatsApp. Turn on to also receive the patient's details when they're ready to book or the AI books their appointment, and the AI's notes for your team while it keeps working the chat."
                     : "Off by default. Turn on to receive the lead's info and escalation reason on the support number above whenever the AI hands a conversation off to a human."}
                 </p>
-                {isClinic && (
-                  <p className="text-[11px] text-[var(--ink-mute)] mt-1">
-                    Use a number other than your connected WhatsApp.
-                    WhatsApp doesn&apos;t notify you about messages from your
-                    own number. If they match, patient alerts go to the
-                    owner&apos;s profile phone instead.
-                  </p>
-                )}
+                <p className="text-[11px] text-[var(--ink-mute)] mt-1">
+                  Use a number other than your connected WhatsApp. WhatsApp
+                  doesn&apos;t notify you about messages from your own number.
+                  If they match, alerts go to the owner&apos;s profile phone
+                  instead.
+                </p>
               </div>
               <FormControl>
                 <CRMSwitch

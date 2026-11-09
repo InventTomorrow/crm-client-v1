@@ -211,6 +211,9 @@ export function AssistantPolicySection() {
                 })
               }
             />
+            <p className="text-[11px] text-[var(--ink-mute)] leading-snug">
+              After a handover, and again after every reply your team sends from the inbox or the business phone.
+            </p>
           </div>
           {catalog.languages.map(({ language, label }) => (
             <div key={language} className="flex flex-col gap-1">
@@ -230,7 +233,7 @@ export function AssistantPolicySection() {
 
         <PolicyCard
           title="Your own instructions"
-          hint="Rules the assistant follows in every chat. Tone, escalation, what to say or avoid. They can narrow what it does, never override its safety limits. Rules for one service go on that service."
+          hint="Rules the assistant follows in every chat. Tone, escalation, what to say or avoid. They take priority over its default behaviour; only its medical safety limits, emergencies and a customer's right to reach your team come first. Rules for one service go on that service."
         >
           <InstructionListField
             label="Assistant instructions"
