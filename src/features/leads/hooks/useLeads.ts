@@ -1,4 +1,5 @@
 'use client';
+import { useCallback } from 'react';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Lead } from '@/lib/mockData';
@@ -46,6 +47,30 @@ export function useInfiniteLeads(archived = false) {
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.length === LEADS_PAGE_SIZE ? lastPageParam + 1 : undefined,
   });
+}
+
+// Starts the next page this far before a column's end so it is ready when the user gets there.
+const NEXT_PAGE_PREFETCH_DISTANCE_PX = 600;
+
+/** Returns a scroll handler that loads the next leads page as a scroll container nears its end. */
+export function useLoadMoreLeadsNearEnd({
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+}: Pick<
+  ReturnType<typeof useInfiniteLeads>,
+  'hasNextPage' | 'isFetchingNextPage' | 'fetchNextPage'
+>) {
+  return useCallback(
+    (scrollContainer: HTMLElement) => {
+      if (!hasNextPage || isFetchingNextPage) return;
+      const distanceToEnd =
+        scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight;
+      if (distanceToEnd > NEXT_PAGE_PREFETCH_DISTANCE_PX) return;
+      fetchNextPage({ cancelRefetch: false });
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 }
 
 // Both useLeads (plain array) and useInfiniteLeads (InfiniteData<Lead[]>) share

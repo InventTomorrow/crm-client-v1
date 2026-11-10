@@ -7,14 +7,26 @@ import type {
   OrderFilters,
   OrderImportResult,
   OrderListItem,
+  OrdersPage,
   OrderStatus,
   OrdersSummary,
   UpdateOrderPayload,
 } from '../types';
 
-export async function getOrders(params: OrderFilters & { cursor?: string; limit?: number }) {
+export async function getOrders(params: OrderFilters & { limit?: number }) {
   const res = await apiClient.get<{ success: true; data: OrderListItem[] }>('/orders', { params });
   return res.data.data;
+}
+
+export async function getOrdersPage(
+  params: OrderFilters & { page: number; limit: number },
+): Promise<OrdersPage> {
+  const res = await apiClient.get<{
+    success: true;
+    data: OrderListItem[];
+    meta?: { total: number };
+  }>('/orders', { params });
+  return { orders: res.data.data, total: res.data.meta?.total ?? res.data.data.length };
 }
 
 export async function getOrdersSummary() {
