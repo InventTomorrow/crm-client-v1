@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useCaptureReferralCode } from "@/features/referrals/hooks/useCaptureReferralCode";
 import { useDeletedAccountRedirect } from "../hooks/useAccountRecovery";
 import { useRegister } from "../hooks/useAuth";
 import { registerSchema, type RegisterData } from "../types";
@@ -39,6 +40,7 @@ function passwordStrength(pw: string): number {
   return Math.min(score, 4);
 }
 export function RegisterView() {
+  useCaptureReferralCode();
   const [showPw, setShowPw] = useState(false);
   const router = useRouter();
   const { mutate, isPending, error } = useRegister();

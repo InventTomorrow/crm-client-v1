@@ -2,6 +2,7 @@
 import { ArrowRight, Loader2 } from 'lucide-react';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { OfferCountdown } from '@/features/offers/components/OfferCountdown';
+import { ReferralAppliedNote } from '@/features/referrals/components/ReferralAppliedNote';
 import { formatPlanListPrice, formatPlanPeriod, formatPlanPrice } from '../utils/planFormat';
 import type { Plan } from '../types';
 import { PlanLimitsList } from './PlanLimitsList';
@@ -104,6 +105,12 @@ export function PlanCard({ plan, isCurrent, isRequested, isScheduled, changeDire
         )}
         <span className="text-[26px] font-bold">{formatPlanPrice(plan)}</span>
         <span className="text-[13px] text-[var(--ink-soft)]"> {formatPlanPeriod(plan.duration, plan.customDurationDays)}</span>
+        {plan.referralCode && (
+          <ReferralAppliedNote
+            code={plan.referralCode}
+            discountPercent={plan.referralDiscountPercent}
+          />
+        )}
       </div>
 
       <div className="mt-4 flex-1">
