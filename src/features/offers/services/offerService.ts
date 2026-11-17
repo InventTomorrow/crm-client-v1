@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
+import { SERVER_FETCH_TIMEOUT_MS } from "@/lib/utils";
 import { activeOfferSchema, type ActiveOffer } from "../types";
 
 /** A campaign that ended between publish and read parses fine but is null. */
@@ -24,6 +25,7 @@ export async function fetchActiveOffer(): Promise<ActiveOffer | null> {
   try {
     const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/v1/public/promo-offer`, {
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(SERVER_FETCH_TIMEOUT_MS),
     });
     if (!response.ok) return null;
     const payload = (await response.json()) as { data?: unknown };

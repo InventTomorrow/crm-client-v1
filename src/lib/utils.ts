@@ -5,6 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Server components await the API while rendering, so a stalled API must not hang the page.
+export const SERVER_FETCH_TIMEOUT_MS = 5000;
+
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

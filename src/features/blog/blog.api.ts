@@ -1,3 +1,4 @@
+import { SERVER_FETCH_TIMEOUT_MS } from "@/lib/utils";
 import featuredSnapshot from "./generated/featured-posts.json";
 import type {
   BlogCategoryWithCount,
@@ -36,6 +37,7 @@ async function fetchBlog<T>(
   try {
     const response = await fetch(`${origin}/api/v1/public/blog${path}`, {
       next: { revalidate, tags: ["blog"] },
+      signal: AbortSignal.timeout(SERVER_FETCH_TIMEOUT_MS),
     });
     if (!response.ok) return fallback;
     const payload = (await response.json()) as { data?: T };
