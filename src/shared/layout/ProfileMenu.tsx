@@ -1,4 +1,5 @@
 "use client";
+import { useAffiliateProfile } from "@/features/affiliate/hooks/useAffiliateProfile";
 import { useLogout, useMe } from "@/features/auth/hooks/useAuth";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import { tourIdFor } from "@/features/tour/steps/workspaceSteps";
@@ -10,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   Compass,
+  Handshake,
   Lock,
   Moon,
   PlayCircle,
@@ -70,6 +72,8 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
   const router = useRouter();
   const { theme, toggleTheme } = useAppStore();
   const { user } = useMe();
+  const { data: affiliateProfile } = useAffiliateProfile();
+  const isAffiliate = Boolean(affiliateProfile);
   const logout = useLogout();
   const { tenant } = useCurrentTenant();
   const { startNextStep } = useNextStep();
@@ -158,6 +162,14 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
           onClick={() => go("/settings")}
           disabled={isLoggingOut}
         />
+        {isAffiliate && (
+          <ProfRow
+            icon={Handshake}
+            label="Affiliate dashboard"
+            onClick={() => go("/affiliate")}
+            disabled={isLoggingOut}
+          />
+        )}
       </div>
       <div className="h-px bg-[var(--line)]" />
       <div className="p-1.5">

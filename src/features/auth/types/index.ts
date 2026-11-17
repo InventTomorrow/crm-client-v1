@@ -1,3 +1,4 @@
+import { REFERRAL_CODE_PATTERN } from '@/features/referrals/types';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { z } from 'zod';
 
@@ -26,6 +27,11 @@ export const registerSchema = z.object({
 export const createWorkspaceSchema = z.object({
   name: z.string().min(2, 'Workspace name must be at least 2 characters').max(60),
   businessName: z.string().min(2, 'Business name must be at least 2 characters').max(120),
+  referralCode: z
+    .string()
+    .trim()
+    .refine((code) => code === '' || REFERRAL_CODE_PATTERN.test(code), 'Use 3 to 20 letters or numbers')
+    .optional(),
 });
 
 export const forgotPasswordSchema = z.object({

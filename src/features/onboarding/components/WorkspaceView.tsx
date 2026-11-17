@@ -1,10 +1,7 @@
 "use client";
 import { AuthFormError } from "@/features/auth/components/AuthFormError";
-import { useCreateWorkspace } from "@/features/auth/hooks/useAuth";
-import {
-  createWorkspaceSchema,
-  type CreateWorkspaceData,
-} from "@/features/auth/types";
+import { ReferralCodeField } from "@/features/referrals/components/ReferralCodeField";
+import { useCaptureReferralCode } from "@/features/referrals/hooks/useCaptureReferralCode";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import {
@@ -15,18 +12,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Loader2, Store } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useWorkspaceForm } from "../hooks/useWorkspaceForm";
 import { OnboardingShell } from "./OnboardingShell";
 
 export function WorkspaceView() {
-  const { mutate, isPending, error } = useCreateWorkspace();
-
-  const form = useForm<CreateWorkspaceData>({
-    resolver: zodResolver(createWorkspaceSchema),
-    defaultValues: { name: "", businessName: "" },
-  });
+  useCaptureReferralCode();
+  const {
+    form,
+    submitWorkspace,
+    isPending,
+    error,
+    referralCheck,
+    isReferralFieldOpen,
+    openReferralField,
+  } = useWorkspaceForm();
 
   return (
     <OnboardingShell currentStep="WORKSPACE">
@@ -42,10 +42,7 @@ export function WorkspaceView() {
 
       <div className="card p-6">
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((d) => mutate(d))}
-            className="flex flex-col gap-4"
-          >
+          <form onSubmit={submitWorkspace} className="flex flex-col gap-4">
             <AuthFormError error={error} />
 
             <FormField
@@ -107,6 +104,14 @@ export function WorkspaceView() {
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            <ReferralCodeField
+              control={form.control}
+              name="referralCode"
+              checkState={referralCheck}
+              isOpen={isReferralFieldOpen}
+              onOpen={openReferralField}
             />
 
             <Button
