@@ -1,4 +1,4 @@
-import { Mail, MessageCircle } from "lucide-react";
+import { Handshake, Mail, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import Container from "../Container";
 import {
@@ -121,6 +121,15 @@ export default function Footer() {
                   >
                     <MessageCircle className="size-4 text-brand-green" />
                     Contact us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/affiliate-program"
+                    className="inline-flex items-center gap-2 text-brand-text text-[14px] transition-colors hover:text-brand-green"
+                  >
+                    <Handshake className="size-4 text-brand-green" />
+                    Become an affiliate
                   </Link>
                 </li>
                 {/* <li>

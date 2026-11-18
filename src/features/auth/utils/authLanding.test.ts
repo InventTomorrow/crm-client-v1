@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { AuthLandingUser } from "./authLanding";
-import { hasFinishedOnboarding, resolveAuthLanding } from "./authLanding";
+import {
+  canEnterAppRoute,
+  canOpenWorkspaceSetup,
+  hasFinishedOnboarding,
+  resolveAuthLanding,
+} from "./authLanding";
 
 const buildUser = (overrides: Partial<AuthLandingUser> = {}): AuthLandingUser => ({
   tenantId: "tenant-1",
@@ -70,5 +75,40 @@ describe("hasFinishedOnboarding", () => {
       hasFinishedOnboarding(buildUser({ onboardingStatus: "ONBOARDING", onboardingStep: "CHANNEL" })),
     ).toBe(false);
     expect(hasFinishedOnboarding(buildUser({ tenantId: null }))).toBe(false);
+  });
+});
+
+describe("affiliate-only accounts", () => {
+  const affiliateOnly = buildUser({
+    tenantId: null,
+    onboardingStatus: "ONBOARDING",
+    onboardingStep: "WORKSPACE",
+    isAffiliate: true,
+  });
+
+  it("lands on the affiliate dashboard instead of the workspace wizard", () => {
+    expect(resolveAuthLanding(affiliateOnly)).toBe("/affiliate");
+  });
+
+  it("still sends an unverified affiliate to verification first", () => {
+    expect(resolveAuthLanding({ ...affiliateOnly, onboardingStatus: "EMAIL_UNVERIFIED" })).toBe(
+      "/auth/verify-email",
+    );
+  });
+
+  it("opens only the affiliate pages of the app", () => {
+    expect(canEnterAppRoute(affiliateOnly, "/affiliate")).toBe(true);
+    expect(canEnterAppRoute(affiliateOnly, "/inbox")).toBe(false);
+  });
+
+  it("can start the workspace wizard whenever they choose to", () => {
+    expect(canOpenWorkspaceSetup(affiliateOnly, "/onboarding/workspace")).toBe(true);
+    expect(canOpenWorkspaceSetup(affiliateOnly, "/onboarding/channel")).toBe(false);
+  });
+
+  it("follows the normal rules once the affiliate has a workspace", () => {
+    const withWorkspace = buildUser({ isAffiliate: true });
+    expect(resolveAuthLanding(withWorkspace)).toBe("/dashboard");
+    expect(canEnterAppRoute(withWorkspace, "/inbox")).toBe(true);
   });
 });

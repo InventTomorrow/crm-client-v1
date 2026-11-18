@@ -2,7 +2,7 @@
 import { Button } from "@/shared/ui/Button";
 import { Copy, Link2, Ticket } from "lucide-react";
 import { toast } from "sonner";
-import type { AffiliateShareCode } from "../types";
+import type { AffiliateShareCode } from "../../types";
 
 const copyToClipboard = async (text: string, successMessage: string) => {
   try {
@@ -19,11 +19,19 @@ function isCodeUsable(shareCode: AffiliateShareCode): boolean {
   return shareCode.maxRedemptions === null || shareCode.uses < shareCode.maxRedemptions;
 }
 
-export function AffiliateShareCodes({ codes }: { codes: AffiliateShareCode[] }) {
+export function AffiliateShareCodes({
+  codes,
+  canCreateCodes,
+}: {
+  codes: AffiliateShareCode[];
+  canCreateCodes: boolean;
+}) {
   if (codes.length === 0) {
     return (
       <p className="text-[12.5px] text-[var(--ink-mute)]">
-        No codes yet. Ask your account manager to create one.
+        {canCreateCodes
+          ? "No codes yet. Create your first one to start sharing."
+          : "No codes yet. Ask your account manager to create one."}
       </p>
     );
   }
@@ -43,6 +51,9 @@ export function AffiliateShareCodes({ codes }: { codes: AffiliateShareCode[] }) 
                 <span className="font-mono text-[17px] font-semibold tracking-wide text-[var(--ink)]">
                   {shareCode.code}
                 </span>
+                {shareCode.createdByAffiliate && (
+                  <span className="text-[10.5px] text-[var(--ink-mute)]">Created by you</span>
+                )}
               </div>
               <span className="badge bg-[var(--accent-soft)] font-medium text-[var(--accent)]">
                 {shareCode.discountPercent}% off for them

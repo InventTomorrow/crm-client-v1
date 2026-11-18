@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/apiClient";
 import type {
   AffiliateAnalytics,
+  AffiliateShareCode,
   AffiliateProfile,
   AffiliateReferralsPage,
   AffiliateReferredCustomer,
@@ -33,4 +34,9 @@ export async function listAffiliateReferrals(params: {
     meta: AffiliateReferralsPage["meta"];
   }>("/affiliate/me/referrals", { params });
   return { items: res.data.data, meta: res.data.meta };
+}
+
+export async function createOwnReferralCode(input: { code?: string; discountPercent: number }): Promise<AffiliateShareCode> {
+  const res = await apiClient.post<{ success: true; data: AffiliateShareCode }>("/affiliate/me/codes", input);
+  return res.data.data;
 }

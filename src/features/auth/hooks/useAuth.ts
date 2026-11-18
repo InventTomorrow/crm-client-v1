@@ -129,11 +129,12 @@ export function useVerifyEmail() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (token: string) => verifyEmail(token),
-    onSuccess: () => {
+    onSuccess: ({ user }) => {
       // The server signs the user in as part of verifying — drop any identity
       // cached while they were still unverified before the gate reads it.
       queryClient.removeQueries({ queryKey: ['me'] });
-      router.push('/onboarding/workspace');
+      // Usually the workspace wizard; an account linked to an affiliate goes to its dashboard instead.
+      router.push(resolveAuthLanding(user));
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });

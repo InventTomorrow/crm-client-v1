@@ -1,4 +1,6 @@
 "use client";
+import { useMe } from "@/features/auth/hooks/useAuth";
+import { isAffiliateOnlyAccount } from "@/features/auth/utils/authLanding";
 import { usePostAuthRouting } from "@/features/billing/hooks/usePostAuthRouting";
 import { TestUserBanner } from "@/features/seed/components/TestUserBanner";
 import { WelcomeDemoDialog } from "@/features/demo/components/WelcomeDemoDialog";
@@ -7,6 +9,7 @@ import { useSyncActiveWorkspace } from "@/features/tenant/hooks/useSyncActiveWor
 import { TourProvider } from "@/features/tour/components/TourProvider";
 import { WorkspaceTourStarter } from "@/features/tour/components/WorkspaceTourStarter";
 import { useAppStore } from "@/lib/appStore";
+import { AffiliateShell } from "@/shared/layout/AffiliateShell";
 import { AppFooter } from "@/shared/layout/AppFooter";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { AppTopBar } from "@/shared/layout/AppTopBar";
@@ -20,6 +23,22 @@ import { Toaster } from "@/shared/ui/Sonner";
 import { Suspense } from "react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { user } = useMe();
+  const isAffiliateOnly = !!user && isAffiliateOnlyAccount(user);
+
+  return (
+    <AuthGate>
+      {isAffiliateOnly ? (
+        <AffiliateShell>{children}</AffiliateShell>
+      ) : (
+        <WorkspaceShell>{children}</WorkspaceShell>
+      )}
+    </AuthGate>
+  );
+}
+
+// Workspace-scoped hooks live here so an affiliate-only account never calls tenant endpoints.
+function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const {
     mobileMenuOpen,
     setMobileMenuOpen,
@@ -36,47 +55,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   usePostAuthRouting();
 
   return (
-    <AuthGate>
-      <TourProvider>
-        <div className="app-shell">
-          {/* AppSidebar reads `?section=` to light the active Settings tab. */}
-          <Suspense>
-            <AppSidebar
-              mobileOpen={mobileMenuOpen}
-              onCloseMobile={() => setMobileMenuOpen(false)}
-            />
-          </Suspense>
-          <div className="app-main">
-            {/* Campaign strip sits above the bar so it never covers navigation. */}
-            <AppOfferSurfaces />
-            <TestUserBanner />
-            <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
-            <main key={currentWorkspaceId} className="app-content">
-              <RouteGuard>{children}</RouteGuard>
-            </main>
-            <AppFooter />
-          </div>
-          <MobileDock />
-
-          {escalatingLead && (
-            <EscalateDialog
-              lead={escalatingLead}
-              onClose={() => setEscalatingLead(null)}
-              onConfirm={() => {
-                setEscalatingLead(null);
-                setHotLead(escalatingLead);
-              }}
-            />
-          )}
-          {hotLead && (
-            <HotToast lead={hotLead} onClose={() => setHotLead(null)} />
-          )}
-          <Toaster richColors position="top-right" closeButton theme="system" />
-          <WorkspaceSwitchingOverlay />
-          <WelcomeDemoDialog />
-          <WorkspaceTourStarter />
+    <TourProvider>
+      <div className="app-shell">
+        {/* AppSidebar reads `?section=` to light the active Settings tab. */}
+        <Suspense>
+          <AppSidebar
+            mobileOpen={mobileMenuOpen}
+            onCloseMobile={() => setMobileMenuOpen(false)}
+          />
+        </Suspense>
+        <div className="app-main">
+          {/* Campaign strip sits above the bar so it never covers navigation. */}
+          <AppOfferSurfaces />
+          <TestUserBanner />
+          <AppTopBar onMobileMenu={() => setMobileMenuOpen(true)} />
+          <main key={currentWorkspaceId} className="app-content">
+            <RouteGuard>{children}</RouteGuard>
+          </main>
+          <AppFooter />
         </div>
-      </TourProvider>
-    </AuthGate>
+        <MobileDock />
+
+        {escalatingLead && (
+          <EscalateDialog
+            lead={escalatingLead}
+            onClose={() => setEscalatingLead(null)}
+            onConfirm={() => {
+              setEscalatingLead(null);
+              setHotLead(escalatingLead);
+            }}
+          />
+        )}
+        {hotLead && (
+          <HotToast lead={hotLead} onClose={() => setHotLead(null)} />
+        )}
+        <Toaster richColors position="top-right" closeButton theme="system" />
+        <WorkspaceSwitchingOverlay />
+        <WelcomeDemoDialog />
+        <WorkspaceTourStarter />
+      </div>
+    </TourProvider>
   );
 }

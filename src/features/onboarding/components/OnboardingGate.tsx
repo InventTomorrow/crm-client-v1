@@ -1,6 +1,6 @@
 'use client';
 import { useMe } from '@/features/auth/hooks/useAuth';
-import { resolveAuthLanding } from '@/features/auth/utils/authLanding';
+import { canOpenWorkspaceSetup, resolveAuthLanding } from '@/features/auth/utils/authLanding';
 import { Loader2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -24,7 +24,9 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   const landing = user ? resolveAuthLanding(user) : null;
   const belongsHere =
-    pathname === COMPLETION_ROUTE || (!!landing && landing.startsWith('/onboarding/'));
+    pathname === COMPLETION_ROUTE ||
+    (!!landing && landing.startsWith('/onboarding/')) ||
+    (!!user && canOpenWorkspaceSetup(user, pathname));
 
   useEffect(() => {
     if (isLoading) return;

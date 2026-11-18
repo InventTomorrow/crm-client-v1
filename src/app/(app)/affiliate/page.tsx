@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { AffiliateDashboardView } from '@/features/affiliate/components/AffiliateDashboardView';
+import { AffiliateDashboardView } from '@/features/affiliate/components/dashboard/AffiliateDashboardView';
 
 export const metadata: Metadata = {
   title: 'Affiliate dashboard',

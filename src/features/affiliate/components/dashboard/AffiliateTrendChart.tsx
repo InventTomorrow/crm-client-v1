@@ -9,7 +9,7 @@ import {
   type ChartConfig,
 } from "@/shared/ui/Chart";
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
-import type { AffiliateAnalytics } from "../types";
+import type { AffiliateAnalytics } from "../../types";
 
 const chartConfig: ChartConfig = {
   signups: { label: "Sign-ups", color: "var(--info)" },
