@@ -10,12 +10,12 @@ import {
   Wallet,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useAffiliateAnalytics } from "../hooks/useAffiliateAnalytics";
-import { useAffiliateProfile } from "../hooks/useAffiliateProfile";
-import { ANALYTICS_RANGE_PRESETS, type AffiliateAnalytics } from "../types";
+import { useAffiliateAnalytics } from "../../hooks/useAffiliateAnalytics";
+import { useAffiliateProfile } from "../../hooks/useAffiliateProfile";
+import { ANALYTICS_RANGE_PRESETS, type AffiliateAnalytics } from "../../types";
 import { AffiliateKpiTile } from "./AffiliateKpiTile";
 import { AffiliateReferralsList } from "./AffiliateReferralsList";
-import { AffiliateShareCodes } from "./AffiliateShareCodes";
+import { AffiliateCodesCard } from "./AffiliateCodesCard";
 
 const AffiliateTrendChart = dynamic(() => import("./AffiliateTrendChart"), {
   ssr: false,
@@ -189,10 +189,7 @@ export function AffiliateDashboardView() {
             <Skeleton className="h-[280px] w-full" />
           )}
         </div>
-        <div className="card p-[18px]">
-          <h3 className="mb-3 text-[14px] font-semibold">Your codes</h3>
-          <AffiliateShareCodes codes={affiliateProfile.codes} />
-        </div>
+        <AffiliateCodesCard profile={affiliateProfile} />
       </div>
 
       <div className="card p-[18px]">

@@ -2,7 +2,7 @@ import { REFERRAL_CODE_PATTERN } from '@/features/referrals/types';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { z } from 'zod';
 
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters')
   .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
@@ -112,6 +112,7 @@ export interface LoginResponse {
   onboardingStatus: OnboardingStatus;
   onboardingStep: OnboardingStep | null;
   isTester: boolean;
+  isAffiliate: boolean;
 }
 
 export interface UserResponse {
@@ -137,4 +138,6 @@ export interface UserResponse {
   roleName: string | null;
   permissions: string[];
   onboardingStep: OnboardingStep;
+  /** Linked to an affiliate record; such an account may have no workspace at all. */
+  isAffiliate: boolean;
 }

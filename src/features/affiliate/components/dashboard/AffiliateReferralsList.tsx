@@ -1,9 +1,13 @@
 "use client";
 import { pkr } from "@/lib/utils";
 import { Button } from "@/shared/ui/Button";
+import { CRMAvatar } from "@/shared/ui/CRMAvatar";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { CheckCircle2, Clock, Loader2 } from "lucide-react";
-import { useAffiliateReferrals } from "../hooks/useAffiliateReferrals";
+import { Loader2 } from "lucide-react";
+import { useAffiliateReferrals } from "../../hooks/useAffiliateReferrals";
+
+const formatShortDate = (isoDate: string) =>
+  new Date(isoDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 export function AffiliateReferralsList() {
   const referralsQuery = useAffiliateReferrals(true);
@@ -35,20 +39,31 @@ export function AffiliateReferralsList() {
           return (
             <li key={referredCustomer.id} className="flex items-center justify-between gap-3 py-2.5">
               <div className="flex min-w-0 items-center gap-2.5">
-                {hasPaid ? (
-                  <CheckCircle2 size={16} className="shrink-0 text-success-foreground" />
-                ) : (
-                  <Clock size={16} className="shrink-0 text-[var(--ink-mute)]" />
-                )}
+                <CRMAvatar
+                  name={referredCustomer.customerName}
+                  src={referredCustomer.customerAvatarUrl}
+                  size={34}
+                />
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-medium text-[var(--ink)]">
                     {referredCustomer.customerName}
                   </div>
                   <div className="truncate text-[11.5px] text-[var(--ink-mute)]">
-                    {referredCustomer.code} ·{" "}
+                    Joined with <span className="font-mono">{referredCustomer.code}</span> on{" "}
+                    {formatShortDate(referredCustomer.createdAt)}
+                  </div>
+                  <div
+                    className={
+                      hasPaid
+                        ? "truncate text-[11.5px] text-success-foreground"
+                        : "truncate text-[11.5px] text-[var(--ink-mute)]"
+                    }
+                  >
                     {hasPaid
-                      ? `Paid for ${referredCustomer.planName ?? "a plan"}`
-                      : `Joined ${new Date(referredCustomer.createdAt).toLocaleDateString()}`}
+                      ? `First payment: ${referredCustomer.planName ?? "a plan"}${
+                          referredCustomer.convertedAt ? ` on ${formatShortDate(referredCustomer.convertedAt)}` : ""
+                        }`
+                      : "No payment yet"}
                   </div>
                 </div>
               </div>
