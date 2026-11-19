@@ -1629,6 +1629,15 @@ html.dark .theme-seg button.on {
   animation: shimmerWave 2.2s linear infinite;
 }
 
+/* Auth password mask: Verdana draws rounder, larger dots; placeholder keeps the normal size. */
+.auth-shell input[type="password"]:not(:placeholder-shown) {
+  font-family: Verdana, var(--font-body);
+  font-size: 20px;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+  caret-color: var(--accent);
+}
+
 /* Reusable hover polish for clickable cards/rows/links app-wide (Channels
    cards, Inbox lead-info/order-history cards, lead detail sheet, order detail
    sheet item rows, etc.): background/border transitions stay on the element's
