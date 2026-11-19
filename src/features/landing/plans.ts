@@ -1,3 +1,4 @@
+import { SERVER_FETCH_TIMEOUT_MS } from "@/lib/utils";
 import { formatOfferCountdown } from "./constants";
 
 /**
@@ -193,6 +194,7 @@ export async function fetchLandingPlans(): Promise<Plan[]> {
         // campaign discount, so a longer cache here would leave the banner
         // advertising a discount the cards below it are not showing yet.
         next: { revalidate: 60 },
+        signal: AbortSignal.timeout(SERVER_FETCH_TIMEOUT_MS),
       },
     );
     if (!response.ok) return [];
