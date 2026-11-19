@@ -5,6 +5,7 @@ import {
   canOpenWorkspaceSetup,
   hasFinishedOnboarding,
   resolveAuthLanding,
+  resolveHomeDashboard,
 } from "./authLanding";
 
 const buildUser = (overrides: Partial<AuthLandingUser> = {}): AuthLandingUser => ({
@@ -110,5 +111,23 @@ describe("affiliate-only accounts", () => {
     const withWorkspace = buildUser({ isAffiliate: true });
     expect(resolveAuthLanding(withWorkspace)).toBe("/dashboard");
     expect(canEnterAppRoute(withWorkspace, "/inbox")).toBe(true);
+  });
+});
+
+describe("resolveHomeDashboard", () => {
+  it("returns the workspace dashboard once setup is finished", () => {
+    expect(resolveHomeDashboard(buildUser())).toBe("/dashboard");
+  });
+
+  it("returns the affiliate dashboard for an affiliate with no workspace", () => {
+    const affiliateOnly = buildUser({ tenantId: null, isAffiliate: true });
+    expect(resolveHomeDashboard(affiliateOnly)).toBe("/affiliate");
+  });
+
+  it("returns null while the user still owes a setup step", () => {
+    expect(resolveHomeDashboard(buildUser({ tenantId: null }))).toBeNull();
+    expect(
+      resolveHomeDashboard(buildUser({ onboardingStatus: "EMAIL_UNVERIFIED" })),
+    ).toBeNull();
   });
 });

@@ -53,6 +53,12 @@ export function hasFinishedOnboarding(user: AuthLandingUser): boolean {
   return resolveAuthLanding(user) === '/dashboard';
 }
 
+/** The dashboard a signed-in user returns to, or null while they still owe a setup step. */
+export function resolveHomeDashboard(user: AuthLandingUser): string | null {
+  const landing = resolveAuthLanding(user);
+  return landing === '/dashboard' || landing === AFFILIATE_HOME ? landing : null;
+}
+
 /** Whether this `(app)` route may render; an affiliate-only account is limited to its dashboard. */
 export function canEnterAppRoute(user: AuthLandingUser, pathname: string): boolean {
   if (hasFinishedOnboarding(user)) return true;

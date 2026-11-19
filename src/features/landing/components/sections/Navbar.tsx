@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMe } from "@/features/auth/hooks/useAuth";
-import { hasFinishedOnboarding } from "@/features/auth/utils/authLanding";
+import { resolveHomeDashboard } from "@/features/auth/utils/authLanding";
 import { PrimaryCta } from "../LandingCta";
 import Logo from "../Logo";
 
@@ -26,7 +26,7 @@ const sectionIdOf = (href: string) => href.split("#")[1] ?? null;
 export default function Navbar() {
   const pathname = usePathname();
   const { user } = useMe();
-  const isSignedIn = !!user && hasFinishedOnboarding(user);
+  const isSignedIn = !!user && resolveHomeDashboard(user) !== null;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeId, setActiveId] = useState(
