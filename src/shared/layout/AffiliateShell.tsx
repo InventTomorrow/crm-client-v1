@@ -15,20 +15,20 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--bg)]">
       <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 md:px-8">
-          <Link href="/affiliate" className="flex min-w-0 items-center gap-2">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 md:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <Image
               src="/asaanrabta-icon.png"
               alt="AsaanRabta"
-              width={28}
-              height={28}
+              width={40}
+              height={40}
               priority
-              className="h-7 w-7 shrink-0 rounded-lg"
+              className="h-9 w-9 shrink-0 rounded-[10px] sm:h-10 sm:w-10"
             />
-            <span className="font-[var(--font-head)] text-[14px] font-bold tracking-[-0.02em] text-[var(--ink)]">
+            <span className="font-[var(--font-head)] text-[17px] font-bold tracking-[-0.02em] text-[var(--ink)] sm:text-[18px]">
               Asaan<span className="text-[var(--accent)]">Rabta</span>
             </span>
-            <span className="hidden text-[12px] text-[var(--ink-mute)] sm:inline">Affiliate</span>
+            <span className="hidden text-[13px] text-[var(--ink-mute)] sm:inline">Affiliate</span>
           </Link>
 
           <div className="flex items-center gap-1.5">
