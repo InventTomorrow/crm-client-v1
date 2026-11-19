@@ -1632,9 +1632,10 @@ html.dark .theme-seg button.on {
 /* Auth password mask: Verdana draws rounder, larger dots; placeholder keeps the normal size. */
 .auth-shell input[type="password"]:not(:placeholder-shown) {
   font-family: Verdana, var(--font-body);
-  font-size: 20px;
-  letter-spacing: 0.24em;
-  color: var(--accent);
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
   caret-color: var(--accent);
 }
 
