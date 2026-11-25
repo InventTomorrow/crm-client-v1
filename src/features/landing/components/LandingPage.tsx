@@ -1,4 +1,6 @@
 import { fetchFeaturedPosts } from "@/features/blog/blog.api";
+import CustomPlanSection from "@/features/custom-plan/components/CustomPlanSection";
+import { fetchLeadPricing } from "@/features/custom-plan/services/customPlanService";
 import { OfferDialog } from "@/features/offers/components/OfferDialog";
 import { fetchActiveOffer } from "@/features/offers/services/offerService";
 import { fetchLandingPlans } from "../plans";
@@ -23,10 +25,11 @@ import Values from "./sections/Values";
  * the SSR HTML rather than appearing after hydration.
  */
 export async function LandingPage() {
-  const [plans, featuredPosts, offer] = await Promise.all([
+  const [plans, featuredPosts, offer, leadPricing] = await Promise.all([
     fetchLandingPlans(),
     fetchFeaturedPosts(4),
     fetchActiveOffer(),
+    fetchLeadPricing(),
   ]);
 
   return (
@@ -41,6 +44,7 @@ export async function LandingPage() {
       <FeatureDetail />
       <BusinessTypes />
       <Pricing plans={plans} offer={offer} />
+      {leadPricing && <CustomPlanSection leadPricing={leadPricing} />}
       <Values />
       {/* <WhyAsaanRabta /> */}
       <LatestArticles posts={featuredPosts} />

@@ -20,6 +20,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NAV_ITEMS, type NavItem } from "./navItems";
 import { ProfileMenu } from "./ProfileMenu";
+import { SidebarFooterLinks } from "./SidebarFooterLinks";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarOfferCard } from "./SidebarOfferCard";
 import { WorkspaceSwitcherV2 } from "./WorkspaceSwitcherV2";
@@ -209,6 +210,12 @@ export function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
               {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             </Button>
           )} */}
+
+          <SidebarFooterLinks
+            pathname={pathname}
+            collapsed={collapsed}
+            onNavigate={onCloseMobile}
+          />
 
           {/* Profile */}
           <div data-header-popover className="relative">

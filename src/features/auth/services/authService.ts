@@ -25,9 +25,12 @@ export async function logout() {
   return res.data;
 }
 
-export async function verifyEmail(token: string) {
-  const res = await apiClient.get('/auth/verify-email', { params: { token } });
-  return res.data;
+export async function verifyEmail(token: string): Promise<{ message: string; user: LoginResponse }> {
+  const res = await apiClient.get<{ success: true; data: { message: string; user: LoginResponse } }>(
+    '/auth/verify-email',
+    { params: { token } },
+  );
+  return res.data.data;
 }
 
 export async function resendVerification(email: string) {

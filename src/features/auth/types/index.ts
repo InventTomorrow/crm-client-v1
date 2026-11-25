@@ -1,7 +1,8 @@
+import { REFERRAL_CODE_PATTERN } from '@/features/referrals/types';
 import type { BusinessVertical } from '@/lib/business-verticals';
 import { z } from 'zod';
 
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters')
   .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
@@ -26,6 +27,11 @@ export const registerSchema = z.object({
 export const createWorkspaceSchema = z.object({
   name: z.string().min(2, 'Workspace name must be at least 2 characters').max(60),
   businessName: z.string().min(2, 'Business name must be at least 2 characters').max(120),
+  referralCode: z
+    .string()
+    .trim()
+    .refine((code) => code === '' || REFERRAL_CODE_PATTERN.test(code), 'Use 3 to 20 letters or numbers')
+    .optional(),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -106,6 +112,7 @@ export interface LoginResponse {
   onboardingStatus: OnboardingStatus;
   onboardingStep: OnboardingStep | null;
   isTester: boolean;
+  isAffiliate: boolean;
 }
 
 export interface UserResponse {
@@ -131,4 +138,6 @@ export interface UserResponse {
   roleName: string | null;
   permissions: string[];
   onboardingStep: OnboardingStep;
+  /** Linked to an affiliate record; such an account may have no workspace at all. */
+  isAffiliate: boolean;
 }

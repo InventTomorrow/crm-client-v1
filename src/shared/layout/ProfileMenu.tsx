@@ -1,7 +1,7 @@
 "use client";
+import { useAffiliateProfile } from "@/features/affiliate/hooks/useAffiliateProfile";
 import { useLogout, useMe } from "@/features/auth/hooks/useAuth";
-import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
-import { tourIdFor } from "@/features/tour/steps/workspaceSteps";
+import { useReplayWorkspaceTour } from "@/features/tour/hooks/useReplayWorkspaceTour";
 import { useAppStore } from "@/lib/appStore";
 import { cn } from "@/lib/utils";
 import { CRMAvatar } from "@/shared/ui/CRMAvatar";
@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   Compass,
+  Handshake,
   Lock,
   Moon,
   PlayCircle,
@@ -18,7 +19,6 @@ import {
   User
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useNextStep } from "nextstepjs";
 
 function ProfRow({
   icon: Icon,
@@ -69,11 +69,11 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
   const router = useRouter();
   const { theme, toggleTheme } = useAppStore();
   const { user } = useMe();
+  const { data: affiliateProfile } = useAffiliateProfile();
+  const isAffiliate = Boolean(affiliateProfile);
   const logout = useLogout();
-  const { tenant } = useCurrentTenant();
-  const { startNextStep } = useNextStep();
+  const { canReplayTour, replayWorkspaceTour } = useReplayWorkspaceTour();
   const isLoggingOut = logout.isPending;
-  const tourId = tourIdFor(tenant?.businessVertical);
 
   const profileName = user
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
@@ -85,12 +85,9 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
     onClose();
   };
 
-  // The guide opens on dashboard elements, so land there before it starts.
-  const replayWorkspaceTour = () => {
-    if (!tourId) return;
-    router.push("/dashboard");
+  const startTour = () => {
+    replayWorkspaceTour();
     onClose();
-    setTimeout(() => startNextStep(tourId), 300);
   };
 
   return (
@@ -151,6 +148,14 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
           onClick={() => go("/settings")}
           disabled={isLoggingOut}
         />
+        {isAffiliate && (
+          <ProfRow
+            icon={Handshake}
+            label="Affiliate dashboard"
+            onClick={() => go("/affiliate")}
+            disabled={isLoggingOut}
+          />
+        )}
       </div>
       <div className="h-px bg-[var(--line)]" />
       <div className="p-1.5">
@@ -166,8 +171,8 @@ export function ProfileMenu({ onClose }: ProfileMenuProps) {
         <ProfRow
           icon={Compass}
           label="Take a tour"
-          onClick={replayWorkspaceTour}
-          disabled={isLoggingOut || !tourId}
+          onClick={startTour}
+          disabled={isLoggingOut || !canReplayTour}
         />
         <ProfRow
           icon={PlayCircle}

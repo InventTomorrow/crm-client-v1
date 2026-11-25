@@ -18,7 +18,6 @@ import {
   Megaphone,
   MessageSquare,
   Package,
-  PlayCircle,
   Settings,
   ShieldCheck,
   ShoppingCart,
@@ -313,7 +312,6 @@ export const NAV_ITEMS: NavItem[] = [
   //   Icon: ShieldCheck,
   //   perm: "members:view",
   // },
-  { href: "/demo", label: "Demo", Icon: PlayCircle },
 ];
 
 export function formatNavBadge(count: number): string {

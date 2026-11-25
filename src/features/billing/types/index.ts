@@ -53,6 +53,9 @@ export interface Plan {
   offerPrice: number | null;
   offerDiscountPercent: number | null;
   offerEndsAt: string | null;
+  // Set when the account's referral code is part of offerPrice; absent on public listings.
+  referralCode?: string | null;
+  referralDiscountPercent?: number | null;
 
   canResell: boolean;
   canWhitelabel: boolean;

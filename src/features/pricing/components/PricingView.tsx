@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, ShieldCheck, Receipt, Headphones } from "lucide-react";
+import { Calculator, Loader2, ShieldCheck, Receipt, Headphones } from "lucide-react";
+import { Button } from "@/shared/ui/Button";
+import { CustomPlanDialog } from "@/features/custom-plan/components/CustomPlanDialog";
 import { useCurrentTenant } from "@/features/tenant/hooks/useCurrentTenant";
 import {
   useChangePlan,
@@ -35,6 +37,7 @@ export function PricingView() {
   const requestPlan = useRequestPlan();
   const changePlan = useChangePlan();
   const [selectingPlanId, setSelectingPlanId] = useState<string | null>(null);
+  const [isCustomPlanDialogOpen, setIsCustomPlanDialogOpen] = useState(false);
 
   // Cancel-at-period-end leaves status ACTIVE/TRIALING with cancelledAt set —
   // that subscription is no longer "current" for plan-selection purposes.
@@ -109,6 +112,29 @@ export function PricingView() {
           onSelect={handleSelect}
         />
       )}
+
+      <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]">
+            <Calculator size={16} />
+          </span>
+          <div>
+            <h3 className="text-[14px] font-semibold text-[var(--ink)]">Need a different size?</h3>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--ink-soft)]">
+              Build a plan around the leads you expect each month. We set it up and send you a
+              checkout link.
+            </p>
+          </div>
+        </div>
+        <Button className="shrink-0" onClick={() => setIsCustomPlanDialogOpen(true)}>
+          Build a custom plan
+        </Button>
+      </div>
+
+      <CustomPlanDialog
+        open={isCustomPlanDialogOpen}
+        onOpenChange={setIsCustomPlanDialogOpen}
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <InfoCard

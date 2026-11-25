@@ -1,7 +1,12 @@
 "use client";
 
 import { useMe } from "@/features/auth/hooks/useAuth";
-import { hasFinishedOnboarding, resolveAuthLanding } from "@/features/auth/utils/authLanding";
+import {
+  AFFILIATE_HOME,
+  hasFinishedOnboarding,
+  resolveAuthLanding,
+  resolveHomeDashboard,
+} from "@/features/auth/utils/authLanding";
 import { useRequestPlan } from "@/features/billing/hooks/useBilling";
 import { savePlanIntent } from "@/features/billing/utils/planIntent";
 import { cn } from "@/lib/utils";
@@ -22,16 +27,16 @@ const CTA_HREF = "/auth/register";
 /** Which app screen a CTA sends a fully signed-in user to. */
 export type SignedInTarget = "dashboard" | "inbox";
 
-const SIGNED_IN_CTA: Record<SignedInTarget, { href: string; label: string }> = {
-  dashboard: { href: "/dashboard", label: "Dashboard" },
-  inbox: { href: "/inbox", label: "Inbox" },
-};
+const INBOX_CTA = { href: "/inbox", label: "Inbox" };
 
 /** Resolves the signed-in destination, or null while the CTA should stay a signup link. */
 function useSignedInCta(target: SignedInTarget) {
   const { user } = useMe();
-  if (!user || !hasFinishedOnboarding(user)) return null;
-  return SIGNED_IN_CTA[target];
+  const homeDashboard = user ? resolveHomeDashboard(user) : null;
+  if (!homeDashboard) return null;
+  if (target === "dashboard") return { href: homeDashboard, label: "Dashboard" };
+  // An affiliate-only account has no inbox, so that CTA stays a signup link.
+  return homeDashboard === AFFILIATE_HOME ? null : INBOX_CTA;
 }
 
 /** Primary pill button used across the landing page. */

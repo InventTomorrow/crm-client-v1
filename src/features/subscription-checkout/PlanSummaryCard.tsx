@@ -6,6 +6,7 @@ import {
 } from "@/features/billing/utils/planFormat";
 import { formatPlanLimit } from "@/features/billing/utils/planLimits";
 import type { Plan } from "@/features/billing/types";
+import { ReferralAppliedNote } from "@/features/referrals/components/ReferralAppliedNote";
 
 /** Read-only summary of the plan the admin issued this link for. */
 export function PlanSummaryCard({ plan }: { plan: Plan }) {
@@ -45,6 +46,13 @@ export function PlanSummaryCard({ plan }: { plan: Plan }) {
             <div className="text-[11.5px] text-[var(--ink-mute)]">
               {formatPlanPeriod(plan.duration, plan.customDurationDays)}
             </div>
+            {plan.referralCode && (
+              <ReferralAppliedNote
+                code={plan.referralCode}
+                discountPercent={plan.referralDiscountPercent}
+                className="justify-end"
+              />
+            )}
           </div>
         </div>
       </div>
